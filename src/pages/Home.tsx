@@ -13,9 +13,9 @@ export default function Home({ onSelectVibe }: HomeProps) {
 
   useEffect(() => {
     api.getVibes().then(data => {
-      setVibes(data);
+      setVibes(Array.isArray(data) ? data : []);
       setLoading(false);
-    });
+    }).catch(() => setLoading(false));
   }, []);
 
   const featuredVibes = vibes.slice(0, 3);
@@ -44,7 +44,7 @@ export default function Home({ onSelectVibe }: HomeProps) {
                   {featuredVibes[0].title}
                 </h1>
                 <div className="flex items-center gap-4">
-                  <button 
+                  <button
                     onClick={() => onSelectVibe(featuredVibes[0].id)}
                     className="px-8 py-4 bg-white text-black font-bold rounded-full hover:bg-indigo-500 hover:text-white transition-all transform hover:scale-105"
                   >
@@ -85,9 +85,9 @@ export default function Home({ onSelectVibe }: HomeProps) {
           ))
         ) : (
           vibes.map(vibe => (
-            <VibeCard 
-              key={vibe.id} 
-              vibe={vibe} 
+            <VibeCard
+              key={vibe.id}
+              vibe={vibe}
               onClick={() => onSelectVibe(vibe.id)}
             />
           ))
