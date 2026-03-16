@@ -11,6 +11,7 @@ export default function Navbar({ onNavigate }: NavbarProps) {
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
+    if (!supabase) return;
     supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
       setUser(session?.user ?? null);
