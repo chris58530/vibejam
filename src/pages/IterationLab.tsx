@@ -176,41 +176,47 @@ export default function IterationLab({ vibeId, onBack, onRemix, currentUserId }:
 
                 {/* Input Area */}
                 <div className="p-4 bg-zinc-900 shadow-[0_-10px_30px_rgba(0,0,0,0.5)] z-20">
-                  <div className="space-y-3">
-                    {showCodeInput && (
-                      <textarea
-                        value={commentCode}
-                        onChange={(e) => setCommentCode(e.target.value)}
-                        placeholder="Paste suggested code snippet..."
-                        className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-xs font-mono text-indigo-300 focus:ring-1 focus:ring-indigo-500/50 outline-none h-24 custom-scrollbar"
-                      />
-                    )}
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 relative">
-                        <input
-                          type="text"
-                          value={commentText}
-                          onChange={(e) => setCommentText(e.target.value)}
-                          onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
-                          placeholder="Type a message..."
-                          className="w-full bg-zinc-800 border border-white/10 rounded-full pl-4 pr-10 py-2.5 text-sm text-white placeholder:text-white/30 focus:ring-1 focus:ring-indigo-500 outline-none"
+                  {currentUserId ? (
+                    <div className="space-y-3">
+                      {showCodeInput && (
+                        <textarea
+                          value={commentCode}
+                          onChange={(e) => setCommentCode(e.target.value)}
+                          placeholder="Paste suggested code snippet..."
+                          className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-xs font-mono text-indigo-300 focus:ring-1 focus:ring-indigo-500/50 outline-none h-24 custom-scrollbar"
                         />
+                      )}
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 relative">
+                          <input
+                            type="text"
+                            value={commentText}
+                            onChange={(e) => setCommentText(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
+                            placeholder="Type a message..."
+                            className="w-full bg-zinc-800 border border-white/10 rounded-full pl-4 pr-10 py-2.5 text-sm text-white placeholder:text-white/30 focus:ring-1 focus:ring-indigo-500 outline-none"
+                          />
+                          <button
+                            onClick={() => setShowCodeInput(!showCodeInput)}
+                            className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full transition-colors ${showCodeInput ? 'text-indigo-400 bg-indigo-500/20' : 'text-white/40 hover:text-white hover:bg-white/10'}`}
+                          >
+                            <Code2 className="w-4 h-4" />
+                          </button>
+                        </div>
                         <button
-                          onClick={() => setShowCodeInput(!showCodeInput)}
-                          className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full transition-colors ${showCodeInput ? 'text-indigo-400 bg-indigo-500/20' : 'text-white/40 hover:text-white hover:bg-white/10'}`}
+                          onClick={handleAddComment}
+                          className="p-2.5 bg-indigo-500 text-white rounded-full hover:bg-indigo-600 transition-colors shrink-0 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                          disabled={!commentText.trim()}
                         >
-                          <Code2 className="w-4 h-4" />
+                          <Send className="w-4 h-4 ml-0.5" />
                         </button>
                       </div>
-                      <button
-                        onClick={handleAddComment}
-                        className="p-2.5 bg-indigo-500 text-white rounded-full hover:bg-indigo-600 transition-colors shrink-0 flex items-center justify-center"
-                        disabled={!commentText.trim()}
-                      >
-                        <Send className="w-4 h-4 ml-0.5" />
-                      </button>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="py-3 px-4 bg-zinc-800/50 border border-white/5 rounded-xl text-center">
+                      <p className="text-white/50 text-sm">Please log in with GitHub to participate in the thread.</p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
