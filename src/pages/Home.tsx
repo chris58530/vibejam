@@ -1,15 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { api, Vibe } from '../lib/api';
+import { useNavigate } from 'react-router-dom';
+import { api, toSlug, Vibe } from '../lib/api';
 import VibeCard from '../components/VibeCard';
 
-interface HomeProps {
-  onSelectVibe: (id: number) => void;
-}
-
-export default function Home({ onSelectVibe }: HomeProps) {
+export default function Home() {
   const [vibes, setVibes] = useState<Vibe[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     api.getVibes().then(data => {
@@ -19,6 +17,10 @@ export default function Home({ onSelectVibe }: HomeProps) {
   }, []);
 
   const featuredVibes = vibes.slice(0, 3);
+
+  const handleSelectVibe = (vibe: Vibe) => {
+    navigate(`/@${vibe.author_name}/${toSlug(vibe.title)}`);
+  };
 
   return (
     <div className="pt-20 pb-20 px-6 max-w-7xl mx-auto">
@@ -45,7 +47,7 @@ export default function Home({ onSelectVibe }: HomeProps) {
                 </h1>
                 <div className="flex items-center gap-4">
                   <button
-                    onClick={() => onSelectVibe(featuredVibes[0].id)}
+                    onClick={() => handleSelectVibe(featuredVibes[0])}
                     className="px-8 py-4 bg-white text-black font-bold rounded-full hover:bg-indigo-500 hover:text-white transition-all transform hover:scale-105"
                   >
                     View Project
@@ -88,7 +90,7 @@ export default function Home({ onSelectVibe }: HomeProps) {
             <VibeCard
               key={vibe.id}
               vibe={vibe}
-              onClick={() => onSelectVibe(vibe.id)}
+              onClick={() => handleSelectVibe(vibe)}
             />
           ))
         )}

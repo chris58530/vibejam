@@ -49,6 +49,15 @@ export interface Vibe {
   comments?: Comment[];
 }
 
+// Converts a vibe title to a URL-friendly slug.
+// Preserves CJK characters (\u4e00-\u9fff) to support Chinese titles.
+export function toSlug(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9\u4e00-\u9fff]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
 const API_BASE = '/api';
 
 export const api = {
