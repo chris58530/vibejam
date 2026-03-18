@@ -14,7 +14,48 @@ export async function signInWithGitHub() {
       redirectTo: window.location.origin,
     },
   });
-  if (error) console.error(error);
+  if (error) throw error;
+}
+
+export async function signUpWithEmail(
+  email: string,
+  password: string,
+  username: string,
+  avatarUrl?: string,
+) {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        user_name: username,
+        name: username,
+        avatar_url:
+          avatarUrl ||
+          `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(username)}`,
+      },
+    },
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function signInWithEmail(email: string, password: string) {
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) throw error;
+  return data;
+}
+
+export async function resetPasswordForEmail(email: string) {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin,
+  });
+  if (error) throw error;
+}
+
+export async function updatePassword(newPassword: string) {
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) throw error;
 }
 
 export async function signOut() {
