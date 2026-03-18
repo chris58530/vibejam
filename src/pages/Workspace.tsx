@@ -4,7 +4,7 @@ import { Rocket, Save, Maximize2, Minimize2, Laptop, Smartphone } from 'lucide-r
 import { api } from '../lib/api';
 
 interface WorkspaceProps {
-  onPublish: () => void;
+  onPublish: (vibeId?: number) => void;
   remixFrom?: { id: number; code: string; title: string };
   currentUserId?: number;
 }
@@ -27,17 +27,19 @@ export default function Workspace({ onPublish, remixFrom, currentUserId }: Works
         await api.addVersion(remixFrom.id, {
           code: code,
           update_log: logMsg,
+          author_id: currentUserId,
         });
+        onPublish(remixFrom.id);
       } else {
         // Create new vibe as usual
-        await api.createVibe({
+        const res = await api.createVibe({
           title,
           tags,
           code,
           author_id: currentUserId,
         });
+        onPublish(res.id);
       }
-      onPublish();
     } catch (err) {
       console.error(err);
     } finally {

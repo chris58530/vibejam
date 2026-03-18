@@ -73,7 +73,14 @@ export default function App() {
 
         {currentPage === 'workspace' && (
           <Workspace
-            onPublish={() => setCurrentPage('home')}
+            onPublish={(vibeId) => {
+              if (vibeId) {
+                setSelectedVibeId(vibeId);
+                setCurrentPage('lab');
+              } else {
+                setCurrentPage('home');
+              }
+            }}
             remixFrom={remixData}
             currentUserId={currentUser?.id}
           />

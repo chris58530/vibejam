@@ -79,12 +79,16 @@ export default function IterationLab({ vibeId, onBack, onRemix, currentUserId }:
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-500 flex items-center justify-center font-bold text-white">
-              {vibe.title[0]}
+            <div className="w-10 h-10 rounded-xl bg-indigo-500 flex items-center justify-center font-bold text-white overflow-hidden">
+              {vibe.author_avatar ? (
+                <img src={vibe.author_avatar} alt="author" className="w-full h-full object-cover" />
+              ) : (
+                vibe.title[0]
+              )}
             </div>
             <div>
               <h1 className="text-white font-bold">{vibe.title}</h1>
-              <p className="text-white/40 text-xs">by {vibe.author_name} • V{selectedVersion?.version_number}</p>
+              <p className="text-white/40 text-xs">Original by {vibe.author_name} • V{selectedVersion?.version_number} by {selectedVersion?.author_name || vibe.author_name}</p>
             </div>
           </div>
         </div>
@@ -240,6 +244,19 @@ export default function IterationLab({ vibeId, onBack, onRemix, currentUserId }:
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-white font-bold text-sm">V{version.version_number}</span>
                           <span className="text-[10px] text-white/20">{new Date(version.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <div className="flex items-center gap-2 mb-2">
+                          {version.author_avatar ? (
+                            <img src={version.author_avatar} className="w-4 h-4 rounded-full" alt="author" />
+                          ) : (
+                            <div className="w-4 h-4 rounded-full bg-indigo-500/50 flex items-center justify-center text-[8px] text-white">
+                              {(version.author_name || vibe.author_name || '?')[0]}
+                            </div>
+                          )}
+                          <span className="text-xs text-white/60 font-medium">{version.author_name || vibe.author_name}</span>
+                          {(version.author_id && version.author_id !== vibe.author_id) && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded border border-indigo-500/30 text-indigo-400 bg-indigo-500/10">Fork</span>
+                          )}
                         </div>
                         <p className="text-white/40 text-xs leading-relaxed italic">
                           {version.update_log || 'No update log provided.'}
