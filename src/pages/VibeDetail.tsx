@@ -150,6 +150,11 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                 )}
               </div>
               <div className="group-hover:opacity-80 transition-opacity">
+                <h1 className="text-white font-bold">{vibe.title}</h1>
+                <p className="text-white/40 text-xs">Original by {vibe.author_name} • V{selectedVersion?.version_number} by {selectedVersion?.author_name || vibe.author_name}</p>
+              </div>
+            </div>
+          </div>
 
         <div className="flex items-center gap-3">
           <button
