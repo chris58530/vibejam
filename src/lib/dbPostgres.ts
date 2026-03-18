@@ -25,8 +25,10 @@ export async function initializeDatabase() {
         username TEXT UNIQUE NOT NULL,
         avatar TEXT,
         credit INTEGER DEFAULT 0,
+        supabase_id TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS supabase_id TEXT;
 
       CREATE TABLE IF NOT EXISTS vibes (
         id SERIAL PRIMARY KEY,

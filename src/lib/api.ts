@@ -47,6 +47,14 @@ export interface Vibe {
 const API_BASE = '/api';
 
 export const api = {
+  async syncUser(data: { supabase_id: string; username: string; avatar: string }): Promise<User> {
+    const res = await fetch(`${API_BASE}/auth/sync`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
   async getVibes(): Promise<Vibe[]> {
     const res = await fetch(`${API_BASE}/vibes`);
     return res.json();
@@ -55,7 +63,7 @@ export const api = {
     const res = await fetch(`${API_BASE}/vibes/${id}`);
     return res.json();
   },
-  async createVibe(data: { title: string; tags: string; code: string; parent_vibe_id?: number }): Promise<{ id: number }> {
+  async createVibe(data: { title: string; tags: string; code: string; author_id?: number; parent_vibe_id?: number }): Promise<{ id: number }> {
     const res = await fetch(`${API_BASE}/vibes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -71,7 +79,7 @@ export const api = {
     });
     return res.json();
   },
-  async addComment(vibeId: number, data: { content: string; code_snippet?: string; version_id: number }): Promise<{ success: boolean }> {
+  async addComment(vibeId: number, data: { content: string; code_snippet?: string; version_id: number; author_id?: number }): Promise<{ success: boolean }> {
     const res = await fetch(`${API_BASE}/vibes/${vibeId}/comments`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

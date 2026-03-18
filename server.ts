@@ -8,7 +8,7 @@ import { db, initializeDatabase } from './src/lib/dbPostgres.js';
 
 async function startServer() {
   const app = express();
-  const PORT = process.env.PORT || 3000;
+  const PORT = Number(process.env.PORT) || 3000;
 
   app.use(cors());
   app.use(express.json());
@@ -16,6 +16,33 @@ async function startServer() {
   await initializeDatabase();
 
   // API Routes
+
+  // Sync GitHub/Supabase user to PostgreSQL users table
+  app.post('/api/auth/sync', async (req, res) => {
+    const { supabase_id, username, avatar } = req.body;
+    if (!supabase_id || !username) {
+      return res.status(400).json({ error: 'supabase_id and username are required' });
+    }
+    try {
+      // Try to find by supabase_id first
+      let user = await db.get('SELECT * FROM users WHERE supabase_id = $1', [supabase_id]);
+      if (!user) {
+        // Try to find by username (legacy records without supabase_id)
+        user = await db.get('SELECT * FROM users WHERE username = $1', [username]);
+        if (user) {
+          // Link existing user to supabase_id
+          user = await db.get('UPDATE users SET supabase_id = $1, avatar = $2 WHERE id = $3 RETURNING *', [supabase_id, avatar, user.id]);
+        } else {
+          // Create new user
+          user = await db.get(
+            'INSERT INTO users (username, avatar, supabase_id) VALUES ($1, $2, $3) RETURNING *',
+            [username, avatar, supabase_id]
+          );
+        }
+      }
+      res.json(user);
+    } catch (err: any) { res.status(500).json({ error: err.message }); }
+  });
 
   // Get all vibes
   app.get('/api/vibes', async (req, res) => {

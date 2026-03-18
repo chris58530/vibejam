@@ -6,9 +6,10 @@ import { api } from '../lib/api';
 interface WorkspaceProps {
   onPublish: () => void;
   remixFrom?: { id: number; code: string; title: string };
+  currentUserId?: number;
 }
 
-export default function Workspace({ onPublish, remixFrom }: WorkspaceProps) {
+export default function Workspace({ onPublish, remixFrom, currentUserId }: WorkspaceProps) {
   const [code, setCode] = useState(remixFrom?.code || '');
   const [title, setTitle] = useState(remixFrom ? `Remix of ${remixFrom.title}` : '');
   const [tags, setTags] = useState('');
@@ -24,6 +25,7 @@ export default function Workspace({ onPublish, remixFrom }: WorkspaceProps) {
         title,
         tags,
         code,
+        author_id: currentUserId,
         parent_vibe_id: remixFrom?.id
       });
       onPublish();
@@ -79,7 +81,7 @@ export default function Workspace({ onPublish, remixFrom }: WorkspaceProps) {
             <Save className="w-4 h-4" />
             Save Draft
           </button>
-          
+
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -100,20 +102,20 @@ export default function Workspace({ onPublish, remixFrom }: WorkspaceProps) {
       {/* Right Panel: Preview */}
       <div className={`relative flex flex-col transition-all duration-500 ${isPreviewFull ? 'w-full' : 'w-1/2'} bg-zinc-950`}>
         <div className="absolute top-6 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 bg-black/60 backdrop-blur-md border border-white/10 rounded-full px-4 py-2 shadow-2xl">
-          <button 
+          <button
             onClick={() => setViewMode('desktop')}
             className={`p-1.5 rounded-md transition-colors ${viewMode === 'desktop' ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white'}`}
           >
             <Laptop className="w-4 h-4" />
           </button>
-          <button 
+          <button
             onClick={() => setViewMode('mobile')}
             className={`p-1.5 rounded-md transition-colors ${viewMode === 'mobile' ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white'}`}
           >
             <Smartphone className="w-4 h-4" />
           </button>
           <div className="w-px h-4 bg-white/10 mx-1" />
-          <button 
+          <button
             onClick={() => setIsPreviewFull(!isPreviewFull)}
             className="p-1.5 rounded-md text-white/40 hover:text-white transition-colors"
           >
@@ -122,7 +124,7 @@ export default function Workspace({ onPublish, remixFrom }: WorkspaceProps) {
         </div>
 
         <div className="flex-1 flex items-center justify-center p-12">
-          <div 
+          <div
             className={`bg-white rounded-2xl shadow-2xl overflow-hidden transition-all duration-500 ${viewMode === 'mobile' ? 'w-[375px] h-[667px]' : 'w-full h-full'}`}
           >
             {code ? (
