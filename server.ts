@@ -70,7 +70,11 @@ async function startServer() {
       `, [req.params.id]);
       if (!vibe) return res.status(404).json({ error: 'Vibe not found' });
 
-      const versions = await db.query('SELECT * FROM versions WHERE vibe_id = $1 ORDER BY version_number DESC', [req.params.id]);
+      const versions = await db.query(`
+        SELECT v.*, u.username as author_name, u.avatar as author_avatar
+        FROM versions v LEFT JOIN users u ON v.author_id = u.id
+        WHERE v.vibe_id = $1 ORDER BY v.version_number DESC
+      `, [req.params.id]);
       const comments = await db.query(`
         SELECT c.*, u.username as author_name, u.avatar as author_avatar
         FROM comments c JOIN users u ON c.author_id = u.id
@@ -90,7 +94,10 @@ async function startServer() {
         [title, author_id, tags]
       );
       const vibeId = vibe.id;
-      await db.run('INSERT INTO versions (vibe_id, version_number, code, update_log) VALUES ($1, $2, $3, $4)', [vibeId, 1, code, 'Initial version']);
+      await db.run(
+        'INSERT INTO versions (vibe_id, version_number, author_id, code, update_log) VALUES ($1, $2, $3, $4, $5)',
+        [vibeId, 1, author_id, code, 'Initial version']
+      );
       if (parent_vibe_id) {
         await db.run('INSERT INTO remixes (parent_vibe_id, child_vibe_id) VALUES ($1, $2)', [parent_vibe_id, vibeId]);
       }
@@ -100,12 +107,15 @@ async function startServer() {
 
   // Add new version
   app.post('/api/vibes/:id/versions', async (req, res) => {
-    const { code, update_log } = req.body;
+    const { code, update_log, author_id } = req.body;
     const vibeId = req.params.id;
     try {
       const latest = await db.get('SELECT MAX(version_number) as max_v FROM versions WHERE vibe_id = $1', [vibeId]);
       const nextVersion = (Number(latest?.max_v) || 0) + 1;
-      await db.run('INSERT INTO versions (vibe_id, version_number, code, update_log) VALUES ($1, $2, $3, $4)', [vibeId, nextVersion, code, update_log]);
+      await db.run(
+        'INSERT INTO versions (vibe_id, version_number, author_id, code, update_log) VALUES ($1, $2, $3, $4, $5)',
+        [vibeId, nextVersion, author_id || null, code, update_log]
+      );
       res.json({ success: true, version: nextVersion });
     } catch (err: any) { res.status(500).json({ error: err.message }); }
   });
