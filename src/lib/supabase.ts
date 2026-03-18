@@ -27,6 +27,7 @@ export async function signUpWithEmail(
     email,
     password,
     options: {
+      emailRedirectTo: window.location.origin,
       data: {
         user_name: username,
         name: username,
@@ -38,6 +39,17 @@ export async function signUpWithEmail(
   });
   if (error) throw error;
   return data;
+}
+
+export async function resendConfirmationEmail(email: string) {
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email,
+    options: {
+      emailRedirectTo: window.location.origin,
+    },
+  });
+  if (error) throw error;
 }
 
 export async function signInWithEmail(email: string, password: string) {
