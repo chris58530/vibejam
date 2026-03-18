@@ -9,6 +9,7 @@ import {
     resetPasswordForEmail,
     updatePassword,
     resendConfirmationEmail,
+    AlreadyRegisteredUnconfirmedError,
 } from '../lib/supabase';
 
 export type AuthView = 'login' | 'register' | 'forgot' | 'change-password';
@@ -157,9 +158,14 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
             setSuccess('🎉 註冊成功！請查收電子郵件並點擊確認連結，確認後即可登入（若未收到，請檢查垃圾郵件夾）。');
         } catch (err: any) {
             const msg: string = err.message || '';
-            if (msg.includes('already registered') || msg.includes('already been registered'))
+            if (msg.includes('already registered') || msg.includes('already been registered')) {
+                // Email is confirmed and in use — direct to login
                 setError('此電子郵件已被使用，請直接登入');
-            else setError(msg || '註冊失敗，請稍後再試');
+            } else if (err instanceof AlreadyRegisteredUnconfirmedError) {
+                // Email is registered but unconfirmed — offer to resend confirmation
+                setUnconfirmedEmail(regEmail.trim());
+                setError('此電子郵件已被使用但尚未確認。請點擊下方按鈕重新發送確認信，或直接前往登入。');
+            } else setError(msg || '註冊失敗，請稍後再試');
         } finally {
             setLoading(false);
         }
