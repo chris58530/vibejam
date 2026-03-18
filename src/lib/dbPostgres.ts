@@ -29,6 +29,9 @@ export async function initializeDatabase() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
       ALTER TABLE users ADD COLUMN IF NOT EXISTS supabase_id TEXT;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS motto TEXT DEFAULT 'Keep it simple, make it vibe. Exploring the intersection between minimal design and raw code.';
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS followers_count INTEGER DEFAULT 0;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS likes_count INTEGER DEFAULT 0;
 
       CREATE TABLE IF NOT EXISTS vibes (
         id SERIAL PRIMARY KEY,

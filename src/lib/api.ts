@@ -3,6 +3,9 @@ export interface User {
   username: string;
   avatar: string;
   credit: number;
+  motto?: string;
+  followers_count?: number;
+  likes_count?: number;
 }
 
 export interface Version {
@@ -67,6 +70,20 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
+    return res.json();
+  },
+  async getUserProfile(username: string): Promise<User> {
+    const res = await fetch(`${API_BASE}/users/${encodeURIComponent(username)}`);
+    if (!res.ok) throw new Error('User not found');
+    return res.json();
+  },
+  async updateUserProfile(username: string, data: { motto: string }): Promise<User> {
+    const res = await fetch(`${API_BASE}/users/${encodeURIComponent(username)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to update user');
     return res.json();
   },
   async getVibes(): Promise<Vibe[]> {

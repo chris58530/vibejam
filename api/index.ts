@@ -38,6 +38,33 @@ app.post('/api/auth/sync', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
 
+// Get user profile
+app.get('/api/users/:username', async (req, res) => {
+  const username = decodeURIComponent(req.params.username);
+  try {
+    await ensureDb();
+    const user = await db.get('SELECT * FROM users WHERE username = $1', [username]);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json(user);
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+// Update user profile
+app.put('/api/users/:username', async (req, res) => {
+  const username = decodeURIComponent(req.params.username);
+  const { motto } = req.body;
+  try {
+    await ensureDb();
+    const user = await db.get('UPDATE users SET motto = $1 WHERE username = $2 RETURNING *', [motto, username]);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json(user);
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
 // Get all vibes
 app.get('/api/vibes', async (req, res) => {
   try {
