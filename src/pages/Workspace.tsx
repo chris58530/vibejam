@@ -96,10 +96,15 @@ export default function Workspace({ onPublish, remixFrom, currentUserId }: Works
             )}
             Jam It Out!
             
-            {/* Tooltip for unauthorized users */}
+            {/* Tooltips */}
             {!currentUserId && (
               <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-black/90 border border-white/10 text-white/80 text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                 Please login with GitHub first
+              </div>
+            )}
+            {currentUserId && (!title || !code) && (
+              <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-black/90 border border-white/10 text-white/80 text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                Title and Code are required
               </div>
             )}
           </motion.button>
