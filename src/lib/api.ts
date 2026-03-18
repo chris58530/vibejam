@@ -9,6 +9,9 @@ export interface Version {
   id: number;
   vibe_id: number;
   version_number: number;
+  author_id?: number;
+  author_name?: string;
+  author_avatar?: string;
   code: string;
   update_log: string;
   created_at: string;

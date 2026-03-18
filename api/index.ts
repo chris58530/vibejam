@@ -87,7 +87,7 @@ app.post('/api/vibes', async (req, res) => {
       [title, author_id, tags]
     );
     const vibeId = vibe.id;
-    await db.run('INSERT INTO versions (vibe_id, version_number, code, update_log) VALUES ($1, $2, $3, $4)', [vibeId, 1, code, 'Initial version']);
+    await db.run('INSERT INTO versions (vibe_id, version_number, author_id, code, update_log) VALUES ($1, $2, $3, $4, $5)', [vibeId, 1, author_id, code, 'Initial version']);
     if (parent_vibe_id) {
       await db.run('INSERT INTO remixes (parent_vibe_id, child_vibe_id) VALUES ($1, $2)', [parent_vibe_id, vibeId]);
     }
@@ -97,13 +97,13 @@ app.post('/api/vibes', async (req, res) => {
 
 // Add new version
 app.post('/api/vibes/:id/versions', async (req, res) => {
-  const { code, update_log } = req.body;
+  const { code, update_log, author_id } = req.body;
   const vibeId = req.params.id;
   try {
     await ensureDb();
     const latest = await db.get('SELECT MAX(version_number) as max_v FROM versions WHERE vibe_id = $1', [vibeId]);
     const nextVersion = (Number(latest?.max_v) || 0) + 1;
-    await db.run('INSERT INTO versions (vibe_id, version_number, code, update_log) VALUES ($1, $2, $3, $4)', [vibeId, nextVersion, code, update_log]);
+    await db.run('INSERT INTO versions (vibe_id, version_number, author_id, code, update_log) VALUES ($1, $2, $3, $4, $5)', [vibeId, nextVersion, author_id, code, update_log]);
     res.json({ success: true, version: nextVersion });
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });

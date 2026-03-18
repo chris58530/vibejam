@@ -43,10 +43,12 @@ export async function initializeDatabase() {
         id SERIAL PRIMARY KEY,
         vibe_id INTEGER NOT NULL,
         version_number INTEGER NOT NULL,
+        author_id INTEGER,
         code TEXT NOT NULL,
         update_log TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+      ALTER TABLE versions ADD COLUMN IF NOT EXISTS author_id INTEGER;
 
       CREATE TABLE IF NOT EXISTS comments (
         id SERIAL PRIMARY KEY,
