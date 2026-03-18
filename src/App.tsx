@@ -3,10 +3,11 @@ import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Workspace from './pages/Workspace';
 import IterationLab from './pages/IterationLab';
+import Profile from './pages/Profile';
 import { Vibe, api, User } from './lib/api';
 import { supabase } from './lib/supabase';
 
-type Page = 'home' | 'workspace' | 'lab';
+type Page = 'home' | 'workspace' | 'lab' | 'profile';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>('home');
@@ -69,6 +70,10 @@ export default function App() {
       <main className="h-full">
         {currentPage === 'home' && (
           <Home onSelectVibe={handleSelectVibe} />
+        )}
+
+        {currentPage === 'profile' && (
+          <Profile user={currentUser} onSelectVibe={handleSelectVibe} />
         )}
 
         {currentPage === 'workspace' && (

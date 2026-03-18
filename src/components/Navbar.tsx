@@ -5,7 +5,7 @@ import { supabase, signOut } from '../lib/supabase';
 import AuthModal, { AuthView } from './AuthModal';
 
 interface NavbarProps {
-  onNavigate: (page: 'home' | 'workspace' | 'lab') => void;
+  onNavigate: (page: 'home' | 'workspace' | 'lab' | 'profile') => void;
 }
 
 export default function Navbar({ onNavigate }: NavbarProps) {
@@ -85,6 +85,7 @@ export default function Navbar({ onNavigate }: NavbarProps) {
               alt={user.user_metadata?.user_name || user.user_metadata?.name || user.email}
               className="w-10 h-10 rounded-full border border-white/20 cursor-pointer hover:border-white/40 transition-colors object-cover"
               title={user.user_metadata?.user_name || user.user_metadata?.name || user.email}
+              onClick={() => onNavigate('profile')}
             />
             <button
               onClick={signOut}
