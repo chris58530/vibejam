@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Search, Plus, Zap } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useNavigate } from 'react-router-dom';
 import { supabase, signOut } from '../lib/supabase';
 import AuthModal, { AuthView } from './AuthModal';
 
-interface NavbarProps {
-  onNavigate: (page: 'home' | 'workspace' | 'lab' | 'profile') => void;
-}
-
-export default function Navbar({ onNavigate }: NavbarProps) {
+export default function Navbar() {
+  const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [authView, setAuthView] = useState<AuthView>('login');
@@ -37,7 +35,7 @@ export default function Navbar({ onNavigate }: NavbarProps) {
       <div className="flex items-center gap-8">
         <div
           className="flex items-center gap-2 cursor-pointer group"
-          onClick={() => onNavigate('home')}
+          onClick={() => navigate('/')}
         >
           <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
             <Zap className="text-white w-6 h-6 fill-current" />
@@ -59,7 +57,7 @@ export default function Navbar({ onNavigate }: NavbarProps) {
 
       <div className="flex items-center gap-4">
         <button
-          onClick={() => onNavigate('home')}
+          onClick={() => navigate('/')}
           className="text-white/60 hover:text-white text-sm font-medium transition-colors"
         >
           Explore
@@ -68,7 +66,7 @@ export default function Navbar({ onNavigate }: NavbarProps) {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => onNavigate('workspace')}
+          onClick={() => navigate('/workspace')}
           className="relative group px-6 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full text-white font-bold text-sm shadow-[0_0_20px_rgba(129,140,248,0.4)] overflow-hidden"
         >
           <div className="absolute inset-0 bg-white/20 group-hover:translate-x-full transition-transform duration-500 -skew-x-12 -translate-x-full" />
@@ -85,7 +83,7 @@ export default function Navbar({ onNavigate }: NavbarProps) {
               alt={user.user_metadata?.user_name || user.user_metadata?.name || user.email}
               className="w-10 h-10 rounded-full border border-white/20 cursor-pointer hover:border-white/40 transition-colors object-cover"
               title={user.user_metadata?.user_name || user.user_metadata?.name || user.email}
-              onClick={() => onNavigate('profile')}
+              onClick={() => navigate('/profile')}
             />
             <button
               onClick={signOut}

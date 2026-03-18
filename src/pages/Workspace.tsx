@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Rocket, Save, Maximize2, Minimize2, Laptop, Smartphone } from 'lucide-react';
-import { api } from '../lib/api';
+import { api, toSlug, User } from '../lib/api';
 
 interface WorkspaceProps {
-  onPublish: (vibeId?: number) => void;
-  remixFrom?: { id: number; code: string; title: string };
-  currentUserId?: number;
+  currentUser?: User;
 }
 
-export default function Workspace({ onPublish, remixFrom, currentUserId }: WorkspaceProps) {
+export default function Workspace({ currentUser }: WorkspaceProps) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const remixFrom = location.state as { id: number; code: string; title: string; author_name?: string } | undefined;
+
   const [code, setCode] = useState(remixFrom?.code || '');
   const [title, setTitle] = useState(remixFrom ? `Remix of ${remixFrom.title}` : '');
   const [tags, setTags] = useState('');
@@ -27,18 +30,27 @@ export default function Workspace({ onPublish, remixFrom, currentUserId }: Works
         await api.addVersion(remixFrom.id, {
           code: code,
           update_log: logMsg,
-          author_id: currentUserId,
+          author_id: currentUser?.id,
         });
-        onPublish(remixFrom.id);
+        const authorName = remixFrom.author_name || currentUser?.username;
+        if (authorName) {
+          navigate(`/@${authorName}/${toSlug(remixFrom.title)}`);
+        } else {
+          navigate('/');
+        }
       } else {
         // Create new vibe as usual
         const res = await api.createVibe({
           title,
           tags,
           code,
-          author_id: currentUserId,
+          author_id: currentUser?.id,
         });
-        onPublish(res.id);
+        if (currentUser) {
+          navigate(`/@${currentUser.username}/${toSlug(title)}`);
+        } else {
+          navigate('/');
+        }
       }
     } catch (err) {
       console.error(err);
@@ -97,7 +109,7 @@ export default function Workspace({ onPublish, remixFrom, currentUserId }: Works
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handlePublish}
-            disabled={isPublishing || !title || !code || !currentUserId}
+            disabled={isPublishing || !title || !code || !currentUser?.id}
             className="px-8 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl text-white font-bold shadow-lg shadow-indigo-500/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed group relative"
           >
             {isPublishing ? (
@@ -108,12 +120,12 @@ export default function Workspace({ onPublish, remixFrom, currentUserId }: Works
             Jam It Out!
             
             {/* Tooltips */}
-            {!currentUserId && (
+            {!currentUser?.id && (
               <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-black/90 border border-white/10 text-white/80 text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                 Please login with GitHub first
               </div>
             )}
-            {currentUserId && (!title || !code) && (
+            {currentUser?.id && (!title || !code) && (
               <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-black/90 border border-white/10 text-white/80 text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                 Title and Code are required
               </div>

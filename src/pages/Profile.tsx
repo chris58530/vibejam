@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { api, Vibe, User } from '../lib/api';
+import { useNavigate } from 'react-router-dom';
+import { api, Vibe, User, toSlug } from '../lib/api';
 import VibeCard from '../components/VibeCard';
 
 interface ProfileProps {
   user: User | null;
-  onSelectVibe: (id: number) => void;
 }
 
-export default function Profile({ user, onSelectVibe }: ProfileProps) {
+export default function Profile({ user }: ProfileProps) {
   const [userVibes, setUserVibes] = useState<Vibe[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   // Mock metrics for vanity
   const followersCount = 1337;
@@ -86,9 +87,9 @@ export default function Profile({ user, onSelectVibe }: ProfileProps) {
       ) : (
         <div className="grid grid-cols-3 gap-1 md:gap-4">
           {userVibes.map((vibe) => (
-            <div 
-              key={vibe.id} 
-              onClick={() => onSelectVibe(vibe.id)}
+            <div
+              key={vibe.id}
+              onClick={() => navigate(`/@${vibe.author_name}/${toSlug(vibe.title)}`)}
               className="aspect-square bg-gray-900 overflow-hidden cursor-pointer relative group"
             >
               {/* Fallback pattern if no thumbnail */}
