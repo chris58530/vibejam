@@ -19,7 +19,7 @@ export default function Home() {
   const featuredVibes = vibes.slice(0, 3);
 
   const handleSelectVibe = (vibe: Vibe) => {
-    navigate(`/@${vibe.author_name}/${toSlug(vibe.title)}`);
+    navigate(`/@${encodeURIComponent(vibe.author_name)}/${toSlug(vibe.title)}`);
   };
 
   return (

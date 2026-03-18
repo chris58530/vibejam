@@ -1,54 +1,53 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { useNavigate } from 'react-router-dom';
-import { api, Vibe, User, toSlug } from '../lib/api';
-import VibeCard from '../components/VibeCard';
+import { useNavigate, useParams } from 'react-router-dom';
+import { api, Vibe, toSlug } from '../lib/api';
 
-interface ProfileProps {
-  user: User | null;
-}
-
-export default function Profile({ user }: ProfileProps) {
+export default function Profile() {
+  const { username } = useParams<{ username: string }>();
   const [userVibes, setUserVibes] = useState<Vibe[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  // Decode username in case it's URL-encoded
+  const decodedUsername = username ? decodeURIComponent(username) : 'Guest Creator';
 
   // Mock metrics for vanity
   const followersCount = 1337;
   const likesCount = 8964;
 
   useEffect(() => {
-    // Ideally this would fetch only the user's vibes. For now, we'll fetch all and filter or just show all if no API support.
+    // Fetch vibes and filter by the username in the URL
     api.getVibes().then(data => {
-      // Mock filtering if user exists, otherwise just show some data
-      const filtered = Array.isArray(data) 
-        ? data.filter(v => !user || v.author_id === user.id)
+      const filtered = Array.isArray(data)
+        ? data.filter(v => v.author_name === decodedUsername)
         : [];
-      setUserVibes(filtered.length > 0 ? filtered : (Array.isArray(data) ? data.slice(0, 9) : []));
+      setUserVibes(filtered);
       setLoading(false);
     }).catch(() => setLoading(false));
-  }, [user]);
+  }, [decodedUsername]);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-4xl mx-auto px-4 py-20">
       {/* Profile Header (IG Style) */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col md:flex-row items-center md:items-start gap-8 mb-12"
       >
         {/* Avatar */}
         <div className="w-32 h-32 md:w-40 md:h-40 shrink-0">
-          <img 
-            src={user?.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${user?.username || 'vibe'}`} 
-            alt="Profile Avatar" 
+          <img
+            src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${decodedUsername}`}
+            alt="Profile Avatar"
             className="w-full h-full rounded-full object-cover border-4 border-gray-800 shadow-xl"
           />
         </div>
 
         {/* Info & Stats */}
         <div className="flex-1 text-center md:text-left">
-          <h2 className="text-2xl font-bold mb-4">{user?.username || 'Guest Creator'}</h2>
+          <h2 className="text-2xl font-bold mb-4">{decodedUsername}</h2>
+
           
           <div className="flex justify-center md:justify-start gap-6 text-sm mb-6">
             <div className="text-center">

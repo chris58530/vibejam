@@ -41,8 +41,10 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
     setLoading(true);
     try {
       const vibes = await api.getVibes();
+      const decodedUsername = username ? decodeURIComponent(username) : '';
+      const decodedSlug = vibeSlug ? decodeURIComponent(vibeSlug) : '';
       const found = vibes.find(
-        v => v.author_name === username && toSlug(v.title) === vibeSlug
+        v => v.author_name === decodedUsername && toSlug(v.title) === decodedSlug
       );
       if (!found) {
         navigate('/');

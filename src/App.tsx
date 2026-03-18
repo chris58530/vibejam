@@ -53,7 +53,12 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/workspace" element={<Workspace currentUser={currentUser ?? undefined} />} />
           <Route path="/@:username/:vibeSlug" element={<VibeDetail currentUser={currentUser ?? undefined} />} />
-          <Route path="/profile" element={<Profile user={currentUser} />} />
+          <Route path="/@:username" element={<Profile />} />
+          <Route path="*" element={
+            <div className="flex items-center justify-center h-full text-white/50">
+              404 | 找不到該頁面。
+            </div>
+          } />
         </Routes>
       </main>
 
