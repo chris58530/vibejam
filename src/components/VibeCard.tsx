@@ -42,11 +42,11 @@ export default function VibeCard({ vibe, onClick }: VibeCardProps) {
 
   // Inject the freeze script to disable animations when not hovered
   const rawCode = vibe.latest_code || '';
-  const previewCode = isHovered 
-    ? rawCode 
-    : (rawCode.includes('<head>') 
-        ? rawCode.replace('<head>', '<head>' + freezeScript)
-        : freezeScript + rawCode);
+  const previewCode = isHovered
+    ? rawCode
+    : (rawCode.includes('<head>')
+      ? rawCode.replace('<head>', '<head>' + freezeScript)
+      : freezeScript + rawCode);
 
   return (
     <motion.div
@@ -62,7 +62,7 @@ export default function VibeCard({ vibe, onClick }: VibeCardProps) {
       <div className="relative aspect-[4/3] bg-zinc-950 overflow-hidden w-full">
         {/* Always render iframe, but show static state when not hovered */}
         <div className={`absolute inset-0 z-10 transition-opacity duration-300 pointer-events-none ${isHovered ? 'bg-transparent' : 'bg-black/20 backdrop-grayscale-[0.5]'}`} />
-        
+
         <iframe
           srcDoc={previewCode}
           className="absolute top-0 left-0 w-[200%] h-[200%] scale-50 origin-top-left border-none pointer-events-none bg-white"
@@ -71,7 +71,7 @@ export default function VibeCard({ vibe, onClick }: VibeCardProps) {
         />
 
         <div className="absolute top-3 left-3 flex items-center gap-2 z-20">
-          <div 
+          <div
             onClick={(e) => {
               e.stopPropagation();
               navigate(`/@${encodeURIComponent(vibe.author_name)}`);
@@ -94,7 +94,7 @@ export default function VibeCard({ vibe, onClick }: VibeCardProps) {
         <h3 className="text-white font-semibold text-sm mb-2 group-hover:text-indigo-400 transition-colors">
           {vibe.title}
         </h3>
-        
+
         <div className="flex items-center justify-between mt-4">
           <div className="flex gap-3">
             <div className="flex items-center gap-1 text-white/40 text-[11px]">
@@ -110,7 +110,7 @@ export default function VibeCard({ vibe, onClick }: VibeCardProps) {
               {vibe.remix_count}
             </div>
           </div>
-          
+
           <div className="flex gap-1">
             {vibe.tags?.split(',').slice(0, 2).map(tag => (
               <span key={tag} className="text-[9px] text-white/30 uppercase tracking-wider">

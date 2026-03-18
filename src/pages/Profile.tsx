@@ -48,7 +48,7 @@ export default function Profile() {
         <div className="flex-1 text-center md:text-left">
           <h2 className="text-2xl font-bold mb-4">{decodedUsername}</h2>
 
-          
+
           <div className="flex justify-center md:justify-start gap-6 text-sm mb-6">
             <div className="text-center">
               <span className="block font-bold text-xl">{userVibes.length}</span>
@@ -97,7 +97,7 @@ export default function Profile() {
                   {vibe.title}
                 </span>
               </div>
-              
+
               {/* Hover overlay stats (IG style) */}
               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
                 <div className="flex items-center gap-1 font-bold">
