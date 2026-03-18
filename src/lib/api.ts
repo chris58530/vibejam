@@ -28,6 +28,8 @@ export interface Comment {
   code_snippet: string;
   is_adopted: number;
   created_at: string;
+  /** True when this comment has been added optimistically and not yet confirmed by the server */
+  optimistic?: boolean;
 }
 
 export interface Vibe {

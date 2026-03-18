@@ -91,7 +91,7 @@ export default function App() {
             vibeId={selectedVibeId}
             onBack={() => setCurrentPage('home')}
             onRemix={handleRemix}
-            currentUserId={currentUser?.id}
+            currentUser={currentUser ?? undefined}
           />
         )}
       </main>

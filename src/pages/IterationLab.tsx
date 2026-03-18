@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Maximize2,
@@ -12,22 +12,23 @@ import {
   Send,
   ArrowLeft
 } from 'lucide-react';
-import { api, Vibe, Version, Comment } from '../lib/api';
+import { api, Vibe, Version, Comment, User } from '../lib/api';
 
 interface IterationLabProps {
   vibeId: number;
   onBack: () => void;
   onRemix: (vibe: Vibe, code: string) => void;
-  currentUserId?: number;
+  currentUser?: User;
 }
 
-export default function IterationLab({ vibeId, onBack, onRemix, currentUserId }: IterationLabProps) {
+export default function IterationLab({ vibeId, onBack, onRemix, currentUser }: IterationLabProps) {
   const [vibe, setVibe] = useState<Vibe | null>(null);
   const [selectedVersion, setSelectedVersion] = useState<Version | null>(null);
   const [commentText, setCommentText] = useState('');
   const [commentCode, setCommentCode] = useState('');
   const [showCodeInput, setShowCodeInput] = useState(false);
   const [loading, setLoading] = useState(true);
+  const isSending = useRef(false);
 
   const [activeTab, setActiveTab] = useState<'chat'|'versions'>('chat');
 
@@ -45,17 +46,60 @@ export default function IterationLab({ vibeId, onBack, onRemix, currentUserId }:
   };
 
   const handleAddComment = async () => {
-    if (!commentText || !selectedVersion) return;
-    await api.addComment(vibeId, {
-      content: commentText,
-      code_snippet: commentCode,
-      version_id: selectedVersion.id,
-      author_id: currentUserId,
-    });
+    if (!commentText.trim() || !selectedVersion || !currentUser) return;
+    if (isSending.current) return;
+    isSending.current = true;
+
+    // Capture current values before clearing
+    const content = commentText.trim();
+    const codeSnippet = commentCode;
+
+    // Optimistic UI: clear inputs immediately to prevent duplicate submissions
     setCommentText('');
     setCommentCode('');
     setShowCodeInput(false);
-    loadVibe();
+
+    // Create a temporary optimistic comment with a negative ID
+    const tempId = -Date.now();
+    const optimisticComment: Comment = {
+      id: tempId,
+      vibe_id: vibeId,
+      version_id: selectedVersion.id,
+      author_id: currentUser.id,
+      author_name: currentUser.username,
+      author_avatar: currentUser.avatar,
+      content,
+      code_snippet: codeSnippet,
+      is_adopted: 0,
+      created_at: new Date().toISOString(),
+      optimistic: true,
+    };
+
+    // Add the optimistic comment to the UI immediately
+    setVibe(prev =>
+      prev ? { ...prev, comments: [...(prev.comments ?? []), optimisticComment] } : prev,
+    );
+
+    try {
+      await api.addComment(vibeId, {
+        content,
+        code_snippet: codeSnippet,
+        version_id: selectedVersion.id,
+        author_id: currentUser.id,
+      });
+      // Replace optimistic comment with real server data
+      loadVibe();
+    } catch (error) {
+      console.error('Failed to send comment:', error);
+      // On failure, silently remove the optimistic comment from the UI
+      setVibe(prev =>
+        prev
+          ? { ...prev, comments: (prev.comments ?? []).filter(c => c.id !== tempId) }
+          : prev,
+      );
+    } finally {
+      isSending.current = false;
+    }
   };
 
   const handleCopyCode = () => {
@@ -152,7 +196,7 @@ export default function IterationLab({ vibeId, onBack, onRemix, currentUserId }:
               <div className="flex-1 flex flex-col overflow-hidden absolute inset-0">
                 <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar">
                   {vibe.comments?.map(comment => (
-                    <div key={comment.id} className="flex gap-3 group">
+                    <div key={comment.id} className={`flex gap-3 group ${comment.optimistic ? 'opacity-60' : ''}`}>
                       <img src={comment.author_avatar} className="w-8 h-8 rounded-full border border-white/10 shrink-0" />
                       <div className="flex-1 space-y-1">
                         <div className="flex items-center justify-between">
@@ -165,7 +209,11 @@ export default function IterationLab({ vibeId, onBack, onRemix, currentUserId }:
                               </span>
                             )}
                           </div>
-                          <span className="text-[10px] text-white/20">{new Date(comment.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                          {comment.optimistic ? (
+                            <span className="text-[10px] text-white/30 italic">Sending…</span>
+                          ) : (
+                            <span className="text-[10px] text-white/20">{new Date(comment.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                          )}
                         </div>
                         <p className="text-white/80 text-sm leading-relaxed whitespace-pre-wrap">{comment.content}</p>
                         {comment.code_snippet && (
@@ -180,7 +228,7 @@ export default function IterationLab({ vibeId, onBack, onRemix, currentUserId }:
 
                 {/* Input Area */}
                 <div className="p-4 bg-zinc-900 shadow-[0_-10px_30px_rgba(0,0,0,0.5)] z-20">
-                  {currentUserId ? (
+                  {currentUser ? (
                     <div className="space-y-3">
                       {showCodeInput && (
                         <textarea
