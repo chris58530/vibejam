@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Eye, MessageSquare, Repeat, User } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useNavigate } from 'react-router-dom';
 import { Vibe } from '../lib/api';
 
 interface VibeCardProps {
@@ -10,6 +11,7 @@ interface VibeCardProps {
 
 export default function VibeCard({ vibe, onClick }: VibeCardProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const navigate = useNavigate();
 
   // We can freeze JS and CSS animations when not hovered by injecting a script
   // and style, to simulate a "static" preview state.
@@ -67,9 +69,15 @@ export default function VibeCard({ vibe, onClick }: VibeCardProps) {
           title={vibe.title}
           sandbox="allow-scripts allow-same-origin"
         />
-        
-        <div className="absolute top-3 left-3 flex items-center gap-2 z-20 pointer-events-none">
-          <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-2 py-1 rounded-full border border-white/10">
+
+        <div className="absolute top-3 left-3 flex items-center gap-2 z-20">
+          <div 
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/@${encodeURIComponent(vibe.author_name)}`);
+            }}
+            className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-2 py-1 rounded-full border border-white/10 cursor-pointer hover:bg-black/80 transition-colors"
+          >
             <img src={vibe.author_avatar} alt={vibe.author_name} className="w-4 h-4 rounded-full" />
             <span className="text-[10px] text-white/80 font-medium">{vibe.author_name}</span>
           </div>

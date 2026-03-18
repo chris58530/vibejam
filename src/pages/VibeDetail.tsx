@@ -138,20 +138,18 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
           <button onClick={() => navigate('/')} className="p-2 hover:bg-white/5 rounded-full transition-colors text-white/60 hover:text-white">
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-500 flex items-center justify-center font-bold text-white overflow-hidden">
-              {vibe.author_avatar ? (
-                <img src={vibe.author_avatar} alt="author" className="w-full h-full object-cover" />
-              ) : (
-                vibe.title[0]
-              )}
-            </div>
-            <div>
-              <h1 className="text-white font-bold">{vibe.title}</h1>
-              <p className="text-white/40 text-xs">Original by {vibe.author_name} • V{selectedVersion?.version_number} by {selectedVersion?.author_name || vibe.author_name}</p>
-            </div>
-          </div>
-        </div>
+            <div 
+              className="flex items-center gap-3 cursor-pointer group"
+              onClick={() => navigate(`/@${encodeURIComponent(vibe.author_name)}`)}
+            >
+              <div className="w-10 h-10 rounded-xl bg-indigo-500 flex items-center justify-center font-bold text-white overflow-hidden group-hover:ring-2 ring-indigo-400 transition-all">
+                {vibe.author_avatar ? (
+                  <img src={vibe.author_avatar} alt="author" className="w-full h-full object-cover" />
+                ) : (
+                  vibe.title[0]
+                )}
+              </div>
+              <div className="group-hover:opacity-80 transition-opacity">
 
         <div className="flex items-center gap-3">
           <button

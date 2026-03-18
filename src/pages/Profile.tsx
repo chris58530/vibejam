@@ -88,7 +88,7 @@ export default function Profile() {
           {userVibes.map((vibe) => (
             <div
               key={vibe.id}
-              onClick={() => navigate(`/@${vibe.author_name}/${toSlug(vibe.title)}`)}
+              onClick={() => navigate(`/@${encodeURIComponent(vibe.author_name)}/${toSlug(vibe.title)}`)}
               className="aspect-square bg-gray-900 overflow-hidden cursor-pointer relative group"
             >
               {/* Fallback pattern if no thumbnail */}
