@@ -66,7 +66,11 @@ app.get('/api/vibes/:id', async (req, res) => {
     `, [req.params.id]);
     if (!vibe) return res.status(404).json({ error: 'Vibe not found' });
 
-    const versions = await db.query('SELECT * FROM versions WHERE vibe_id = $1 ORDER BY version_number DESC', [req.params.id]);
+    const versions = await db.query(`
+      SELECT v.*, u.username as author_name, u.avatar as author_avatar
+      FROM versions v LEFT JOIN users u ON v.author_id = u.id
+      WHERE v.vibe_id = $1 ORDER BY v.version_number DESC
+    `, [req.params.id]);
     const comments = await db.query(`
       SELECT c.*, u.username as author_name, u.avatar as author_avatar
       FROM comments c JOIN users u ON c.author_id = u.id
