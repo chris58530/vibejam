@@ -74,7 +74,7 @@ export const api = {
     });
     return res.json();
   },
-  async addVersion(vibeId: number, data: { code: string; update_log: string }): Promise<{ success: boolean; version: number }> {
+  async addVersion(vibeId: number, data: { code: string; update_log: string; author_id?: number }): Promise<{ success: boolean; version: number }> {
     const res = await fetch(`${API_BASE}/vibes/${vibeId}/versions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
