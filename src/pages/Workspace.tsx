@@ -21,13 +21,22 @@ export default function Workspace({ onPublish, remixFrom, currentUserId }: Works
     if (!title || !code) return;
     setIsPublishing(true);
     try {
-      await api.createVibe({
-        title,
-        tags,
-        code,
-        author_id: currentUserId,
-        parent_vibe_id: remixFrom?.id
-      });
+      if (remixFrom) {
+        // If remixing an existing project, just add a new version to it!
+        const logMsg = title !== \`Remix of \${remixFrom.title}\` ? title : 'Remix logic update';
+        await api.addVersion(remixFrom.id, {
+          code: code,
+          update_log: logMsg,
+        });
+      } else {
+        // Create new vibe as usual
+        await api.createVibe({
+          title,
+          tags,
+          code,
+          author_id: currentUserId,
+        });
+      }
       onPublish();
     } catch (err) {
       console.error(err);
