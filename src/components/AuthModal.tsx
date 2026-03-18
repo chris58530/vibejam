@@ -8,6 +8,7 @@ import {
     signInWithEmail,
     resetPasswordForEmail,
     updatePassword,
+    resendConfirmationEmail,
 } from '../lib/supabase';
 
 export type AuthView = 'login' | 'register' | 'forgot' | 'change-password';
@@ -66,6 +67,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [unconfirmedEmail, setUnconfirmedEmail] = useState('');
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -81,6 +83,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
         setView(v);
         setError('');
         setSuccess('');
+        setUnconfirmedEmail('');
     };
 
     const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -118,7 +121,10 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
         } catch (err: any) {
             const msg: string = err.message || '';
             if (msg.includes('Invalid login credentials')) setError('電子郵件或密碼不正確');
-            else if (msg.includes('Email not confirmed')) setError('請先確認您的電子郵件後再登入');
+            else if (msg.includes('Email not confirmed')) {
+                setUnconfirmedEmail(loginEmail.trim());
+                setError('請先確認您的電子郵件後再登入。如未收到確認信，請點擊下方按鈕重新發送。');
+            }
             else setError(msg || '登入失敗，請稍後再試');
         } finally {
             setLoading(false);
@@ -148,7 +154,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
             setView('login');
             setError('');
             // Use a custom success message shown in login view
-            setSuccess('🎉 註冊成功！請查收電子郵件並點擊確認連結，確認後即可登入。');
+            setSuccess('🎉 註冊成功！請查收電子郵件並點擊確認連結，確認後即可登入（若未收到，請檢查垃圾郵件夾）。');
         } catch (err: any) {
             const msg: string = err.message || '';
             if (msg.includes('already registered') || msg.includes('already been registered'))
@@ -199,6 +205,22 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
             setTimeout(() => onClose(), 2000);
         } catch (err: any) {
             setError(err.message || '密碼更新失敗，請稍後再試');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleResendConfirmation = async () => {
+        if (!unconfirmedEmail) return;
+        setLoading(true);
+        setError('');
+        setSuccess('');
+        try {
+            await resendConfirmationEmail(unconfirmedEmail);
+            setSuccess('✉️ 確認信已重新發送！請檢查您的信箱（包含垃圾郵件夾）。');
+            setUnconfirmedEmail('');
+        } catch (err: any) {
+            setError(err.message || '發送失敗，請稍後再試');
         } finally {
             setLoading(false);
         }
@@ -287,6 +309,18 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                     {error && (
                         <div className="mb-4 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
                             {error}
+                        </div>
+                    )}
+                    {unconfirmedEmail && (
+                        <div className="mb-4">
+                            <button
+                                type="button"
+                                onClick={handleResendConfirmation}
+                                disabled={loading}
+                                className="w-full py-2.5 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-indigo-400 text-sm font-medium hover:bg-indigo-500/20 transition-colors disabled:opacity-50"
+                            >
+                                {loading ? '發送中…' : '📧 重新發送確認信'}
+                            </button>
                         </div>
                     )}
                     {success && (
