@@ -86,8 +86,8 @@ export default function Workspace({ onPublish, remixFrom, currentUserId }: Works
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handlePublish}
-            disabled={isPublishing || !title || !code}
-            className="px-8 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl text-white font-bold shadow-lg shadow-indigo-500/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isPublishing || !title || !code || !currentUserId}
+            className="px-8 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl text-white font-bold shadow-lg shadow-indigo-500/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed group relative"
           >
             {isPublishing ? (
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -95,6 +95,13 @@ export default function Workspace({ onPublish, remixFrom, currentUserId }: Works
               <Rocket className="w-5 h-5" />
             )}
             Jam It Out!
+            
+            {/* Tooltip for unauthorized users */}
+            {!currentUserId && (
+              <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-black/90 border border-white/10 text-white/80 text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                Please login with GitHub first
+              </div>
+            )}
           </motion.button>
         </div>
       </div>
