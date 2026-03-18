@@ -23,7 +23,7 @@ export default function Workspace({ onPublish, remixFrom, currentUserId }: Works
     try {
       if (remixFrom) {
         // If remixing an existing project, just add a new version to it!
-        const logMsg = title !== \`Remix of \${remixFrom.title}\` ? title : 'Remix logic update';
+        const logMsg = title !== `Remix of ${remixFrom.title}` ? title : 'Remix logic update';
         await api.addVersion(remixFrom.id, {
           code: code,
           update_log: logMsg,
