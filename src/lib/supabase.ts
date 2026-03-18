@@ -15,14 +15,8 @@ export class SupabaseNotInitializedError extends Error {
   }
 }
 
-/** Thrown when signUp returns a null user, meaning the email is already
- *  registered but the user has not confirmed it yet. */
-export class AlreadyRegisteredUnconfirmedError extends Error {
-  constructor() {
-    super('此電子郵件已被使用但尚未確認');
-    this.name = 'AlreadyRegisteredUnconfirmedError';
-  }
-}
+// ⚠️ 重要：若要讓用戶註冊後不需要確認 Email 直接登入，
+// 請至 Supabase Dashboard → Authentication → Settings → 關閉「Confirm email」選項。
 
 function getSupabase(): SupabaseClient {
   if (!supabase) throw new SupabaseNotInitializedError();
@@ -49,7 +43,6 @@ export async function signUpWithEmail(
     email,
     password,
     options: {
-      emailRedirectTo: window.location.origin,
       data: {
         user_name: username,
         name: username,
@@ -60,21 +53,7 @@ export async function signUpWithEmail(
     },
   });
   if (error) throw error;
-  if (!data.user) {
-    throw new AlreadyRegisteredUnconfirmedError();
-  }
   return data;
-}
-
-export async function resendConfirmationEmail(email: string) {
-  const { error } = await getSupabase().auth.resend({
-    type: 'signup',
-    email,
-    options: {
-      emailRedirectTo: window.location.origin,
-    },
-  });
-  if (error) throw error;
 }
 
 export async function signInWithEmail(email: string, password: string) {
