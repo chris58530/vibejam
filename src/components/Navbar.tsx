@@ -32,6 +32,7 @@ export default function Navbar({ onNavigate }: NavbarProps) {
   };
 
   return (
+    <>
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/10 backdrop-blur-md border-b border-white/20 px-6 py-3 flex items-center justify-between">
       <div className="flex items-center gap-8">
         <div
@@ -104,11 +105,12 @@ export default function Navbar({ onNavigate }: NavbarProps) {
         )}
       </div>
 
-      <AuthModal
-        isOpen={authOpen}
-        onClose={() => setAuthOpen(false)}
-        initialView={authView}
-      />
     </nav>
+    <AuthModal
+      isOpen={authOpen}
+      onClose={() => setAuthOpen(false)}
+      initialView={authView}
+    />
+    </>
   );
 }
