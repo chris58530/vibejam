@@ -38,7 +38,6 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
   }, [username, vibeSlug]);
 
   const loadVibe = async () => {
-    setLoading(true);
     try {
       const vibes = await api.getVibes();
       const rawUsername = username?.startsWith('@') ? username.substring(1) : username;
@@ -264,7 +263,12 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                             type="text"
                             value={commentText}
                             onChange={(e) => setCommentText(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleAddComment();
+                              }
+                            }}
                             placeholder="Type a message..."
                             className="w-full bg-zinc-800 border border-white/10 rounded-full pl-4 pr-10 py-2.5 text-sm text-white placeholder:text-white/30 focus:ring-1 focus:ring-indigo-500 outline-none"
                           />
