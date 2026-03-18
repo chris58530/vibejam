@@ -4,6 +4,7 @@ import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Workspace from './pages/Workspace';
 import VibeDetail from './pages/VibeDetail';
+import Profile from './pages/Profile';
 import { api, User } from './lib/api';
 import { supabase } from './lib/supabase';
 
@@ -52,6 +53,7 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/workspace" element={<Workspace currentUser={currentUser ?? undefined} />} />
           <Route path="/@:username/:vibeSlug" element={<VibeDetail currentUser={currentUser ?? undefined} />} />
+          <Route path="/profile" element={<Profile user={currentUser} />} />
         </Routes>
       </main>
 
