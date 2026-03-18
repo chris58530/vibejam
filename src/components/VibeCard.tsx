@@ -59,7 +59,7 @@ export default function VibeCard({ vibe, onClick }: VibeCardProps) {
     >
       <div className="relative aspect-[4/3] bg-zinc-950 overflow-hidden w-full">
         {/* Always render iframe, but show static state when not hovered */}
-        <div className={\`absolute inset-0 z-10 transition-opacity duration-300 pointer-events-none \${isHovered ? 'bg-transparent' : 'bg-black/20 backdrop-grayscale-[0.5]'}\`} />
+        <div className={`absolute inset-0 z-10 transition-opacity duration-300 pointer-events-none ${isHovered ? 'bg-transparent' : 'bg-black/20 backdrop-grayscale-[0.5]'}`} />
         
         <iframe
           srcDoc={previewCode}
