@@ -9,8 +9,9 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Decode username in case it's URL-encoded
-  const decodedUsername = username ? decodeURIComponent(username) : 'Guest Creator';
+  // Decode username in case it's URL-encoded, and remove leading @
+  const rawUsername = username?.startsWith('@') ? username.substring(1) : username;
+  const decodedUsername = rawUsername ? decodeURIComponent(rawUsername) : 'Guest Creator';
 
   // Mock metrics for vanity
   const followersCount = 1337;

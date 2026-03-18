@@ -41,7 +41,7 @@ export default function Navbar() {
               <Zap className="text-white w-6 h-6 fill-current" />
             </div>
             <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60 tracking-tighter">
-              VibeJam <span className="text-[10px] text-white/30 ml-1 font-mono align-top tracking-normal group-hover:text-indigo-300 transition-colors">v1.0.1</span>
+              VibeJam <span className="text-[10px] text-white/30 ml-1 font-mono align-top tracking-normal group-hover:text-indigo-300 transition-colors">v1.0.2</span>
             </span>
           </div>
 
