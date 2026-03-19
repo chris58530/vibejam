@@ -365,7 +365,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                                         onClick={() => setShowLoginPwd((v) => !v)}
                                         className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface/30 hover:text-on-surface/70 transition-colors"
                                     >
-                                        {showLoginPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                        {showLoginPwd ? <span className="material-symbols-outlined text-[16px]">visibility_off</span> : <span className="material-symbols-outlined text-[16px]">visibility</span>}
                                     </button>
                                 </div>
                                 <button
@@ -428,12 +428,12 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                                                 className="w-full h-full object-cover"
                                             />
                                             <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <Upload className="w-5 h-5 text-on-surface" />
+                                                <span className="material-symbols-outlined text-[20px] text-on-surface">upload</span>
                                             </div>
                                         </>
                                     ) : (
                                         <div className="text-center">
-                                            <Upload className="w-6 h-6 text-on-surface/30 mx-auto" />
+                                            <span className="material-symbols-outlined text-[24px] text-on-surface/30 mx-auto">upload</span>
                                             <span className="text-on-surface/20 text-xs mt-0.5 block">上傳</span>
                                         </div>
                                     )}
@@ -508,7 +508,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                                         onClick={() => setShowRegPwd((v) => !v)}
                                         className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface/30 hover:text-on-surface/70 transition-colors"
                                     >
-                                        {showRegPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                        {showRegPwd ? <span className="material-symbols-outlined text-[16px]">visibility_off</span> : <span className="material-symbols-outlined text-[16px]">visibility</span>}
                                     </button>
                                 </div>
                             </div>
@@ -534,10 +534,10 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                                         onClick={() => setShowConfirmPwd((v) => !v)}
                                         className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface/30 hover:text-on-surface/70 transition-colors"
                                     >
-                                        {showConfirmPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                        {showConfirmPwd ? <span className="material-symbols-outlined text-[16px]">visibility_off</span> : <span className="material-symbols-outlined text-[16px]">visibility</span>}
                                     </button>
                                     {regConfirm && regPassword === regConfirm && (
-                                        <Check className="absolute right-9 top-1/2 -translate-y-1/2 w-4 h-4 text-green-400 pointer-events-none" />
+                                        <span className="material-symbols-outlined absolute right-9 top-[40%] -translate-y-1/2 text-[16px] text-green-400 pointer-events-none">check</span>
                                     )}
                                 </div>
                             </div>
@@ -598,7 +598,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                                         onClick={() => setShowNewPwd((v) => !v)}
                                         className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface/30 hover:text-on-surface/70 transition-colors"
                                     >
-                                        {showNewPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                        {showNewPwd ? <span className="material-symbols-outlined text-[16px]">visibility_off</span> : <span className="material-symbols-outlined text-[16px]">visibility</span>}
                                     </button>
                                 </div>
                             </div>
@@ -623,13 +623,13 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                                         className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface/30 hover:text-on-surface/70 transition-colors"
                                     >
                                         {showNewConfirmPwd ? (
-                                            <EyeOff className="w-4 h-4" />
+                                            <span className="material-symbols-outlined text-[16px]">visibility_off</span>
                                         ) : (
-                                            <Eye className="w-4 h-4" />
+                                            <span className="material-symbols-outlined text-[16px]">visibility</span>
                                         )}
                                     </button>
                                     {newPasswordConfirm && newPassword === newPasswordConfirm && (
-                                        <Check className="absolute right-9 top-1/2 -translate-y-1/2 w-4 h-4 text-green-400 pointer-events-none" />
+                                        <span className="material-symbols-outlined absolute right-9 top-[40%] -translate-y-1/2 text-[16px] text-green-400 pointer-events-none">check</span>
                                     )}
                                 </div>
                             </div>
@@ -646,4 +646,6 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
 
     return ReactDOM.createPortal(modalContent, portalRoot);
 }
+
+
 

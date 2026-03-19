@@ -342,3 +342,4 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
     </div>
   );
 }
+

@@ -19,7 +19,7 @@ export default function Home() {
   }, []);
 
   const handleSelectVibe = (vibe: Vibe) => {
-    navigate(\`/@\${encodeURIComponent(vibe.author_name)}/\${toSlug(vibe.title)}\`);
+    navigate(`/@${encodeURIComponent(vibe.author_name)}/${toSlug(vibe.title)}`);
   };
 
   const filteredVibes = activeFilter === 'All Vibes'
@@ -35,11 +35,11 @@ export default function Home() {
             <button
               key={tag}
               onClick={() => setActiveFilter(tag)}
-              className={\`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors \${
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                 activeFilter === tag
                   ? 'bg-[#E5E2E1] text-[#131313]'
                   : 'bg-surface-container-high text-[#E5E2E1]/80 hover:bg-surface-container-highest'
-              }\`}
+              }`}
             >
               {tag}
             </button>
@@ -81,3 +81,4 @@ export default function Home() {
     </main>
   );
 }
+

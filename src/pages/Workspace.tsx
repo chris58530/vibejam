@@ -185,3 +185,4 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
     </main>
   );
 }
+

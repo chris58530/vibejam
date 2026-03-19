@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Vibe } from '../lib/api';
 
 interface VibeCardProps {
+  key?: string | number;
   vibe: Vibe;
   onClick: () => void;
 }
@@ -87,12 +88,12 @@ export default function VibeCard({ vibe, onClick }: VibeCardProps) {
         {/* Author avatar */}
         <div className="flex-shrink-0 w-9 h-9 rounded-full bg-surface-container-high overflow-hidden mt-0.5 border border-outline-variant/10">
           <img
-            src={vibe.author_avatar || \`https://api.dicebear.com/7.x/avataaars/svg?seed=\${vibe.author_name}\`}
+            src={vibe.author_avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${vibe.author_name}`}
             alt={vibe.author_name}
             className="w-full h-full object-cover"
             onClick={(e) => {
               e.stopPropagation();
-              navigate(\`/@\${encodeURIComponent(vibe.author_name)}\`);
+              navigate(`/@${encodeURIComponent(vibe.author_name)}`);
             }}
           />
         </div>
@@ -106,7 +107,7 @@ export default function VibeCard({ vibe, onClick }: VibeCardProps) {
             className="text-xs text-[#E5E2E1]/60 mt-1 hover:text-[#E5E2E1] transition-colors truncate"
             onClick={(e) => {
               e.stopPropagation();
-              navigate(\`/@\${encodeURIComponent(vibe.author_name)}\`);
+              navigate(`/@${encodeURIComponent(vibe.author_name)}`);
             }}
           >
             @{vibe.author_name}
@@ -121,3 +122,4 @@ export default function VibeCard({ vibe, onClick }: VibeCardProps) {
     </motion.div>
   );
 }
+
