@@ -79,7 +79,7 @@ export default function Profile() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col md:flex-row items-center md:items-end gap-4 md:gap-8 -mt-16 mb-6"
+          className="relative z-10 flex flex-col md:flex-row items-center md:items-end gap-4 md:gap-8 -mt-16 mb-6"
         >
           {/* Avatar overlapping banner */}
           <div className="w-28 h-28 md:w-36 md:h-36 shrink-0">
