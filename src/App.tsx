@@ -47,11 +47,11 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white font-sans selection:bg-indigo-500/30">
+    <div className="min-h-screen bg-surface text-on-surface font-sans selection:bg-primary/30">
       <Navbar />
-      <div className="flex">
+      <div className="flex w-full min-h-screen">
         <Sidebar />
-        <main className="flex-1 md:pl-56 pb-16 md:pb-0">
+        <main className="flex-1 pb-16 md:pb-0 relative">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/workspace" element={<Workspace currentUser={currentUser ?? undefined} />} />

@@ -112,13 +112,13 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
   };
 
   if (loading || !vibe) return (
-    <div className="pt-20 flex items-center justify-center min-h-screen bg-surface text-on-surface/40 font-mono text-lg tracking-widest uppercase">
+    <div className="md:ml-64 pt-20 flex items-center justify-center min-h-screen bg-surface text-on-surface/40 font-mono text-lg tracking-widest uppercase">
       Loading Stage...
     </div>
   );
 
   return (
-    <div className="md:ml-[80px] pt-[64px] h-screen flex flex-col bg-surface overflow-hidden">
+    <div className="md:ml-64 pt-[64px] h-screen flex flex-col bg-surface overflow-hidden">
       {/* Platform Header */}
       <div className="h-16 border-b border-outline-variant/10 flex items-center justify-between px-6 bg-surface-container-low shrink-0 z-10">
         <div className="flex items-center gap-4">

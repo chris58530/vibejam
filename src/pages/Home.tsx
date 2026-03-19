@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { api, toSlug, Vibe } from '../lib/api';
 import VibeCard from '../components/VibeCard';
 
@@ -10,6 +10,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('All Vibes');
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     api.getVibes().then(data => {
@@ -22,9 +23,20 @@ export default function Home() {
     navigate(`/@${encodeURIComponent(vibe.author_name)}/${toSlug(vibe.title)}`);
   };
 
-  const filteredVibes = activeFilter === 'All Vibes'
+  // Determine which feed we are on based on the query param
+  const isTrending = location.search.includes('feed=trending');
+  const isFollowing = location.search.includes('feed=following');
+
+  let filteredVibes = activeFilter === 'All Vibes'
     ? vibes
     : vibes.filter(v => v.tags?.toLowerCase().includes(activeFilter.replace(' ', '').toLowerCase()));
+
+  // Apply feed sorting/filtering logic
+  if (isTrending) {
+    filteredVibes = [...filteredVibes].sort((a, b) => b.id - a.id); 
+  } else if (isFollowing) {
+    filteredVibes = filteredVibes.filter(v => typeof v.author_name === 'string' && ['小仔', '陰陽'].includes(v.author_name));
+  }
 
   return (
     <main className="md:ml-64 pt-16 min-h-screen bg-surface">
@@ -81,4 +93,5 @@ export default function Home() {
     </main>
   );
 }
+
 
