@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Search, Plus, Zap } from 'lucide-react';
+import { Search, Plus, Zap, X } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import { supabase, signOut } from '../lib/supabase';
@@ -24,6 +24,8 @@ export default function Navbar() {
     return () => subscription.unsubscribe();
   }, []);
 
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+
   const openAuth = (view: AuthView = 'login') => {
     setAuthView(view);
     setAuthOpen(true);
@@ -31,7 +33,23 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/10 backdrop-blur-md border-b border-white/20 px-6 py-3 flex items-center justify-between">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/10 backdrop-blur-md border-b border-white/20 px-6 py-3 flex items-center justify-between md:pl-60">
+        {/* Mobile search overlay */}
+        {mobileSearchOpen && (
+          <div className="absolute inset-0 z-10 flex items-center bg-zinc-950/95 px-4 gap-3 md:hidden">
+            <Search className="w-4 h-4 text-white/40 flex-shrink-0" />
+            <input
+              autoFocus
+              type="text"
+              placeholder="Search vibes, authors, #tags..."
+              className="flex-1 bg-transparent border-none focus:ring-0 text-sm text-white placeholder:text-white/20 outline-none"
+            />
+            <button onClick={() => setMobileSearchOpen(false)} className="text-white/60 hover:text-white">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        )}
+
         <div className="flex items-center gap-8">
           <div
             className="flex items-center gap-2 cursor-pointer group"
@@ -56,6 +74,14 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-4">
+          {/* Mobile search toggle */}
+          <button
+            onClick={() => setMobileSearchOpen(true)}
+            className="md:hidden text-white/60 hover:text-white transition-colors"
+          >
+            <Search className="w-5 h-5" />
+          </button>
+
           <button
             onClick={() => navigate('/')}
             className="text-white/60 hover:text-white text-sm font-medium transition-colors"

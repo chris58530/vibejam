@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import Sidebar from './components/Sidebar';
+import BottomTabBar from './components/BottomTabBar';
 import Home from './pages/Home';
 import Workspace from './pages/Workspace';
 import VibeDetail from './pages/VibeDetail';
@@ -47,20 +49,23 @@ export default function App() {
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-indigo-500/30">
       <Navbar />
-
-      <main className="h-full">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/workspace" element={<Workspace currentUser={currentUser ?? undefined} />} />
-          <Route path="/:username/:vibeSlug" element={<VibeDetail currentUser={currentUser ?? undefined} />} />
-          <Route path="/:username" element={<Profile />} />
-          <Route path="*" element={
-            <div className="flex items-center justify-center h-full text-white/50">
-              404 | 找不到該頁面。
-            </div>
-          } />
-        </Routes>
-      </main>
+      <div className="flex">
+        <Sidebar />
+        <main className="flex-1 md:pl-56 pb-16 md:pb-0">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/workspace" element={<Workspace currentUser={currentUser ?? undefined} />} />
+            <Route path="/:username/:vibeSlug" element={<VibeDetail currentUser={currentUser ?? undefined} />} />
+            <Route path="/:username" element={<Profile />} />
+            <Route path="*" element={
+              <div className="flex items-center justify-center h-full text-white/50">
+                404 | 找不到該頁面。
+              </div>
+            } />
+          </Routes>
+        </main>
+      </div>
+      <BottomTabBar />
 
       {/* Global Styles for custom scrollbar */}
       <style dangerouslySetInnerHTML={{
