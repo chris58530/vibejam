@@ -285,7 +285,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                         {view === 'register' && (
                             <>
                                 <h2 className="text-2xl font-bold text-white">建立帳號</h2>
-                                <p className="text-white/40 text-sm mt-1">加入 VibeJam 社群，開始創作</p>
+                                <p className="text-white/40 text-sm mt-1">加入 VibeJamer 社群，開始創作</p>
                             </>
                         )}
                         {view === 'forgot' && (

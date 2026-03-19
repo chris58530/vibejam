@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 
-const db = new Database('vibejam.db');
+const db = new Database('vibejamer.db');
 
 // Initialize schema
 db.exec(`
@@ -86,7 +86,7 @@ if (userCount.count === 0) {
         <div class="card">
           <h1>Neon Pulse</h1>
           <div class="pulse"></div>
-          <p style="opacity: 0.5">VibeJam Prototype V1</p>
+          <p style="opacity: 0.5">VibeJamer Prototype V1</p>
         </div>
       `
     },

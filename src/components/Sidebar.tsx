@@ -44,7 +44,7 @@ export default function Sidebar() {
           <Zap className="text-white w-5 h-5 fill-current" />
         </div>
         <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60 tracking-tighter">
-          VibeJam
+          VibeJamer
         </span>
       </div>
 
