@@ -1,9 +1,26 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Home, Compass, Plus, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 
 export default function BottomTabBar() {
   const navigate = useNavigate();
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setCurrentUser(data.session?.user ?? null));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleProfileClick = () => {
+    const username = currentUser?.user_metadata?.user_name || currentUser?.user_metadata?.name;
+    if (username) {
+      navigate(`/@${username}`);
+    }
+  };
 
   return (
     <div className="flex md:hidden fixed bottom-0 left-0 right-0 z-50 bg-zinc-950/90 backdrop-blur border-t border-white/10">
@@ -34,7 +51,7 @@ export default function BottomTabBar() {
       </button>
 
       <button
-        onClick={() => navigate('/')}
+        onClick={handleProfileClick}
         className="flex-1 flex flex-col items-center gap-1 py-3 text-white/60 hover:text-white transition-colors"
       >
         <User className="w-5 h-5" />
