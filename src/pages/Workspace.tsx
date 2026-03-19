@@ -1,7 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
+import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Rocket, Save, Maximize2, Minimize2, Laptop, Smartphone } from 'lucide-react';
 import { api, toSlug, User } from '../lib/api';
 
 interface WorkspaceProps {
@@ -14,9 +12,8 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
   const remixFrom = location.state as { id: number; code: string; title: string; author_name?: string } | undefined;
 
   const [code, setCode] = useState(remixFrom?.code || '');
-  const [title, setTitle] = useState(remixFrom ? `Remix of ${remixFrom.title}` : '');
+  const [title, setTitle] = useState(remixFrom ? `Remix of ${remixFrom.title}` : 'Untitled Project');
   const [tags, setTags] = useState('');
-  const [isPreviewFull, setIsPreviewFull] = useState(false);
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
   const [isPublishing, setIsPublishing] = useState(false);
 
@@ -25,7 +22,6 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
     setIsPublishing(true);
     try {
       if (remixFrom) {
-        // If remixing an existing project, just add a new version to it!
         const logMsg = title !== `Remix of ${remixFrom.title}` ? title : 'Remix logic update';
         await api.addVersion(remixFrom.id, {
           code: code,
@@ -39,8 +35,7 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
           navigate('/');
         }
       } else {
-        // Create new vibe as usual
-        const res = await api.createVibe({
+        await api.createVibe({
           title,
           tags,
           code,
@@ -60,146 +55,133 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
   };
 
   return (
-    <div className="pt-16 h-screen flex bg-black overflow-hidden">
-      {/* Left Panel: Editor */}
-      <div className={`flex-1 flex flex-col border-r border-white/10 transition-all duration-500 ${isPreviewFull ? 'w-0 opacity-0' : 'w-1/2'}`}>
-        <div className="p-6 space-y-6 flex-1 overflow-y-auto custom-scrollbar">
-          <div className="space-y-2">
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Give your Vibe a cool name..."
-              className="w-full bg-transparent border-none text-4xl font-black text-white placeholder:text-white/10 focus:ring-0 p-0"
-            />
-            <input
-              type="text"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              placeholder="#tag1, #tag2, #tag3"
-              className="w-full bg-transparent border-none text-sm font-medium text-indigo-400 placeholder:text-white/10 focus:ring-0 p-0"
-            />
-          </div>
-
-          <div className="flex-1 flex flex-col min-h-[400px]">
-            <div className="flex items-center justify-between mb-2 px-1">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Code Canvas</span>
-              <div className="flex gap-2">
-                <div className="w-2 h-2 rounded-full bg-red-500/50" />
-                <div className="w-2 h-2 rounded-full bg-yellow-500/50" />
-                <div className="w-2 h-2 rounded-full bg-green-500/50" />
+    <main className="md:ml-16 pt-16 flex-1 flex flex-col h-[calc(100vh)] overflow-hidden bg-background">
+      {/* Vibe Properties Header */}
+      <div className="bg-surface px-6 py-3 flex items-center gap-6 border-b border-outline-variant/10">
+        <div className="flex items-center gap-3 bg-surface-container-low px-4 py-1.5 rounded-lg border-b-2 border-primary-container focus-within:border-primary transition-colors">
+          <span className="material-symbols-outlined text-primary-container text-sm">edit_note</span>
+          <input
+            className="bg-transparent border-none focus:ring-0 text-sm font-medium text-on-surface p-0 w-64 outline-none"
+            placeholder="Untitled Project"
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+        </div>
+        <div className="flex items-center gap-3 bg-surface-container-low px-4 py-1.5 rounded-lg focus-within:border-primary/50 transition-colors border-b-2 border-transparent">
+          <span className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Tags</span>
+          <input
+            className="bg-transparent border-none focus:ring-0 text-xs text-on-surface/80 p-0 w-48 outline-none"
+            placeholder="#ui-design #editorial"
+            type="text"
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+          />
+        </div>
+        
+        <div className="ml-auto flex gap-3">
+          <button 
+            onClick={handlePublish}
+            disabled={isPublishing || !title || !code || !currentUser?.id}
+            className="bg-gradient-to-br from-primary to-primary-container text-on-primary px-5 py-1.5 rounded-lg text-sm font-bold active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed group relative flex items-center gap-2"
+          >
+            {isPublishing ? 'Publishing...' : 'Publish'}
+            {!currentUser?.id && (
+              <div className="absolute top-full mt-2 right-0 px-3 py-1.5 bg-black/90 border border-white/10 text-white/80 text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                Please login first
               </div>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Split Pane Layout */}
+      <div className="flex-1 flex overflow-hidden flex-col md:flex-row">
+        {/* Left Pane: Code Editor */}
+        <section className="md:w-1/2 flex flex-col bg-surface-container-lowest border-r border-outline-variant/10 h-1/2 md:h-full">
+          <div className="flex bg-surface-container-low h-10 items-end px-2 gap-1 border-b border-outline-variant/10">
+            <div className="px-4 py-2 bg-surface-container-lowest text-primary text-xs font-medium rounded-t-lg flex items-center gap-2 border-t border-x border-outline-variant/10">
+              <span className="material-symbols-outlined text-[14px]">html</span>
+              index.html
+            </div>
+          </div>
+          <div className="flex-1 p-0 font-mono text-sm leading-relaxed editor-well overflow-hidden flex relative group cursor-text">
+            <div className="absolute left-0 top-0 bottom-0 w-8 bg-surface-container-lowest border-r border-outline-variant/5 text-right py-4 pr-2 text-on-surface/20 select-none hidden sm:block">
+               {code.split('\n').map((_, i) => (
+                 <div key={i}>{i + 1}</div>
+               ))}
             </div>
             <textarea
               value={code}
               onChange={(e) => setCode(e.target.value)}
               placeholder="Paste your AI-generated HTML/CSS/JS code here..."
-              className="flex-1 w-full bg-zinc-900/50 border border-white/10 rounded-2xl p-6 font-mono text-sm text-indigo-300 placeholder:text-white/5 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/40 resize-none outline-none transition-all"
+              className="flex-1 w-full bg-transparent p-4 sm:pl-12 py-4 font-mono text-sm text-[#E5E2E1] outline-none resize-none hide-scrollbar placeholder:text-on-surface/20 whitespace-pre"
+              spellCheck={false}
             />
           </div>
-        </div>
+        </section>
 
-        <div className="p-6 border-t border-white/10 bg-black/50 backdrop-blur-xl flex items-center justify-between">
-          <button className="flex items-center gap-2 text-white/40 hover:text-white transition-colors text-sm font-bold">
-            <Save className="w-4 h-4" />
-            Save Draft
-          </button>
+        {/* Right Pane: Preview */}
+        <section className="md:w-1/2 bg-surface flex flex-col h-1/2 md:h-full">
+          <div className="h-10 bg-surface-container-low border-b border-outline-variant/10 flex items-center justify-between px-4">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 bg-surface-container-highest rounded px-2 py-0.5">
+                <span className="material-symbols-outlined text-[14px] text-tertiary">lock</span>
+                <span className="text-[10px] text-on-surface/60 font-mono tracking-tight">localhost:3000/vibe/preview</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => setViewMode(viewMode === 'desktop' ? 'mobile' : 'desktop')}
+                className="material-symbols-outlined text-on-surface/40 hover:text-primary transition-colors text-lg"
+              >
+                {viewMode === 'desktop' ? 'smartphone' : 'desktop_windows'}
+              </button>
+            </div>
+          </div>
 
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handlePublish}
-            disabled={isPublishing || !title || !code || !currentUser?.id}
-            className="px-8 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl text-white font-bold shadow-lg shadow-indigo-500/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed group relative"
-          >
-            {isPublishing ? (
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : (
-              <Rocket className="w-5 h-5" />
-            )}
-            Jam It Out!
-            
-            {/* Tooltips */}
-            {!currentUser?.id && (
-              <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-black/90 border border-white/10 text-white/80 text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                Please login with GitHub first
-              </div>
-            )}
-            {currentUser?.id && (!title || !code) && (
-              <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-black/90 border border-white/10 text-white/80 text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                Title and Code are required
-              </div>
-            )}
-          </motion.button>
-        </div>
+          <div className="flex-1 p-4 md:p-8 bg-surface-container flex items-center justify-center overflow-hidden">
+            <div className={`bg-white rounded-xl shadow-2xl overflow-hidden border border-outline-variant/20 transition-all duration-500 relative flex ${viewMode === 'mobile' ? 'w-[375px] h-[667px]' : 'w-full h-full'}`}>
+              {code ? (
+                <iframe
+                  srcDoc={code}
+                  className="w-full h-full border-none absolute inset-0 bg-white"
+                  title="Live Preview"
+                  sandbox="allow-scripts allow-same-origin"
+                />
+              ) : (
+                <div className="w-full h-full bg-[#050505] flex flex-col items-center justify-center p-12 relative z-10">
+                  <div className="w-full h-full border border-dashed border-outline-variant/20 rounded-lg flex flex-col items-center justify-center text-center">
+                    <span className="material-symbols-outlined text-6xl text-primary/20 mb-4" style={{ fontVariationSettings: "'FILL' 1" }}>fluid</span>
+                    <h3 className="text-on-surface-variant font-mono text-lg">render_engine.init("{title || 'untitled'}")</h3>
+                    <p className="text-on-surface-variant/40 text-sm mt-2 font-mono">Ready for execution...</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
       </div>
 
-      {/* Right Panel: Preview */}
-      <div className={`relative flex flex-col transition-all duration-500 ${isPreviewFull ? 'w-full' : 'w-1/2'} bg-zinc-950`}>
-        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 bg-black/60 backdrop-blur-md border border-white/10 rounded-full px-4 py-2 shadow-2xl">
-          <button
-            onClick={() => setViewMode('desktop')}
-            className={`p-1.5 rounded-md transition-colors ${viewMode === 'desktop' ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white'}`}
-          >
-            <Laptop className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setViewMode('mobile')}
-            className={`p-1.5 rounded-md transition-colors ${viewMode === 'mobile' ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white'}`}
-          >
-            <Smartphone className="w-4 h-4" />
-          </button>
-          <div className="w-px h-4 bg-white/10 mx-1" />
-          <button
-            onClick={() => setIsPreviewFull(!isPreviewFull)}
-            className="p-1.5 rounded-md text-white/40 hover:text-white transition-colors"
-          >
-            {isPreviewFull ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-          </button>
-        </div>
-
-        <div className="flex-1 flex items-center justify-center p-12">
-          <div
-            className={`bg-white rounded-2xl shadow-2xl overflow-hidden transition-all duration-500 ${viewMode === 'mobile' ? 'w-[375px] h-[667px]' : 'w-full h-full'}`}
-          >
-            {code ? (
-              <iframe
-                srcDoc={code}
-                className="w-full h-full border-none"
-                title="Live Preview"
-              />
-            ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center text-zinc-300 space-y-4">
-                <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center">
-                  <Zap className="w-8 h-8 text-zinc-400" />
-                </div>
-                <p className="font-medium">Waiting for your magic code...</p>
-              </div>
-            )}
+      <footer className="bg-[#131313] border-t border-[#584142]/20 flex justify-between items-center px-6 h-8 w-full z-50">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-[#FFB3B6]">
+            <span className="material-symbols-outlined text-[12px]">rebase</span>
+            main*
+          </div>
+          <div className="text-[10px] text-on-surface/40 font-mono">
+           {code ? `Ln ${code.split('\n').length}` : ''}
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function Zap(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M4 14.71 14.71 4H20v5.29L9.29 20H4v-5.29Z" />
-      <path d="M15 9l-2 2" />
-      <path d="M9 15l2 2" />
-    </svg>
+        <div className="flex items-center gap-4 text-[10px] font-mono text-on-surface/40">
+          <span className="flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-tertiary"></span> 
+            VibeJam Cloud
+          </span>
+          <span>UTF-8</span>
+          <span className="text-primary">HTML/CSS/JS</span>
+        </div>
+      </footer>
+    </main>
   );
 }

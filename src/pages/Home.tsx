@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { api, toSlug, Vibe } from '../lib/api';
 import VibeCard from '../components/VibeCard';
 
-const FILTERS = ['All', '3D Effects', 'SaaS Dashboards', 'Micro-interactions', 'Pure CSS', 'Generative Art'];
+const FILTERS = ['All Vibes', '3D Effects', 'SaaS UI', 'Micro-interactions', 'Tailwind Magic', 'Data Viz', 'Shaders', 'Typography', 'Layouts', 'Canvas Art'];
 
 export default function Home() {
   const [vibes, setVibes] = useState<Vibe[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeFilter, setActiveFilter] = useState('All');
+  const [activeFilter, setActiveFilter] = useState('All Vibes');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -19,80 +19,65 @@ export default function Home() {
   }, []);
 
   const handleSelectVibe = (vibe: Vibe) => {
-    navigate(`/@${encodeURIComponent(vibe.author_name)}/${toSlug(vibe.title)}`);
+    navigate(\`/@\${encodeURIComponent(vibe.author_name)}/\${toSlug(vibe.title)}\`);
   };
 
-  const filteredVibes = activeFilter === 'All'
+  const filteredVibes = activeFilter === 'All Vibes'
     ? vibes
-    : vibes.filter(v => v.tags?.toLowerCase().includes(activeFilter.toLowerCase()));
-
-  const trendingVibes = vibes.slice(0, 6);
-  const latestVibes = vibes.slice(6, 12).length > 0 ? vibes.slice(6, 12) : vibes.slice(0, 6);
+    : vibes.filter(v => v.tags?.toLowerCase().includes(activeFilter.replace(' ', '').toLowerCase()));
 
   return (
-    <div className="pt-20 pb-20 max-w-7xl mx-auto">
-      {/* Shelves */}
-      {!loading && vibes.length > 0 && (
-        <>
-          {/* Trending Today shelf */}
-          <section className="mb-8 px-0 sm:px-6">
-            <h2 className="text-lg font-bold text-white mb-3 px-4 sm:px-0">🔥 Trending Today</h2>
-            <div className="flex overflow-x-auto gap-4 pb-4 no-scrollbar px-4 sm:px-0">
-              {trendingVibes.map(vibe => (
-                <div key={vibe.id} className="w-64 flex-shrink-0">
-                  <VibeCard vibe={vibe} onClick={() => handleSelectVibe(vibe)} />
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Latest Uploads shelf */}
-          <section className="mb-8 px-0 sm:px-6">
-            <h2 className="text-lg font-bold text-white mb-3 px-4 sm:px-0">✨ Latest Uploads</h2>
-            <div className="flex overflow-x-auto gap-4 pb-4 no-scrollbar px-4 sm:px-0">
-              {latestVibes.map(vibe => (
-                <div key={vibe.id} className="w-64 flex-shrink-0">
-                  <VibeCard vibe={vibe} onClick={() => handleSelectVibe(vibe)} />
-                </div>
-              ))}
-            </div>
-          </section>
-        </>
-      )}
-
-      {/* Filter Bar */}
-      <div className="flex gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar px-4 sm:px-6">
-        {FILTERS.map(tag => (
-          <button
-            key={tag}
-            onClick={() => setActiveFilter(tag)}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
-              activeFilter === tag
-                ? 'bg-white text-black'
-                : 'bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 hover:text-white hover:border-white/20'
-            }`}
-          >
-            {tag === 'All' ? 'All' : `#${tag.replace(' ', '')}`}
-          </button>
-        ))}
+    <main className="md:ml-64 pt-16 min-h-screen bg-surface">
+      {/* Scrolling Tag Bar */}
+      <div className="sticky top-16 z-40 bg-surface/90 backdrop-blur-md px-6 py-4">
+        <div className="flex items-center gap-3 overflow-x-auto no-scrollbar whitespace-nowrap hide-scrollbar">
+          {FILTERS.map(tag => (
+            <button
+              key={tag}
+              onClick={() => setActiveFilter(tag)}
+              className={\`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors \${
+                activeFilter === tag
+                  ? 'bg-[#E5E2E1] text-[#131313]'
+                  : 'bg-surface-container-high text-[#E5E2E1]/80 hover:bg-surface-container-highest'
+              }\`}
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-0 sm:gap-6 px-0 sm:px-6">
-        {loading ? (
-          Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="aspect-video bg-white/5 sm:rounded-2xl animate-pulse" />
-          ))
-        ) : (
-          filteredVibes.map(vibe => (
-            <VibeCard
-              key={vibe.id}
-              vibe={vibe}
-              onClick={() => handleSelectVibe(vibe)}
-            />
-          ))
-        )}
+      {/* Grid of Vibe Cards */}
+      <div className="p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
+          {loading ? (
+            Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="aspect-video bg-surface-container-highest rounded-lg animate-pulse" />
+            ))
+          ) : (
+            filteredVibes.map(vibe => (
+              <VibeCard
+                key={vibe.id}
+                vibe={vibe}
+                onClick={() => handleSelectVibe(vibe)}
+              />
+            ))
+          )}
+        </div>
       </div>
-    </div>
+      
+      {/* Footer */}
+      <footer className="flex justify-between items-center px-8 py-12 bg-[#131313] border-t border-outline-variant/10 mt-12">
+        <div className="flex flex-col gap-2">
+          <span className="text-sm font-bold text-[#E5E2E1]">VibeJam</span>
+          <p className="font-['Inter'] text-[10px] uppercase tracking-widest text-[#E5E2E1]/40 mt-1">© 2024 VibeJam Editorial</p>
+        </div>
+        <div className="flex gap-8">
+          <a href="#" className="font-['Inter'] text-xs uppercase tracking-widest text-[#E5E2E1]/40 hover:text-[#FFB3B6] transition-colors">Terms</a>
+          <a href="#" className="font-['Inter'] text-xs uppercase tracking-widest text-[#E5E2E1]/40 hover:text-[#FFB3B6] transition-colors">Privacy</a>
+          <a href="#" className="font-['Inter'] text-xs uppercase tracking-widest text-[#E5E2E1]/40 hover:text-[#FFB3B6] transition-colors">About</a>
+        </div>
+      </footer>
+    </main>
   );
 }

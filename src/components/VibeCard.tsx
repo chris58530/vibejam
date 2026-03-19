@@ -60,50 +60,62 @@ export default function VibeCard({ vibe, onClick }: VibeCardProps) {
       layout
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-none sm:rounded-2xl overflow-hidden group cursor-pointer flex flex-col sm:bg-zinc-900/50 sm:border sm:border-white/10"
+      className="group cursor-pointer flex flex-col"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={onClick}
     >
       {/* Thumbnail */}
-      <div className="relative aspect-video bg-zinc-950 overflow-hidden w-full">
+      <div className="relative aspect-video bg-surface-container-lowest rounded-lg overflow-hidden border border-outline-variant/10 group-hover:border-primary/20 transition-colors w-full">
         <div className={`absolute inset-0 z-10 transition-opacity duration-300 pointer-events-none ${isHovered ? 'bg-transparent' : 'bg-black/20 backdrop-grayscale-[0.5]'}`} />
 
         <iframe
           srcDoc={previewCode}
-          className="absolute top-0 left-0 w-[200%] h-[200%] scale-50 origin-top-left border-none pointer-events-none bg-white"
+          className="absolute top-0 left-0 w-[200%] h-[200%] scale-50 origin-top-left border-none pointer-events-none bg-white opacity-80 group-hover:scale-[0.52] group-hover:opacity-100 transition-all duration-500"
           title={vibe.title}
           sandbox="allow-scripts allow-same-origin"
         />
 
         {/* Version badge - bottom right */}
-        <div className="absolute bottom-2 right-2 z-20 pointer-events-none">
-          <div className="bg-black/80 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
-            V{vibe.latest_version}
-          </div>
+        <div className="absolute bottom-2 right-2 bg-black/80 px-1.5 py-0.5 rounded text-[10px] font-mono text-white z-20 pointer-events-none">
+          V{vibe.latest_version}
         </div>
       </div>
 
       {/* Details */}
-      <div className="flex gap-3 p-3 sm:p-4">
+      <div className="mt-3 flex gap-3">
         {/* Author avatar */}
-        <img
-          src={vibe.author_avatar}
-          alt={vibe.author_name}
-          className="w-9 h-9 rounded-full flex-shrink-0 mt-0.5 object-cover"
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(`/@${encodeURIComponent(vibe.author_name)}`);
-          }}
-        />
+        <div className="flex-shrink-0 w-9 h-9 rounded-full bg-surface-container-high overflow-hidden mt-0.5 border border-outline-variant/10">
+          <img
+            src={vibe.author_avatar || \`https://api.dicebear.com/7.x/avataaars/svg?seed=\${vibe.author_name}\`}
+            alt={vibe.author_name}
+            className="w-full h-full object-cover"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(\`/@\${encodeURIComponent(vibe.author_name)}\`);
+            }}
+          />
+        </div>
+        
         {/* Text */}
-        <div className="flex-1 min-w-0">
-          <h3 className="text-base font-semibold text-white line-clamp-2 leading-snug mb-1 group-hover:text-indigo-400 transition-colors">
+        <div className="flex flex-col flex-1 min-w-0">
+          <h3 className="font-mono font-bold text-sm text-[#E5E2E1] leading-tight group-hover:text-primary transition-colors line-clamp-2">
             {vibe.title}
           </h3>
-          <p className="text-xs text-white/50 truncate">
-            {vibe.author_name} · {vibe.views} views · {timeAgo(vibe.created_at)}
-          </p>
+          <span 
+            className="text-xs text-[#E5E2E1]/60 mt-1 hover:text-[#E5E2E1] transition-colors truncate"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(\`/@\${encodeURIComponent(vibe.author_name)}\`);
+            }}
+          >
+            @{vibe.author_name}
+          </span>
+          <div className="flex items-center text-[11px] text-[#E5E2E1]/40 mt-0.5">
+            <span>{vibe.views} views</span>
+            <span className="mx-1.5">•</span>
+            <span>{timeAgo(vibe.created_at)}</span>
+          </div>
         </div>
       </div>
     </motion.div>

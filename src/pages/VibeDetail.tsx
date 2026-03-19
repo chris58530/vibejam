@@ -1,18 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { useParams, useNavigate } from 'react-router-dom';
-import {
-  Maximize2,
-  Copy,
-  Repeat,
-  Clock,
-  MessageSquare,
-  Plus,
-  CheckCircle2,
-  Code2,
-  Send,
-  ArrowLeft
-} from 'lucide-react';
 import { api, toSlug, Vibe, Version, Comment, User } from '../lib/api';
 
 interface VibeDetailProps {
@@ -125,33 +112,33 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
   };
 
   if (loading || !vibe) return (
-    <div className="pt-20 flex items-center justify-center h-screen text-white/20 font-bold text-2xl">
-      Loading Lab...
+    <div className="pt-20 flex items-center justify-center min-h-screen bg-surface text-on-surface/40 font-mono text-lg tracking-widest uppercase">
+      Loading Stage...
     </div>
   );
 
   return (
-    <div className="pt-16 h-screen flex flex-col bg-zinc-950 overflow-hidden">
-      {/* Top Bar */}
-      <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-zinc-900/50 backdrop-blur-xl">
+    <div className="md:ml-[80px] pt-[64px] h-screen flex flex-col bg-surface overflow-hidden">
+      {/* Platform Header */}
+      <div className="h-16 border-b border-outline-variant/10 flex items-center justify-between px-6 bg-surface-container-low shrink-0 z-10">
         <div className="flex items-center gap-4">
-          <button onClick={() => navigate('/')} className="p-2 hover:bg-white/5 rounded-full transition-colors text-white/60 hover:text-white">
-            <ArrowLeft className="w-5 h-5" />
+          <button onClick={() => navigate('/')} className="w-8 h-8 rounded-full hover:bg-surface-container-high transition-colors text-on-surface/60 hover:text-on-surface flex items-center justify-center">
+            <span className="material-symbols-outlined text-[18px]">arrow_back</span>
           </button>
             <div 
               className="flex items-center gap-3 cursor-pointer group"
               onClick={() => navigate(`/@${encodeURIComponent(vibe.author_name)}`)}
             >
-              <div className="w-10 h-10 rounded-xl bg-indigo-500 flex items-center justify-center font-bold text-white overflow-hidden group-hover:ring-2 ring-indigo-400 transition-all">
+              <div className="w-10 h-10 rounded-md bg-primary-container flex items-center justify-center font-bold text-on-primary-container overflow-hidden transition-all border border-transparent group-hover:border-primary">
                 {vibe.author_avatar ? (
                   <img src={vibe.author_avatar} alt="author" className="w-full h-full object-cover" />
                 ) : (
                   vibe.title[0]
                 )}
               </div>
-              <div className="group-hover:opacity-80 transition-opacity">
-                <h1 className="text-white font-bold">{vibe.title}</h1>
-                <p className="text-white/40 text-xs">Original by {vibe.author_name} • V{selectedVersion?.version_number} by {selectedVersion?.author_name || vibe.author_name}</p>
+              <div className="group-hover:opacity-80 transition-opacity flex flex-col justify-center">
+                <h1 className="text-on-surface font-sans font-bold text-sm tracking-tight">{vibe.title}</h1>
+                <p className="text-on-surface/40 font-mono text-[10px] mt-0.5">Original by {vibe.author_name} • V{selectedVersion?.version_number}</p>
               </div>
             </div>
           </div>
@@ -159,50 +146,52 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
         <div className="flex items-center gap-3">
           <button
             onClick={handleCopyCode}
-            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white text-sm font-bold rounded-xl border border-white/10 transition-all"
+            className="flex items-center gap-2 px-3 py-1.5 bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-xs font-mono font-bold rounded border border-outline-variant/10 transition-colors"
           >
-            <Copy className="w-4 h-4" />
-            Copy Code
+            <span className="material-symbols-outlined text-[14px]">content_copy</span>
+            Copy
           </button>
           <button
             onClick={handleRemix}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-bold rounded-xl shadow-lg shadow-indigo-500/20 transition-all"
+            className="flex items-center gap-2 px-3 py-1.5 bg-primary hover:bg-primary-fixed text-on-primary text-xs font-mono font-bold rounded shadow-lg shadow-primary/10 transition-colors"
           >
-            <Repeat className="w-4 h-4" />
+            <span className="material-symbols-outlined text-[14px]">fork_right</span>
             Remix
           </button>
         </div>
       </div>
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
         {/* Left: Stage (Preview) */}
-        <div className="flex-1 bg-white relative">
-          <iframe
-            srcDoc={selectedVersion?.code}
-            className="w-full h-full border-none"
-            title="Stage"
-            sandbox="allow-scripts allow-same-origin allow-forms"
-          />
-          <button className="absolute bottom-4 right-4 p-2 bg-black/60 backdrop-blur-md text-white rounded-lg hover:bg-black/80 transition-colors z-10">
-            <Maximize2 className="w-5 h-5" />
+        <div className="flex-1 bg-surface-container-lowest relative flex items-center justify-center p-4 lg:p-12 order-1 md:order-none">
+          <div className="w-full h-full bg-white rounded-xl shadow-2xl overflow-hidden border border-outline-variant/20 relative">
+            <iframe
+              srcDoc={selectedVersion?.code}
+              className="w-full h-full border-none absolute inset-0 bg-white"
+              title="Stage"
+              sandbox="allow-scripts allow-same-origin allow-forms"
+            />
+          </div>
+          <button className="absolute bottom-6 right-6 lg:bottom-14 lg:right-14 w-10 h-10 bg-surface/80 backdrop-blur-md border border-outline-variant/20 text-on-surface rounded flex items-center justify-center hover:bg-surface transition-colors z-10 shadow-lg">
+            <span className="material-symbols-outlined text-[18px]">fullscreen</span>
           </button>
         </div>
 
         {/* Right: Chat / Comments & Timeline */}
-        <div className="w-[400px] flex flex-col border-l border-white/5 bg-zinc-900/30 overflow-hidden">
+        <div className="w-full md:w-[400px] flex flex-col border-l border-outline-variant/10 bg-surface-container-low overflow-hidden shrink-0 order-2 md:order-none">
 
           {/* Tabs header for Chat vs Timeline */}
-          <div className="flex w-full items-center border-b border-white/5 bg-zinc-900/50 cursor-pointer">
+          <div className="flex w-full items-center border-b border-outline-variant/10 bg-surface-container-lowest cursor-pointer shrink-0 h-12">
             <div
               onClick={() => setActiveTab('chat')}
-              className={`flex-1 py-3 text-center text-xs font-bold text-white uppercase tracking-widest transition-colors ${activeTab === 'chat' ? 'border-b-2 border-indigo-500 bg-white/5' : 'text-white/40 hover:text-white hover:bg-white/5'}`}>
-              <MessageSquare className="w-4 h-4 inline-block mr-2" />
+              className={`flex-1 h-full flex items-center justify-center gap-2 text-[10px] font-mono font-bold uppercase tracking-widest transition-colors ${activeTab === 'chat' ? 'border-b-2 border-primary text-primary bg-surface-container-high' : 'text-on-surface/40 hover:text-on-surface hover:bg-surface-container-low'}`}>
+              <span className="material-symbols-outlined text-[14px]">chat_bubble</span>
               Chat
             </div>
             <div
               onClick={() => setActiveTab('versions')}
-              className={`flex-1 py-3 text-center text-xs font-bold text-white uppercase tracking-widest transition-colors ${activeTab === 'versions' ? 'border-b-2 border-indigo-500 bg-white/5' : 'text-white/40 hover:text-white hover:bg-white/5'}`}>
-              <Clock className="w-4 h-4 inline-block mr-2" />
+              className={`flex-1 h-full flex items-center justify-center gap-2 text-[10px] font-mono font-bold uppercase tracking-widest transition-colors ${activeTab === 'versions' ? 'border-b-2 border-primary text-primary bg-surface-container-high' : 'text-on-surface/40 hover:text-on-surface hover:bg-surface-container-low'}`}>
+              <span className="material-symbols-outlined text-[14px]">history</span>
               Versions
             </div>
           </div>
@@ -213,40 +202,45 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
             {/* Chat Window */}
             {activeTab === 'chat' && (
               <div className="flex-1 flex flex-col overflow-hidden absolute inset-0">
-                <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar">
+                <div className="flex-1 overflow-y-auto p-4 space-y-6 hide-scrollbar">
                   {vibe.comments?.map(comment => (
                     <div key={comment.id} className={`flex gap-3 group ${comment.optimistic ? 'opacity-60' : ''}`}>
-                      <img src={comment.author_avatar} className="w-8 h-8 rounded-full border border-white/10 shrink-0" />
+                      <img src={comment.author_avatar} className="w-8 h-8 rounded shrink-0 border border-outline-variant/10" alt="avatar" />
                       <div className="flex-1 space-y-1">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <span className="text-white font-bold text-sm">{comment.author_name}</span>
+                            <span className="text-on-surface font-sans font-bold text-sm tracking-tight">{comment.author_name}</span>
                             {comment.is_adopted === 1 && (
-                              <span className="flex items-center gap-1 text-[10px] text-green-400 font-bold">
-                                <CheckCircle2 className="w-3 h-3" />
+                              <span className="flex items-center gap-1 text-[9px] text-tertiary font-mono uppercase tracking-widest">
+                                <span className="material-symbols-outlined text-[10px]">check_circle</span>
                                 Adopted
                               </span>
                             )}
                           </div>
                           {comment.optimistic ? (
-                            <span className="text-[10px] text-white/30 italic">Sending…</span>
+                            <span className="text-[10px] text-on-surface/30 font-mono italic">Sending…</span>
                           ) : (
-                            <span className="text-[10px] text-white/20">{new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            <span className="text-[10px] text-on-surface/20 font-mono">{new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                           )}
                         </div>
-                        <p className="text-white/80 text-sm leading-relaxed whitespace-pre-wrap">{comment.content}</p>
+                        <p className="text-on-surface/80 text-sm leading-relaxed whitespace-pre-wrap font-sans">{comment.content}</p>
                         {comment.code_snippet && (
-                          <div className="bg-black/40 rounded-lg p-3 border border-white/5 font-mono text-[11px] text-indigo-300 overflow-x-auto">
+                          <div className="mt-2 bg-surface-container-lowest rounded p-3 border border-outline-variant/10 font-mono text-[11px] text-tertiary overflow-x-auto hide-scrollbar">
                             {comment.code_snippet}
                           </div>
                         )}
                       </div>
                     </div>
                   ))}
+                  {(!vibe.comments || vibe.comments.length === 0) && (
+                     <div className="w-full h-full flex items-center justify-center text-on-surface/20 font-mono text-xs text-center p-8">
+                       Be the first to drop some knowledge.
+                     </div>
+                  )}
                 </div>
 
                 {/* Input Area */}
-                <div className="p-4 bg-zinc-900 shadow-[0_-10px_30px_rgba(0,0,0,0.5)] z-20">
+                <div className="p-4 bg-surface-container border-t border-outline-variant/10 shrink-0 z-20">
                   {currentUser ? (
                     <div className="space-y-3">
                       {showCodeInput && (
@@ -254,7 +248,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                           value={commentCode}
                           onChange={(e) => setCommentCode(e.target.value)}
                           placeholder="Paste suggested code snippet..."
-                          className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-xs font-mono text-indigo-300 focus:ring-1 focus:ring-indigo-500/50 outline-none h-24 custom-scrollbar"
+                          className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded p-3 text-xs font-mono text-tertiary focus:border-primary/50 outline-none h-24 hide-scrollbar placeholder:text-on-surface/20"
                         />
                       )}
                       <div className="flex items-center gap-2">
@@ -269,28 +263,28 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                                 handleAddComment();
                               }
                             }}
-                            placeholder="Type a message..."
-                            className="w-full bg-zinc-800 border border-white/10 rounded-full pl-4 pr-10 py-2.5 text-sm text-white placeholder:text-white/30 focus:ring-1 focus:ring-indigo-500 outline-none"
+                            placeholder="Type your message..."
+                            className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded pl-3 pr-10 py-2.5 text-sm text-on-surface placeholder:text-on-surface/30 focus:border-primary/50 outline-none font-sans"
                           />
                           <button
                             onClick={() => setShowCodeInput(!showCodeInput)}
-                            className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full transition-colors ${showCodeInput ? 'text-indigo-400 bg-indigo-500/20' : 'text-white/40 hover:text-white hover:bg-white/10'}`}
+                            className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded transition-colors flex items-center justify-center ${showCodeInput ? 'text-primary bg-primary/10' : 'text-on-surface/40 hover:text-on-surface hover:bg-surface-container-high'}`}
                           >
-                            <Code2 className="w-4 h-4" />
+                            <span className="material-symbols-outlined text-[16px]">code</span>
                           </button>
                         </div>
                         <button
                           onClick={handleAddComment}
-                          className="p-2.5 bg-indigo-500 text-white rounded-full hover:bg-indigo-600 transition-colors shrink-0 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="w-10 h-10 bg-primary text-on-primary rounded hover:bg-primary-fixed transition-colors shrink-0 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                           disabled={!commentText.trim()}
                         >
-                          <Send className="w-4 h-4 ml-0.5" />
+                          <span className="material-symbols-outlined text-[16px] ml-0.5">send</span>
                         </button>
                       </div>
                     </div>
                   ) : (
-                    <div className="py-3 px-4 bg-zinc-800/50 border border-white/5 rounded-xl text-center">
-                      <p className="text-white/50 text-sm">Please log in with GitHub to participate in the thread.</p>
+                    <div className="py-3 px-4 bg-surface-container-lowest border border-outline-variant/10 rounded text-center">
+                      <p className="text-on-surface/40 font-mono text-[10px] uppercase tracking-widest">Sign in to participate</p>
                     </div>
                   )}
                 </div>
@@ -299,47 +293,49 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
 
             {/* Timeline Window */}
             {activeTab === 'versions' && (
-              <div className="flex-1 overflow-y-auto p-6 relative custom-scrollbar absolute inset-0">
-                <div className="absolute left-9 top-8 bottom-8 w-px bg-white/5" />
+              <div className="flex-1 overflow-y-auto p-6 relative hide-scrollbar absolute inset-0">
+                <div className="absolute left-[34px] top-8 bottom-8 w-px bg-outline-variant/10" />
 
                 <div className="space-y-8 relative">
                   {vibe.versions?.map((version, index) => (
                     <div
                       key={version.id}
-                      className={`flex gap-4 cursor-pointer group transition-all ${selectedVersion?.id === version.id ? 'opacity-100' : 'opacity-40 hover:opacity-60'}`}
+                      className={`flex gap-4 cursor-pointer group transition-all ${selectedVersion?.id === version.id ? 'opacity-100' : 'opacity-40 hover:opacity-80'}`}
                       onClick={() => setSelectedVersion(version)}
                     >
-                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center z-10 transition-colors ${selectedVersion?.id === version.id ? 'bg-indigo-500 border-indigo-400' : 'bg-zinc-900 border-white/10'}`}>
-                        {selectedVersion?.id === version.id && <div className="w-2 h-2 bg-white rounded-full" />}
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center z-10 transition-colors mt-0.5 ${selectedVersion?.id === version.id ? 'bg-primary border-primary' : 'bg-surface-container-lowest border-outline-variant/20 group-hover:border-outline-variant/40'}`}>
+                        {selectedVersion?.id === version.id && <div className="w-1.5 h-1.5 bg-on-primary rounded-full" />}
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-white font-bold text-sm">V{version.version_number}</span>
-                          <span className="text-[10px] text-white/20">{new Date(version.created_at).toLocaleDateString()}</span>
+                           <span className="text-on-surface font-mono font-bold text-sm">V{version.version_number}</span>
+                           <span className="text-[10px] text-on-surface/30 font-mono">{new Date(version.created_at).toLocaleDateString()}</span>
                         </div>
                         <div className="flex items-center gap-2 mb-2">
-                          {version.author_avatar ? (
-                            <img src={version.author_avatar} className="w-4 h-4 rounded-full" alt="author" />
-                          ) : (
-                            <div className="w-4 h-4 rounded-full bg-indigo-500/50 flex items-center justify-center text-[8px] text-white">
-                              {(version.author_name || vibe.author_name || '?')[0]}
-                            </div>
-                          )}
-                          <span className="text-xs text-white/60 font-medium">{version.author_name || vibe.author_name}</span>
-                          {(version.author_id && version.author_id !== vibe.author_id) && (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded border border-indigo-500/30 text-indigo-400 bg-indigo-500/10">Fork</span>
-                          )}
+                           {version.author_avatar ? (
+                             <img src={version.author_avatar} className="w-4 h-4 rounded" alt="author" />
+                           ) : (
+                             <div className="w-4 h-4 rounded bg-tertiary-container flex items-center justify-center text-[8px] text-on-tertiary-container font-bold">
+                               {(version.author_name || vibe.author_name || '?')[0]}
+                             </div>
+                           )}
+                           <span className="text-xs text-on-surface/60 font-sans font-medium">{version.author_name || vibe.author_name}</span>
+                           {(version.author_id && version.author_id !== vibe.author_id) && (
+                             <span className="text-[9px] px-1.5 py-0.5 rounded border border-tertiary/20 text-tertiary font-mono uppercase bg-tertiary/5 tracking-widest">Fork</span>
+                           )}
                         </div>
-                        <p className="text-white/40 text-xs leading-relaxed italic">
-                          {version.update_log || 'No update log provided.'}
+                        <p className="text-on-surface/40 text-[11px] leading-relaxed font-sans">
+                           {version.update_log || 'System update registered.'}
                         </p>
                       </div>
                     </div>
                   ))}
+                  {(!vibe.versions || vibe.versions.length === 0) && (
+                     <div className="w-full text-center text-on-surface/20 font-mono text-xs pt-4">No version history</div>
+                  )}
                 </div>
               </div>
             )}
-
           </div>
         </div>
       </div>

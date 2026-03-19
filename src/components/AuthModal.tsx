@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { X, Eye, EyeOff, Upload, Check, ArrowLeft } from 'lucide-react';
+
 import { motion } from 'motion/react';
 import {
     signInWithGitHub,
@@ -238,14 +238,14 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
     if (!portalRoot) return null;
 
     const inputClass =
-        'w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 text-sm focus:outline-none focus:border-indigo-500/50 transition-colors';
+        'w-full bg-surface-container border border-outline-variant/10 rounded-lg px-4 py-3 text-on-surface placeholder:text-on-surface/30 text-sm focus:outline-none focus:border-primary/50 transition-colors font-mono';
     const passwordInputClass =
-        'w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 pr-11 text-white placeholder:text-white/20 text-sm focus:outline-none focus:border-indigo-500/50 transition-colors';
+        'w-full bg-surface-container border border-outline-variant/10 rounded-lg px-4 py-3 pr-11 text-on-surface placeholder:text-on-surface/30 text-sm focus:outline-none focus:border-primary/50 transition-colors font-mono';
     const submitBtnClass =
-        'w-full py-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-xl text-white font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50';
+        'w-full py-3 bg-primary text-on-primary font-mono tracking-widest uppercase hover:bg-primary-fixed rounded-xl text-on-surface font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50';
 
     const confirmBorderClass = (value: string, match: boolean) => {
-        if (!value) return 'border-white/10 focus:border-indigo-500/50';
+        if (!value) return 'border-outline-variant/10 focus:border-primary/50';
         return match ? 'border-green-500/40' : 'border-red-500/40';
     };
 
@@ -260,53 +260,53 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.95, opacity: 0, y: 12 }}
                 transition={{ duration: 0.18 }}
-                className="bg-[#0d0d1a] border border-white/10 rounded-2xl w-full max-w-md relative shadow-2xl max-h-[90vh] overflow-y-auto"
+                className="bg-surface-container-low border border-outline-variant/20 rounded-xl w-full max-w-md relative shadow-2xl max-h-[90vh] overflow-y-auto"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Top gradient bar */}
-                <div className="h-0.5 w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+                <div className="h-0.5 w-full bg-primary text-on-primary font-mono tracking-widest uppercase hover:bg-primary-fixed" />
 
                 <div className="p-8">
                     <button
                         onClick={onClose}
-                        className="absolute top-5 right-5 text-white/30 hover:text-white transition-colors"
+                        className="absolute top-5 right-5 text-on-surface/30 hover:text-on-surface transition-colors"
                     >
-                        <X className="w-5 h-5" />
+                        <span className="material-symbols-outlined text-[20px]">close</span>
                     </button>
 
                     {/* ─── HEADER ─── */}
                     <div className="mb-6">
                         {view === 'login' && (
                             <>
-                                <h2 className="text-2xl font-bold text-white">歡迎回來</h2>
-                                <p className="text-white/40 text-sm mt-1">登入您的帳號繼續創作</p>
+                                <h2 className="text-2xl font-bold text-on-surface">歡迎回來</h2>
+                                <p className="text-on-surface/40 text-sm mt-1">登入您的帳號繼續創作</p>
                             </>
                         )}
                         {view === 'register' && (
                             <>
-                                <h2 className="text-2xl font-bold text-white">建立帳號</h2>
-                                <p className="text-white/40 text-sm mt-1">加入 VibeJamer 社群，開始創作</p>
+                                <h2 className="text-2xl font-bold text-on-surface">建立帳號</h2>
+                                <p className="text-on-surface/40 text-sm mt-1">加入 VibeJamer 社群，開始創作</p>
                             </>
                         )}
                         {view === 'forgot' && (
                             <>
                                 <button
                                     onClick={() => switchView('login')}
-                                    className="flex items-center gap-1 text-white/40 hover:text-white text-sm mb-3 transition-colors"
+                                    className="flex items-center gap-1 text-on-surface/40 hover:text-on-surface text-sm mb-3 transition-colors"
                                 >
-                                    <ArrowLeft className="w-4 h-4" />
+                                    <span className="material-symbols-outlined text-[16px]">arrow_back</span>
                                     返回登入
                                 </button>
-                                <h2 className="text-2xl font-bold text-white">忘記密碼</h2>
-                                <p className="text-white/40 text-sm mt-1">
+                                <h2 className="text-2xl font-bold text-on-surface">忘記密碼</h2>
+                                <p className="text-on-surface/40 text-sm mt-1">
                                     輸入您的電子郵件，我們將寄送重設連結
                                 </p>
                             </>
                         )}
                         {view === 'change-password' && (
                             <>
-                                <h2 className="text-2xl font-bold text-white">設定新密碼</h2>
-                                <p className="text-white/40 text-sm mt-1">請輸入您想要使用的新密碼</p>
+                                <h2 className="text-2xl font-bold text-on-surface">設定新密碼</h2>
+                                <p className="text-on-surface/40 text-sm mt-1">請輸入您想要使用的新密碼</p>
                             </>
                         )}
                     </div>
@@ -339,7 +339,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                     {view === 'login' && (
                         <form onSubmit={handleLogin} className="space-y-4">
                             <div>
-                                <label className="block text-white/60 text-sm mb-1.5">電子郵件</label>
+                                <label className="block text-on-surface/60 text-sm mb-1.5">電子郵件</label>
                                 <input
                                     type="email"
                                     value={loginEmail}
@@ -350,7 +350,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                                 />
                             </div>
                             <div>
-                                <label className="block text-white/60 text-sm mb-1.5">密碼</label>
+                                <label className="block text-on-surface/60 text-sm mb-1.5">密碼</label>
                                 <div className="relative">
                                     <input
                                         type={showLoginPwd ? 'text' : 'password'}
@@ -363,7 +363,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                                     <button
                                         type="button"
                                         onClick={() => setShowLoginPwd((v) => !v)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/70 transition-colors"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface/30 hover:text-on-surface/70 transition-colors"
                                     >
                                         {showLoginPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                     </button>
@@ -383,14 +383,14 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
 
                             <div className="relative flex items-center gap-3 my-1">
                                 <div className="flex-1 h-px bg-white/10" />
-                                <span className="text-white/20 text-xs">或</span>
+                                <span className="text-on-surface/20 text-xs">或</span>
                                 <div className="flex-1 h-px bg-white/10" />
                             </div>
 
                             <button
                                 type="button"
                                 onClick={signInWithGitHub}
-                                className="w-full py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm font-medium hover:bg-white/10 transition-colors flex items-center justify-center gap-2"
+                                className="w-full py-3 bg-white/5 border border-outline-variant/10 rounded-xl text-on-surface text-sm font-medium hover:bg-white/10 transition-colors flex items-center justify-center gap-2"
                             >
                                 <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
                                     <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
@@ -398,7 +398,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                                 使用 GitHub 登入
                             </button>
 
-                            <p className="text-center text-white/30 text-sm">
+                            <p className="text-center text-on-surface/30 text-sm">
                                 還沒有帳號？{' '}
                                 <button
                                     type="button"
@@ -428,13 +428,13 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                                                 className="w-full h-full object-cover"
                                             />
                                             <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <Upload className="w-5 h-5 text-white" />
+                                                <Upload className="w-5 h-5 text-on-surface" />
                                             </div>
                                         </>
                                     ) : (
                                         <div className="text-center">
-                                            <Upload className="w-6 h-6 text-white/30 mx-auto" />
-                                            <span className="text-white/20 text-xs mt-0.5 block">上傳</span>
+                                            <Upload className="w-6 h-6 text-on-surface/30 mx-auto" />
+                                            <span className="text-on-surface/20 text-xs mt-0.5 block">上傳</span>
                                         </div>
                                     )}
                                 </div>
@@ -445,13 +445,13 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                                             setRegAvatarPreview('');
                                             setRegAvatarData('');
                                         }}
-                                        className="text-xs text-white/30 hover:text-red-400 transition-colors"
+                                        className="text-xs text-on-surface/30 hover:text-red-400 transition-colors"
                                     >
                                         移除頭像
                                     </button>
                                 )}
                                 {!regAvatarPreview && (
-                                    <p className="text-xs text-white/25">點擊上傳頭像（選填）</p>
+                                    <p className="text-xs text-on-surface/25">點擊上傳頭像（選填）</p>
                                 )}
                                 <input
                                     ref={fileInputRef}
@@ -463,7 +463,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                             </div>
 
                             <div>
-                                <label className="block text-white/60 text-sm mb-1.5">
+                                <label className="block text-on-surface/60 text-sm mb-1.5">
                                     顯示名稱 <span className="text-red-400">*</span>
                                 </label>
                                 <input
@@ -477,7 +477,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                             </div>
 
                             <div>
-                                <label className="block text-white/60 text-sm mb-1.5">
+                                <label className="block text-on-surface/60 text-sm mb-1.5">
                                     電子郵件 <span className="text-red-400">*</span>
                                 </label>
                                 <input
@@ -491,7 +491,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                             </div>
 
                             <div>
-                                <label className="block text-white/60 text-sm mb-1.5">
+                                <label className="block text-on-surface/60 text-sm mb-1.5">
                                     密碼 <span className="text-red-400">*</span>
                                 </label>
                                 <div className="relative">
@@ -506,7 +506,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                                     <button
                                         type="button"
                                         onClick={() => setShowRegPwd((v) => !v)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/70 transition-colors"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface/30 hover:text-on-surface/70 transition-colors"
                                     >
                                         {showRegPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                     </button>
@@ -514,7 +514,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                             </div>
 
                             <div>
-                                <label className="block text-white/60 text-sm mb-1.5">
+                                <label className="block text-on-surface/60 text-sm mb-1.5">
                                     確認密碼 <span className="text-red-400">*</span>
                                 </label>
                                 <div className="relative">
@@ -523,7 +523,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                                         value={regConfirm}
                                         onChange={(e) => setRegConfirm(e.target.value)}
                                         placeholder="再次輸入密碼"
-                                        className={`w-full bg-white/5 border rounded-xl px-4 py-3 pr-11 text-white placeholder:text-white/20 text-sm focus:outline-none transition-colors ${confirmBorderClass(
+                                        className={`w-full bg-white/5 border rounded-xl px-4 py-3 pr-11 text-on-surface placeholder:text-on-surface/20 text-sm focus:outline-none transition-colors ${confirmBorderClass(
                                             regConfirm,
                                             regPassword === regConfirm,
                                         )}`}
@@ -532,7 +532,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                                     <button
                                         type="button"
                                         onClick={() => setShowConfirmPwd((v) => !v)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/70 transition-colors"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface/30 hover:text-on-surface/70 transition-colors"
                                     >
                                         {showConfirmPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                     </button>
@@ -546,7 +546,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                                 {loading ? '建立中…' : '建立帳號'}
                             </button>
 
-                            <p className="text-center text-white/30 text-sm">
+                            <p className="text-center text-on-surface/30 text-sm">
                                 已有帳號？{' '}
                                 <button
                                     type="button"
@@ -563,7 +563,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                     {view === 'forgot' && !success && (
                         <form onSubmit={handleForgotPassword} className="space-y-4">
                             <div>
-                                <label className="block text-white/60 text-sm mb-1.5">電子郵件</label>
+                                <label className="block text-on-surface/60 text-sm mb-1.5">電子郵件</label>
                                 <input
                                     type="email"
                                     value={forgotEmail}
@@ -583,7 +583,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                     {view === 'change-password' && !success && (
                         <form onSubmit={handleChangePassword} className="space-y-4">
                             <div>
-                                <label className="block text-white/60 text-sm mb-1.5">新密碼</label>
+                                <label className="block text-on-surface/60 text-sm mb-1.5">新密碼</label>
                                 <div className="relative">
                                     <input
                                         type={showNewPwd ? 'text' : 'password'}
@@ -596,7 +596,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                                     <button
                                         type="button"
                                         onClick={() => setShowNewPwd((v) => !v)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/70 transition-colors"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface/30 hover:text-on-surface/70 transition-colors"
                                     >
                                         {showNewPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                     </button>
@@ -604,14 +604,14 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                             </div>
 
                             <div>
-                                <label className="block text-white/60 text-sm mb-1.5">確認新密碼</label>
+                                <label className="block text-on-surface/60 text-sm mb-1.5">確認新密碼</label>
                                 <div className="relative">
                                     <input
                                         type={showNewConfirmPwd ? 'text' : 'password'}
                                         value={newPasswordConfirm}
                                         onChange={(e) => setNewPasswordConfirm(e.target.value)}
                                         placeholder="再次輸入新密碼"
-                                        className={`w-full bg-white/5 border rounded-xl px-4 py-3 pr-11 text-white placeholder:text-white/20 text-sm focus:outline-none transition-colors ${confirmBorderClass(
+                                        className={`w-full bg-white/5 border rounded-xl px-4 py-3 pr-11 text-on-surface placeholder:text-on-surface/20 text-sm focus:outline-none transition-colors ${confirmBorderClass(
                                             newPasswordConfirm,
                                             newPassword === newPasswordConfirm,
                                         )}`}
@@ -620,7 +620,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                                     <button
                                         type="button"
                                         onClick={() => setShowNewConfirmPwd((v) => !v)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/70 transition-colors"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface/30 hover:text-on-surface/70 transition-colors"
                                     >
                                         {showNewConfirmPwd ? (
                                             <EyeOff className="w-4 h-4" />
@@ -646,3 +646,4 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
 
     return ReactDOM.createPortal(modalContent, portalRoot);
 }
+
