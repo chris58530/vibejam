@@ -169,11 +169,27 @@ async function startServer() {
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
           body: JSON.stringify({ model: 'MiniMax-Text-01', messages: [{ role: 'user', content: 'hi' }], max_tokens: 5 }),
         });
-        if (!r.ok) return res.status(401).json({ error: 'Invalid MiniMax API key' });
+        if (!r.ok) {
+          const err = await r.json().catch(() => ({}));
+          return res.status(401).json({ error: err.base_resp?.status_msg || 'Invalid MiniMax API key' });
+        }
         return res.json({ ok: true, provider });
       }
-      // For providers without a simple test endpoint, accept the key
-      return res.json({ ok: true, provider });
+      if (provider === 'replicate') {
+        const r = await fetch('https://api.replicate.com/v1/account', {
+          headers: { Authorization: `Token ${apiKey}` },
+        });
+        if (!r.ok) return res.status(401).json({ error: 'Invalid Replicate API key' });
+        return res.json({ ok: true, provider });
+      }
+      if (provider === 'stability') {
+        const r = await fetch('https://api.stability.ai/v1/user/account', {
+          headers: { Authorization: `Bearer ${apiKey}` },
+        });
+        if (!r.ok) return res.status(401).json({ error: 'Invalid Stability AI API key' });
+        return res.json({ ok: true, provider });
+      }
+      return res.status(400).json({ error: `Unknown provider: ${provider}` });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
