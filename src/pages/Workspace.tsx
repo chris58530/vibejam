@@ -78,9 +78,9 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
             onChange={(e) => setTags(e.target.value)}
           />
         </div>
-        
+
         <div className="ml-auto flex gap-3">
-          <button 
+          <button
             onClick={handlePublish}
             disabled={isPublishing || !title || !code || !currentUser?.id}
             className="bg-gradient-to-br from-primary to-primary-container text-on-primary px-5 py-1.5 rounded-lg text-sm font-bold active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed group relative flex items-center gap-2"
@@ -107,9 +107,9 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
           </div>
           <div className="flex-1 p-0 font-mono text-sm leading-relaxed editor-well overflow-hidden flex relative group cursor-text">
             <div className="absolute left-0 top-0 bottom-0 w-8 bg-surface-container-lowest border-r border-outline-variant/5 text-right py-4 pr-2 text-on-surface/20 select-none hidden sm:block">
-               {code.split('\n').map((_, i) => (
-                 <div key={i}>{i + 1}</div>
-               ))}
+              {code.split('\n').map((_, i) => (
+                <div key={i}>{i + 1}</div>
+              ))}
             </div>
             <textarea
               value={code}
@@ -131,7 +131,7 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <button 
+              <button
                 onClick={() => setViewMode(viewMode === 'desktop' ? 'mobile' : 'desktop')}
                 className="material-symbols-outlined text-on-surface/40 hover:text-primary transition-colors text-lg"
               >
@@ -170,12 +170,12 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
             main*
           </div>
           <div className="text-[10px] text-on-surface/40 font-mono">
-           {code ? `Ln ${code.split('\n').length}` : ''}
+            {code ? `Ln ${code.split('\n').length}` : ''}
           </div>
         </div>
         <div className="flex items-center gap-4 text-[10px] font-mono text-on-surface/40">
           <span className="flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-tertiary"></span> 
+            <span className="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
             VibeJam Cloud
           </span>
           <span>UTF-8</span>

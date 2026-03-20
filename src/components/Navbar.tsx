@@ -35,7 +35,7 @@ export default function Navbar() {
       <header className={`fixed top-0 w-full z-50 bg-[#131313]/80 backdrop-blur-xl flex items-center justify-between px-6 h-16 ${!isWorkspace ? 'border-b border-transparent' : 'border-b border-outline-variant/10'}`}>
         <div className="flex items-center gap-8">
           {isWorkspace ? (
-            <div 
+            <div
               className="text-xl font-bold tracking-tighter text-[#E5E2E1] flex items-center gap-2 cursor-pointer font-headline"
               onClick={() => navigate('/')}
             >
@@ -45,7 +45,7 @@ export default function Navbar() {
           ) : (
             <div className="flex items-center gap-4">
               <span className="material-symbols-outlined text-[#E5E2E1]/60 cursor-pointer hover:bg-[#2A2A2A] p-2 rounded-lg transition-colors md:hidden">menu</span>
-              <h1 
+              <h1
                 className="text-xl font-bold tracking-tighter text-[#E5E2E1] font-headline cursor-pointer"
                 onClick={() => navigate('/')}
               >
@@ -57,9 +57,9 @@ export default function Navbar() {
           {!isWorkspace && (
             <div className="hidden md:flex items-center bg-surface-container-low px-4 py-2 rounded-full gap-3 w-96 group transition-all duration-300 focus-within:ring-1 ring-outline-variant/30">
               <span className="material-symbols-outlined text-on-surface-variant text-sm">search</span>
-              <input 
-                className="bg-transparent border-none focus:ring-0 text-sm w-full font-body placeholder:text-on-surface-variant/50 outline-none" 
-                placeholder="Search vibes, code, or creators..." 
+              <input
+                className="bg-transparent border-none focus:ring-0 text-sm w-full font-body placeholder:text-on-surface-variant/50 outline-none"
+                placeholder="Search vibes, code, or creators..."
                 type="text"
               />
             </div>
@@ -92,14 +92,14 @@ export default function Navbar() {
             </>
           ) : (
             <div className="flex items-center gap-4">
-              <button 
+              <button
                 onClick={() => navigate('/workspace')}
                 className="bg-gradient-to-br from-primary to-primary-container text-on-primary px-4 py-1.5 rounded-lg text-sm font-semibold active:scale-95 transition-transform font-body flex items-center gap-2"
               >
                 <span className="material-symbols-outlined text-[18px]">add_circle</span>
                 Create
               </button>
-              
+
               <div className="flex items-center gap-1 hidden sm:flex">
                 <button className="p-2 rounded-lg text-[#E5E2E1]/60 hover:bg-[#2A2A2A] transition-colors duration-200">
                   <span className="material-symbols-outlined">notifications</span>
@@ -113,7 +113,7 @@ export default function Navbar() {
 
           {user ? (
             <div className="flex items-center gap-2 ml-2">
-              <div 
+              <div
                 className="h-8 w-8 rounded-full border border-outline-variant/30 overflow-hidden bg-surface-container-high cursor-pointer"
                 onClick={() => {
                   const username = user.user_metadata?.user_name || user.user_metadata?.name || user.email || 'anonymous';
@@ -146,7 +146,7 @@ export default function Navbar() {
           )}
         </div>
       </header>
-      
+
       <AuthModal
         isOpen={authOpen}
         onClose={() => setAuthOpen(false)}

@@ -37,11 +37,11 @@ export default function BottomTabBar() {
       </button>
 
       <button
-        onClick={() => navigate('/')}
-        className="flex flex-col items-center gap-1 text-[#E5E2E1]/60 hover:text-[#E5E2E1] transition-colors"
+        onClick={() => navigate('/ai-chat')}
+        className={`flex flex-col items-center gap-1 transition-colors ${isActive('/ai-chat') ? 'text-[#FFB3B6]' : 'text-[#E5E2E1]/60 hover:text-[#E5E2E1]'}`}
       >
-        <span className="material-symbols-outlined">trending_up</span>
-        <span className="text-[10px] font-medium font-body">Explore</span>
+        <span className="material-symbols-outlined" style={isActive('/ai-chat') ? { fontVariationSettings: "'FILL' 1" } : {}}>smart_toy</span>
+        <span className="text-[10px] font-medium font-body">AI Chat</span>
       </button>
 
       <button

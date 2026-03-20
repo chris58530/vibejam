@@ -7,6 +7,8 @@ const navItems = [
   { label: 'Trending', icon: 'trending_up', path: '/?feed=trending' },
   { label: 'Following', icon: 'subscriptions', path: '/?feed=following' },
   { label: 'Workspace', icon: 'terminal', path: '/workspace' },
+  { label: 'AI Chat', icon: 'smart_toy', path: '/ai-chat' },
+  { label: 'Settings', icon: 'settings', path: '/settings' },
 ];
 
 export default function Sidebar() {
@@ -85,7 +87,9 @@ export default function Sidebar() {
             (label === 'Trending' && location.search.includes('feed=trending')) ||
             (label === 'Following' && location.search.includes('feed=following')) ||
             (label === 'Home' && location.pathname === '/' && !location.search) ||
-            (label === 'Workspace' && location.pathname === '/workspace');
+            (label === 'Workspace' && location.pathname === '/workspace') ||
+            (label === 'AI Chat' && location.pathname === '/ai-chat') ||
+            (label === 'Settings' && location.pathname === '/settings');
           
           return (
             <button

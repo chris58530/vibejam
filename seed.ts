@@ -179,6 +179,123 @@ function draw(){
 }
 draw();
 </script></body></html>`
+  },
+  {
+    title: 'VibeBot AI Chat Demo',
+    tags: 'AI, Chatbot, API',
+    code: `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VibeBot AI Chat</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#131313;color:#E5E2E1;font-family:'Segoe UI',system-ui,sans-serif;height:100vh;display:flex;flex-direction:column}
+.header{padding:16px 20px;border-bottom:1px solid rgba(88,65,66,0.15);display:flex;align-items:center;gap:12px;background:rgba(19,19,19,0.9);backdrop-filter:blur(12px)}
+.header .avatar{width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,#FFB3B6,#EF616F);display:flex;align-items:center;justify-content:center;font-size:18px}
+.header h1{font-size:16px;font-weight:700;letter-spacing:-0.02em}
+.header .badge{font-size:10px;padding:2px 8px;border-radius:99px;background:rgba(108,219,162,0.15);color:#6cdba2;font-weight:600}
+.key-setup{padding:24px;text-align:center;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.key-setup input{width:100%;max-width:380px;padding:12px 16px;border-radius:12px;border:1px solid rgba(88,65,66,0.2);background:#1C1B1B;color:#E5E2E1;font-size:14px;font-family:monospace;outline:none;transition:all 0.2s}
+.key-setup input:focus{border-color:#FFB3B6;box-shadow:0 0 0 3px rgba(255,179,182,0.1)}
+.key-setup button{padding:10px 28px;border-radius:10px;border:none;background:linear-gradient(135deg,#FFB3B6,#EF616F);color:#40000c;font-weight:700;font-size:14px;cursor:pointer;transition:transform 0.15s}
+.key-setup button:hover{transform:scale(1.03)}
+.key-setup button:active{transform:scale(0.97)}
+.messages{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:12px}
+.msg{max-width:80%;padding:12px 16px;border-radius:16px;font-size:14px;line-height:1.6;white-space:pre-wrap;word-break:break-word;animation:fadeIn 0.3s}
+.msg.user{align-self:flex-end;background:#FFB3B6;color:#40000c;border-bottom-right-radius:4px}
+.msg.bot{align-self:flex-start;background:#1C1B1B;border:1px solid rgba(88,65,66,0.1);border-bottom-left-radius:4px}
+.typing{align-self:flex-start;padding:12px 20px;background:#1C1B1B;border-radius:16px;border-bottom-left-radius:4px;display:flex;gap:4px}
+.typing span{width:8px;height:8px;background:#FFB3B6;opacity:0.5;border-radius:50%;animation:bounce 1.2s infinite}
+.typing span:nth-child(2){animation-delay:0.15s}
+.typing span:nth-child(3){animation-delay:0.3s}
+@keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-8px)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.input-area{padding:12px 16px;border-top:1px solid rgba(88,65,66,0.1)}
+.input-wrap{display:flex;gap:8px;background:#1C1B1B;border:1px solid rgba(88,65,66,0.15);border-radius:14px;padding:6px;align-items:flex-end;transition:all 0.2s}
+.input-wrap:focus-within{border-color:rgba(255,179,182,0.3)}
+.input-wrap textarea{flex:1;background:transparent;border:none;color:#E5E2E1;font-size:14px;resize:none;max-height:120px;padding:6px 8px;outline:none;font-family:inherit;line-height:1.5}
+.input-wrap textarea::placeholder{color:rgba(229,226,225,0.3)}
+.send-btn{width:36px;height:36px;border-radius:10px;border:none;background:#FFB3B6;color:#40000c;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;flex-shrink:0}
+.send-btn:hover{background:#f9a0a4}
+.send-btn:disabled{opacity:0.3;cursor:not-allowed}
+.send-btn svg{width:18px;height:18px}
+.provider-tag{font-size:11px;color:rgba(229,226,225,0.4);text-align:center;padding:6px}
+</style></head><body>
+<div class="header">
+  <div class="avatar">\u{1F916}</div>
+  <div>
+    <h1>VibeBot Chat</h1>
+    <div style="font-size:11px;color:rgba(229,226,225,0.4);margin-top:2px">AI-powered coding assistant</div>
+  </div>
+  <div class="badge" id="status">Offline</div>
+</div>
+<div id="app"></div>
+<script>
+const app=document.getElementById('app');
+let API_KEY=localStorage.getItem('vibejam_demo_gemini_key')||'';
+let chatHistory=[];
+function renderKeySetup(){
+  app.innerHTML=\`<div class="key-setup">
+    <div style="font-size:48px;opacity:0.2">\u{1F511}</div>
+    <h2 style="font-size:18px;font-weight:600">Enter your Gemini API Key</h2>
+    <p style="font-size:13px;color:rgba(229,226,225,0.5);max-width:360px">Your key is stored locally in your browser and never sent to our servers. Get one free at <span style="color:#FFB3B6">aistudio.google.com</span></p>
+    <input id="keyInput" type="password" placeholder="AIza..." value="\${API_KEY}">
+    <button onclick="saveKey()">Connect</button>
+  </div>\`;
+}
+function saveKey(){
+  const k=document.getElementById('keyInput').value.trim();
+  if(!k)return;
+  API_KEY=k;
+  localStorage.setItem('vibejam_demo_gemini_key',k);
+  renderChat();
+}
+function renderChat(){
+  document.getElementById('status').textContent='Connected';
+  document.getElementById('status').style.background='rgba(108,219,162,0.15)';
+  document.getElementById('status').style.color='#6cdba2';
+  app.innerHTML=\`<div class="messages" id="msgs"></div>
+    <div class="provider-tag">Powered by Gemini 2.0 Flash</div>
+    <div class="input-area"><div class="input-wrap">
+      <textarea id="input" rows="1" placeholder="Ask me about web dev..."
+        oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();send()}"></textarea>
+      <button class="send-btn" id="sendBtn" onclick="send()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg></button>
+    </div></div>\`;
+  renderMessages();
+}
+function renderMessages(){
+  const c=document.getElementById('msgs');
+  if(!c)return;
+  c.innerHTML=chatHistory.map(m=>\`<div class="msg \${m.role==='user'?'user':'bot'}">\${escapeHtml(m.content)}</div>\`).join('');
+  c.scrollTop=c.scrollHeight;
+}
+function escapeHtml(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+async function send(){
+  const input=document.getElementById('input');
+  const text=input.value.trim();
+  if(!text)return;
+  input.value='';input.style.height='auto';
+  chatHistory.push({role:'user',content:text});
+  renderMessages();
+  const msgs=document.getElementById('msgs');
+  msgs.innerHTML+=\`<div class="typing"><span></span><span></span><span></span></div>\`;
+  msgs.scrollTop=msgs.scrollHeight;
+  document.getElementById('sendBtn').disabled=true;
+  try{
+    const contents=chatHistory.filter(m=>m.role!=='system').map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]}));
+    const r=await fetch(\`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=\${encodeURIComponent(API_KEY)}\`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents,systemInstruction:{parts:[{text:'You are VibeBot, a creative coding assistant on the VibeJam platform. Help users with HTML, CSS, JS, Canvas, animations, and creative web development. Be concise, friendly, and provide code examples when appropriate. Respond in the same language as the user.'}]},generationConfig:{temperature:0.7,maxOutputTokens:2048}})
+    });
+    if(!r.ok) throw new Error('API error '+r.status);
+    const d=await r.json();
+    const reply=d.candidates?.[0]?.content?.parts?.[0]?.text||'Sorry, no response.';
+    chatHistory.push({role:'assistant',content:reply});
+  }catch(e){chatHistory.push({role:'assistant',content:'\\u274c Error: '+e.message+'\\n\\nPlease check your API key.'})}
+  document.getElementById('sendBtn').disabled=false;
+  renderMessages();
+}
+if(API_KEY)renderChat();else renderKeySetup();
+</script></body></html>`
   }
   ];
 

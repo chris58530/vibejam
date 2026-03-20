@@ -7,11 +7,19 @@ import Home from './pages/Home';
 import Workspace from './pages/Workspace';
 import VibeDetail from './pages/VibeDetail';
 import Profile from './pages/Profile';
+import Settings from './pages/Settings';
+import AIChat from './pages/AIChat';
 import { api, User } from './lib/api';
 import { supabase } from './lib/supabase';
+import { useAIKeyStore } from './lib/aiKeyStore';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+  // Initialize AI Key Store
+  useEffect(() => {
+    useAIKeyStore.getState().initialize();
+  }, []);
 
   useEffect(() => {
     if (!supabase) return;
@@ -55,6 +63,8 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/workspace" element={<Workspace currentUser={currentUser ?? undefined} />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/ai-chat" element={<AIChat />} />
             <Route path="/:username/:vibeSlug" element={<VibeDetail currentUser={currentUser ?? undefined} />} />
             <Route path="/:username" element={<Profile />} />
             <Route path="*" element={

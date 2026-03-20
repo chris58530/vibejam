@@ -129,6 +129,99 @@ async function startServer() {
     } catch (err: any) { res.status(500).json({ error: err.message }); }
   });
 
+  // ── AI Proxy Routes ──────────────────────────────────────────
+
+  // Rate limit tracking (simple in-memory)
+  const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+  const RATE_LIMIT = 30; // requests per minute
+
+  function checkRateLimit(ip: string): boolean {
+    const now = Date.now();
+    const entry = rateLimitMap.get(ip);
+    if (!entry || now > entry.resetAt) {
+      rateLimitMap.set(ip, { count: 1, resetAt: now + 60000 });
+      return true;
+    }
+    if (entry.count >= RATE_LIMIT) return false;
+    entry.count++;
+    return true;
+  }
+
+  // Test API Key validity
+  app.post('/api/ai/test', async (req, res) => {
+    const { provider, apiKey } = req.body;
+    if (!provider || !apiKey) return res.status(400).json({ error: 'provider and apiKey required' });
+
+    try {
+      if (provider === 'gemini') {
+        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`);
+        if (!r.ok) return res.status(401).json({ error: 'Invalid Gemini API key' });
+        return res.json({ ok: true, provider });
+      }
+      if (provider === 'openai') {
+        const r = await fetch('https://api.openai.com/v1/models', { headers: { Authorization: `Bearer ${apiKey}` } });
+        if (!r.ok) return res.status(401).json({ error: 'Invalid OpenAI API key' });
+        return res.json({ ok: true, provider });
+      }
+      // For providers without a simple test endpoint, accept the key
+      return res.json({ ok: true, provider });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // AI Chat Proxy
+  app.post('/api/ai/chat', async (req, res) => {
+    const ip = req.ip || req.socket.remoteAddress || 'unknown';
+    if (!checkRateLimit(ip)) return res.status(429).json({ error: 'Rate limit exceeded. Try again later.' });
+
+    const { provider, apiKey, messages, model, temperature = 0.7, maxTokens = 2048 } = req.body;
+    if (!provider || !apiKey || !messages) return res.status(400).json({ error: 'provider, apiKey and messages required' });
+
+    try {
+      if (provider === 'gemini') {
+        const geminiModel = model || 'gemini-2.0-flash';
+        const contents = messages
+          .filter((m: any) => m.role !== 'system')
+          .map((m: any) => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }));
+        const systemInstruction = messages.find((m: any) => m.role === 'system');
+
+        const body: any = { contents, generationConfig: { temperature, maxOutputTokens: maxTokens } };
+        if (systemInstruction) body.systemInstruction = { parts: [{ text: systemInstruction.content }] };
+
+        const r = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${encodeURIComponent(apiKey)}`,
+          { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+        );
+        if (!r.ok) {
+          const err = await r.json().catch(() => ({}));
+          return res.status(r.status).json({ error: err.error?.message || 'Gemini API error' });
+        }
+        const data = await r.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        return res.json({ text, tokensUsed: data.usageMetadata?.totalTokenCount });
+      }
+
+      if (provider === 'openai') {
+        const r = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+          body: JSON.stringify({ model: model || 'gpt-3.5-turbo', messages, temperature, max_tokens: maxTokens }),
+        });
+        if (!r.ok) {
+          const err = await r.json().catch(() => ({}));
+          return res.status(r.status).json({ error: err.error?.message || 'OpenAI API error' });
+        }
+        const data = await r.json();
+        return res.json({ text: data.choices?.[0]?.message?.content || '', tokensUsed: data.usage?.total_tokens });
+      }
+
+      return res.status(400).json({ error: `Provider '${provider}' chat not supported yet` });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
