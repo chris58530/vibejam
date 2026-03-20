@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { encrypt, decrypt } from './crypto';
 
-export type AIProvider = 'gemini' | 'openai' | 'replicate' | 'stability';
+export type AIProvider = 'gemini' | 'openai' | 'replicate' | 'stability' | 'minimax';
 
 export interface AIProviderConfig {
   id: AIProvider;
@@ -13,6 +13,7 @@ export interface AIProviderConfig {
 export const AI_PROVIDERS: AIProviderConfig[] = [
   { id: 'gemini', label: 'Google Gemini', placeholder: 'AIza...', testEndpoint: '/api/ai/test' },
   { id: 'openai', label: 'OpenAI', placeholder: 'sk-...', testEndpoint: '/api/ai/test' },
+  { id: 'minimax', label: 'MiniMax', placeholder: 'eyJ...', testEndpoint: '/api/ai/test' },
   { id: 'replicate', label: 'Replicate', placeholder: 'r8_...', testEndpoint: '/api/ai/test' },
   { id: 'stability', label: 'Stability AI', placeholder: 'sk-...', testEndpoint: '/api/ai/test' },
 ];

@@ -181,7 +181,202 @@ draw();
 </script></body></html>`
   },
   {
-    title: 'VibeBot AI Chat Demo',
+    title: 'MiniMax API Key Tester',
+    tags: 'AI, MiniMax, API, Tool',
+    code: `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MiniMax Key Tester</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d0d0d;color:#e5e2e1;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:24px 16px}
+h1{font-size:22px;font-weight:800;letter-spacing:-0.03em;margin-bottom:4px}
+.sub{font-size:13px;color:rgba(229,226,225,0.45);margin-bottom:28px}
+.card{width:100%;max-width:480px;background:#1a1a1a;border:1px solid rgba(255,255,255,0.07);border-radius:20px;padding:24px;display:flex;flex-direction:column;gap:16px}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.logo-icon{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#1a6bff,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:20px}
+.label{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(229,226,225,0.4);margin-bottom:6px}
+.input-wrap{position:relative}
+input[type=password],input[type=text]{width:100%;padding:12px 42px 12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,0.08);background:#111;color:#e5e2e1;font-size:13px;font-family:monospace;outline:none;transition:all 0.2s}
+input:focus{border-color:rgba(99,149,255,0.5);box-shadow:0 0 0 3px rgba(99,149,255,0.08)}
+.eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(229,226,225,0.35);cursor:pointer;font-size:16px;padding:2px}
+.btn{padding:13px;border-radius:12px;border:none;font-weight:700;font-size:14px;cursor:pointer;transition:all 0.2s;letter-spacing:0.01em}
+.btn-test{background:linear-gradient(135deg,#1a6bff,#7c3aed);color:#fff}
+.btn-test:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.btn-test:active{transform:translateY(0)}
+.btn-test:disabled{opacity:0.4;cursor:not-allowed;transform:none;filter:none}
+.result{border-radius:14px;padding:16px;font-size:13px;display:none}
+.result.ok{background:rgba(108,219,162,0.1);border:1px solid rgba(108,219,162,0.2);color:#6cdba2}
+.result.err{background:rgba(255,100,100,0.1);border:1px solid rgba(255,100,100,0.2);color:#ff7070}
+.result.testing{background:rgba(255,183,0,0.08);border:1px solid rgba(255,183,0,0.15);color:#ffd060}
+.result-icon{font-size:20px;margin-right:8px}
+.result-title{font-weight:700;margin-bottom:4px;display:flex;align-items:center}
+.result-body{color:inherit;opacity:0.75;line-height:1.5;font-size:12px}
+.divider{height:1px;background:rgba(255,255,255,0.05);margin:4px 0}
+.chat-area{display:none;flex-direction:column;gap:12px}
+.chat-messages{max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:4px}
+.chat-messages::-webkit-scrollbar{width:4px}
+.chat-messages::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:99px}
+.msg-bubble{padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.6;max-width:90%;white-space:pre-wrap;word-break:break-word}
+.msg-bubble.user{background:#1a6bff;color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.msg-bubble.bot{background:#222;border:1px solid rgba(255,255,255,0.07);align-self:flex-start;border-bottom-left-radius:4px}
+.typing-dots{display:flex;gap:4px;align-items:center;padding:10px 14px;background:#222;border-radius:14px;border-bottom-left-radius:4px;align-self:flex-start}
+.typing-dots span{width:7px;height:7px;background:rgba(229,226,225,0.4);border-radius:50%;animation:blink 1.2s infinite}
+.typing-dots span:nth-child(2){animation-delay:.15s}
+.typing-dots span:nth-child(3){animation-delay:.3s}
+@keyframes blink{0%,80%,100%{transform:scale(1);opacity:.4}40%{transform:scale(1.2);opacity:1}}
+.chat-input-row{display:flex;gap:8px}
+.chat-input-row input{flex:1;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:#111;color:#e5e2e1;font-size:13px;outline:none;transition:border-color .2s}
+.chat-input-row input:focus{border-color:rgba(99,149,255,0.4)}
+.send-btn{width:38px;height:38px;min-width:38px;border-radius:10px;border:none;background:#1a6bff;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;transition:all .15s}
+.send-btn:hover{background:#2b7bff}
+.send-btn:disabled{opacity:0.35;cursor:not-allowed}
+.meta{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:rgba(229,226,225,0.3)}
+</style>
+</head><body>
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+  <div style="font-size:32px">🧪</div>
+  <div>
+    <h1>MiniMax Key Tester</h1>
+    <p class="sub" style="margin-bottom:0">Validate your API key instantly</p>
+  </div>
+</div>
+
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon">M</div>
+    <div>
+      <div style="font-weight:700;font-size:15px">MiniMax</div>
+      <div style="font-size:11px;color:rgba(229,226,225,0.4)">api.minimaxi.chat</div>
+    </div>
+  </div>
+
+  <div>
+    <div class="label">API Key</div>
+    <div class="input-wrap">
+      <input id="keyInput" type="password" placeholder="eyJ... or your MiniMax API key" autocomplete="off">
+      <button class="eye" onclick="toggleVis()" id="eyeBtn">👁</button>
+    </div>
+  </div>
+
+  <button class="btn btn-test" id="testBtn" onclick="testKey()">🔑 Test API Key</button>
+
+  <div class="result" id="result">
+    <div class="result-title"><span class="result-icon" id="resultIcon"></span><span id="resultTitle"></span></div>
+    <div class="result-body" id="resultBody"></div>
+  </div>
+
+  <div class="divider" id="chatDivider" style="display:none"></div>
+
+  <div class="chat-area" id="chatArea">
+    <div class="label">Quick Chat Demo</div>
+    <div class="chat-messages" id="chatMsgs"></div>
+    <div class="chat-input-row">
+      <input id="chatInput" placeholder="Ask anything..." onkeydown="if(event.key==='Enter')sendChat()">
+      <button class="send-btn" id="sendBtn" onclick="sendChat()" title="Send">➤</button>
+    </div>
+    <div class="meta">
+      <span>Model: MiniMax-Text-01</span>
+      <span id="usageInfo"></span>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:20px;font-size:11px;color:rgba(229,226,225,0.25);text-align:center;max-width:400px">
+  Key is stored locally in your browser only.<br>Get your key at <span style="color:#1a6bff">platform.minimaxi.chat</span>
+</div>
+
+<script>
+let API_KEY = localStorage.getItem('vibejam_minimax_key') || '';
+let totalTokens = 0;
+const chatHistory = [];
+if(API_KEY) document.getElementById('keyInput').value = API_KEY;
+
+function toggleVis(){
+  const i = document.getElementById('keyInput');
+  const b = document.getElementById('eyeBtn');
+  if(i.type==='password'){i.type='text';b.textContent='🙈';}
+  else{i.type='password';b.textContent='👁';}
+}
+
+async function testKey(){
+  const key = document.getElementById('keyInput').value.trim();
+  if(!key){showResult('err','❌','No Key Entered','Please paste your MiniMax API key above.');return;}
+  API_KEY = key;
+  localStorage.setItem('vibejam_minimax_key', key);
+  const btn = document.getElementById('testBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Testing...';
+  showResult('testing','⏳','Testing...','Sending a test request to MiniMax API...');
+  try{
+    const r = await fetch('https://api.minimaxi.chat/v1/text/chatcompletion_v2',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+      body:JSON.stringify({model:'MiniMax-Text-01',messages:[{role:'user',content:'Reply with exactly: OK'}],max_tokens:10})
+    });
+    const data = await r.json();
+    if(!r.ok){
+      const msg = data.base_resp?.status_msg || data.error?.message || ('HTTP '+r.status);
+      showResult('err','❌','Invalid Key',msg);
+    }else{
+      const reply = data.choices?.[0]?.message?.content || '(no content)';
+      const tokens = data.usage?.total_tokens || 0;
+      showResult('ok','✅','API Key Valid!', 'Model: MiniMax-Text-01 ✓\\nTest reply: "'+reply+'"\\nTokens used: '+tokens);
+      document.getElementById('chatDivider').style.display='block';
+      document.getElementById('chatArea').style.display='flex';
+    }
+  }catch(e){
+    showResult('err','⚠️','Network Error',e.message+'\\n\\nNote: CORS may block direct calls in some browsers. The key may still be valid — try using the VibeJam AI Chat page.');
+  }
+  btn.disabled = false;
+  btn.textContent = '🔄 Test Again';
+}
+
+function showResult(type, icon, title, body){
+  const r=document.getElementById('result');
+  r.style.display='block';
+  r.className='result '+type;
+  document.getElementById('resultIcon').textContent=icon;
+  document.getElementById('resultTitle').textContent=title;
+  document.getElementById('resultBody').textContent=body;
+}
+
+async function sendChat(){
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if(!text||!API_KEY)return;
+  input.value='';
+  chatHistory.push({role:'user',content:text});
+  renderMessages();
+  const msgs = document.getElementById('chatMsgs');
+  const typing = document.createElement('div');
+  typing.className='typing-dots';typing.id='typing';
+  typing.innerHTML='<span></span><span></span><span></span>';
+  msgs.appendChild(typing);msgs.scrollTop=msgs.scrollHeight;
+  document.getElementById('sendBtn').disabled=true;
+  try{
+    const r = await fetch('https://api.minimaxi.chat/v1/text/chatcompletion_v2',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+API_KEY},
+      body:JSON.stringify({model:'MiniMax-Text-01',messages:[{role:'system',content:'You are a helpful assistant. Be concise.'},...chatHistory],temperature:0.7,max_tokens:1024})
+    });
+    const data = await r.json();
+    if(!r.ok) throw new Error(data.base_resp?.status_msg||'API error');
+    const reply = data.choices?.[0]?.message?.content||'No response';
+    totalTokens += data.usage?.total_tokens||0;
+    chatHistory.push({role:'assistant',content:reply});
+    document.getElementById('usageInfo').textContent='Tokens: '+totalTokens;
+  }catch(e){chatHistory.push({role:'assistant',content:'Error: '+e.message});}
+  typing?.remove();
+  document.getElementById('sendBtn').disabled=false;
+  renderMessages();
+}
+
+function renderMessages(){
+  const c=document.getElementById('chatMsgs');
+  c.innerHTML=chatHistory.map(m=>\`<div class="msg-bubble \${m.role==='user'?'user':'bot'}">\${m.content.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>\`).join('');
+  c.scrollTop=c.scrollHeight;
+}
+</script></body></html>`
+  },
     tags: 'AI, Chatbot, API',
     code: `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>VibeBot AI Chat</title>

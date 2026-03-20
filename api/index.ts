@@ -181,6 +181,15 @@ app.post('/api/ai/test', async (req, res) => {
       if (!r.ok) return res.status(401).json({ error: 'Invalid OpenAI API key' });
       return res.json({ ok: true, provider });
     }
+    if (provider === 'minimax') {
+      const r = await fetch('https://api.minimaxi.chat/v1/text/chatcompletion_v2', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({ model: 'MiniMax-Text-01', messages: [{ role: 'user', content: 'hi' }], max_tokens: 5 }),
+      });
+      if (!r.ok) return res.status(401).json({ error: 'Invalid MiniMax API key' });
+      return res.json({ ok: true, provider });
+    }
     return res.json({ ok: true, provider });
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
@@ -227,6 +236,21 @@ app.post('/api/ai/chat', async (req, res) => {
       }
       const data = await r.json();
       return res.json({ text: data.choices?.[0]?.message?.content || '', tokensUsed: data.usage?.total_tokens });
+    }
+
+    if (provider === 'minimax') {
+      const r = await fetch('https://api.minimaxi.chat/v1/text/chatcompletion_v2', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({ model: model || 'MiniMax-Text-01', messages, temperature, max_tokens: maxTokens }),
+      });
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({}));
+        return res.status(r.status).json({ error: err.base_resp?.status_msg || 'MiniMax API error' });
+      }
+      const data = await r.json();
+      const text = data.choices?.[0]?.message?.content || '';
+      return res.json({ text, tokensUsed: data.usage?.total_tokens });
     }
 
     return res.status(400).json({ error: `Provider '${provider}' chat not supported yet` });

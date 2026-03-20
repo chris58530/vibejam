@@ -11,7 +11,7 @@ export default function AIChat() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [selectedProvider, setSelectedProvider] = useState<'gemini' | 'openai'>('gemini');
+  const [selectedProvider, setSelectedProvider] = useState<'gemini' | 'openai' | 'minimax'>('gemini');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -97,7 +97,7 @@ export default function AIChat() {
         <div className="flex items-center gap-3">
           {/* Provider selector */}
           <div className="flex items-center bg-surface-container-low rounded-lg p-0.5">
-            {(['gemini', 'openai'] as const).map(p => (
+            {(['gemini', 'openai', 'minimax'] as const).map(p => (
               <button
                 key={p}
                 onClick={() => setSelectedProvider(p)}
@@ -111,7 +111,7 @@ export default function AIChat() {
                 disabled={!keys[p]}
                 title={keys[p] ? '' : '未設定 API Key'}
               >
-                {p === 'gemini' ? 'Gemini' : 'OpenAI'}
+                {p === 'gemini' ? 'Gemini' : p === 'openai' ? 'OpenAI' : 'MiniMax'}
               </button>
             ))}
           </div>
