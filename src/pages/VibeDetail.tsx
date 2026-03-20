@@ -156,7 +156,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
             className="flex items-center gap-2 px-3 py-1.5 bg-primary hover:bg-primary-fixed text-on-primary text-xs font-mono font-bold rounded shadow-lg shadow-primary/10 transition-colors"
           >
             <span className="material-symbols-outlined text-[14px]">fork_right</span>
-            Remix
+            Fork
           </button>
         </div>
       </div>

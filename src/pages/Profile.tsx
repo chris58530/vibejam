@@ -10,7 +10,7 @@ export default function Profile() {
   const [userProfile, setUserProfile] = useState<User | null>(null);
   const [userVibes, setUserVibes] = useState<Vibe[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('Works');
+  const [activeTab, setActiveTab] = useState('Published');
   
   const [isEditingMotto, setIsEditingMotto] = useState(false);
   const [mottoDraft, setMottoDraft] = useState('');
@@ -113,9 +113,52 @@ export default function Profile() {
           </div>
         </motion.div>
 
-        {/* Channel Tabs */}
+        {/* Motto / About — always visible below header */}
+        <div className="mb-8 px-1">
+          <div className="flex items-start gap-3 group">
+            <div className="flex-1">
+              {isEditingMotto ? (
+                <div className="flex flex-col gap-3">
+                  <textarea
+                    value={mottoDraft}
+                    onChange={(e) => setMottoDraft(e.target.value)}
+                    className="w-full max-w-xl bg-surface-container-low border border-outline-variant/20 rounded-lg p-3 text-on-surface text-sm focus:outline-none focus:border-primary font-sans placeholder:text-on-surface/20 resize-none"
+                    rows={3}
+                    placeholder="Write something about yourself..."
+                    autoFocus
+                  />
+                  <div className="flex gap-2">
+                    <button onClick={() => setIsEditingMotto(false)} className="flex items-center gap-1 px-3 py-1.5 text-xs text-on-surface/50 hover:text-on-surface bg-surface-container-high rounded-lg transition-colors">
+                      <span className="material-symbols-outlined text-sm">close</span> Cancel
+                    </button>
+                    <button onClick={handleSaveMotto} className="flex items-center gap-1 px-3 py-1.5 text-xs bg-primary text-on-primary font-semibold rounded-lg hover:bg-primary/90 transition-colors">
+                      <span className="material-symbols-outlined text-sm">check</span> Save
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-start gap-3">
+                  <p className="text-on-surface/70 text-sm leading-relaxed font-sans border-l-2 border-primary/40 pl-4 py-0.5 max-w-xl">
+                    {userProfile?.motto || 'INIT. DEV. VIBE. System online.'}
+                  </p>
+                  {isOwner && (
+                    <button
+                      onClick={() => setIsEditingMotto(true)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity mt-0.5 p-1.5 text-on-surface/30 hover:text-primary hover:bg-surface-container-high rounded-lg"
+                      title="Edit about"
+                    >
+                      <span className="material-symbols-outlined text-sm">edit</span>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Channel Tabs */}}
         <div className="border-b border-outline-variant/10 mb-8 flex gap-8">
-          {['Works', 'Remixes', 'About'].map(tab => (
+          {['Published', 'Forks'].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -131,7 +174,7 @@ export default function Profile() {
         </div>
 
         {/* Tab Content */}
-        {activeTab === 'Works' && (
+        {activeTab === 'Published' && (
           loading ? (
             <div className="flex justify-center py-32">
               <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
@@ -155,49 +198,14 @@ export default function Profile() {
           )
         )}
 
-        {activeTab === 'Remixes' && (
+        {activeTab === 'Forks' && (
           <div className="col-span-full flex flex-col items-center justify-center py-20 text-on-surface/20 border border-dashed border-outline-variant/10 rounded-xl bg-surface-container-lowest">
-             <span className="material-symbols-outlined text-2xl mb-2 opacity-50">account_tree</span>
-             <p className="font-mono text-xs uppercase tracking-widest">Remixes offline</p>
+             <span className="material-symbols-outlined text-2xl mb-2 opacity-50">fork_right</span>
+             <p className="font-mono text-xs uppercase tracking-widest">No forks yet</p>
           </div>
         )}
 
-        {activeTab === 'About' && (
-          <div className="max-w-xl py-6 p-8 bg-surface-container-lowest border border-outline-variant/10 rounded-xl">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="material-symbols-outlined text-on-surface/40 text-[18px]">info</span>
-              <p className="font-mono text-[10px] uppercase tracking-widest text-on-surface/40">Status / Motto</p>
-              {isOwner && !isEditingMotto && (
-                <button onClick={() => setIsEditingMotto(true)} className="ml-auto flex items-center justify-center w-6 h-6 text-on-surface/30 hover:text-primary transition-colors bg-surface-container hover:bg-surface-container-high rounded decoration-none shadow-none focus:outline-none">
-                  <span className="material-symbols-outlined text-[14px]">edit</span>
-                </button>
-              )}
-            </div>
-            
-            {isEditingMotto ? (
-              <div className="flex flex-col gap-3">
-                <textarea
-                  value={mottoDraft}
-                  onChange={(e) => setMottoDraft(e.target.value)}
-                  className="w-full bg-surface border border-outline-variant/20 rounded p-4 text-on-surface text-sm focus:outline-none focus:border-primary font-mono placeholder:text-on-surface/20"
-                  rows={3}
-                />
-                <div className="flex justify-end gap-2">
-                  <button onClick={() => setIsEditingMotto(false)} className="w-8 h-8 flex items-center justify-center hover:bg-surface-container rounded transition-colors border border-outline-variant/10">
-                    <span className="material-symbols-outlined text-[16px] text-on-surface/40 hover:text-on-surface">close</span>
-                  </button>
-                  <button onClick={handleSaveMotto} className="w-8 h-8 flex items-center justify-center bg-primary hover:bg-primary-fixed rounded transition-colors text-on-primary">
-                    <span className="material-symbols-outlined text-[16px]">check</span>
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <p className="text-on-surface/80 text-sm leading-relaxed font-sans border-l-2 border-primary/40 pl-4 py-1">
-                {userProfile?.motto || 'INIT. DEV. VIBE. System online.'}
-              </p>
-            )}
-          </div>
-        )}
+
       </div>
       
       {/* Footer */}
