@@ -188,7 +188,10 @@ function checkRateLimit(ip: string): boolean {
 }
 
 app.post('/api/ai/test', async (req, res) => {
-  const { provider, apiKey } = req.body;
+  let { provider, apiKey } = req.body;
+  
+  if (apiKey) apiKey = apiKey.trim();
+
   if (!provider || !apiKey) return res.status(400).json({ error: 'provider and apiKey required' });
   try {
     if (provider === 'gemini') {
@@ -241,7 +244,10 @@ app.post('/api/ai/chat', async (req, res) => {
   const ip = req.ip || req.socket.remoteAddress || 'unknown';
   if (!checkRateLimit(ip)) return res.status(429).json({ error: 'Rate limit exceeded. Try again later.' });
 
-  const { provider, apiKey, messages, model, temperature = 0.7, maxTokens = 2048 } = req.body;
+  let { provider, apiKey, messages, model, temperature = 0.7, maxTokens = 2048 } = req.body;
+  
+  if (apiKey) apiKey = apiKey.trim();
+
   if (!provider || !apiKey || !messages) return res.status(400).json({ error: 'provider, apiKey and messages required' });
 
   try {
