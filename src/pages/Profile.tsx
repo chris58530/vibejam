@@ -156,7 +156,7 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* Channel Tabs */}}
+        {/* Channel Tabs */}
         <div className="border-b border-outline-variant/10 mb-8 flex gap-8">
           {['Published', 'Forks'].map(tab => (
             <button
