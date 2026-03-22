@@ -4,7 +4,7 @@ import { useAIKeyStore, AI_PROVIDERS, AIProvider } from '../lib/aiKeyStore';
 
 export default function Settings() {
   const navigate = useNavigate();
-  const { keys, testResults, usage, dailyLimits, initialized, initialize, setKey, removeKey, testKey, setDailyLimit, getUsage } = useAIKeyStore();
+  const { keys, testResults, testMessages, usage, dailyLimits, initialized, initialize, setKey, removeKey, testKey, setDailyLimit, getUsage } = useAIKeyStore();
 
   const [inputValues, setInputValues] = useState<Record<string, string>>({});
   const [visibility, setVisibility] = useState<Record<string, boolean>>({});
@@ -161,6 +161,14 @@ export default function Settings() {
                   </button>
                 )}
               </div>
+
+              {/* Error message */}
+              {testResults[provider.id] === 'error' && testMessages[provider.id] && (
+                <div className="flex items-start gap-2 mb-3 px-3 py-2 bg-error/8 border border-error/20 rounded-lg">
+                  <span className="material-symbols-outlined text-error text-[14px] mt-0.5 flex-shrink-0">error</span>
+                  <p className="text-error text-xs font-mono break-all">{testMessages[provider.id]}</p>
+                </div>
+              )}
 
               {/* Daily Limit */}
               {hasKey && (

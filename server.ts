@@ -174,12 +174,18 @@ async function startServer() {
     try {
       if (provider === 'gemini') {
         const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`);
-        if (!r.ok) return res.status(401).json({ error: 'Invalid Gemini API key' });
+        if (!r.ok) {
+          const err = await r.json().catch(() => ({}));
+          return res.status(401).json({ error: err.error?.message || 'Invalid Gemini API key' });
+        }
         return res.json({ ok: true, provider });
       }
       if (provider === 'openai') {
         const r = await fetch('https://api.openai.com/v1/models', { headers: { Authorization: `Bearer ${apiKey}` } });
-        if (!r.ok) return res.status(401).json({ error: 'Invalid OpenAI API key' });
+        if (!r.ok) {
+          const err = await r.json().catch(() => ({}));
+          return res.status(401).json({ error: err.error?.message || 'Invalid OpenAI API key' });
+        }
         return res.json({ ok: true, provider });
       }
       if (provider === 'minimax') {

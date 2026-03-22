@@ -13,7 +13,7 @@ export interface AIProviderConfig {
 export const AI_PROVIDERS: AIProviderConfig[] = [
   { id: 'gemini', label: 'Google Gemini', placeholder: 'AIza...', testEndpoint: '/api/ai/test' },
   { id: 'openai', label: 'OpenAI', placeholder: 'sk-...', testEndpoint: '/api/ai/test' },
-  { id: 'minimax', label: 'MiniMax', placeholder: 'eyJ...', testEndpoint: '/api/ai/test' },
+  { id: 'minimax', label: 'MiniMax', placeholder: 'sk-cp-... 或 eyJ...', testEndpoint: '/api/ai/test' },
   { id: 'replicate', label: 'Replicate', placeholder: 'r8_...', testEndpoint: '/api/ai/test' },
   { id: 'stability', label: 'Stability AI', placeholder: 'sk-...', testEndpoint: '/api/ai/test' },
 ];
@@ -28,6 +28,8 @@ interface AIKeyState {
   keys: Record<string, string>;
   // Connection test results
   testResults: Record<string, 'idle' | 'testing' | 'success' | 'error'>;
+  // Error messages from test
+  testMessages: Record<string, string>;
   // Daily usage counters
   usage: Record<string, UsageRecord>;
   // Daily limit per provider
@@ -58,6 +60,7 @@ function todayStr(): string {
 export const useAIKeyStore = create<AIKeyState>((set, get) => ({
   keys: {},
   testResults: {},
+  testMessages: {},
   usage: {},
   dailyLimits: {},
   initialized: false,
@@ -122,7 +125,7 @@ export const useAIKeyStore = create<AIKeyState>((set, get) => ({
     const key = get().keys[provider];
     if (!key) return false;
 
-    set(state => ({ testResults: { ...state.testResults, [provider]: 'testing' } }));
+    set(state => ({ testResults: { ...state.testResults, [provider]: 'testing' }, testMessages: { ...state.testMessages, [provider]: '' } }));
 
     try {
       const res = await fetch('/api/ai/test', {
@@ -130,11 +133,18 @@ export const useAIKeyStore = create<AIKeyState>((set, get) => ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ provider, apiKey: key }),
       });
+      const data = await res.json().catch(() => ({}));
       const ok = res.ok;
-      set(state => ({ testResults: { ...state.testResults, [provider]: ok ? 'success' : 'error' } }));
+      set(state => ({
+        testResults: { ...state.testResults, [provider]: ok ? 'success' : 'error' },
+        testMessages: { ...state.testMessages, [provider]: ok ? '' : (data.error || '連線失敗，請確認 Key 是否正確') },
+      }));
       return ok;
-    } catch {
-      set(state => ({ testResults: { ...state.testResults, [provider]: 'error' } }));
+    } catch (err: any) {
+      set(state => ({
+        testResults: { ...state.testResults, [provider]: 'error' },
+        testMessages: { ...state.testMessages, [provider]: err.message || '網路錯誤' },
+      }));
       return false;
     }
   },
