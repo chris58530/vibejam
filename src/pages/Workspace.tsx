@@ -24,17 +24,25 @@ function wrapReactForPreview(rawCode: string): string {
 
   // 擷取 React named imports → 轉為全域 React 解構
   const reactNamed: string[] = [];
+  // 處理: import React, { useState, useEffect } from 'react'
+  code = code.replace(/import\s+\w+\s*,\s*\{([^}]+)\}\s*from\s*['"]react['"]\s*;?\n?/g, (_, imports) => {
+    reactNamed.push(...imports.split(',').map((s: string) => s.trim().split(/\s+as\s+/)[0].trim()));
+    return '';
+  });
+  // 處理: import { useState } from 'react'
   code = code.replace(/import\s*\{([^}]+)\}\s*from\s*['"]react['"]\s*;?\n?/g, (_, imports) => {
     reactNamed.push(...imports.split(',').map((s: string) => s.trim().split(/\s+as\s+/)[0].trim()));
     return '';
   });
+  // 處理: import React from 'react'
   code = code.replace(/import\s+React[^'"]*from\s*['"]react['"]\s*;?\n?/g, '');
   code = code.replace(/import\s+(?:ReactDOM|\{[^}]*\})\s*from\s*['"]react-dom(?:\/client)?['"]\s*;?\n?/g, '');
 
   // 擷取 lucide-react imports → 轉為全域 LucideReact 解構
   const lucideNamed: string[] = [];
+  // 處理: import { MapPin, Clock } from 'lucide-react' (可能跨多行)
   code = code.replace(/import\s*\{([^}]+)\}\s*from\s*['"]lucide-react['"]\s*;?\n?/g, (_, imports) => {
-    lucideNamed.push(...imports.split(',').map((s: string) => s.trim().split(/\s+as\s+/)[0].trim()));
+    lucideNamed.push(...imports.split(',').map((s: string) => s.trim().split(/\s+as\s+/)[0].trim()).filter(Boolean));
     return '';
   });
 
@@ -66,7 +74,7 @@ function wrapReactForPreview(rawCode: string): string {
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script>window.react = window.React;</script>
-  <script src="https://unpkg.com/lucide-react@0.460.0/dist/umd/lucide-react.min.js"></script>
+  <script src="https://unpkg.com/lucide-react/dist/umd/lucide-react.min.js"></script>
   <script>window.LucideReact = window.LucideReact || window.lucideReact || {};</script>
   <script src="https://unpkg.com/@babel/standalone@7.26.4/babel.min.js"></script>
 </head>
