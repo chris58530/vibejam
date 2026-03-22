@@ -118,4 +118,13 @@ export const api = {
     });
     return res.json();
   },
+  async deleteVibe(vibeId: number, supabaseId: string): Promise<{ success: boolean }> {
+    const res = await fetch(`${API_BASE}/vibes/${vibeId}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ supabase_id: supabaseId }),
+    });
+    if (!res.ok) throw new Error('Failed to delete vibe');
+    return res.json();
+  },
 };

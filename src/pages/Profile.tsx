@@ -15,6 +15,7 @@ export default function Profile() {
   const [isEditingMotto, setIsEditingMotto] = useState(false);
   const [mottoDraft, setMottoDraft] = useState('');
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
 
   const navigate = useNavigate();
 
@@ -54,6 +55,18 @@ export default function Profile() {
       setIsEditingMotto(false);
     } catch (err) {
       console.error('Failed to update motto', err);
+    }
+  };
+
+  const handleDeleteVibe = async (vibeId: number) => {
+    if (!currentUser?.id) return;
+    try {
+      await api.deleteVibe(vibeId, currentUser.id);
+      setUserVibes(prev => prev.filter(v => v.id !== vibeId));
+    } catch (err) {
+      console.error('Failed to delete vibe', err);
+    } finally {
+      setDeleteConfirm(null);
     }
   };
 
@@ -182,11 +195,21 @@ export default function Profile() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-8">
               {userVibes.map((vibe) => (
-                <VibeCard
-                  key={vibe.id}
-                  vibe={vibe}
-                  onClick={() => navigate(`/@${encodeURIComponent(vibe.author_name)}/${toSlug(vibe.title)}`)}
-                />
+                <div key={vibe.id} className="relative group/card">
+                  <VibeCard
+                    vibe={vibe}
+                    onClick={() => navigate(`/@${encodeURIComponent(vibe.author_name)}/${toSlug(vibe.title)}`)}
+                  />
+                  {isOwner && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setDeleteConfirm(vibe.id); }}
+                      className="absolute top-2 right-2 opacity-0 group-hover/card:opacity-100 transition-opacity bg-error/80 hover:bg-error text-white rounded-lg p-1.5 shadow-lg z-10"
+                      title="刪除這個專案"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">delete</span>
+                    </button>
+                  )}
+                </div>
               ))}
               {userVibes.length === 0 && (
                 <div className="col-span-full flex flex-col items-center justify-center py-20 text-on-surface/20 border border-dashed border-outline-variant/10 rounded-xl bg-surface-container-lowest">
@@ -219,6 +242,41 @@ export default function Profile() {
           <a href="#" className="font-mono text-[10px] uppercase tracking-widest text-[#E5E2E1]/40 hover:text-[#FFB3B6] transition-colors">Privacy</a>
         </div>
       </footer>
+
+      {/* 刪除確認對話框 */}
+      {deleteConfirm !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-surface border border-outline-variant/20 rounded-2xl shadow-2xl max-w-sm w-full mx-4 p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-error/10 flex items-center justify-center flex-shrink-0">
+                <span className="material-symbols-outlined text-error text-xl">delete_forever</span>
+              </div>
+              <div>
+                <h3 className="text-on-surface font-bold">確認刪除</h3>
+                <p className="text-on-surface-variant text-xs mt-0.5">此操作不可復原</p>
+              </div>
+            </div>
+            <p className="text-on-surface-variant text-sm leading-relaxed mb-6">
+              確定要刪除這個專案嗎？所有版本、評論都會一並刪除。
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface transition-colors rounded-lg hover:bg-surface-container"
+              >
+                取消
+              </button>
+              <button
+                onClick={() => handleDeleteVibe(deleteConfirm)}
+                className="px-5 py-2 bg-error text-white rounded-lg text-sm font-bold hover:opacity-90 transition-opacity flex items-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[16px]">delete_forever</span>
+                確認刪除
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

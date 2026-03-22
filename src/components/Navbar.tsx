@@ -92,14 +92,6 @@ export default function Navbar() {
             </>
           ) : (
             <div className="flex items-center gap-4">
-              <button
-                onClick={() => navigate('/workspace')}
-                className="bg-gradient-to-br from-primary to-primary-container text-on-primary px-4 py-1.5 rounded-lg text-sm font-semibold active:scale-95 transition-transform font-body flex items-center gap-2"
-              >
-                <span className="material-symbols-outlined text-[18px]">add_circle</span>
-                Create
-              </button>
-
               <div className="flex items-center gap-1 hidden sm:flex">
                 <button className="p-2 rounded-lg text-[#E5E2E1]/60 hover:bg-[#2A2A2A] transition-colors duration-200">
                   <span className="material-symbols-outlined">notifications</span>

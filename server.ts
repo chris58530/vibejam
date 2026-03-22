@@ -129,6 +129,25 @@ async function startServer() {
     } catch (err: any) { res.status(500).json({ error: err.message }); }
   });
 
+  // Delete vibe (owner only, verified by supabase_id)
+  app.delete('/api/vibes/:id', async (req, res) => {
+    const { supabase_id } = req.body;
+    if (!supabase_id) return res.status(401).json({ error: 'Unauthorized' });
+    try {
+      const user = await db.get('SELECT id FROM users WHERE supabase_id = $1', [supabase_id]);
+      if (!user) return res.status(401).json({ error: 'Unauthorized' });
+      const vibe = await db.get('SELECT author_id FROM vibes WHERE id = $1', [req.params.id]);
+      if (!vibe) return res.status(404).json({ error: 'Vibe not found' });
+      if (vibe.author_id !== user.id) return res.status(403).json({ error: 'Forbidden' });
+      await db.run('DELETE FROM comments WHERE vibe_id = $1', [req.params.id]);
+      await db.run('DELETE FROM reactions WHERE vibe_id = $1', [req.params.id]);
+      await db.run('DELETE FROM remixes WHERE parent_vibe_id = $1 OR child_vibe_id = $1', [req.params.id, req.params.id]);
+      await db.run('DELETE FROM versions WHERE vibe_id = $1', [req.params.id]);
+      await db.run('DELETE FROM vibes WHERE id = $1', [req.params.id]);
+      res.json({ success: true });
+    } catch (err: any) { res.status(500).json({ error: err.message }); }
+  });
+
   // ── AI Proxy Routes ──────────────────────────────────────────
 
   // Rate limit tracking (simple in-memory)
@@ -169,9 +188,9 @@ async function startServer() {
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
           body: JSON.stringify({ model: 'MiniMax-Text-01', messages: [{ role: 'user', content: 'hi' }], max_tokens: 5 }),
         });
-        if (!r.ok) {
-          const err = await r.json().catch(() => ({}));
-          return res.status(401).json({ error: err.base_resp?.status_msg || 'Invalid MiniMax API key' });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok || (data.base_resp?.status_code !== undefined && data.base_resp.status_code !== 0)) {
+          return res.status(401).json({ error: data.base_resp?.status_msg || 'Invalid MiniMax API key' });
         }
         return res.json({ ok: true, provider });
       }
@@ -247,11 +266,10 @@ async function startServer() {
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
           body: JSON.stringify({ model: model || 'MiniMax-Text-01', messages, temperature, max_tokens: maxTokens }),
         });
-        if (!r.ok) {
-          const err = await r.json().catch(() => ({}));
-          return res.status(r.status).json({ error: err.base_resp?.status_msg || 'MiniMax API error' });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok || (data.base_resp?.status_code !== undefined && data.base_resp.status_code !== 0)) {
+          return res.status(r.ok ? 400 : r.status).json({ error: data.base_resp?.status_msg || 'MiniMax API error' });
         }
-        const data = await r.json();
         const text = data.choices?.[0]?.message?.content || '';
         return res.json({ text, tokensUsed: data.usage?.total_tokens });
       }
