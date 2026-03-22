@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { api, toSlug, User } from '../lib/api';
 
@@ -7,15 +7,28 @@ interface WorkspaceProps {
 }
 
 type EditorTab = 'html' | 'css' | 'js';
-type EditorMode = 'single' | 'split' | 'react';
+type EditorMode = 'single' | 'split' | 'react' | 'vue';
 
-// ── 偵測是否為 React 程式碼 ──────────────────────────────────────────
-function isReactCode(code: string): boolean {
-  return (
+// ── 框架偵測 ─────────────────────────────────────────────────────────
+function detectFramework(code: string): EditorMode {
+  // React
+  if (
     /from\s+['"]react['"]/i.test(code) ||
-    /import\s+React/i.test(code) ||
-    /export\s+default\s+(function|class)\s+\w+/i.test(code)
-  );
+    /import\s+React/i.test(code)
+  ) return 'react';
+
+  // Vue SFC: <template> + <script>
+  if (
+    /<template\b/i.test(code) && /<script\b/i.test(code)
+  ) return 'vue';
+
+  // Vue options/composition: import from 'vue' 或 createApp
+  if (
+    /from\s+['"]vue['"]/i.test(code) ||
+    /Vue\.createApp|createApp\s*\(/i.test(code)
+  ) return 'vue';
+
+  return 'single';
 }
 
 // ── 將 React JSX 包裝成可在 iframe 中執行的完整 HTML ─────────────────
@@ -114,6 +127,84 @@ ${js}
 </html>`;
 }
 
+// ── 將 Vue SFC / Options API 包裝成可在 iframe 中執行的完整 HTML ─────
+function wrapVueForPreview(rawCode: string): string {
+  const isSFC = /<template\b/i.test(rawCode) && /<script\b/i.test(rawCode);
+
+  if (isSFC) {
+    // 擷取 <template>, <script>, <style>
+    const templateMatch = rawCode.match(/<template\b[^>]*>([\s\S]*?)<\/template>/i);
+    const scriptMatch = rawCode.match(/<script\b[^>]*>([\s\S]*?)<\/script>/i);
+    const styleMatch = rawCode.match(/<style\b[^>]*>([\s\S]*?)<\/style>/i);
+
+    const templateContent = templateMatch?.[1]?.trim() || '<div>No template</div>';
+    let scriptContent = scriptMatch?.[1]?.trim() || '';
+    const styleContent = styleMatch?.[1]?.trim() || '';
+
+    // 移除 import 語句
+    scriptContent = scriptContent.replace(/^import\s+[^;]+;?\n?/gm, '');
+    // 將 export default 改為變數賦值
+    scriptContent = scriptContent.replace(/export\s+default\s*/, 'const __component__ = ');
+
+    return `<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <style>${styleContent}</style>
+</head>
+<body>
+  <div id="app">${templateContent}</div>
+  <script>
+${scriptContent}
+const app = Vue.createApp(typeof __component__ !== 'undefined' ? __component__ : {});
+app.mount('#app');
+  </script>
+</body>
+</html>`;
+  }
+
+  // Non-SFC: import { ref } from 'vue' 或 createApp 風格
+  let code = rawCode;
+  const vueNamed: string[] = [];
+  code = code.replace(/import\s*\{([^}]+)\}\s*from\s*['"]vue['"]\s*;?\n?/g, (_, imports) => {
+    vueNamed.push(...imports.split(',').map((s: string) => s.trim().split(/\s+as\s+/)[0].trim()).filter(Boolean));
+    return '';
+  });
+  code = code.replace(/import\s+[^;]*from\s*['"]vue['"]\s*;?\n?/g, '');
+  code = code.replace(/^import\s+[^;]+;?\n?/gm, '');
+
+  const destructures = vueNamed.length > 0
+    ? `const { ${[...new Set(vueNamed)].join(', ')} } = Vue;\n`
+    : '';
+
+  return `<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+${destructures}${code}
+  </script>
+</body>
+</html>`;
+}
+
+// ── 模式設定 ─────────────────────────────────────────────────────────
+const MODE_OPTIONS: { id: EditorMode; emoji: string; label: string; desc: string }[] = [
+  { id: 'single', emoji: '📋', label: '直接貼上', desc: '把 AI 給你的整段程式碼貼入' },
+  { id: 'split', emoji: '🔧', label: '分開編輯', desc: '自行分開撰寫 HTML、CSS、JS' },
+  { id: 'react', emoji: '⚛️', label: 'React 元件', desc: '支援 JSX + Tailwind + lucide' },
+  { id: 'vue', emoji: '💚', label: 'Vue 元件', desc: '支援 Vue 3 SFC 單檔元件' },
+];
+
 // ─────────────────────────────────────────────────────────────────────
 export default function Workspace({ currentUser }: WorkspaceProps) {
   const location = useLocation();
@@ -126,9 +217,14 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
   const [activeTab, setActiveTab] = useState<EditorTab>('html');
 
   const [editorMode, setEditorMode] = useState<EditorMode>('single');
-  const [reactDialog, setReactDialog] = useState({ open: false, pendingCode: '' });
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Toast 通知
+  const [toast, setToast] = useState<{ show: boolean; message: string; icon: string }>({ show: false, message: '', icon: 'auto_awesome' });
 
   const isReactMode = editorMode === 'react';
+  const isVueMode = editorMode === 'vue';
   const isSplitMode = editorMode === 'split';
 
   const [title, setTitle] = useState(remixFrom ? `Remix of ${remixFrom.title}` : 'Untitled Project');
@@ -138,19 +234,35 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
 
   const currentCode = activeTab === 'html' ? htmlCode : activeTab === 'css' ? cssCode : jsCode;
 
+  // 點擊外部關閉下拉
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const showToast = (message: string, icon = 'auto_awesome') => {
+    setToast({ show: true, message, icon });
+    setTimeout(() => setToast({ show: false, message: '', icon: 'auto_awesome' }), 3000);
+  };
+
   const previewDoc = useMemo(() => {
     if (!htmlCode && !cssCode && !jsCode) return '';
-    return isReactMode
-      ? wrapReactForPreview(htmlCode)
-      : mergeCode(htmlCode, cssCode, jsCode);
-  }, [isReactMode, htmlCode, cssCode, jsCode]);
+    if (isReactMode) return wrapReactForPreview(htmlCode);
+    if (isVueMode) return wrapVueForPreview(htmlCode);
+    return mergeCode(htmlCode, cssCode, jsCode);
+  }, [isReactMode, isVueMode, htmlCode, cssCode, jsCode]);
 
   // ── 編輯器 onChange ────────────────────────────────────────────────
   const handleEditorChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
     if (activeTab === 'html') {
       setHtmlCode(value);
-      if (!value && editorMode === 'react') setEditorMode('single');
+      if (!value && (editorMode === 'react' || editorMode === 'vue')) setEditorMode('single');
     } else if (activeTab === 'css') {
       setCssCode(value);
     } else {
@@ -158,32 +270,26 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
     }
   };
 
-  // ── 貼上時偵測 React 並跳出對話框 ─────────────────────────────────
+  // ── 貼上時自動偵測框架（靜默轉換 + toast）─────────────────────────
   const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     if (activeTab !== 'html') return;
     const pasted = e.clipboardData.getData('text');
-    if (isReactCode(pasted)) {
+    const detected = detectFramework(pasted);
+
+    if (detected !== 'single' && detected !== editorMode) {
       e.preventDefault();
-      setReactDialog({ open: true, pendingCode: pasted });
-      return;
+      setHtmlCode(pasted);
+      setEditorMode(detected);
+      const label = MODE_OPTIONS.find(m => m.id === detected)?.label || detected;
+      showToast(`已自動切換為 ${label} 模式`, 'auto_awesome');
     }
-  };
-
-  const handleReactConfirm = () => {
-    setHtmlCode(reactDialog.pendingCode);
-    setEditorMode('react');
-    setReactDialog({ open: false, pendingCode: '' });
-  };
-
-  const handleReactCancel = () => {
-    setHtmlCode(reactDialog.pendingCode);
-    setReactDialog({ open: false, pendingCode: '' });
   };
 
   const handleModeChange = (mode: EditorMode) => {
     setEditorMode(mode);
     setActiveTab('html');
-    if (mode === 'single' || mode === 'react') {
+    setDropdownOpen(false);
+    if (mode === 'single' || mode === 'react' || mode === 'vue') {
       setCssCode('');
       setJsCode('');
     }
@@ -279,18 +385,41 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
         <section className="md:w-1/2 flex flex-col bg-surface-container-lowest border-r border-outline-variant/10 h-1/2 md:h-full">
           {/* Mode Selector + Tabs */}
           <div className="flex bg-surface-container-low h-10 items-end px-2 gap-1 border-b border-outline-variant/10">
-            {/* Mode Dropdown */}
-            <div className="flex items-center mr-2 mb-1">
-              <select
-                value={editorMode}
-                onChange={(e) => handleModeChange(e.target.value as EditorMode)}
-                className="bg-surface-container-highest text-on-surface text-[11px] font-bold uppercase tracking-wider rounded px-2 py-1 border border-outline-variant/20 outline-none cursor-pointer appearance-none pr-5"
-                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 6px center' }}
+            {/* Custom Mode Dropdown */}
+            <div className="relative flex items-center mr-2 mb-1" ref={dropdownRef}>
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="flex items-center gap-1.5 bg-surface-container-highest text-on-surface text-[11px] font-bold uppercase tracking-wider rounded px-2.5 py-1 border border-outline-variant/20 hover:border-outline-variant/40 transition-colors"
               >
-                <option value="single">All-in-One</option>
-                <option value="split">HTML / CSS / JS</option>
-                <option value="react">React JSX</option>
-              </select>
+                <span className="text-sm">{MODE_OPTIONS.find(m => m.id === editorMode)?.emoji}</span>
+                {MODE_OPTIONS.find(m => m.id === editorMode)?.label}
+                <span className="material-symbols-outlined text-[12px] text-on-surface/40 ml-0.5">expand_more</span>
+              </button>
+
+              {dropdownOpen && (
+                <div className="absolute top-full left-0 mt-1 w-64 bg-surface border border-outline-variant/20 rounded-xl shadow-2xl overflow-hidden z-50">
+                  {MODE_OPTIONS.map(opt => (
+                    <button
+                      key={opt.id}
+                      onClick={() => handleModeChange(opt.id)}
+                      className={`w-full text-left px-4 py-3 hover:bg-surface-container transition-colors flex items-start gap-3 ${
+                        editorMode === opt.id ? 'bg-primary/5' : ''
+                      }`}
+                    >
+                      <span className="text-lg mt-0.5">{opt.emoji}</span>
+                      <div>
+                        <div className={`text-sm font-bold ${editorMode === opt.id ? 'text-primary' : 'text-on-surface'}`}>
+                          {opt.label}
+                        </div>
+                        <div className="text-[11px] text-on-surface-variant leading-tight mt-0.5">{opt.desc}</div>
+                      </div>
+                      {editorMode === opt.id && (
+                        <span className="material-symbols-outlined text-primary text-[16px] ml-auto mt-1">check</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Tabs (只在 split 模式顯示) */}
@@ -312,8 +441,8 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
             {/* 非 split 模式 → 顯示檔案名標籤 */}
             {!isSplitMode && (
               <div className="px-4 py-2 bg-surface-container-lowest text-primary text-xs font-medium rounded-t-lg flex items-center gap-1.5 border-t border-x border-outline-variant/10">
-                <span className="material-symbols-outlined text-[14px]">{isReactMode ? 'code' : 'html'}</span>
-                {isReactMode ? 'Component.jsx' : 'index.html'}
+                <span className="material-symbols-outlined text-[14px]">{isReactMode ? 'code' : isVueMode ? 'code' : 'html'}</span>
+                {isReactMode ? 'Component.jsx' : isVueMode ? 'Component.vue' : 'index.html'}
               </div>
             )}
           </div>
@@ -330,15 +459,13 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
               onChange={handleEditorChange}
               onPaste={handlePaste}
               placeholder={
-                isReactMode
-                  ? 'Paste your React component code here...'
-                  : !isSplitMode
-                  ? 'Paste your complete HTML code here...'
-                  : activeTab === 'html'
-                  ? '<div>Your HTML here</div>'
-                  : activeTab === 'css'
-                  ? 'body { font-family: sans-serif; }'
-                  : 'console.log("hello!");'
+                isSplitMode
+                  ? activeTab === 'html'
+                    ? '<div>Your HTML here</div>'
+                    : activeTab === 'css'
+                    ? 'body { font-family: sans-serif; }'
+                    : 'console.log("hello!");'
+                  : '把 AI 生成的程式碼貼在這裡 ✨\n\n💡 小提示：\n• 跟 AI 說「請輸出成一個完整的 HTML 檔案」效果最好\n• 也支援 React 和 Vue 元件，貼上後會自動偵測'
               }
               className="flex-1 w-full bg-transparent p-4 sm:pl-12 py-4 font-mono text-sm text-[#E5E2E1] outline-none resize-none hide-scrollbar placeholder:text-on-surface/20 whitespace-pre"
               spellCheck={false}
@@ -404,42 +531,18 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
             VibeJam Cloud
           </span>
           <span>UTF-8</span>
-          <span className="text-primary">{isReactMode ? 'React JSX' : isSplitMode ? 'HTML / CSS / JS' : 'HTML (All-in-One)'}</span>
+          <span className="text-primary">{isReactMode ? 'React JSX' : isVueMode ? 'Vue 3' : isSplitMode ? 'HTML / CSS / JS' : 'HTML (All-in-One)'}</span>
         </div>
       </footer>
 
-      {/* ── React 偵測對話框 ── */}
-      {reactDialog.open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-surface border border-outline-variant/20 rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <span className="material-symbols-outlined text-primary text-xl">auto_awesome</span>
-              </div>
-              <div>
-                <h3 className="text-on-surface font-bold">偵測到 React 程式碼</h3>
-                <p className="text-on-surface-variant text-xs mt-0.5">這看起來是一個 React 元件</p>
-              </div>
+      {/* ── Toast 通知 ── */}
+      {toast.visible && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 animate-[slideDown_0.3s_ease-out] pointer-events-none">
+          <div className="bg-surface border border-outline-variant/20 rounded-2xl shadow-2xl px-5 py-3 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <span className="material-symbols-outlined text-primary text-lg">auto_awesome</span>
             </div>
-            <p className="text-on-surface-variant text-sm leading-relaxed mb-6">
-              是否要自動轉換成可預覽的格式？<br />
-              <span className="text-on-surface/50 text-xs">系統將自動注入 React、Tailwind CSS 及 lucide-react 等所需函式庫。</span>
-            </p>
-            <div className="flex gap-3 justify-end">
-              <button
-                onClick={handleReactCancel}
-                className="px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface transition-colors rounded-lg hover:bg-surface-container"
-              >
-                維持原狀貼上
-              </button>
-              <button
-                onClick={handleReactConfirm}
-                className="px-5 py-2 bg-primary text-on-primary rounded-lg text-sm font-bold hover:opacity-90 transition-opacity flex items-center gap-2"
-              >
-                <span className="material-symbols-outlined text-[16px]">auto_fix_high</span>
-                轉換預覽
-              </button>
-            </div>
+            <span className="text-on-surface text-sm font-medium">{toast.message}</span>
           </div>
         </div>
       )}
