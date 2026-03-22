@@ -7,6 +7,7 @@ interface WorkspaceProps {
 }
 
 type EditorTab = 'html' | 'css' | 'js';
+type EditorMode = 'single' | 'split' | 'react';
 
 // ── 偵測是否為 React 程式碼 ──────────────────────────────────────────
 function isReactCode(code: string): boolean {
@@ -62,11 +63,12 @@ function wrapReactForPreview(rawCode: string): string {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <script src="https://unpkg.com/lucide-react/dist/umd/lucide-react.js"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script>window.react = window.React;</script>
+  <script src="https://unpkg.com/lucide-react@0.460.0/dist/umd/lucide-react.min.js"></script>
   <script>window.LucideReact = window.LucideReact || window.lucideReact || {};</script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.26.4/babel.min.js"></script>
 </head>
 <body>
   <div id="root"></div>
@@ -115,8 +117,11 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
   const [jsCode, setJsCode] = useState('');
   const [activeTab, setActiveTab] = useState<EditorTab>('html');
 
-  const [isReactMode, setIsReactMode] = useState(false);
+  const [editorMode, setEditorMode] = useState<EditorMode>('single');
   const [reactDialog, setReactDialog] = useState({ open: false, pendingCode: '' });
+
+  const isReactMode = editorMode === 'react';
+  const isSplitMode = editorMode === 'split';
 
   const [title, setTitle] = useState(remixFrom ? `Remix of ${remixFrom.title}` : 'Untitled Project');
   const [tags, setTags] = useState('');
@@ -137,7 +142,7 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
     const value = e.target.value;
     if (activeTab === 'html') {
       setHtmlCode(value);
-      if (!value) setIsReactMode(false);
+      if (!value && editorMode === 'react') setEditorMode('single');
     } else if (activeTab === 'css') {
       setCssCode(value);
     } else {
@@ -152,19 +157,28 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
     if (isReactCode(pasted)) {
       e.preventDefault();
       setReactDialog({ open: true, pendingCode: pasted });
+      return;
     }
   };
 
   const handleReactConfirm = () => {
     setHtmlCode(reactDialog.pendingCode);
-    setIsReactMode(true);
+    setEditorMode('react');
     setReactDialog({ open: false, pendingCode: '' });
   };
 
   const handleReactCancel = () => {
     setHtmlCode(reactDialog.pendingCode);
-    setIsReactMode(false);
     setReactDialog({ open: false, pendingCode: '' });
+  };
+
+  const handleModeChange = (mode: EditorMode) => {
+    setEditorMode(mode);
+    setActiveTab('html');
+    if (mode === 'single' || mode === 'react') {
+      setCssCode('');
+      setJsCode('');
+    }
   };
 
   // ── 發布 ───────────────────────────────────────────────────────────
@@ -255,26 +269,45 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
       <div className="flex-1 flex overflow-hidden flex-col md:flex-row">
         {/* Editor */}
         <section className="md:w-1/2 flex flex-col bg-surface-container-lowest border-r border-outline-variant/10 h-1/2 md:h-full">
-          {/* Tabs */}
+          {/* Mode Selector + Tabs */}
           <div className="flex bg-surface-container-low h-10 items-end px-2 gap-1 border-b border-outline-variant/10">
-            {tabs.map(tab => (
+            {/* Mode Dropdown */}
+            <div className="flex items-center mr-2 mb-1">
+              <select
+                value={editorMode}
+                onChange={(e) => handleModeChange(e.target.value as EditorMode)}
+                className="bg-surface-container-highest text-on-surface text-[11px] font-bold uppercase tracking-wider rounded px-2 py-1 border border-outline-variant/20 outline-none cursor-pointer appearance-none pr-5"
+                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 6px center' }}
+              >
+                <option value="single">All-in-One</option>
+                <option value="split">HTML / CSS / JS</option>
+                <option value="react">React JSX</option>
+              </select>
+            </div>
+
+            {/* Tabs (只在 split 模式顯示) */}
+            {isSplitMode && tabs.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                disabled={isReactMode && tab.id !== 'html'}
                 className={`px-4 py-2 text-xs font-medium rounded-t-lg flex items-center gap-1.5 border-t border-x transition-colors ${
                   activeTab === tab.id
                     ? 'bg-surface-container-lowest text-primary border-outline-variant/10'
                     : 'text-on-surface/40 border-transparent hover:text-on-surface/70'
-                } ${isReactMode && tab.id !== 'html' ? 'opacity-30 cursor-not-allowed' : ''}`}
+                }`}
               >
                 <span className="material-symbols-outlined text-[14px]">{tab.icon}</span>
                 {tab.label}
-                {isReactMode && tab.id === 'html' && (
-                  <span className="ml-1 text-[9px] bg-primary/20 text-primary px-1 rounded leading-tight">React</span>
-                )}
               </button>
             ))}
+
+            {/* 非 split 模式 → 顯示檔案名標籤 */}
+            {!isSplitMode && (
+              <div className="px-4 py-2 bg-surface-container-lowest text-primary text-xs font-medium rounded-t-lg flex items-center gap-1.5 border-t border-x border-outline-variant/10">
+                <span className="material-symbols-outlined text-[14px]">{isReactMode ? 'code' : 'html'}</span>
+                {isReactMode ? 'Component.jsx' : 'index.html'}
+              </div>
+            )}
           </div>
 
           {/* Textarea */}
@@ -289,8 +322,12 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
               onChange={handleEditorChange}
               onPaste={handlePaste}
               placeholder={
-                activeTab === 'html'
-                  ? 'Paste your HTML or React component here...'
+                isReactMode
+                  ? 'Paste your React component code here...'
+                  : !isSplitMode
+                  ? 'Paste your complete HTML code here...'
+                  : activeTab === 'html'
+                  ? '<div>Your HTML here</div>'
                   : activeTab === 'css'
                   ? 'body { font-family: sans-serif; }'
                   : 'console.log("hello!");'
@@ -359,7 +396,7 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
             VibeJam Cloud
           </span>
           <span>UTF-8</span>
-          <span className="text-primary">{isReactMode ? 'React JSX' : 'HTML/CSS/JS'}</span>
+          <span className="text-primary">{isReactMode ? 'React JSX' : isSplitMode ? 'HTML / CSS / JS' : 'HTML (All-in-One)'}</span>
         </div>
       </footer>
 
