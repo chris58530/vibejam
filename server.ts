@@ -249,7 +249,7 @@ async function startServer() {
 
     try {
       if (provider === 'gemini') {
-        const geminiModel = typeof model === 'string' && model.trim() ? model.trim() : 'gemini-2.0-flash';
+        const geminiModel = typeof model === 'string' && model.trim() ? model.trim() : 'gemini-2.5-flash';
         const contents = messages
           .filter((m: any) => m.role !== 'system')
           .map((m: any) => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }));
