@@ -1,17 +1,25 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAIKeyStore, AI_PROVIDERS } from '../lib/aiKeyStore';
+import { useAIKeyStore } from '../lib/aiKeyStore';
 import { chatWithAI, ChatMessage, AIServiceError } from '../lib/aiService';
+
+type ChatProvider = 'gemini' | 'openai' | 'minimax';
+
+const CHAT_PROVIDER_LABEL: Record<ChatProvider, string> = {
+  gemini: 'Gemini',
+  openai: 'OpenAI',
+  minimax: 'MiniMax',
+};
 
 export default function AIChat() {
   const navigate = useNavigate();
-  const { keys, initialized, initialize, getUsage, dailyLimits } = useAIKeyStore();
+  const { keys, validated, initialized, initialize, getUsage, dailyLimits } = useAIKeyStore();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [selectedProvider, setSelectedProvider] = useState<'gemini' | 'openai' | 'minimax'>('gemini');
+  const [selectedProvider, setSelectedProvider] = useState<ChatProvider | ''>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -23,21 +31,30 @@ export default function AIChat() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Auto-select first available provider
+  const activeChatProviders = (['gemini', 'openai', 'minimax'] as const).filter(
+    p => !!keys[p] && !!validated[p]
+  );
+
+  // Auto-select first active provider
   useEffect(() => {
     if (initialized) {
-      if (keys['gemini']) setSelectedProvider('gemini');
-      else if (keys['openai']) setSelectedProvider('openai');
+      if (activeChatProviders.length === 0) {
+        setSelectedProvider('');
+        return;
+      }
+      if (!selectedProvider || !activeChatProviders.includes(selectedProvider)) {
+        setSelectedProvider(activeChatProviders[0]);
+      }
     }
-  }, [initialized, keys]);
+  }, [initialized, selectedProvider, activeChatProviders]);
 
-  const hasKey = !!keys[selectedProvider];
-  const todayUsage = getUsage(selectedProvider);
-  const limit = dailyLimits[selectedProvider] || 0;
+  const hasActiveProvider = !!selectedProvider;
+  const todayUsage = selectedProvider ? getUsage(selectedProvider) : 0;
+  const limit = selectedProvider ? (dailyLimits[selectedProvider] || 0) : 0;
 
   const handleSend = async () => {
     const text = input.trim();
-    if (!text || loading) return;
+    if (!text || loading || !selectedProvider) return;
 
     setError('');
     const userMsg: ChatMessage = { role: 'user', content: text };
@@ -91,33 +108,37 @@ export default function AIChat() {
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-primary">smart_toy</span>
             <h2 className="font-semibold font-headline text-on-surface">VibeBot Chat</h2>
+            {hasActiveProvider && (
+              <span className="text-[11px] px-2 py-0.5 rounded-full bg-tertiary/15 text-tertiary font-semibold">
+                Active: {CHAT_PROVIDER_LABEL[selectedProvider]}
+              </span>
+            )}
           </div>
         </div>
 
         <div className="flex items-center gap-3">
           {/* Provider selector */}
-          <div className="flex items-center bg-surface-container-low rounded-lg p-0.5">
-            {(['gemini', 'openai', 'minimax'] as const).map(p => (
-              <button
-                key={p}
-                onClick={() => setSelectedProvider(p)}
-                className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${
-                  selectedProvider === p
-                    ? 'bg-surface-container-high text-primary'
-                    : keys[p]
-                      ? 'text-on-surface-variant hover:text-on-surface'
-                      : 'text-on-surface-variant/30 cursor-not-allowed'
-                }`}
-                disabled={!keys[p]}
-                title={keys[p] ? '' : '未設定 API Key'}
-              >
-                {p === 'gemini' ? 'Gemini' : p === 'openai' ? 'OpenAI' : 'MiniMax'}
-              </button>
-            ))}
+          <div className="flex items-center gap-2 bg-surface-container-low rounded-lg px-2.5 py-1.5 border border-outline-variant/10">
+            <span className="material-symbols-outlined text-sm text-on-surface-variant">toggle_on</span>
+            <select
+              value={selectedProvider}
+              onChange={(e) => setSelectedProvider(e.target.value as ChatProvider)}
+              className="bg-transparent text-xs font-semibold text-on-surface focus:outline-none"
+              disabled={activeChatProviders.length === 0}
+              title={activeChatProviders.length === 0 ? '尚無有效 API，請先到設定頁測試通過' : '切換目前使用中的 API'}
+            >
+              {activeChatProviders.length === 0 ? (
+                <option value="">無有效 API</option>
+              ) : (
+                activeChatProviders.map((p) => (
+                  <option key={p} value={p}>{CHAT_PROVIDER_LABEL[p]}</option>
+                ))
+              )}
+            </select>
           </div>
 
           {/* Usage indicator */}
-          {hasKey && (
+          {hasActiveProvider && (
             <span className="text-xs text-on-surface-variant flex items-center gap-1">
               <span className="material-symbols-outlined text-sm">analytics</span>
               {todayUsage}{limit > 0 ? `/${limit}` : ''}
@@ -133,12 +154,12 @@ export default function AIChat() {
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto custom-scrollbar px-6 py-4 space-y-4">
-        {!hasKey ? (
+        {!hasActiveProvider ? (
           <div className="flex flex-col items-center justify-center h-full gap-4 text-center">
             <span className="material-symbols-outlined text-6xl text-on-surface-variant/20">key</span>
             <div>
-              <p className="text-on-surface font-semibold mb-1">尚未設定 API Key</p>
-              <p className="text-sm text-on-surface-variant">前往設定頁面輸入你的 AI 服務金鑰，即可開始對話。</p>
+              <p className="text-on-surface font-semibold mb-1">尚無有效 API</p>
+              <p className="text-sm text-on-surface-variant">請到設定頁儲存並測試通過至少一把 API Key，才會出現在下拉選單。</p>
             </div>
             <button
               onClick={() => navigate('/settings')}
@@ -210,7 +231,7 @@ export default function AIChat() {
       </div>
 
       {/* Input Area */}
-      {hasKey && (
+      {hasActiveProvider && (
         <div className="px-6 pb-4 pt-2 border-t border-outline-variant/10">
           <div className="flex items-end gap-2 bg-surface-container-low border border-outline-variant/10 rounded-xl p-2 focus-within:ring-1 focus-within:ring-primary/30 transition-all">
             <textarea

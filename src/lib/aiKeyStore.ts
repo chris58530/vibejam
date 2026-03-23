@@ -26,6 +26,8 @@ export interface UsageRecord {
 interface AIKeyState {
   // Key storage (decrypted, in-memory only)
   keys: Record<string, string>;
+  // Persisted validity status from latest key test
+  validated: Record<string, boolean>;
   // Connection test results
   testResults: Record<string, 'idle' | 'testing' | 'success' | 'error'>;
   // Error messages from test
@@ -52,6 +54,7 @@ interface AIKeyState {
 const STORAGE_PREFIX = 'vibejam_aikey_';
 const USAGE_PREFIX = 'vibejam_usage_';
 const LIMIT_PREFIX = 'vibejam_limit_';
+const VALID_PREFIX = 'vibejam_valid_';
 
 function sanitizeApiKey(raw: string): string {
   // Remove wrapping quotes and invisible whitespace that often appears when copying keys.
@@ -67,6 +70,7 @@ function todayStr(): string {
 
 export const useAIKeyStore = create<AIKeyState>((set, get) => ({
   keys: {},
+  validated: {},
   testResults: {},
   testMessages: {},
   usage: {},
@@ -75,6 +79,7 @@ export const useAIKeyStore = create<AIKeyState>((set, get) => ({
 
   initialize: async () => {
     const keys: Record<string, string> = {};
+    const validated: Record<string, boolean> = {};
     const usage: Record<string, UsageRecord> = {};
     const dailyLimits: Record<string, number> = {};
     const today = todayStr();
@@ -94,6 +99,9 @@ export const useAIKeyStore = create<AIKeyState>((set, get) => ({
         }
       }
 
+      // Load validity
+      validated[p.id] = localStorage.getItem(VALID_PREFIX + p.id) === '1';
+
       // Load usage
       const usageRaw = localStorage.getItem(USAGE_PREFIX + p.id);
       if (usageRaw) {
@@ -112,7 +120,7 @@ export const useAIKeyStore = create<AIKeyState>((set, get) => ({
       if (limitRaw) dailyLimits[p.id] = parseInt(limitRaw, 10) || 0;
     }
 
-    set({ keys, usage, dailyLimits, initialized: true });
+    set({ keys, validated, usage, dailyLimits, initialized: true });
   },
 
   setKey: async (provider, key) => {
@@ -121,17 +129,33 @@ export const useAIKeyStore = create<AIKeyState>((set, get) => ({
       await get().removeKey(provider);
       return;
     }
+    const previousKey = get().keys[provider];
     const encrypted = await encrypt(cleaned);
     localStorage.setItem(STORAGE_PREFIX + provider, encrypted);
-    set(state => ({ keys: { ...state.keys, [provider]: cleaned } }));
+    if (previousKey !== cleaned) {
+      localStorage.removeItem(VALID_PREFIX + provider);
+    }
+    set(state => ({
+      keys: { ...state.keys, [provider]: cleaned },
+      validated: { ...state.validated, [provider]: previousKey === cleaned ? !!state.validated[provider] : false },
+      testResults: { ...state.testResults, [provider]: 'idle' },
+      testMessages: { ...state.testMessages, [provider]: '' },
+    }));
   },
 
   removeKey: async (provider) => {
     localStorage.removeItem(STORAGE_PREFIX + provider);
+    localStorage.removeItem(VALID_PREFIX + provider);
     set(state => {
       const keys = { ...state.keys };
+      const validated = { ...state.validated };
+      const testResults = { ...state.testResults };
+      const testMessages = { ...state.testMessages };
       delete keys[provider];
-      return { keys };
+      delete validated[provider];
+      delete testResults[provider];
+      delete testMessages[provider];
+      return { keys, validated, testResults, testMessages };
     });
   },
 
@@ -151,13 +175,17 @@ export const useAIKeyStore = create<AIKeyState>((set, get) => ({
       });
       const data = await res.json().catch(() => ({}));
       const ok = res.ok;
+      localStorage.setItem(VALID_PREFIX + provider, ok ? '1' : '0');
       set(state => ({
+        validated: { ...state.validated, [provider]: ok },
         testResults: { ...state.testResults, [provider]: ok ? 'success' : 'error' },
         testMessages: { ...state.testMessages, [provider]: ok ? '' : (data.error || '連線失敗，請確認 Key 是否正確') },
       }));
       return ok;
     } catch (err: any) {
+      localStorage.setItem(VALID_PREFIX + provider, '0');
       set(state => ({
+        validated: { ...state.validated, [provider]: false },
         testResults: { ...state.testResults, [provider]: 'error' },
         testMessages: { ...state.testMessages, [provider]: err.message || '網路錯誤' },
       }));
