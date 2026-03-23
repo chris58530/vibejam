@@ -173,7 +173,11 @@ async function startServer() {
   }
 
   function normalizeApiKey(value: unknown): string {
-    return typeof value === 'string' ? value.trim() : '';
+    if (typeof value !== 'string') return '';
+    return value
+      .replace(/[\s\u200B-\u200D\uFEFF]+/g, '')
+      .replace(/^['"`]+|['"`]+$/g, '')
+      .trim();
   }
 
   // Test API Key validity

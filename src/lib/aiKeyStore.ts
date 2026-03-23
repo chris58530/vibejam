@@ -53,6 +53,14 @@ const STORAGE_PREFIX = 'vibejam_aikey_';
 const USAGE_PREFIX = 'vibejam_usage_';
 const LIMIT_PREFIX = 'vibejam_limit_';
 
+function sanitizeApiKey(raw: string): string {
+  // Remove wrapping quotes and invisible whitespace that often appears when copying keys.
+  return raw
+    .replace(/[\s\u200B-\u200D\uFEFF]+/g, '')
+    .replace(/^['"`]+|['"`]+$/g, '')
+    .trim();
+}
+
 function todayStr(): string {
   return new Date().toISOString().slice(0, 10);
 }
@@ -76,7 +84,10 @@ export const useAIKeyStore = create<AIKeyState>((set, get) => ({
       const stored = localStorage.getItem(STORAGE_PREFIX + p.id);
       if (stored) {
         try {
-          keys[p.id] = await decrypt(stored);
+          const decrypted = await decrypt(stored);
+          const cleaned = sanitizeApiKey(decrypted);
+          if (cleaned) keys[p.id] = cleaned;
+          else localStorage.removeItem(STORAGE_PREFIX + p.id);
         } catch {
           // Corrupted — remove
           localStorage.removeItem(STORAGE_PREFIX + p.id);
@@ -105,9 +116,14 @@ export const useAIKeyStore = create<AIKeyState>((set, get) => ({
   },
 
   setKey: async (provider, key) => {
-    const encrypted = await encrypt(key);
+    const cleaned = sanitizeApiKey(key);
+    if (!cleaned) {
+      await get().removeKey(provider);
+      return;
+    }
+    const encrypted = await encrypt(cleaned);
     localStorage.setItem(STORAGE_PREFIX + provider, encrypted);
-    set(state => ({ keys: { ...state.keys, [provider]: key } }));
+    set(state => ({ keys: { ...state.keys, [provider]: cleaned } }));
   },
 
   removeKey: async (provider) => {
@@ -122,7 +138,7 @@ export const useAIKeyStore = create<AIKeyState>((set, get) => ({
   getKey: (provider) => get().keys[provider],
 
   testKey: async (provider) => {
-    const key = get().keys[provider];
+    const key = sanitizeApiKey(get().keys[provider] || '');
     if (!key) return false;
 
     set(state => ({ testResults: { ...state.testResults, [provider]: 'testing' }, testMessages: { ...state.testMessages, [provider]: '' } }));

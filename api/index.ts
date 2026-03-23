@@ -194,7 +194,11 @@ function normalizeProvider(value: unknown): string {
 }
 
 function normalizeApiKey(value: unknown): string {
-  return typeof value === 'string' ? value.trim() : '';
+  if (typeof value !== 'string') return '';
+  return value
+    .replace(/[\s\u200B-\u200D\uFEFF]+/g, '')
+    .replace(/^['"`]+|['"`]+$/g, '')
+    .trim();
 }
 
 app.post('/api/ai/test', async (req, res) => {
