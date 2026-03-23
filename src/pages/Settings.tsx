@@ -33,6 +33,11 @@ export default function Settings() {
   };
 
   const handleTest = async (provider: AIProvider) => {
+    // Ensure test uses the latest typed key instead of a stale stored value.
+    const val = inputValues[provider]?.trim();
+    if (val && val !== keys[provider]) {
+      await setKey(provider, val);
+    }
     await testKey(provider);
   };
 
