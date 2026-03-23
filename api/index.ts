@@ -174,6 +174,8 @@ app.delete('/api/vibes/:id', async (req, res) => {
 
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT = 30;
+const MINIMAX_BASE_URL = (process.env.MINIMAX_BASE_URL || 'https://api.minimax.io').replace(/\/+$/, '');
+const MINIMAX_DEFAULT_MODEL = process.env.MINIMAX_DEFAULT_MODEL || 'MiniMax-M2.5';
 
 function checkRateLimit(ip: string): boolean {
   const now = Date.now();
@@ -187,10 +189,18 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
+function normalizeProvider(value: unknown): string {
+  return typeof value === 'string' ? value.trim().toLowerCase() : '';
+}
+
+function normalizeApiKey(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
 app.post('/api/ai/test', async (req, res) => {
   let { provider, apiKey } = req.body;
-  
-  if (apiKey) apiKey = apiKey.trim();
+  provider = normalizeProvider(provider);
+  apiKey = normalizeApiKey(apiKey);
 
   if (!provider || !apiKey) return res.status(400).json({ error: 'provider and apiKey required' });
   try {
@@ -198,7 +208,11 @@ app.post('/api/ai/test', async (req, res) => {
       const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`);
       if (!r.ok) {
         const err = await r.json().catch(() => ({}));
-        return res.status(401).json({ error: err.error?.message || 'Invalid Gemini API key' });
+        const message = err.error?.message || 'Invalid Gemini API key';
+        const hint = /API key not valid/i.test(message)
+          ? ' 請確認你使用的是 Google AI Studio 產生的 Gemini API Key，且該 key 可用於 Generative Language API。'
+          : '';
+        return res.status(401).json({ error: `${message}${hint}` });
       }
       return res.json({ ok: true, provider });
     }
@@ -211,14 +225,15 @@ app.post('/api/ai/test', async (req, res) => {
       return res.json({ ok: true, provider });
     }
     if (provider === 'minimax') {
-      const r = await fetch('https://api.minimaxi.chat/v1/text/chatcompletion_v2', {
+      const r = await fetch(`${MINIMAX_BASE_URL}/v1/chat/completions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({ model: 'MiniMax-Text-01', messages: [{ role: 'user', content: 'hi' }], max_tokens: 5 }),
+        body: JSON.stringify({ model: MINIMAX_DEFAULT_MODEL, messages: [{ role: 'user', content: 'hi' }], max_tokens: 8, temperature: 0 }),
       });
       const data = await r.json().catch(() => ({}));
-      if (!r.ok || (data.base_resp?.status_code !== undefined && data.base_resp.status_code !== 0)) {
-        return res.status(401).json({ error: data.base_resp?.status_msg || 'Invalid MiniMax API key' });
+      const embeddedError = data.base_resp?.status_code !== undefined && data.base_resp.status_code !== 0;
+      if (!r.ok || embeddedError) {
+        return res.status(401).json({ error: data.error?.message || data.base_resp?.status_msg || 'Invalid MiniMax API key' });
       }
       return res.json({ ok: true, provider });
     }
@@ -245,14 +260,14 @@ app.post('/api/ai/chat', async (req, res) => {
   if (!checkRateLimit(ip)) return res.status(429).json({ error: 'Rate limit exceeded. Try again later.' });
 
   let { provider, apiKey, messages, model, temperature = 0.7, maxTokens = 2048 } = req.body;
-  
-  if (apiKey) apiKey = apiKey.trim();
+  provider = normalizeProvider(provider);
+  apiKey = normalizeApiKey(apiKey);
 
   if (!provider || !apiKey || !messages) return res.status(400).json({ error: 'provider, apiKey and messages required' });
 
   try {
     if (provider === 'gemini') {
-      const geminiModel = model || 'gemini-2.0-flash';
+      const geminiModel = typeof model === 'string' && model.trim() ? model.trim() : 'gemini-2.0-flash';
       const contents = messages
         .filter((m: any) => m.role !== 'system')
         .map((m: any) => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }));
@@ -266,7 +281,11 @@ app.post('/api/ai/chat', async (req, res) => {
       );
       if (!r.ok) {
         const err = await r.json().catch(() => ({}));
-        return res.status(r.status).json({ error: err.error?.message || 'Gemini API error' });
+        const message = err.error?.message || 'Gemini API error';
+        const hint = /API key not valid/i.test(message)
+          ? ' 請確認你使用的是 Google AI Studio 產生的 Gemini API Key，且該 key 可用於 Generative Language API。'
+          : '';
+        return res.status(r.status).json({ error: `${message}${hint}` });
       }
       const data = await r.json();
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
@@ -288,14 +307,16 @@ app.post('/api/ai/chat', async (req, res) => {
     }
 
     if (provider === 'minimax') {
-      const r = await fetch('https://api.minimaxi.chat/v1/text/chatcompletion_v2', {
+      const minimaxModel = typeof model === 'string' && model.trim() ? model.trim() : MINIMAX_DEFAULT_MODEL;
+      const r = await fetch(`${MINIMAX_BASE_URL}/v1/chat/completions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({ model: model || 'MiniMax-Text-01', messages, temperature, max_tokens: maxTokens }),
+        body: JSON.stringify({ model: minimaxModel, messages, temperature, max_tokens: maxTokens }),
       });
       const data = await r.json().catch(() => ({}));
-      if (!r.ok || (data.base_resp?.status_code !== undefined && data.base_resp.status_code !== 0)) {
-        return res.status(r.ok ? 400 : r.status).json({ error: data.base_resp?.status_msg || 'MiniMax API error' });
+      const embeddedError = data.base_resp?.status_code !== undefined && data.base_resp.status_code !== 0;
+      if (!r.ok || embeddedError) {
+        return res.status(r.status).json({ error: data.error?.message || data.base_resp?.status_msg || 'MiniMax API error' });
       }
       const text = data.choices?.[0]?.message?.content || '';
       return res.json({ text, tokensUsed: data.usage?.total_tokens });
