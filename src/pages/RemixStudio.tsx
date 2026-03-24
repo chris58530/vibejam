@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { api, toSlug, User } from '../lib/api';
-import { useAIKeyStore } from '../lib/aiKeyStore';
+import { useAIKeyStore, AI_PROVIDER_MODELS } from '../lib/aiKeyStore';
 import { chatWithAIStream, ChatMessage, AIServiceError } from '../lib/aiService';
 import { extractCodeFromAIResponse, extractPartialCode, generatePreviewDoc } from '../lib/codeUtils';
 
@@ -43,6 +43,7 @@ export default function RemixStudio({ currentUser }: RemixStudioProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [selectedProvider, setSelectedProvider] = useState<ChatProvider | ''>('');
+    const [selectedModel, setSelectedModel] = useState<string>('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -93,6 +94,14 @@ export default function RemixStudio({ currentUser }: RemixStudioProps) {
             }
         }
     }, [initialized, JSON.stringify(activeChatProviders)]);
+
+    // Reset model to provider default when provider changes
+    useEffect(() => {
+        if (selectedProvider) {
+            const models = AI_PROVIDER_MODELS[selectedProvider];
+            setSelectedModel(models?.[0]?.id || '');
+        }
+    }, [selectedProvider]);
 
     const hasActiveProvider = !!selectedProvider;
     const todayUsage = selectedProvider ? getUsage(selectedProvider) : 0;
@@ -164,7 +173,7 @@ ${code}
                         }
                     }
                 },
-                { maxTokens: 8192 }
+                { maxTokens: 8192, model: selectedModel || undefined }
             );
 
             // Final pass: ensure we got the complete code block
@@ -315,9 +324,9 @@ ${code}
                         </div>
                     </div>
 
-                    {/* Provider Selector */}
+                    {/* Provider + Model Selector */}
                     {activeChatProviders.length > 0 && (
-                        <div className="px-4 py-2 border-b border-outline-variant/10 flex items-center gap-2 shrink-0">
+                        <div className="px-4 py-2 border-b border-outline-variant/10 flex flex-wrap items-center gap-2 shrink-0">
                             {activeChatProviders.map(p => (
                                 <button
                                     key={p}
@@ -330,6 +339,20 @@ ${code}
                                     {CHAT_PROVIDER_LABEL[p]}
                                 </button>
                             ))}
+                            {selectedProvider && AI_PROVIDER_MODELS[selectedProvider] && (
+                                <div className="flex items-center gap-1 bg-surface-container-high rounded-full pl-2 pr-1 py-0.5 border border-outline-variant/10">
+                                    <span className="material-symbols-outlined text-[12px] text-on-surface-variant">model_training</span>
+                                    <select
+                                        value={selectedModel}
+                                        onChange={(e) => setSelectedModel(e.target.value)}
+                                        className="bg-transparent text-[10px] font-mono font-bold text-on-surface focus:outline-none max-w-[120px]"
+                                    >
+                                        {AI_PROVIDER_MODELS[selectedProvider]!.map(m => (
+                                            <option key={m.id} value={m.id}>{m.label}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
                             {selectedProvider && limit > 0 && (
                                 <span className="ml-auto text-[10px] font-mono text-on-surface/30">
                                     {todayUsage}/{limit}

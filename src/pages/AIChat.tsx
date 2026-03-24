@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAIKeyStore } from '../lib/aiKeyStore';
+import { useAIKeyStore, AI_PROVIDER_MODELS } from '../lib/aiKeyStore';
 import { chatWithAI, ChatMessage, AIServiceError } from '../lib/aiService';
 
 type ChatProvider = 'gemini' | 'openai' | 'minimax';
@@ -20,6 +20,7 @@ export default function AIChat() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [selectedProvider, setSelectedProvider] = useState<ChatProvider | ''>('');
+  const [selectedModel, setSelectedModel] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -48,6 +49,14 @@ export default function AIChat() {
     }
   }, [initialized, selectedProvider, activeChatProviders]);
 
+  // Reset model to provider default when provider changes
+  useEffect(() => {
+    if (selectedProvider) {
+      const models = AI_PROVIDER_MODELS[selectedProvider];
+      setSelectedModel(models?.[0]?.id || '');
+    }
+  }, [selectedProvider]);
+
   const hasActiveProvider = !!selectedProvider;
   const todayUsage = selectedProvider ? getUsage(selectedProvider) : 0;
   const limit = selectedProvider ? (dailyLimits[selectedProvider] || 0) : 0;
@@ -68,7 +77,7 @@ export default function AIChat() {
         role: 'system',
         content: '你是 VibeBot，VibeJam 平台的 AI 助理。你善於回答關於網頁開發、創意程式設計、HTML/CSS/JS 的問題。回答時保持友善、簡潔，並在適當時提供程式碼範例。使用繁體中文回答。',
       };
-      const response = await chatWithAI(selectedProvider, [systemPrompt, ...newMessages]);
+      const response = await chatWithAI(selectedProvider, [systemPrompt, ...newMessages], { model: selectedModel || undefined });
       setMessages(prev => [...prev, { role: 'assistant', content: response.text }]);
     } catch (err) {
       if (err instanceof AIServiceError) {
@@ -136,6 +145,22 @@ export default function AIChat() {
               )}
             </select>
           </div>
+
+          {/* Model selector */}
+          {selectedProvider && AI_PROVIDER_MODELS[selectedProvider] && (
+            <div className="flex items-center gap-2 bg-surface-container-low rounded-lg px-2.5 py-1.5 border border-outline-variant/10">
+              <span className="material-symbols-outlined text-sm text-on-surface-variant">model_training</span>
+              <select
+                value={selectedModel}
+                onChange={(e) => setSelectedModel(e.target.value)}
+                className="bg-transparent text-xs font-semibold text-on-surface focus:outline-none max-w-[140px]"
+              >
+                {AI_PROVIDER_MODELS[selectedProvider]!.map(m => (
+                  <option key={m.id} value={m.id}>{m.label}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Usage indicator */}
           {hasActiveProvider && (

@@ -18,6 +18,31 @@ export const AI_PROVIDERS: AIProviderConfig[] = [
   { id: 'stability', label: 'Stability AI', placeholder: 'sk-...', testEndpoint: '/api/ai/test' },
 ];
 
+export interface AIModelOption {
+  id: string;
+  label: string;
+}
+
+export const AI_PROVIDER_MODELS: Partial<Record<AIProvider, AIModelOption[]>> = {
+  gemini: [
+    { id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
+    { id: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
+    { id: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash' },
+    { id: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro' },
+    { id: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash' },
+  ],
+  openai: [
+    { id: 'gpt-4o-mini', label: 'GPT-4o Mini' },
+    { id: 'gpt-4o', label: 'GPT-4o' },
+    { id: 'gpt-4-turbo', label: 'GPT-4 Turbo' },
+    { id: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo' },
+  ],
+  minimax: [
+    { id: 'MiniMax-M2.5', label: 'MiniMax M2.5' },
+    { id: 'MiniMax-M2', label: 'MiniMax M2' },
+  ],
+};
+
 export interface UsageRecord {
   count: number;
   date: string; // YYYY-MM-DD
