@@ -118,13 +118,13 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
   };
 
   if (loading || !vibe) return (
-    <div className="md:ml-64 pt-20 flex items-center justify-center min-h-screen bg-surface text-on-surface/40 font-mono text-lg tracking-widest uppercase">
+    <div className="md:ml-16 pt-20 flex items-center justify-center min-h-screen bg-surface text-on-surface/40 font-mono text-lg tracking-widest uppercase">
       Loading Stage...
     </div>
   );
 
   return (
-    <div className="md:ml-64 pt-[64px] h-screen flex flex-col bg-surface overflow-hidden">
+    <div className="md:ml-16 pt-[64px] h-screen flex flex-col bg-surface overflow-hidden">
       {/* Platform Header */}
       <div className="h-16 border-b border-outline-variant/10 flex items-center justify-between px-6 bg-surface-container-low shrink-0 z-10">
         <div className="flex items-center gap-4">
@@ -184,7 +184,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
         </div>
 
         {/* Right: Chat / Comments & Timeline */}
-        <div className="w-full md:w-[400px] flex flex-col border-l border-outline-variant/10 bg-surface-container-low overflow-hidden shrink-0 order-2 md:order-none">
+        <div className="w-full md:w-[35%] md:min-w-[320px] md:max-w-[440px] flex flex-col border-l border-outline-variant/10 bg-surface-container-low overflow-hidden shrink-0 order-2 md:order-none">
 
           {/* Tabs header for Chat vs Timeline */}
           <div className="flex w-full items-center border-b border-outline-variant/10 bg-surface-container-lowest cursor-pointer shrink-0 h-12">

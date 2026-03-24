@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api, Vibe, User, toSlug } from '../lib/api';
 import VibeCard from '../components/VibeCard';
+import Footer from '../components/Footer';
 import { supabase } from '../lib/supabase';
 
 export default function Profile() {
@@ -74,7 +75,7 @@ export default function Profile() {
   const likesCount = userProfile?.likes_count || 0;
 
   return (
-    <main className="md:ml-64 pt-[64px] min-h-screen bg-surface">
+    <main className="md:ml-16 pt-[64px] min-h-screen bg-surface">
       {/* Banner */}
       <div className="w-full h-32 md:h-56 bg-surface-container border-b border-outline-variant/10 relative overflow-hidden flex items-center justify-center editor-well">
         <div className="absolute inset-0 bg-gradient-to-t from-surface to-transparent" />
@@ -232,16 +233,7 @@ export default function Profile() {
       </div>
       
       {/* Footer */}
-      <footer className="flex justify-between items-center px-8 py-12 bg-[#131313] border-t border-outline-variant/10 mt-auto">
-        <div className="flex flex-col gap-2">
-          <span className="text-sm font-bold text-[#E5E2E1] font-sans">VibeJam</span>
-          <p className="font-mono text-[10px] uppercase tracking-widest text-[#E5E2E1]/40 mt-1">© 2024 VibeJam Editorial</p>
-        </div>
-        <div className="flex gap-8">
-          <a href="#" className="font-mono text-[10px] uppercase tracking-widest text-[#E5E2E1]/40 hover:text-[#FFB3B6] transition-colors">Terms</a>
-          <a href="#" className="font-mono text-[10px] uppercase tracking-widest text-[#E5E2E1]/40 hover:text-[#FFB3B6] transition-colors">Privacy</a>
-        </div>
-      </footer>
+      <Footer />
 
       {/* 刪除確認對話框 */}
       {deleteConfirm !== null && (

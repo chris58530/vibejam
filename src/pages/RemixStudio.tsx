@@ -171,12 +171,32 @@ ${code}
     }
   };
 
+  const [mobileTab, setMobileTab] = useState<'chat' | 'preview'>('chat');
+
   if (!remixFrom) return null;
 
   return (
-    <div className="md:ml-16 pt-16 flex-1 flex h-[calc(100vh)] overflow-hidden bg-background">
+    <div className="md:ml-16 pt-16 flex-1 flex flex-col md:flex-row h-[calc(100vh)] overflow-hidden bg-background">
+      {/* Mobile Tab Switcher */}
+      <div className="flex md:hidden border-b border-outline-variant/10 bg-surface-container-lowest shrink-0">
+        <button
+          onClick={() => setMobileTab('chat')}
+          className={`flex-1 py-3 text-center text-xs font-mono font-bold uppercase tracking-widest transition-colors ${mobileTab === 'chat' ? 'border-b-2 border-primary text-primary bg-surface-container-high' : 'text-on-surface/40'}`}
+        >
+          <span className="material-symbols-outlined text-[14px] mr-1 align-middle">chat</span>
+          AI Chat
+        </button>
+        <button
+          onClick={() => setMobileTab('preview')}
+          className={`flex-1 py-3 text-center text-xs font-mono font-bold uppercase tracking-widest transition-colors ${mobileTab === 'preview' ? 'border-b-2 border-primary text-primary bg-surface-container-high' : 'text-on-surface/40'}`}
+        >
+          <span className="material-symbols-outlined text-[14px] mr-1 align-middle">preview</span>
+          Preview
+        </button>
+      </div>
+
       {/* ── Left: AI Chat Panel ── */}
-      <div className="w-[45%] min-w-[360px] flex flex-col border-r border-outline-variant/10 bg-surface-container-low">
+      <div className={`${mobileTab === 'chat' ? 'flex' : 'hidden'} md:flex w-full md:w-[45%] md:min-w-[360px] flex-col border-r border-outline-variant/10 bg-surface-container-low`}>
         {/* Source Info Header */}
         <div className="px-4 py-3 border-b border-outline-variant/10 bg-surface-container-lowest">
           <div className="flex items-center gap-2 text-xs text-on-surface/50 font-mono">
@@ -306,7 +326,7 @@ ${code}
       </div>
 
       {/* ── Right: Preview Panel ── */}
-      <div className="flex-1 flex flex-col bg-surface-container-lowest">
+      <div className={`${mobileTab === 'preview' ? 'flex' : 'hidden'} md:flex flex-1 flex-col bg-surface-container-lowest`}>
         {/* Preview Header */}
         <div className="px-6 py-3 border-b border-outline-variant/10 flex items-center gap-4 bg-surface shrink-0">
           <div className="flex items-center gap-3 flex-1">

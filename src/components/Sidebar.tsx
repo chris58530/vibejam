@@ -78,10 +78,10 @@ export default function Sidebar() {
     );
   }
 
-  // Regular Sidebar
+  // Regular Sidebar — collapsed by default, expands on hover
   return (
-    <aside className="fixed left-0 top-16 h-[calc(100vh-64px)] w-64 bg-[#1C1B1B] flex flex-col p-4 gap-2 hidden md:flex z-40 border-r border-outline-variant/5">
-      <nav className="space-y-1">
+    <aside className="group/sidebar fixed left-0 top-16 h-[calc(100vh-64px)] w-16 hover:w-64 bg-[#1C1B1B] flex flex-col pt-4 pb-2 hidden md:flex z-40 border-r border-outline-variant/5 transition-all duration-300 overflow-hidden">
+      <nav className="space-y-1 px-2">
         {navItems.map(({ label, icon, path }) => {
           const isActive = 
             (label === 'Trending' && location.search.includes('feed=trending')) ||
@@ -95,13 +95,14 @@ export default function Sidebar() {
             <button
               key={label}
               onClick={() => handleNavClick(label, path)}
-              className={`w-full flex items-center gap-4 px-4 py-3 rounded-lg transition-all duration-300 ease-in-out font-body font-medium text-sm tracking-normal cursor-pointer ${
+              className={`w-full flex items-center gap-4 px-3 py-2.5 rounded-xl transition-all duration-300 ease-in-out font-body font-medium text-sm tracking-normal cursor-pointer whitespace-nowrap ${
                 isActive 
                   ? 'text-[#FFB3B6] bg-[#2A2A2A]' 
                   : 'text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1]'
               }`}
+              title={label}
             >
-              <span className="material-symbols-outlined" style={isActive ? { fontVariationSettings: "'FILL' 1" } : {}}>
+              <span className="material-symbols-outlined shrink-0" style={isActive ? { fontVariationSettings: "'FILL' 1" } : {}}>
                 {icon}
               </span>
               <span>{label}</span>
@@ -110,37 +111,56 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className="my-4 h-px bg-[#584142]/10 mx-4"></div>
+      <div className="my-4 h-px bg-[#584142]/10 mx-4 opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200"></div>
 
-      <div className="px-4 mb-2">
-        <span className="text-[10px] uppercase tracking-[0.2em] text-[#E5E2E1]/30 font-bold">Your Library</span>
+      <div className="px-6 mb-2 opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200">
+        <span className="text-[10px] uppercase tracking-[0.2em] text-[#E5E2E1]/30 font-bold whitespace-nowrap">Your Library</span>
       </div>
       
-      <nav className="space-y-1 flex-1 overflow-y-auto hide-scrollbar">
-        <button onClick={() => alert('機能建構中 (WIP)')} className="w-full flex items-center gap-4 px-4 py-2 text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1] rounded-lg transition-colors text-sm font-body">
-          <span className="material-symbols-outlined text-sm">history</span>
+      <nav className="space-y-1 px-2 flex-1 overflow-y-auto hide-scrollbar opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200">
+        <button onClick={() => alert('機能建構中 (WIP)')} className="w-full flex items-center gap-4 px-3 py-2 text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1] rounded-lg transition-colors text-sm font-body whitespace-nowrap">
+          <span className="material-symbols-outlined text-sm shrink-0">history</span>
           <span>History</span>
         </button>
-        <button onClick={() => alert('機能建構中 (WIP)')} className="w-full flex items-center gap-4 px-4 py-2 text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1] rounded-lg transition-colors text-sm font-body">
-          <span className="material-symbols-outlined text-sm">playlist_play</span>
+        <button onClick={() => alert('機能建構中 (WIP)')} className="w-full flex items-center gap-4 px-3 py-2 text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1] rounded-lg transition-colors text-sm font-body whitespace-nowrap">
+          <span className="material-symbols-outlined text-sm shrink-0">playlist_play</span>
           <span>Saved Vibes</span>
         </button>
-        <button onClick={() => alert('機能建構中 (WIP)')} className="w-full flex items-center gap-4 px-4 py-2 text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1] rounded-lg transition-colors text-sm font-body">
-          <span className="material-symbols-outlined text-sm">thumb_up</span>
+        <button onClick={() => alert('機能建構中 (WIP)')} className="w-full flex items-center gap-4 px-3 py-2 text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1] rounded-lg transition-colors text-sm font-body whitespace-nowrap">
+          <span className="material-symbols-outlined text-sm shrink-0">thumb_up</span>
           <span>Liked Code</span>
         </button>
       </nav>
 
-      <div className="mt-auto pt-4 space-y-4 border-t border-outline-variant/10">
+      <div className="mt-auto pt-4 space-y-3 border-t border-outline-variant/10 opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200">
         <div className="flex flex-wrap gap-x-3 gap-y-1 px-4">
           <a href="#" className="text-[10px] text-[#E5E2E1]/40 hover:text-primary transition-colors uppercase tracking-widest font-body">Terms</a>
           <a href="#" className="text-[10px] text-[#E5E2E1]/40 hover:text-primary transition-colors uppercase tracking-widest font-body">Privacy</a>
           <a href="#" className="text-[10px] text-[#E5E2E1]/40 hover:text-primary transition-colors uppercase tracking-widest font-body">About</a>
         </div>
-        <div className="px-4 pb-2">
-          <p className="text-[10px] text-[#E5E2E1]/20 font-medium font-body">© 2024 VIBEJAM EDITORIAL</p>
+        <div className="px-4 pb-1">
+          <p className="text-[10px] text-[#E5E2E1]/20 font-medium font-body whitespace-nowrap">© 2024 VIBEJAM EDITORIAL</p>
         </div>
       </div>
+
+      {/* User avatar — always visible at bottom */}
+      {currentUser && (
+        <div className="flex items-center gap-3 px-3 py-2 mt-1 shrink-0">
+          <div 
+            className="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden border border-outline-variant/30 cursor-pointer shrink-0"
+            onClick={() => handleNavClick('Profile', null)}
+          >
+            <img 
+              src={currentUser.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.email}`} 
+              alt="User Profile" 
+              className="w-full h-full object-cover" 
+            />
+          </div>
+          <span className="text-xs text-[#E5E2E1]/60 font-body truncate opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 whitespace-nowrap">
+            {currentUser.user_metadata?.user_name || currentUser.user_metadata?.name || ''}
+          </span>
+        </div>
+      )}
     </aside>
   );
 }

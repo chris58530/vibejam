@@ -98,7 +98,7 @@ export default function AIChat() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-64px)] max-w-3xl mx-auto md:ml-64 md:mr-auto">
+    <div className="flex flex-col h-[calc(100vh-64px)] max-w-3xl mx-auto md:ml-16 md:mr-auto">
       {/* Toolbar */}
       <div className="flex items-center justify-between px-6 py-3 border-b border-outline-variant/10">
         <div className="flex items-center gap-3">

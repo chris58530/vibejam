@@ -78,7 +78,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-8 md:ml-64">
+    <div className="max-w-3xl mx-auto px-6 py-8 md:ml-16">
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
         <button onClick={() => navigate(-1)} className="p-2 rounded-lg hover:bg-surface-container-high transition-colors">
