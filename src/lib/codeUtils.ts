@@ -196,6 +196,22 @@ export function extractCodeFromAIResponse(text: string): string | null {
   return match ? match[1].trim() : null;
 }
 
+/**
+ * Extract partial (in-progress) code from a streaming response where the closing
+ * fence hasn't arrived yet. Returns null if no meaningful partial code found.
+ */
+export function extractPartialCode(text: string): string | null {
+  // Look for opening fence that has no closing fence yet
+  const fenceStart = text.search(/```(?:html|tsx|jsx|vue|javascript|js|css)?\s*\n/);
+  if (fenceStart === -1) return null;
+  const afterFence = text.slice(fenceStart).replace(/^```(?:html|tsx|jsx|vue|javascript|js|css)?\s*\n/, '');
+  // If there's already a closing fence, extractCodeFromAIResponse handles it
+  if (afterFence.includes('```')) return null;
+  const partial = afterFence.trimEnd();
+  // Only return if there's meaningful content (at least 30 chars)
+  return partial.length >= 30 ? partial : null;
+}
+
 // ── 根據程式碼類型產生預覽用 HTML ────────────────────────────────────
 export function generatePreviewDoc(code: string): string {
   if (!code) return '';

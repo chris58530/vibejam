@@ -349,4 +349,150 @@ app.post('/api/ai/chat', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
 
+// ── Streaming AI chat (SSE) ──────────────────────────────────────────
+app.post('/api/ai/chat/stream', async (req, res) => {
+  const ip = req.ip || req.socket.remoteAddress || 'unknown';
+  if (!checkRateLimit(ip)) {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.write(`data: ${JSON.stringify({ error: 'Rate limit exceeded.' })}\n\n`);
+    return res.end();
+  }
+
+  let { provider, apiKey, messages, model, temperature = 0.7, maxTokens = 8192 } = req.body;
+  provider = normalizeProvider(provider);
+  apiKey = normalizeApiKey(apiKey);
+
+  if (!provider || !apiKey || !messages) {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.write(`data: ${JSON.stringify({ error: 'provider, apiKey and messages required' })}\n\n`);
+    return res.end();
+  }
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+
+  const send = (text: string) => res.write(`data: ${JSON.stringify({ text })}\n\n`);
+  const finish = () => { res.write('data: [DONE]\n\n'); res.end(); };
+  const sendErr = (msg: string) => { res.write(`data: ${JSON.stringify({ error: msg })}\n\n`); res.end(); };
+
+  try {
+    if (provider === 'gemini') {
+      const geminiModel = typeof model === 'string' && model.trim() ? model.trim() : 'gemini-2.5-flash';
+      const contents = messages
+        .filter((m: any) => m.role !== 'system')
+        .map((m: any) => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }));
+      const systemInstruction = messages.find((m: any) => m.role === 'system');
+      const body: any = { contents, generationConfig: { temperature, maxOutputTokens: maxTokens } };
+      if (systemInstruction) body.systemInstruction = { parts: [{ text: systemInstruction.content }] };
+
+      const r = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:streamGenerateContent?key=${encodeURIComponent(apiKey)}&alt=sse`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+      );
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({}));
+        const msg = err.error?.message || 'Gemini API error';
+        return sendErr(/API key not valid/i.test(msg) ? msg + ' 請確認你的 Gemini API Key 有效。' : msg);
+      }
+      const reader = r.body?.getReader();
+      if (!reader) return finish();
+      const decoder = new TextDecoder();
+      let buf = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const lines = buf.split('\n');
+        buf = lines.pop() || '';
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6).trim();
+          if (data === '[DONE]') continue;
+          try {
+            const obj = JSON.parse(data);
+            const text = obj.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            if (text) send(text);
+          } catch {}
+        }
+      }
+      return finish();
+    }
+
+    if (provider === 'openai') {
+      const r = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({ model: model || 'gpt-3.5-turbo', messages, temperature, max_tokens: maxTokens, stream: true }),
+      });
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({}));
+        return sendErr(err.error?.message || 'OpenAI API error');
+      }
+      const reader = r.body?.getReader();
+      if (!reader) return finish();
+      const decoder = new TextDecoder();
+      let buf = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const lines = buf.split('\n');
+        buf = lines.pop() || '';
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6).trim();
+          if (data === '[DONE]') continue;
+          try {
+            const obj = JSON.parse(data);
+            const text = obj.choices?.[0]?.delta?.content || '';
+            if (text) send(text);
+          } catch {}
+        }
+      }
+      return finish();
+    }
+
+    if (provider === 'minimax') {
+      const minimaxModel = typeof model === 'string' && model.trim() ? model.trim() : MINIMAX_DEFAULT_MODEL;
+      const r = await fetch(`${MINIMAX_BASE_URL}/v1/chat/completions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({ model: minimaxModel, messages, temperature, max_tokens: maxTokens, stream: true }),
+      });
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({}));
+        return sendErr(err.error?.message || err.base_resp?.status_msg || 'MiniMax API error');
+      }
+      const reader = r.body?.getReader();
+      if (!reader) return finish();
+      const decoder = new TextDecoder();
+      let buf = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const lines = buf.split('\n');
+        buf = lines.pop() || '';
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6).trim();
+          if (data === '[DONE]') continue;
+          try {
+            const obj = JSON.parse(data);
+            const text = obj.choices?.[0]?.delta?.content || '';
+            if (text) send(text);
+          } catch {}
+        }
+      }
+      return finish();
+    }
+
+    sendErr(`Provider '${provider}' streaming not supported`);
+  } catch (err: any) {
+    sendErr(err.message || 'Unknown streaming error');
+  }
+});
+
 export default app;
