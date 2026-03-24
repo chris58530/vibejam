@@ -303,7 +303,7 @@ export default function IterationLab({ vibeId, onBack, onRemix, currentUser }: I
                           )}
                           <span className="text-xs text-white/60 font-medium">{version.author_name || vibe.author_name}</span>
                           {(version.author_id && version.author_id !== vibe.author_id) && (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded border border-indigo-500/30 text-indigo-400 bg-indigo-500/10">Fork</span>
+                            <span className="text-[9px] px-1.5 py-0.5 rounded border border-indigo-500/30 text-indigo-400 bg-indigo-500/10">Remix</span>
                           )}
                         </div>
                         <p className="text-white/40 text-xs leading-relaxed italic">

@@ -5,6 +5,7 @@ import Sidebar from './components/Sidebar';
 import BottomTabBar from './components/BottomTabBar';
 import Home from './pages/Home';
 import Workspace from './pages/Workspace';
+import RemixStudio from './pages/RemixStudio';
 import VibeDetail from './pages/VibeDetail';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
@@ -63,6 +64,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/workspace" element={<Workspace currentUser={currentUser ?? undefined} />} />
+            <Route path="/remix" element={<RemixStudio currentUser={currentUser ?? undefined} />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/ai-chat" element={<AIChat />} />
             <Route path="/:username/:vibeSlug" element={<VibeDetail currentUser={currentUser ?? undefined} />} />

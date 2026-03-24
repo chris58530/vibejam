@@ -76,8 +76,10 @@ export async function initializeDatabase() {
         id SERIAL PRIMARY KEY,
         parent_vibe_id INTEGER NOT NULL,
         child_vibe_id INTEGER NOT NULL,
+        parent_version_number INTEGER,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+      ALTER TABLE remixes ADD COLUMN IF NOT EXISTS parent_version_number INTEGER;
     `);
 
     console.log('Database schema initialized');

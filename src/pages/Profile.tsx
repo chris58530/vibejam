@@ -171,7 +171,7 @@ export default function Profile() {
 
         {/* Channel Tabs */}
         <div className="border-b border-outline-variant/10 mb-8 flex gap-8">
-          {['Published', 'Forks'].map(tab => (
+          {['Published', 'Remixes'].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -221,10 +221,10 @@ export default function Profile() {
           )
         )}
 
-        {activeTab === 'Forks' && (
+        {activeTab === 'Remixes' && (
           <div className="col-span-full flex flex-col items-center justify-center py-20 text-on-surface/20 border border-dashed border-outline-variant/10 rounded-xl bg-surface-container-lowest">
-             <span className="material-symbols-outlined text-2xl mb-2 opacity-50">fork_right</span>
-             <p className="font-mono text-xs uppercase tracking-widest">No forks yet</p>
+             <span className="material-symbols-outlined text-2xl mb-2 opacity-50">repeat</span>
+             <p className="font-mono text-xs uppercase tracking-widest">No remixes yet</p>
           </div>
         )}
 

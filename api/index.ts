@@ -105,13 +105,32 @@ app.get('/api/vibes/:id', async (req, res) => {
       WHERE c.vibe_id = $1 ORDER BY c.created_at DESC
     `, [req.params.id]);
 
-    res.json({ ...vibe, versions, comments });
+    // Check if this vibe is a remix (child) and return parent info
+    const remixInfo = await db.get(`
+      SELECT r.parent_vibe_id, r.parent_version_number, pv.title as parent_vibe_title, pu.username as parent_author_name
+      FROM remixes r
+      JOIN vibes pv ON r.parent_vibe_id = pv.id
+      JOIN users pu ON pv.author_id = pu.id
+      WHERE r.child_vibe_id = $1
+    `, [req.params.id]);
+
+    res.json({
+      ...vibe,
+      versions,
+      comments,
+      ...(remixInfo ? {
+        parent_vibe_id: remixInfo.parent_vibe_id,
+        parent_vibe_title: remixInfo.parent_vibe_title,
+        parent_author_name: remixInfo.parent_author_name,
+        parent_version_number: remixInfo.parent_version_number,
+      } : {}),
+    });
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
 
 // Create new vibe
 app.post('/api/vibes', async (req, res) => {
-  const { title, tags, code, author_id = 1, parent_vibe_id } = req.body;
+  const { title, tags, code, author_id = 1, parent_vibe_id, parent_version_number } = req.body;
   try {
     await ensureDb();
     const vibe = await db.get(
@@ -121,7 +140,7 @@ app.post('/api/vibes', async (req, res) => {
     const vibeId = vibe.id;
     await db.run('INSERT INTO versions (vibe_id, version_number, author_id, code, update_log) VALUES ($1, $2, $3, $4, $5)', [vibeId, 1, author_id, code, 'Initial version']);
     if (parent_vibe_id) {
-      await db.run('INSERT INTO remixes (parent_vibe_id, child_vibe_id) VALUES ($1, $2)', [parent_vibe_id, vibeId]);
+      await db.run('INSERT INTO remixes (parent_vibe_id, child_vibe_id, parent_version_number) VALUES ($1, $2, $3)', [parent_vibe_id, vibeId, parent_version_number || null]);
     }
     res.json({ id: vibeId });
   } catch (err: any) { res.status(500).json({ error: err.message }); }

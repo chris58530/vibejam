@@ -106,8 +106,14 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
 
   const handleRemix = () => {
     if (!vibe) return;
-    navigate('/workspace', {
-      state: { id: vibe.id, code: selectedVersion?.code || '', title: vibe.title },
+    navigate('/remix', {
+      state: {
+        parentVibeId: vibe.id,
+        code: selectedVersion?.code || '',
+        title: vibe.title,
+        authorName: vibe.author_name,
+        versionNumber: selectedVersion?.version_number || 1,
+      },
     });
   };
 
@@ -155,8 +161,8 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
             onClick={handleRemix}
             className="flex items-center gap-2 px-3 py-1.5 bg-primary hover:bg-primary-fixed text-on-primary text-xs font-mono font-bold rounded shadow-lg shadow-primary/10 transition-colors"
           >
-            <span className="material-symbols-outlined text-[14px]">fork_right</span>
-            Fork
+            <span className="material-symbols-outlined text-[14px]">repeat</span>
+            Remix
           </button>
         </div>
       </div>
@@ -321,7 +327,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                            )}
                            <span className="text-xs text-on-surface/60 font-sans font-medium">{version.author_name || vibe.author_name}</span>
                            {(version.author_id && version.author_id !== vibe.author_id) && (
-                             <span className="text-[9px] px-1.5 py-0.5 rounded border border-tertiary/20 text-tertiary font-mono uppercase bg-tertiary/5 tracking-widest">Fork</span>
+                             <span className="text-[9px] px-1.5 py-0.5 rounded border border-tertiary/20 text-tertiary font-mono uppercase bg-tertiary/5 tracking-widest">Remix</span>
                            )}
                         </div>
                         <p className="text-on-surface/40 text-[11px] leading-relaxed font-sans">

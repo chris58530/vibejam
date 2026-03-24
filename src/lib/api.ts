@@ -48,6 +48,10 @@ export interface Vibe {
   latest_version?: number;
   comment_count?: number;
   remix_count?: number;
+  parent_vibe_id?: number;
+  parent_vibe_title?: string;
+  parent_author_name?: string;
+  parent_version_number?: number;
   versions?: Version[];
   comments?: Comment[];
 }
@@ -94,7 +98,7 @@ export const api = {
     const res = await fetch(`${API_BASE}/vibes/${id}`);
     return res.json();
   },
-  async createVibe(data: { title: string; tags: string; code: string; author_id?: number; parent_vibe_id?: number }): Promise<{ id: number }> {
+  async createVibe(data: { title: string; tags: string; code: string; author_id?: number; parent_vibe_id?: number; parent_version_number?: number }): Promise<{ id: number }> {
     const res = await fetch(`${API_BASE}/vibes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

@@ -59,6 +59,7 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     parent_vibe_id INTEGER,
     child_vibe_id INTEGER,
+    parent_version_number INTEGER,
     FOREIGN KEY(parent_vibe_id) REFERENCES vibes(id),
     FOREIGN KEY(child_vibe_id) REFERENCES vibes(id)
   );
