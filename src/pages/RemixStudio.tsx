@@ -46,6 +46,15 @@ export default function RemixStudio({ currentUser }: RemixStudioProps) {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
 
+    // Code editor refs & highlight
+    const codeEditorRef = useRef<HTMLTextAreaElement>(null);
+    const [highlightedLine, setHighlightedLine] = useState<number | null>(null);
+    const [codeEditorScrollTop, setCodeEditorScrollTop] = useState(0);
+
+    // Chat smart auto-scroll
+    const chatScrollRef = useRef<HTMLDivElement>(null);
+    const autoScrollEnabledRef = useRef(true);
+
     // Code & publish state
     const [code, setCode] = useState(remixFrom?.code || '');
     const [title, setTitle] = useState(remixFrom ? `Remix of ${remixFrom.title}` : '');
@@ -55,9 +64,19 @@ export default function RemixStudio({ currentUser }: RemixStudioProps) {
         if (!initialized) initialize();
     }, [initialized, initialize]);
 
+    // Chat: scroll to bottom when messages update (only if auto-scroll enabled)
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        if (!autoScrollEnabledRef.current) return;
+        const el = chatScrollRef.current;
+        if (el) el.scrollTop = el.scrollHeight;
     }, [messages]);
+
+    // Code editor: scroll to bottom while AI is streaming
+    useEffect(() => {
+        if (!loading) return;
+        const el = codeEditorRef.current;
+        if (el) el.scrollTop = el.scrollHeight;
+    }, [code, loading]);
 
     const activeChatProviders = (['gemini', 'openai', 'minimax'] as const).filter(
         p => !!keys[p] && !!validated[p]
@@ -136,9 +155,13 @@ ${code}
                     const complete = extractCodeFromAIResponse(full);
                     if (complete) {
                         setCode(complete);
+                        setHighlightedLine(complete.split('\n').length - 1);
                     } else {
                         const partial = extractPartialCode(full);
-                        if (partial) setCode(partial);
+                        if (partial) {
+                            setCode(partial);
+                            setHighlightedLine(partial.split('\n').length - 1);
+                        }
                     }
                 },
                 { maxTokens: 8192 }
@@ -158,6 +181,7 @@ ${code}
             }
         } finally {
             setLoading(false);
+            setHighlightedLine(null);
         }
     };
 
@@ -241,18 +265,32 @@ ${code}
                         <span className="text-xs font-mono font-bold text-on-surface/60 uppercase tracking-widest">Code Editor</span>
                         <span className="ml-auto text-[10px] font-mono text-on-surface/25">{code.length} chars</span>
                     </div>
-                    {/* Code textarea */}
-                    <textarea
-                        value={code}
-                        onChange={e => setCode(e.target.value)}
-                        className="flex-1 w-full bg-surface-container-lowest text-on-surface/85 font-mono text-xs p-4 resize-none outline-none leading-relaxed custom-scrollbar"
-                        style={{ tabSize: 2, whiteSpace: 'pre', overflowWrap: 'normal', overflowX: 'auto' }}
-                        spellCheck={false}
-                        autoCapitalize="none"
-                        autoCorrect="off"
-                        autoComplete="off"
-                        placeholder="// 程式碼在這裡..."
-                    />
+                    {/* Code textarea with line highlight overlay */}
+                    <div className="flex-1 relative overflow-hidden bg-surface-container-lowest">
+                        {/* Highlighted line strip — positioned by line index minus scroll offset */}
+                        {highlightedLine !== null && (
+                            <div
+                                className="absolute left-0 right-0 pointer-events-none z-10 border-l-2 border-primary/80 bg-primary/[0.08]"
+                                style={{
+                                    top: Math.max(0, 16 + highlightedLine * 19.5 - codeEditorScrollTop),
+                                    height: 20,
+                                }}
+                            />
+                        )}
+                        <textarea
+                            ref={codeEditorRef}
+                            value={code}
+                            onChange={e => setCode(e.target.value)}
+                            onScroll={e => setCodeEditorScrollTop((e.target as HTMLTextAreaElement).scrollTop)}
+                            className="absolute inset-0 w-full h-full bg-transparent text-on-surface/85 font-mono text-xs p-4 resize-none outline-none leading-relaxed custom-scrollbar"
+                            style={{ tabSize: 2, whiteSpace: 'pre', overflowWrap: 'normal', overflowX: 'auto' }}
+                            spellCheck={false}
+                            autoCapitalize="none"
+                            autoCorrect="off"
+                            autoComplete="off"
+                            placeholder="// 程式碼在這裡..."
+                        />
+                    </div>
                 </div>
 
                 {/* ─ AI Chat Panel (bottom 2/5 on desktop) ─ */}
@@ -285,8 +323,8 @@ ${code}
                                     key={p}
                                     onClick={() => setSelectedProvider(p)}
                                     className={`px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider transition-colors ${selectedProvider === p
-                                            ? 'bg-primary text-on-primary'
-                                            : 'bg-surface-container-high text-on-surface/50 hover:text-on-surface'
+                                        ? 'bg-primary text-on-primary'
+                                        : 'bg-surface-container-high text-on-surface/50 hover:text-on-surface'
                                         }`}
                                 >
                                     {CHAT_PROVIDER_LABEL[p]}
@@ -301,7 +339,16 @@ ${code}
                     )}
 
                     {/* Chat Messages */}
-                    <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar" style={{ minHeight: 0 }}>
+                    <div
+                        ref={chatScrollRef}
+                        className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar"
+                        style={{ minHeight: 0 }}
+                        onScroll={e => {
+                            const el = e.currentTarget;
+                            const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+                            autoScrollEnabledRef.current = atBottom;
+                        }}
+                    >
                         {!hasActiveProvider && (
                             <div className="flex flex-col items-center justify-center h-full text-center px-6">
                                 <span className="material-symbols-outlined text-4xl text-on-surface/20 mb-3">key</span>
@@ -327,8 +374,8 @@ ${code}
                         {messages.map((msg, i) => (
                             <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                                 <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm whitespace-pre-wrap ${msg.role === 'user'
-                                        ? 'bg-primary text-on-primary rounded-br-md'
-                                        : 'bg-surface-container-high text-on-surface rounded-bl-md'
+                                    ? 'bg-primary text-on-primary rounded-br-md'
+                                    : 'bg-surface-container-high text-on-surface rounded-bl-md'
                                     }`}>
                                     {msg.role === 'assistant' ? formatAssistantMessage(msg.content) : msg.content}
                                 </div>
@@ -436,25 +483,30 @@ ${code}
     );
 }
 
-// ── Helper: Format assistant messages (hide raw code blocks, show explanation) ──
+// ── Helper: Format assistant messages
+// Hides all code blocks (complete or partial/streaming) — code is shown in the editor above
 function formatAssistantMessage(content: string): React.ReactNode {
-    // Split by code blocks
+    // Split on complete code blocks first
     const parts = content.split(/(```[\s\S]*?```)/g);
-    return (
-        <>
-            {parts.map((part, i) => {
-                if (part.startsWith('```')) {
-                    return (
-                        <div key={i} className="my-2 bg-surface-container-lowest rounded-lg px-3 py-2 border border-outline-variant/10">
-                            <div className="flex items-center gap-2 text-[10px] font-mono text-primary/60">
-                                <span className="material-symbols-outlined text-[12px]">check_circle</span>
-                                程式碼已自動套用至預覽
-                            </div>
-                        </div>
-                    );
-                }
-                return <span key={i}>{part}</span>;
-            })}
-        </>
-    );
+    const nodes: React.ReactNode[] = [];
+
+    for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        if (/^```[\s\S]*```$/.test(part)) {
+            // Complete code block — replace with pill
+            nodes.push(
+                <div key={i} className="my-2 bg-surface-container-lowest rounded-lg px-3 py-2 border border-outline-variant/10">
+                    <div className="flex items-center gap-2 text-[10px] font-mono text-primary/60">
+                        <span className="material-symbols-outlined text-[12px]">check_circle</span>
+                        程式碼已自動套用至編輯區
+                    </div>
+                </div>
+            );
+        } else {
+            // Strip any partial / still-streaming opening fence and everything after it
+            const stripped = part.replace(/```[\w]*\n?[\s\S]*$/, '').trimEnd();
+            if (stripped) nodes.push(<span key={i}>{stripped}</span>);
+        }
+    }
+    return <>{nodes}</>;
 }
