@@ -67,12 +67,12 @@ export default function VibeCard({ vibe, onClick }: VibeCardProps) {
       onClick={onClick}
     >
       {/* Thumbnail */}
-      <div className="relative aspect-video bg-surface-container-lowest rounded-lg overflow-hidden border border-outline-variant/10 group-hover:border-primary/20 transition-colors w-full">
+      <div className="relative aspect-video bg-surface-container-lowest rounded-xl overflow-hidden ring-1 ring-black/[0.07] group-hover:ring-primary/25 transition-all duration-300 w-full">
         <div className={`absolute inset-0 z-10 transition-opacity duration-300 pointer-events-none ${isHovered ? 'bg-transparent' : 'bg-black/20 backdrop-grayscale-[0.5]'}`} />
 
         <iframe
           srcDoc={previewCode}
-          className="absolute top-0 left-0 w-[200%] h-[200%] scale-50 origin-top-left border-none pointer-events-none bg-white opacity-80 group-hover:scale-[0.52] group-hover:opacity-100 transition-all duration-500"
+          className="absolute top-0 left-0 w-[200%] h-[200%] scale-50 origin-top-left border-none pointer-events-none bg-white opacity-80 group-hover:scale-[0.52] group-hover:opacity-100 transition-all duration-500 rounded-[10px]"
           title={vibe.title}
           sandbox="allow-scripts allow-same-origin"
         />
@@ -86,7 +86,7 @@ export default function VibeCard({ vibe, onClick }: VibeCardProps) {
       {/* Details */}
       <div className="mt-3 flex gap-3">
         {/* Author avatar */}
-        <div className="flex-shrink-0 w-9 h-9 rounded-full bg-surface-container-high overflow-hidden mt-0.5 border border-outline-variant/10">
+        <div className="flex-shrink-0 w-9 h-9 rounded-full bg-surface-container-high overflow-hidden mt-0.5 ring-1 ring-black/[0.07]">
           <img
             src={vibe.author_avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${vibe.author_name}`}
             alt={vibe.author_name}

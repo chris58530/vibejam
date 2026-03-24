@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import BottomTabBar from './components/BottomTabBar';
+import DebugOverlay from './components/DebugOverlay';
 import Home from './pages/Home';
 import Workspace from './pages/Workspace';
 import RemixStudio from './pages/RemixStudio';
@@ -16,6 +17,7 @@ import { useAIKeyStore } from './lib/aiKeyStore';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [debugMode, setDebugMode] = useState(false);
 
   // Initialize AI Key Store
   useEffect(() => {
@@ -57,7 +59,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-surface text-on-surface font-sans selection:bg-primary/30">
-      <Navbar />
+      <Navbar debugMode={debugMode} onDebugToggle={() => setDebugMode(d => !d)} />
       <div className="flex w-full min-h-screen">
         <Sidebar />
         <main className="flex-1 pb-16 md:pb-0 relative">
@@ -78,6 +80,8 @@ export default function App() {
         </main>
       </div>
       <BottomTabBar />
+
+      {debugMode && <DebugOverlay onClose={() => setDebugMode(false)} />}
 
       {/* Global Styles for custom scrollbar */}
       <style dangerouslySetInnerHTML={{

@@ -171,14 +171,21 @@ ${code}
     }
   };
 
-  const [mobileTab, setMobileTab] = useState<'chat' | 'preview'>('chat');
+  const [mobileTab, setMobileTab] = useState<'code' | 'chat' | 'preview'>('code');
 
   if (!remixFrom) return null;
 
   return (
     <div className="md:ml-16 pt-16 flex-1 flex flex-col md:flex-row h-[calc(100vh)] overflow-hidden bg-background">
-      {/* Mobile Tab Switcher */}
+      {/* Mobile Tab Switcher — 3 tabs */}
       <div className="flex md:hidden border-b border-outline-variant/10 bg-surface-container-lowest shrink-0">
+        <button
+          onClick={() => setMobileTab('code')}
+          className={`flex-1 py-3 text-center text-xs font-mono font-bold uppercase tracking-widest transition-colors ${mobileTab === 'code' ? 'border-b-2 border-primary text-primary bg-surface-container-high' : 'text-on-surface/40'}`}
+        >
+          <span className="material-symbols-outlined text-[14px] mr-1 align-middle">code</span>
+          Code
+        </button>
         <button
           onClick={() => setMobileTab('chat')}
           className={`flex-1 py-3 text-center text-xs font-mono font-bold uppercase tracking-widest transition-colors ${mobileTab === 'chat' ? 'border-b-2 border-primary text-primary bg-surface-container-high' : 'text-on-surface/40'}`}
@@ -195,134 +202,173 @@ ${code}
         </button>
       </div>
 
-      {/* ── Left: AI Chat Panel ── */}
-      <div className={`${mobileTab === 'chat' ? 'flex' : 'hidden'} md:flex w-full md:w-[45%] md:min-w-[360px] flex-col border-r border-outline-variant/10 bg-surface-container-low`}>
-        {/* Source Info Header */}
-        <div className="px-4 py-3 border-b border-outline-variant/10 bg-surface-container-lowest">
-          <div className="flex items-center gap-2 text-xs text-on-surface/50 font-mono">
-            <span className="material-symbols-outlined text-[14px]">repeat</span>
-            <span>Remixing from</span>
-            <button
-              onClick={() => navigate(`/@${encodeURIComponent(remixFrom.authorName)}/${toSlug(remixFrom.title)}`)}
-              className="text-primary hover:underline font-bold truncate max-w-[200px]"
-            >
-              {remixFrom.title}
-            </button>
-            <span className="text-on-surface/30">V{remixFrom.versionNumber}</span>
-            <span className="text-on-surface/30">by {remixFrom.authorName}</span>
+      {/* ── Left Column: Code Editor (top) + AI Chat (bottom) ── */}
+      <div
+        className={`${
+          mobileTab === 'preview' ? 'hidden' : 'flex'
+        } md:flex w-full md:w-[48%] md:min-w-[380px] flex-col border-r border-outline-variant/10 bg-surface-container-low`}
+      >
+        {/* ─ Code Editor Panel (top 3/5 on desktop) ─ */}
+        <div
+          className={`${
+            mobileTab === 'chat' ? 'hidden md:flex' : 'flex'
+          } flex-col overflow-hidden border-b border-outline-variant/10`}
+          style={{ flex: '3 3 0', minHeight: 0 }}
+        >
+          {/* Code editor header */}
+          <div className="px-4 py-2.5 border-b border-outline-variant/10 bg-surface-container-lowest flex items-center gap-2 shrink-0">
+            <span className="material-symbols-outlined text-[14px] text-primary">code</span>
+            <span className="text-xs font-mono font-bold text-on-surface/60 uppercase tracking-widest">Code Editor</span>
+            <span className="ml-auto text-[10px] font-mono text-on-surface/25">{code.length} chars</span>
           </div>
+          {/* Code textarea */}
+          <textarea
+            value={code}
+            onChange={e => setCode(e.target.value)}
+            className="flex-1 w-full bg-surface-container-lowest text-on-surface/85 font-mono text-xs p-4 resize-none outline-none leading-relaxed custom-scrollbar"
+            style={{ tabSize: 2, whiteSpace: 'pre', overflowWrap: 'normal', overflowX: 'auto' }}
+            spellCheck={false}
+            autoCapitalize="none"
+            autoCorrect="off"
+            autoComplete="off"
+            placeholder="// 程式碼在這裡..."
+          />
         </div>
 
-        {/* Provider Selector */}
-        {activeChatProviders.length > 0 && (
-          <div className="px-4 py-2 border-b border-outline-variant/10 flex items-center gap-2">
-            {activeChatProviders.map(p => (
+        {/* ─ AI Chat Panel (bottom 2/5 on desktop) ─ */}
+        <div
+          className={`${
+            mobileTab === 'code' ? 'hidden md:flex' : 'flex'
+          } flex-col overflow-hidden`}
+          style={{ flex: '2 2 0', minHeight: 0 }}
+        >
+          {/* Source Info Header */}
+          <div className="px-4 py-3 border-b border-outline-variant/10 bg-surface-container-lowest shrink-0">
+            <div className="flex items-center gap-2 text-xs text-on-surface/50 font-mono">
+              <span className="material-symbols-outlined text-[14px]">repeat</span>
+              <span>Remixing from</span>
               <button
-                key={p}
-                onClick={() => setSelectedProvider(p)}
-                className={`px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider transition-colors ${
-                  selectedProvider === p
-                    ? 'bg-primary text-on-primary'
-                    : 'bg-surface-container-high text-on-surface/50 hover:text-on-surface'
-                }`}
+                onClick={() => navigate(`/@${encodeURIComponent(remixFrom.authorName)}/${toSlug(remixFrom.title)}`)}
+                className="text-primary hover:underline font-bold truncate max-w-[200px]"
               >
-                {CHAT_PROVIDER_LABEL[p]}
+                {remixFrom.title}
               </button>
-            ))}
-            {selectedProvider && limit > 0 && (
-              <span className="ml-auto text-[10px] font-mono text-on-surface/30">
-                {todayUsage}/{limit}
-              </span>
-            )}
+              <span className="text-on-surface/30">V{remixFrom.versionNumber}</span>
+              <span className="text-on-surface/30">by {remixFrom.authorName}</span>
+            </div>
           </div>
-        )}
 
-        {/* Chat Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-          {!hasActiveProvider && (
-            <div className="flex flex-col items-center justify-center h-full text-center px-6">
-              <span className="material-symbols-outlined text-4xl text-on-surface/20 mb-3">key</span>
-              <p className="text-sm text-on-surface/40 mb-2">尚未設定 AI API Key</p>
-              <p className="text-xs text-on-surface/30 mb-4">請先至設定頁面輸入至少一個 AI 服務的 API Key</p>
-              <button
-                onClick={() => navigate('/settings')}
-                className="px-4 py-2 bg-primary text-on-primary text-xs font-bold rounded-lg hover:bg-primary-fixed transition-colors"
-              >
-                前往設定
-              </button>
+          {/* Provider Selector */}
+          {activeChatProviders.length > 0 && (
+            <div className="px-4 py-2 border-b border-outline-variant/10 flex items-center gap-2 shrink-0">
+              {activeChatProviders.map(p => (
+                <button
+                  key={p}
+                  onClick={() => setSelectedProvider(p)}
+                  className={`px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider transition-colors ${
+                    selectedProvider === p
+                      ? 'bg-primary text-on-primary'
+                      : 'bg-surface-container-high text-on-surface/50 hover:text-on-surface'
+                  }`}
+                >
+                  {CHAT_PROVIDER_LABEL[p]}
+                </button>
+              ))}
+              {selectedProvider && limit > 0 && (
+                <span className="ml-auto text-[10px] font-mono text-on-surface/30">
+                  {todayUsage}/{limit}
+                </span>
+              )}
             </div>
           )}
 
-          {hasActiveProvider && messages.length === 0 && (
-            <div className="flex flex-col items-center justify-center h-full text-center px-6">
-              <span className="material-symbols-outlined text-5xl text-primary/30 mb-4">auto_awesome</span>
-              <p className="text-sm text-on-surface/60 font-medium mb-2">告訴 AI 你想要什麼修改</p>
-              <p className="text-xs text-on-surface/30">例如：「把背景改成漸層色」、「加一個按鈕」、「改成暗色主題」</p>
-            </div>
-          )}
-
-          {messages.map((msg, i) => (
-            <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm whitespace-pre-wrap ${
-                msg.role === 'user'
-                  ? 'bg-primary text-on-primary rounded-br-md'
-                  : 'bg-surface-container-high text-on-surface rounded-bl-md'
-              }`}>
-                {msg.role === 'assistant' ? formatAssistantMessage(msg.content) : msg.content}
+          {/* Chat Messages */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar" style={{ minHeight: 0 }}>
+            {!hasActiveProvider && (
+              <div className="flex flex-col items-center justify-center h-full text-center px-6">
+                <span className="material-symbols-outlined text-4xl text-on-surface/20 mb-3">key</span>
+                <p className="text-sm text-on-surface/40 mb-2">尚未設定 AI API Key</p>
+                <p className="text-xs text-on-surface/30 mb-4">請先至設定頁面輸入至少一個 AI 服務的 API Key</p>
+                <button
+                  onClick={() => navigate('/settings')}
+                  className="px-4 py-2 bg-primary text-on-primary text-xs font-bold rounded-lg hover:bg-primary-fixed transition-colors"
+                >
+                  前往設定
+                </button>
               </div>
-            </div>
-          ))}
+            )}
 
-          {loading && (
-            <div className="flex justify-start">
-              <div className="bg-surface-container-high rounded-2xl rounded-bl-md px-4 py-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+            {hasActiveProvider && messages.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-full text-center px-6">
+                <span className="material-symbols-outlined text-5xl text-primary/30 mb-4">auto_awesome</span>
+                <p className="text-sm text-on-surface/60 font-medium mb-2">告訴 AI 你想要什麼修改</p>
+                <p className="text-xs text-on-surface/30">例如：「把背景改成漸層色」、「加一個按鈕」、「改成暗色主題」</p>
+              </div>
+            )}
+
+            {messages.map((msg, i) => (
+              <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm whitespace-pre-wrap ${
+                  msg.role === 'user'
+                    ? 'bg-primary text-on-primary rounded-br-md'
+                    : 'bg-surface-container-high text-on-surface rounded-bl-md'
+                }`}>
+                  {msg.role === 'assistant' ? formatAssistantMessage(msg.content) : msg.content}
                 </div>
               </div>
-            </div>
-          )}
+            ))}
 
-          {error && (
-            <div className="bg-error-container text-on-error-container text-xs rounded-lg px-3 py-2">
-              {error}
-            </div>
-          )}
+            {loading && (
+              <div className="flex justify-start">
+                <div className="bg-surface-container-high rounded-2xl rounded-bl-md px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                </div>
+              </div>
+            )}
 
-          <div ref={messagesEndRef} />
-        </div>
+            {error && (
+              <div className="bg-error-container text-on-error-container text-xs rounded-lg px-3 py-2">
+                {error}
+              </div>
+            )}
 
-        {/* Input Area */}
-        {hasActiveProvider && (
-          <div className="p-4 border-t border-outline-variant/10 bg-surface-container-lowest">
-            <div className="flex items-end gap-2">
-              <textarea
-                ref={inputRef}
-                value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                rows={1}
-                placeholder="描述你想要的修改..."
-                className="flex-1 bg-surface-container-high text-on-surface text-sm rounded-xl px-4 py-3 resize-none outline-none focus:ring-2 focus:ring-primary/30 transition-shadow placeholder:text-on-surface/30"
-                style={{ maxHeight: '120px', overflowY: 'auto' }}
-                onInput={(e) => {
-                  const target = e.target as HTMLTextAreaElement;
-                  target.style.height = 'auto';
-                  target.style.height = Math.min(target.scrollHeight, 120) + 'px';
-                }}
-              />
-              <button
-                onClick={handleSend}
-                disabled={!input.trim() || loading}
-                className="w-10 h-10 bg-primary text-on-primary rounded-xl flex items-center justify-center hover:bg-primary-fixed transition-colors disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
-              >
-                <span className="material-symbols-outlined text-[18px]">send</span>
-              </button>
-            </div>
+            <div ref={messagesEndRef} />
           </div>
-        )}
+
+          {/* Input Area */}
+          {hasActiveProvider && (
+            <div className="p-3 border-t border-outline-variant/10 bg-surface-container-lowest shrink-0">
+              <div className="flex items-end gap-2">
+                <textarea
+                  ref={inputRef}
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  rows={1}
+                  placeholder="描述你想要的修改..."
+                  className="flex-1 bg-surface-container-high text-on-surface text-sm rounded-xl px-4 py-3 resize-none outline-none focus:ring-2 focus:ring-primary/30 transition-shadow placeholder:text-on-surface/30"
+                  style={{ maxHeight: '100px', overflowY: 'auto' }}
+                  onInput={(e) => {
+                    const target = e.target as HTMLTextAreaElement;
+                    target.style.height = 'auto';
+                    target.style.height = Math.min(target.scrollHeight, 100) + 'px';
+                  }}
+                />
+                <button
+                  onClick={handleSend}
+                  disabled={!input.trim() || loading}
+                  className="w-9 h-9 bg-primary text-on-primary rounded-xl flex items-center justify-center hover:bg-primary-fixed transition-colors disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
+                >
+                  <span className="material-symbols-outlined text-[16px]">send</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── Right: Preview Panel ── */}

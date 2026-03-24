@@ -43,18 +43,25 @@ export default function Home() {
     <main className="md:ml-16 pt-16 min-h-screen bg-surface">
       {/* Hero Section */}
       <div className="px-6 pt-8 pb-4">
-        <div className="max-w-2xl">
-          <h1 className="text-2xl md:text-3xl font-bold text-on-surface font-headline tracking-tight">
-            Discover Creative Code
-          </h1>
-          <p className="text-sm text-on-surface/50 mt-2 leading-relaxed">
-            Explore interactive experiments, remix and build on the work of other creators.
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-end sm:gap-8">
+          <div className="flex-[3]">
+            <h1
+              className="text-2xl md:text-3xl font-bold text-on-surface font-headline tracking-tight leading-tight"
+              style={{ fontWeight: 550, textWrap: 'balance' } as React.CSSProperties}
+            >
+              Discover Creative Code
+            </h1>
+          </div>
+          <div className="flex-[2] mt-2 sm:mt-0 pb-0.5">
+            <p className="text-sm text-on-surface/50 leading-relaxed" style={{ maxWidth: '40ch', textWrap: 'pretty' } as React.CSSProperties}>
+              Explore interactive experiments, remix and build on the work of other creators.
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Scrolling Tag Bar */}
-      <div className="sticky top-16 z-40 bg-surface/90 backdrop-blur-md px-6 py-3">
+      {/* Scrolling Tag Bar — z-30 so sidebar (z-40) overlays it correctly when expanded */}
+      <div className="sticky top-16 z-30 bg-surface/90 backdrop-blur-md px-6 py-3 border-b border-outline-variant/[0.06]">
         <div className="flex items-center gap-3 overflow-x-auto no-scrollbar whitespace-nowrap hide-scrollbar">
           {FILTERS.map(tag => (
             <button

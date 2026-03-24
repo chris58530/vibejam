@@ -3,7 +3,12 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase, signOut } from '../lib/supabase';
 import AuthModal, { AuthView } from './AuthModal';
 
-export default function Navbar() {
+interface NavbarProps {
+  debugMode?: boolean;
+  onDebugToggle?: () => void;
+}
+
+export default function Navbar({ debugMode, onDebugToggle }: NavbarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const [user, setUser] = useState<any>(null);
@@ -55,7 +60,7 @@ export default function Navbar() {
           )}
 
           {!isWorkspace && (
-            <div className="hidden md:flex items-center bg-surface-container-low px-4 py-2 rounded-full gap-3 w-96 group transition-all duration-300 focus-within:ring-1 ring-outline-variant/30">
+            <div className="hidden md:flex items-center bg-surface-container-low px-4 py-2 rounded-full gap-3 w-96 group transition-all duration-300 ring-1 ring-black/[0.06] focus-within:ring-primary/30">
               <span className="material-symbols-outlined text-on-surface-variant text-sm">search</span>
               <input
                 className="bg-transparent border-none focus:ring-0 text-sm w-full font-body placeholder:text-on-surface-variant/50 outline-none"
@@ -95,6 +100,17 @@ export default function Navbar() {
               <div className="flex items-center gap-1 hidden sm:flex">
                 <button className="p-2 rounded-lg text-[#E5E2E1]/60 hover:bg-[#2A2A2A] transition-colors duration-200">
                   <span className="material-symbols-outlined">notifications</span>
+                </button>
+                <button
+                  onClick={onDebugToggle}
+                  className={`p-2 rounded-lg transition-colors duration-200 ${
+                    debugMode
+                      ? 'text-red-400 bg-red-500/15 hover:bg-red-500/25'
+                      : 'text-[#E5E2E1]/40 hover:bg-[#2A2A2A] hover:text-[#E5E2E1]/70'
+                  }`}
+                  title={debugMode ? '關閉 Debug 模式' : '開啟 Debug 模式（定位工具）'}
+                >
+                  <span className="material-symbols-outlined text-[20px]">bug_report</span>
                 </button>
                 <button className="p-2 rounded-lg text-[#E5E2E1]/60 hover:bg-[#2A2A2A] transition-colors duration-200">
                   <span className="material-symbols-outlined">apps</span>
