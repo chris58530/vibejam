@@ -11,6 +11,164 @@ const navItems = [
   { label: 'Settings', icon: 'settings', path: '/settings' },
 ];
 
+// ── 說明分類資料 ──────────────────────────────────────────────────────
+const HELP_SECTIONS = [
+  {
+    id: 'start',
+    icon: 'rocket_launch',
+    title: '快速入門',
+    color: '#FFB3B6',
+    items: [
+      { q: 'VibeJam 是什麼？', a: '一個讓你發佈、探索、Remix 創意網頁作品的社群平台。每件作品稱為「Vibe」，由 HTML/CSS/JS 組成，直接在瀏覽器裡跑。' },
+      { q: '怎麼開始創作？', a: '點左側「Workspace」進入編輯器，貼上程式碼或自行撰寫，即時預覽後按「Publish」發布。' },
+      { q: '需要登入嗎？', a: '瀏覽與預覽不需登入。發布作品、留言、Remix 則需要登入帳號。' },
+    ],
+  },
+  {
+    id: 'workspace',
+    icon: 'terminal',
+    title: 'Workspace 編輯器',
+    color: '#B3D9FF',
+    items: [
+      { q: '四種編輯模式', a: '📋 直接貼上：貼整段 HTML 最快速；🔧 分開編輯：自訂 HTML/CSS/JS 三區；⚛️ React 元件：支援 JSX + Tailwind + Lucide；💚 Vue 元件：支援 Vue 3 SFC。' },
+      { q: '貼上自動偵測', a: '貼上程式碼時系統會自動判斷框架類型，並靜默切換到對應模式，不需要手動選擇。' },
+      { q: '視覺預覽', a: '右側是即時預覽，可切換桌面 / 手機版面。預覽在 sandbox iframe 中執行，安全隔離。' },
+      { q: '發布作品', a: '填入標題和 Tags 後點「Publish」，作品會出現在你的個人頁面和首頁動態。' },
+    ],
+  },
+  {
+    id: 'saves',
+    icon: 'folder',
+    title: '存檔功能',
+    color: '#B3FFD1',
+    items: [
+      { q: '存檔在哪裡？', a: '點左側 folder 圖示開啟存檔面板，最多可儲存 5 個專案。' },
+      { q: '如何儲存？', a: '在 Workspace 開啟存檔面板，按「儲存目前專案」。若已有同名存檔則直接覆蓋更新。' },
+      { q: '如何載入？', a: '在存檔面板點「載入」，會完整還原標題、Tags、模式和程式碼。' },
+      { q: '存檔滿了怎辦？', a: '達到 5 個上限時請先刪除舊存檔（hover 顯示 ✕ 按鈕），才能新增。' },
+      { q: '未登入能用嗎？', a: '可以，但存檔只保存在本機瀏覽器。換裝置或清除瀏覽器資料後會消失。' },
+    ],
+  },
+  {
+    id: 'ai',
+    icon: 'smart_toy',
+    title: 'AI 助理',
+    color: '#E8B3FF',
+    items: [
+      { q: '支援哪些 AI？', a: '支援 Gemini、OpenAI、MiniMax 三家。需要在 Settings 頁面輸入自己的 API Key 並驗證。' },
+      { q: '有使用限制嗎？', a: '每個 provider 各有每日上限次數，可在 AI Chat 頁面看到剩餘額度。' },
+      { q: '怎麼用 AI 生成 Vibe？', a: '在 AI Chat 打「幫我做一個 XX 的動畫效果，輸出完整 HTML 檔案」，把回答的程式碼貼進 Workspace 即可。' },
+    ],
+  },
+  {
+    id: 'remix',
+    icon: 'fork_right',
+    title: 'Remix 玩法',
+    color: '#FFE4B3',
+    items: [
+      { q: '什麼是 Remix？', a: '找到喜歡的 Vibe，點「Remix」進入 Remix Studio，在原始程式碼基礎上加以改造，發布後會顯示來源作者。' },
+      { q: 'Remix Studio 有什麼特別？', a: '左邊是原始版本，右邊是你的改造版本，可以即時對比差異後直接發布。' },
+      { q: 'Remix 有版本記錄嗎？', a: '每次發布都會建立新 version，在作品頁面可以看到完整的版本歷史。' },
+    ],
+  },
+  {
+    id: 'explore',
+    icon: 'explore',
+    title: '探索與互動',
+    color: '#B3F0FF',
+    items: [
+      { q: '首頁有哪些動態？', a: '全部：所有最新作品；Trending：按熱度排序；Following：只看你追蹤的人的作品。' },
+      { q: '如何互動？', a: '點 Vibe 進入詳情頁，可以留言、回應貼文、查看原始碼，或直接 Fork Remix。' },
+      { q: 'Tags 怎麼用？', a: '發布時加上 Tags（如 #animation #ui-design），讓其他人更容易找到你的作品。' },
+    ],
+  },
+];
+
+// ── Help Modal ────────────────────────────────────────────────────────
+function HelpModal({ onClose }: { onClose: () => void }) {
+  const [activeSection, setActiveSection] = useState('start');
+  const [openItem, setOpenItem] = useState<string | null>(null);
+
+  const section = HELP_SECTIONS.find(s => s.id === activeSection)!;
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+      <div
+        className="relative bg-[#1C1B1B] border border-outline-variant/20 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex overflow-hidden"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Left nav */}
+        <div className="w-48 shrink-0 bg-[#161616] border-r border-outline-variant/10 flex flex-col py-4 gap-1 px-2">
+          <div className="px-3 mb-3">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[#FFB3B6] text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>help</span>
+              <span className="text-[11px] uppercase tracking-widest font-bold text-[#E5E2E1]">使用說明</span>
+            </div>
+            <p className="text-[10px] text-[#E5E2E1]/30 mt-1 leading-relaxed">VibeJam 玩法指南</p>
+          </div>
+          {HELP_SECTIONS.map(s => (
+            <button
+              key={s.id}
+              onClick={() => { setActiveSection(s.id); setOpenItem(null); }}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors ${activeSection === s.id ? 'bg-[#2A2A2A] text-[#E5E2E1]' : 'text-[#E5E2E1]/50 hover:bg-[#222] hover:text-[#E5E2E1]/80'}`}
+            >
+              <span className="material-symbols-outlined text-[16px] shrink-0" style={{ color: activeSection === s.id ? s.color : undefined, fontVariationSettings: activeSection === s.id ? "'FILL' 1" : "'FILL' 0" }}>{s.icon}</span>
+              <span className="text-[12px] font-medium">{s.title}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Right content */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Header */}
+          <div className="px-6 py-4 border-b border-outline-variant/10 flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: section.color + '18' }}>
+                <span className="material-symbols-outlined text-[18px]" style={{ color: section.color, fontVariationSettings: "'FILL' 1" }}>{section.icon}</span>
+              </div>
+              <h2 className="text-[15px] font-bold text-[#E5E2E1]">{section.title}</h2>
+            </div>
+            <button onClick={onClose} className="text-[#E5E2E1]/30 hover:text-[#E5E2E1] transition-colors">
+              <span className="material-symbols-outlined text-[20px]">close</span>
+            </button>
+          </div>
+
+          {/* FAQ accordion */}
+          <div className="flex-1 overflow-y-auto custom-scrollbar px-5 py-4 space-y-2">
+            {section.items.map((item, idx) => {
+              const key = `${activeSection}-${idx}`;
+              const isOpen = openItem === key;
+              return (
+                <div key={key} className={`border rounded-xl overflow-hidden transition-colors ${isOpen ? 'border-outline-variant/30 bg-[#222]' : 'border-outline-variant/10 bg-[#1E1E1E] hover:border-outline-variant/20'}`}>
+                  <button
+                    className="w-full flex items-center justify-between px-4 py-3 text-left gap-3"
+                    onClick={() => setOpenItem(isOpen ? null : key)}
+                  >
+                    <span className="text-[13px] font-semibold text-[#E5E2E1]">{item.q}</span>
+                    <span className="material-symbols-outlined text-[16px] text-[#E5E2E1]/40 shrink-0 transition-transform" style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>expand_more</span>
+                  </button>
+                  {isOpen && (
+                    <div className="px-4 pb-4">
+                      <p className="text-[12px] text-[#E5E2E1]/60 leading-relaxed">{item.a}</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Footer hint */}
+          <div className="px-5 py-3 border-t border-outline-variant/10 shrink-0">
+            <p className="text-[10px] text-[#E5E2E1]/25 text-center">點擊問題展開說明 · 點背景關閉</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 interface SidebarProps {
   savePanelOpen?: boolean;
   onToggleSavePanel?: () => void;
@@ -20,6 +178,7 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel }: SidebarPro
   const navigate = useNavigate();
   const location = useLocation();
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   const isWorkspace = location.pathname.includes('/workspace');
 
@@ -45,6 +204,7 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel }: SidebarPro
   // If in workspace, render the minimal utility strip
   if (isWorkspace) {
     return (
+      <>
       <aside className="fixed left-0 top-16 h-[calc(100vh-64px)] w-16 bg-[#1C1B1B] flex flex-col items-center py-4 gap-6 border-r border-outline-variant/10 z-40 hidden md:flex">
         <button onClick={() => navigate('/')} className="text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1] p-2.5 rounded-xl transition-all duration-300" title="Home">
           <span className="material-symbols-outlined">home</span>
@@ -67,7 +227,7 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel }: SidebarPro
         </button>
         
         <div className="mt-auto flex flex-col gap-6 items-center">
-          <button className="text-[#E5E2E1]/70 hover:text-[#FFB3B6] transition-colors">
+          <button onClick={() => setHelpOpen(true)} className="text-[#E5E2E1]/70 hover:text-[#FFB3B6] transition-colors" title="使用說明">
             <span className="material-symbols-outlined">help</span>
           </button>
           {currentUser && (
@@ -84,6 +244,8 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel }: SidebarPro
           )}
         </div>
       </aside>
+      {helpOpen && <HelpModal onClose={() => setHelpOpen(false)} />}
+    </>
     );
   }
 
@@ -174,6 +336,20 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel }: SidebarPro
           </span>
         </div>
       )}
+
+      {/* Help button — always visible at bottom */}
+      <button
+        onClick={() => setHelpOpen(true)}
+        className="shrink-0 flex items-center gap-3 px-3 py-2.5 text-[#E5E2E1]/40 hover:text-[#FFB3B6] hover:bg-[#2A2A2A] rounded-xl transition-colors"
+        title="使用說明"
+      >
+        <span className="material-symbols-outlined shrink-0 text-[22px]">help</span>
+        <span className="whitespace-nowrap overflow-hidden max-w-0 group-hover/sidebar:max-w-[160px] transition-[max-width] duration-300 text-sm font-medium opacity-0 group-hover/sidebar:opacity-100">
+          使用說明
+        </span>
+      </button>
+
+      {helpOpen && <HelpModal onClose={() => setHelpOpen(false)} />}
     </aside>
   );
 }
