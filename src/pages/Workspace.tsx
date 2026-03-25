@@ -452,7 +452,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
         <div className="flex items-center gap-4 text-[10px] font-mono text-on-surface/40">
           <span className="flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
-            VibeJam Cloud
+            The Bower Cloud
           </span>
           <span>UTF-8</span>
           <span className="text-primary">{isReactMode ? 'React JSX' : isVueMode ? 'Vue 3' : isSplitMode ? 'HTML / CSS / JS' : 'HTML (All-in-One)'}</span>

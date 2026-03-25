@@ -113,7 +113,7 @@ export default function DebugOverlay({ onClose }: Props) {
     const hPct = ((box.h / vh) * 100).toFixed(1);
 
     const text = [
-      '=== VibeJam Debug 定位資訊 ===',
+      '=== The Bower Debug 定位資訊 ===',
       '',
       `頁面: ${pageName}`,
       `URL : ${location.pathname}${location.search}`,

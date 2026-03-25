@@ -66,7 +66,7 @@ export default function Navbar({ debugMode, onDebugToggle }: NavbarProps) {
               onClick={() => navigate('/')}
             >
               <span className="material-symbols-outlined text-primary">terminal</span>
-              VibeJam Studio
+              The Bower Studio
             </div>
           ) : (
             <div className="flex items-center gap-4">
@@ -75,7 +75,7 @@ export default function Navbar({ debugMode, onDebugToggle }: NavbarProps) {
                 className="text-xl font-bold tracking-tighter text-[#E5E2E1] font-headline cursor-pointer"
                 onClick={() => navigate('/')}
               >
-                VibeJam
+                The Bower
               </h1>
             </div>
           )}

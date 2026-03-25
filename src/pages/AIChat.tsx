@@ -75,7 +75,7 @@ export default function AIChat() {
     try {
       const systemPrompt: ChatMessage = {
         role: 'system',
-        content: '你是 VibeBot，VibeJam 平台的 AI 助理。你善於回答關於網頁開發、創意程式設計、HTML/CSS/JS 的問題。回答時保持友善、簡潔，並在適當時提供程式碼範例。使用繁體中文回答。',
+        content: '你是 VibeBot，The Bower 平台的 AI 助理。你善於回答關於網頁開發、創意程式設計、HTML/CSS/JS 的問題。回答時保持友善、簡潔，並在適當時提供程式碼範例。使用繁體中文回答。',
       };
       const response = await chatWithAI(selectedProvider, [systemPrompt, ...newMessages], { model: selectedModel || undefined });
       setMessages(prev => [...prev, { role: 'assistant', content: response.text }]);

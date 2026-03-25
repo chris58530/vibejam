@@ -87,7 +87,7 @@ if (userCount.count === 0) {
         <div class="card">
           <h1>Neon Pulse</h1>
           <div class="pulse"></div>
-          <p style="opacity: 0.5">VibeJamer Prototype V1</p>
+          <p style="opacity: 0.5">The Bower Prototype V1</p>
         </div>
       `
     },

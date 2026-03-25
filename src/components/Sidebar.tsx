@@ -30,7 +30,7 @@ const HELP_SECTIONS = [
     title: '快速入門',
     color: '#FFB3B6',
     items: [
-      { q: 'VibeJam 是什麼？', a: '一個讓你發佈、探索、Remix 創意網頁作品的社群平台。每件作品稱為「Vibe」，由 HTML/CSS/JS 組成，直接在瀏覽器裡跑。' },
+      { q: 'The Bower 是什麼？', a: '一個讓你發佈、探索、Remix 創意網頁作品的社群平台。每件作品稱為「Vibe」，由 HTML/CSS/JS 組成，直接在瀏覽器裡跑。' },
       { q: '怎麼開始創作？', a: '點左側「Workspace」進入編輯器，貼上程式碼或自行撰寫，即時預覽後按「Publish」發布。' },
       { q: '需要登入嗎？', a: '瀏覽與預覽不需登入。發布作品、留言、Remix 則需要登入帳號。' },
     ],
@@ -118,7 +118,7 @@ function HelpModal({ onClose }: { onClose: () => void }) {
               <span className="material-symbols-outlined text-[#FFB3B6] text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>help</span>
               <span className="text-[11px] uppercase tracking-widest font-bold text-[#E5E2E1]">使用說明</span>
             </div>
-            <p className="text-[10px] text-[#E5E2E1]/30 mt-1 leading-relaxed">VibeJam 玩法指南</p>
+            <p className="text-[10px] text-[#E5E2E1]/30 mt-1 leading-relaxed">The Bower 玩法指南</p>
           </div>
           {HELP_SECTIONS.map(s => (
             <button
@@ -376,7 +376,7 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
             <a href="#" className="text-[10px] text-[#E5E2E1]/40 hover:text-primary transition-colors uppercase tracking-widest font-body">About</a>
           </div>
           <div className="px-4 pb-2">
-            <p className="text-[10px] text-[#E5E2E1]/20 font-medium font-body whitespace-nowrap">© 2024 VIBEJAM EDITORIAL</p>
+            <p className="text-[10px] text-[#E5E2E1]/20 font-medium font-body whitespace-nowrap">© 2024 THE BOWER EDITORIAL</p>
           </div>
         </div>
       </div>
