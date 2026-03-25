@@ -11,6 +11,7 @@ import {
     resendConfirmationEmail,
     AlreadyRegisteredUnconfirmedError,
 } from '../lib/supabase';
+import { useI18n } from '../lib/i18n';
 
 export type AuthView = 'login' | 'register' | 'forgot' | 'change-password';
 
@@ -43,6 +44,7 @@ async function compressImage(file: File, maxDimension = 120): Promise<string> {
 }
 
 export default function AuthModal({ isOpen, onClose, initialView = 'login' }: AuthModalProps) {
+    const { t } = useI18n();
     const [view, setView] = useState<AuthView>(initialView);
 
     const [loginEmail, setLoginEmail] = useState('');
@@ -91,11 +93,11 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
         const file = e.target.files?.[0];
         if (!file) return;
         if (!file.type.startsWith('image/')) {
-            setError('請選擇圖片檔案');
+            setError(t('auth_err_image_size'));
             return;
         }
         if (file.size > 5 * 1024 * 1024) {
-            setError('圖片大小不能超過 5MB');
+            setError(t('auth_err_image_size'));
             return;
         }
         try {
@@ -104,14 +106,14 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
             setRegAvatarPreview(data);
             setError('');
         } catch {
-            setError('圖片處理失敗，請選擇其他圖片');
+            setError(t('auth_err_image_process'));
         }
     };
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!loginEmail.trim() || !loginPassword) {
-            setError('請填寫所有欄位');
+            setError(t('auth_err_fill_fields'));
             return;
         }
         setLoading(true);
@@ -121,12 +123,12 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
             onClose();
         } catch (err: any) {
             const msg: string = err.message || '';
-            if (msg.includes('Invalid login credentials')) setError('電子郵件或密碼不正確');
+            if (msg.includes('Invalid login credentials')) setError(t('auth_err_invalid_credentials'));
             else if (msg.includes('Email not confirmed')) {
                 setUnconfirmedEmail(loginEmail.trim());
-                setError('請先確認您的電子郵件後再登入。如未收到確認信，請點擊下方按鈕重新發送。');
+                setError(t('auth_err_confirm_email'));
             }
-            else setError(msg || '登入失敗，請稍後再試');
+            else setError(msg || t('auth_err_invalid_credentials'));
         } finally {
             setLoading(false);
         }
@@ -135,15 +137,15 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!regName.trim() || !regEmail.trim() || !regPassword || !regConfirm) {
-            setError('請填寫所有必填欄位');
+            setError(t('auth_err_fill_fields'));
             return;
         }
         if (regPassword !== regConfirm) {
-            setError('兩次密碼輸入不一致');
+            setError(t('auth_err_password_mismatch'));
             return;
         }
         if (regPassword.length < 6) {
-            setError('密碼至少需要 6 個字元');
+            setError(t('auth_password_min'));
             return;
         }
         setLoading(true);
@@ -155,17 +157,17 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
             setView('login');
             setError('');
             // Use a custom success message shown in login view
-            setSuccess('🎉 註冊成功！請查收電子郵件並點擊確認連結，確認後即可登入（若未收到，請檢查垃圾郵件夾）。');
+            setSuccess(t('auth_success_register'));
         } catch (err: any) {
             const msg: string = err.message || '';
             if (msg.includes('already registered') || msg.includes('already been registered')) {
                 // Email is confirmed and in use — direct to login
-                setError('此電子郵件已被使用，請直接登入');
+                setError(t('auth_email_in_use'));
             } else if (err instanceof AlreadyRegisteredUnconfirmedError) {
                 // Email is registered but unconfirmed — offer to resend confirmation
                 setUnconfirmedEmail(regEmail.trim());
-                setError('此電子郵件已被使用但尚未確認。請點擊下方按鈕重新發送確認信，或直接前往登入。');
-            } else setError(msg || '註冊失敗，請稍後再試');
+                setError(t('auth_err_confirm_email'));
+            } else setError(msg || t('auth_err_fill_fields'));
         } finally {
             setLoading(false);
         }
@@ -174,16 +176,16 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
     const handleForgotPassword = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!forgotEmail.trim()) {
-            setError('請輸入電子郵件');
+            setError(t('auth_err_fill_fields'));
             return;
         }
         setLoading(true);
         setError('');
         try {
             await resetPasswordForEmail(forgotEmail.trim());
-            setSuccess('✉️ 重設密碼連結已寄至您的信箱，請檢查電子郵件（包含垃圾郵件夾）。');
+            setSuccess(t('auth_success_reset'));
         } catch (err: any) {
-            setError(err.message || '操作失敗，請稍後再試');
+            setError(err.message || t('auth_err_fill_fields'));
         } finally {
             setLoading(false);
         }
@@ -192,25 +194,25 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
     const handleChangePassword = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newPassword || !newPasswordConfirm) {
-            setError('請填寫所有欄位');
+            setError(t('auth_err_fill_fields'));
             return;
         }
         if (newPassword !== newPasswordConfirm) {
-            setError('兩次密碼輸入不一致');
+            setError(t('auth_err_password_mismatch'));
             return;
         }
         if (newPassword.length < 6) {
-            setError('密碼至少需要 6 個字元');
+            setError(t('auth_password_min'));
             return;
         }
         setLoading(true);
         setError('');
         try {
             await updatePassword(newPassword);
-            setSuccess('✅ 密碼已成功更新！');
+            setSuccess(t('auth_success_password'));
             setTimeout(() => onClose(), 2000);
         } catch (err: any) {
-            setError(err.message || '密碼更新失敗，請稍後再試');
+            setError(err.message || t('auth_err_password_update'));
         } finally {
             setLoading(false);
         }
@@ -223,10 +225,10 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
         setSuccess('');
         try {
             await resendConfirmationEmail(unconfirmedEmail);
-            setSuccess('✉️ 確認信已重新發送！請檢查您的信箱（包含垃圾郵件夾）。');
+            setSuccess(t('auth_success_resend'));
             setUnconfirmedEmail('');
         } catch (err: any) {
-            setError(err.message || '發送失敗，請稍後再試');
+            setError(err.message || t('auth_err_fill_fields'));
         } finally {
             setLoading(false);
         }
@@ -278,14 +280,14 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                     <div className="mb-6">
                         {view === 'login' && (
                             <>
-                                <h2 className="text-2xl font-bold text-on-surface">歡迎回來</h2>
-                                <p className="text-on-surface/40 text-sm mt-1">登入您的帳號繼續創作</p>
+                                <h2 className="text-2xl font-bold text-on-surface">{t('auth_welcome_back')}</h2>
+                                <p className="text-on-surface/40 text-sm mt-1">{t('auth_signin_subtitle')}</p>
                             </>
                         )}
                         {view === 'register' && (
                             <>
-                                <h2 className="text-2xl font-bold text-on-surface">建立帳號</h2>
-                                <p className="text-on-surface/40 text-sm mt-1">加入 VibeJamer 社群，開始創作</p>
+                                <h2 className="text-2xl font-bold text-on-surface">{t('auth_create_account')}</h2>
+                                <p className="text-on-surface/40 text-sm mt-1">{t('auth_register_subtitle')}</p>
                             </>
                         )}
                         {view === 'forgot' && (
@@ -295,18 +297,18 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                                     className="flex items-center gap-1 text-on-surface/40 hover:text-on-surface text-sm mb-3 transition-colors"
                                 >
                                     <span className="material-symbols-outlined text-[16px]">arrow_back</span>
-                                    返回登入
+                                    {t('auth_back_login')}
                                 </button>
-                                <h2 className="text-2xl font-bold text-on-surface">忘記密碼</h2>
+                                <h2 className="text-2xl font-bold text-on-surface">{t('auth_forgot_title')}</h2>
                                 <p className="text-on-surface/40 text-sm mt-1">
-                                    輸入您的電子郵件，我們將寄送重設連結
+                                    {t('auth_forgot_subtitle')}
                                 </p>
                             </>
                         )}
                         {view === 'change-password' && (
                             <>
-                                <h2 className="text-2xl font-bold text-on-surface">設定新密碼</h2>
-                                <p className="text-on-surface/40 text-sm mt-1">請輸入您想要使用的新密碼</p>
+                                <h2 className="text-2xl font-bold text-on-surface">{t('auth_new_password')}</h2>
+                                <p className="text-on-surface/40 text-sm mt-1">{t('auth_change_pwd_subtitle')}</p>
                             </>
                         )}
                     </div>
@@ -325,7 +327,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                                 disabled={loading}
                                 className="w-full py-2.5 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-indigo-400 text-sm font-medium hover:bg-indigo-500/20 transition-colors disabled:opacity-50"
                             >
-                                {loading ? '發送中…' : '📧 重新發送確認信'}
+                                {loading ? t('auth_sending') : t('auth_resend_confirm')}
                             </button>
                         </div>
                     )}
@@ -339,7 +341,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                     {view === 'login' && (
                         <form onSubmit={handleLogin} className="space-y-4">
                             <div>
-                                <label className="block text-on-surface/60 text-sm mb-1.5">電子郵件</label>
+                                <label className="block text-on-surface/60 text-sm mb-1.5">{t('auth_email')}</label>
                                 <input
                                     type="email"
                                     value={loginEmail}
@@ -350,7 +352,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                                 />
                             </div>
                             <div>
-                                <label className="block text-on-surface/60 text-sm mb-1.5">密碼</label>
+                                <label className="block text-on-surface/60 text-sm mb-1.5">{t('auth_password')}</label>
                                 <div className="relative">
                                     <input
                                         type={showLoginPwd ? 'text' : 'password'}
@@ -373,17 +375,17 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                                     onClick={() => switchView('forgot')}
                                     className="text-xs text-indigo-400 hover:text-indigo-300 mt-1.5 transition-colors"
                                 >
-                                    忘記密碼？
+                                    {t('auth_forgot_password')}
                                 </button>
                             </div>
 
                             <button type="submit" disabled={loading} className={submitBtnClass}>
-                                {loading ? '登入中…' : '登入'}
+                                {loading ? t('auth_signing_in') : t('auth_signin_btn')}
                             </button>
 
                             <div className="relative flex items-center gap-3 my-1">
                                 <div className="flex-1 h-px bg-white/10" />
-                                <span className="text-on-surface/20 text-xs">或</span>
+                                <span className="text-on-surface/20 text-xs">{t('misc_or')}</span>
                                 <div className="flex-1 h-px bg-white/10" />
                             </div>
 
@@ -395,17 +397,17 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                                 <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
                                     <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
                                 </svg>
-                                使用 GitHub 登入
+                                {t('auth_github_signin')}
                             </button>
 
                             <p className="text-center text-on-surface/30 text-sm">
-                                還沒有帳號？{' '}
+                                {t('auth_no_account')}{' '}
                                 <button
                                     type="button"
                                     onClick={() => switchView('register')}
                                     className="text-indigo-400 hover:text-indigo-300 transition-colors font-medium"
                                 >
-                                    立即註冊
+                                    {t('auth_register_now')}
                                 </button>
                             </p>
                         </form>
@@ -434,7 +436,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                                     ) : (
                                         <div className="text-center">
                                             <span className="material-symbols-outlined text-[24px] text-on-surface/30 mx-auto">upload</span>
-                                            <span className="text-on-surface/20 text-xs mt-0.5 block">上傳</span>
+                                            <span className="text-on-surface/20 text-xs mt-0.5 block">{t('misc_upload')}</span>
                                         </div>
                                     )}
                                 </div>
@@ -447,11 +449,11 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                                         }}
                                         className="text-xs text-on-surface/30 hover:text-red-400 transition-colors"
                                     >
-                                        移除頭像
+                                        {t('auth_remove_avatar')}
                                     </button>
                                 )}
                                 {!regAvatarPreview && (
-                                    <p className="text-xs text-on-surface/25">點擊上傳頭像（選填）</p>
+                                    <p className="text-xs text-on-surface/25">{t('auth_upload_avatar')}</p>
                                 )}
                                 <input
                                     ref={fileInputRef}
@@ -464,13 +466,13 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
 
                             <div>
                                 <label className="block text-on-surface/60 text-sm mb-1.5">
-                                    顯示名稱 <span className="text-red-400">*</span>
+                                    {t('auth_display_name')}
                                 </label>
                                 <input
                                     type="text"
                                     value={regName}
                                     onChange={(e) => setRegName(e.target.value)}
-                                    placeholder="您的名字"
+                                    placeholder={t('auth_your_name')}
                                     className={inputClass}
                                     autoComplete="name"
                                 />
@@ -478,7 +480,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
 
                             <div>
                                 <label className="block text-on-surface/60 text-sm mb-1.5">
-                                    電子郵件 <span className="text-red-400">*</span>
+                                    {t('auth_email')} <span className="text-red-400">*</span>
                                 </label>
                                 <input
                                     type="email"
@@ -492,7 +494,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
 
                             <div>
                                 <label className="block text-on-surface/60 text-sm mb-1.5">
-                                    密碼 <span className="text-red-400">*</span>
+                                    {t('auth_password')} <span className="text-red-400">*</span>
                                 </label>
                                 <div className="relative">
                                     <input
@@ -515,14 +517,14 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
 
                             <div>
                                 <label className="block text-on-surface/60 text-sm mb-1.5">
-                                    確認密碼 <span className="text-red-400">*</span>
+                                    {t('auth_confirm_password')} <span className="text-red-400">*</span>
                                 </label>
                                 <div className="relative">
                                     <input
                                         type={showConfirmPwd ? 'text' : 'password'}
                                         value={regConfirm}
                                         onChange={(e) => setRegConfirm(e.target.value)}
-                                        placeholder="再次輸入密碼"
+                                        placeholder={t('auth_reenter_password')}
                                         className={`w-full bg-white/5 border rounded-xl px-4 py-3 pr-11 text-on-surface placeholder:text-on-surface/20 text-sm focus:outline-none transition-colors ${confirmBorderClass(
                                             regConfirm,
                                             regPassword === regConfirm,
@@ -543,17 +545,17 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                             </div>
 
                             <button type="submit" disabled={loading} className={submitBtnClass}>
-                                {loading ? '建立中…' : '建立帳號'}
+                                {loading ? t('auth_creating') : t('auth_create_account')}
                             </button>
 
                             <p className="text-center text-on-surface/30 text-sm">
-                                已有帳號？{' '}
+                                {t('auth_have_account')}{' '}
                                 <button
                                     type="button"
                                     onClick={() => switchView('login')}
                                     className="text-indigo-400 hover:text-indigo-300 transition-colors font-medium"
                                 >
-                                    登入
+                                    {t('auth_signin_btn')}
                                 </button>
                             </p>
                         </form>
@@ -563,7 +565,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                     {view === 'forgot' && !success && (
                         <form onSubmit={handleForgotPassword} className="space-y-4">
                             <div>
-                                <label className="block text-on-surface/60 text-sm mb-1.5">電子郵件</label>
+                                <label className="block text-on-surface/60 text-sm mb-1.5">{t('auth_email')}</label>
                                 <input
                                     type="email"
                                     value={forgotEmail}
@@ -574,7 +576,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                                 />
                             </div>
                             <button type="submit" disabled={loading} className={submitBtnClass}>
-                                {loading ? '發送中…' : '發送重設連結'}
+                                {loading ? t('auth_sending') : t('auth_send_reset')}
                             </button>
                         </form>
                     )}
@@ -583,7 +585,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                     {view === 'change-password' && !success && (
                         <form onSubmit={handleChangePassword} className="space-y-4">
                             <div>
-                                <label className="block text-on-surface/60 text-sm mb-1.5">新密碼</label>
+                                <label className="block text-on-surface/60 text-sm mb-1.5">{t('auth_new_password')}</label>
                                 <div className="relative">
                                     <input
                                         type={showNewPwd ? 'text' : 'password'}
@@ -604,13 +606,13 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                             </div>
 
                             <div>
-                                <label className="block text-on-surface/60 text-sm mb-1.5">確認新密碼</label>
+                                <label className="block text-on-surface/60 text-sm mb-1.5">{t('auth_confirm_password')}</label>
                                 <div className="relative">
                                     <input
                                         type={showNewConfirmPwd ? 'text' : 'password'}
                                         value={newPasswordConfirm}
                                         onChange={(e) => setNewPasswordConfirm(e.target.value)}
-                                        placeholder="再次輸入新密碼"
+                                        placeholder={t('auth_reenter_password')}
                                         className={`w-full bg-white/5 border rounded-xl px-4 py-3 pr-11 text-on-surface placeholder:text-on-surface/20 text-sm focus:outline-none transition-colors ${confirmBorderClass(
                                             newPasswordConfirm,
                                             newPassword === newPasswordConfirm,
@@ -635,7 +637,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                             </div>
 
                             <button type="submit" disabled={loading} className={submitBtnClass}>
-                                {loading ? '更新中…' : '更新密碼'}
+                                {loading ? t('auth_updating') : t('auth_update_password')}
                             </button>
                         </form>
                     )}

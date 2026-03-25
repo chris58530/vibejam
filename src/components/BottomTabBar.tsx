@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { useI18n } from '../lib/i18n';
 
 export default function BottomTabBar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useI18n();
   const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
@@ -33,7 +35,7 @@ export default function BottomTabBar() {
         className={`flex flex-col items-center gap-1 transition-colors ${isActive('/') ? 'text-[#FFB3B6]' : 'text-[#E5E2E1]/60 hover:text-[#E5E2E1]'}`}
       >
         <span className="material-symbols-outlined" style={isActive('/') ? { fontVariationSettings: "'FILL' 1" } : {}}>home</span>
-        <span className="text-[10px] font-medium font-body">Home</span>
+        <span className="text-[10px] font-medium font-body">{t('tab_home')}</span>
       </button>
 
       <button
@@ -41,7 +43,7 @@ export default function BottomTabBar() {
         className={`flex flex-col items-center gap-1 transition-colors ${isActive('/ai-chat') ? 'text-[#FFB3B6]' : 'text-[#E5E2E1]/60 hover:text-[#E5E2E1]'}`}
       >
         <span className="material-symbols-outlined" style={isActive('/ai-chat') ? { fontVariationSettings: "'FILL' 1" } : {}}>smart_toy</span>
-        <span className="text-[10px] font-medium font-body">AI Chat</span>
+        <span className="text-[10px] font-medium font-body">{t('tab_ai_chat')}</span>
       </button>
 
       <button
@@ -49,7 +51,7 @@ export default function BottomTabBar() {
         className={`flex flex-col items-center gap-1 transition-colors ${isActive('/workspace') ? 'text-[#FFB3B6]' : 'text-[#E5E2E1]/60 hover:text-[#E5E2E1]'}`}
       >
         <span className="material-symbols-outlined">add_circle</span>
-        <span className="text-[10px] font-medium font-body">Create</span>
+        <span className="text-[10px] font-medium font-body">{t('tab_create')}</span>
       </button>
 
       <button
@@ -57,7 +59,7 @@ export default function BottomTabBar() {
         className="flex flex-col items-center gap-1 text-[#E5E2E1]/60 hover:text-[#E5E2E1] transition-colors"
       >
         <span className="material-symbols-outlined">subscriptions</span>
-        <span className="text-[10px] font-medium font-body">Subs</span>
+        <span className="text-[10px] font-medium font-body">{t('tab_subs')}</span>
       </button>
 
       <button
@@ -65,7 +67,7 @@ export default function BottomTabBar() {
         className="flex flex-col items-center gap-1 text-[#E5E2E1]/60 hover:text-[#E5E2E1] transition-colors"
       >
         <span className="material-symbols-outlined">person</span>
-        <span className="text-[10px] font-medium font-body">You</span>
+        <span className="text-[10px] font-medium font-body">{t('tab_you')}</span>
       </button>
     </nav>
   );

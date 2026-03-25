@@ -1,19 +1,28 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase, signOut } from '../lib/supabase';
 import AuthModal, { AuthView } from './AuthModal';
+import { useI18n, Language } from '../lib/i18n';
 
 interface NavbarProps {
   debugMode?: boolean;
   onDebugToggle?: () => void;
 }
 
+const LANGUAGES: { code: Language; label: string; flag: string }[] = [
+  { code: 'en', label: 'English', flag: '🇬🇧' },
+  { code: 'zh-TW', label: '繁體中文', flag: '🇹🇼' },
+];
+
 export default function Navbar({ debugMode, onDebugToggle }: NavbarProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t, language, setLanguage } = useI18n();
   const [user, setUser] = useState<any>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [authView, setAuthView] = useState<AuthView>('login');
+  const [langMenuOpen, setLangMenuOpen] = useState(false);
+  const langMenuRef = useRef<HTMLDivElement>(null);
 
   const isWorkspace = location.pathname.includes('/workspace');
 
@@ -30,10 +39,22 @@ export default function Navbar({ debugMode, onDebugToggle }: NavbarProps) {
     return () => subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (langMenuRef.current && !langMenuRef.current.contains(e.target as Node)) {
+        setLangMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const openAuth = (view: AuthView = 'login') => {
     setAuthView(view);
     setAuthOpen(true);
   };
+
+  const currentLang = LANGUAGES.find(l => l.code === language) ?? LANGUAGES[0];
 
   return (
     <>
@@ -64,7 +85,7 @@ export default function Navbar({ debugMode, onDebugToggle }: NavbarProps) {
               <span className="material-symbols-outlined text-on-surface-variant text-sm">search</span>
               <input
                 className="bg-transparent border-none focus:ring-0 text-sm w-full font-body placeholder:text-on-surface-variant/50 outline-none"
-                placeholder="Search vibes, code, or creators..."
+                placeholder={t('nav_search_placeholder')}
                 type="text"
               />
             </div>
@@ -74,11 +95,11 @@ export default function Navbar({ debugMode, onDebugToggle }: NavbarProps) {
             <nav className="hidden md:flex items-center bg-surface-container-low p-1 rounded-lg">
               <button className="px-3 py-1.5 rounded-md text-primary font-semibold bg-surface-container-high transition-all text-sm flex items-center gap-2">
                 <span className="material-symbols-outlined text-sm">desktop_windows</span>
-                Desktop
+                {t('nav_desktop')}
               </button>
               <button className="px-3 py-1.5 rounded-md text-[#E5E2E1]/60 hover:bg-surface-container-high transition-colors text-sm flex items-center gap-2">
                 <span className="material-symbols-outlined text-sm">smartphone</span>
-                Mobile
+                {t('nav_mobile')}
               </button>
             </nav>
           )}
@@ -89,35 +110,69 @@ export default function Navbar({ debugMode, onDebugToggle }: NavbarProps) {
             <>
               <div className="flex items-center gap-2 px-3 py-1.5 bg-surface-container-low rounded-lg text-xs font-mono text-tertiary">
                 <span className="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span>
-                LIVE SYNC
+                {t('nav_live_sync')}
               </div>
               <div className="h-6 w-px bg-outline-variant/20 mx-2"></div>
               <button className="material-symbols-outlined text-[#E5E2E1]/60 hover:text-on-background transition-colors p-2 rounded-lg">notifications</button>
               <button className="material-symbols-outlined text-[#E5E2E1]/60 hover:text-on-background transition-colors p-2 rounded-lg">settings</button>
             </>
           ) : (
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1 hidden sm:flex">
-                <button className="p-2 rounded-lg text-[#E5E2E1]/60 hover:bg-[#2A2A2A] transition-colors duration-200">
-                  <span className="material-symbols-outlined">notifications</span>
-                </button>
-                <button
-                  onClick={onDebugToggle}
-                  className={`p-2 rounded-lg transition-colors duration-200 ${
-                    debugMode
-                      ? 'text-red-400 bg-red-500/15 hover:bg-red-500/25'
-                      : 'text-[#E5E2E1]/40 hover:bg-[#2A2A2A] hover:text-[#E5E2E1]/70'
-                  }`}
-                  title={debugMode ? '關閉 Debug 模式' : '開啟 Debug 模式（定位工具）'}
-                >
-                  <span className="material-symbols-outlined text-[20px]">bug_report</span>
-                </button>
-                <button className="p-2 rounded-lg text-[#E5E2E1]/60 hover:bg-[#2A2A2A] transition-colors duration-200">
-                  <span className="material-symbols-outlined">apps</span>
-                </button>
-              </div>
+            <div className="flex items-center gap-1 hidden sm:flex">
+              <button className="p-2 rounded-lg text-[#E5E2E1]/60 hover:bg-[#2A2A2A] transition-colors duration-200">
+                <span className="material-symbols-outlined">notifications</span>
+              </button>
+              <button
+                onClick={onDebugToggle}
+                className={`p-2 rounded-lg transition-colors duration-200 ${
+                  debugMode
+                    ? 'text-red-400 bg-red-500/15 hover:bg-red-500/25'
+                    : 'text-[#E5E2E1]/40 hover:bg-[#2A2A2A] hover:text-[#E5E2E1]/70'
+                }`}
+                title={debugMode ? t('nav_debug_off') : t('nav_debug_on')}
+              >
+                <span className="material-symbols-outlined text-[20px]">bug_report</span>
+              </button>
+              <button className="p-2 rounded-lg text-[#E5E2E1]/60 hover:bg-[#2A2A2A] transition-colors duration-200">
+                <span className="material-symbols-outlined">apps</span>
+              </button>
             </div>
           )}
+
+          {/* Language Switcher */}
+          <div className="relative" ref={langMenuRef}>
+            <button
+              onClick={() => setLangMenuOpen(v => !v)}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[#E5E2E1]/60 hover:bg-[#2A2A2A] hover:text-[#E5E2E1] transition-colors duration-200 text-sm font-body"
+              title={t('lang_switcher_label')}
+            >
+              <span className="material-symbols-outlined text-[18px]">language</span>
+              <span className="hidden sm:inline">{currentLang.flag} {currentLang.label}</span>
+              <span className="sm:hidden">{currentLang.flag}</span>
+              <span className="material-symbols-outlined text-[14px] hidden sm:inline">expand_more</span>
+            </button>
+
+            {langMenuOpen && (
+              <div className="absolute right-0 top-full mt-2 bg-[#1C1B1B] border border-outline-variant/20 rounded-xl shadow-xl overflow-hidden z-50 min-w-[140px]">
+                {LANGUAGES.map(lang => (
+                  <button
+                    key={lang.code}
+                    onClick={() => { setLanguage(lang.code); setLangMenuOpen(false); }}
+                    className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-body transition-colors ${
+                      language === lang.code
+                        ? 'text-primary bg-primary/10'
+                        : 'text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1]'
+                    }`}
+                  >
+                    <span>{lang.flag}</span>
+                    <span>{lang.label}</span>
+                    {language === lang.code && (
+                      <span className="material-symbols-outlined text-[16px] ml-auto text-primary">check</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           {user ? (
             <div className="flex items-center gap-2 ml-2">
@@ -134,7 +189,7 @@ export default function Navbar({ debugMode, onDebugToggle }: NavbarProps) {
                   className="w-full h-full object-cover"
                 />
               </div>
-              <button onClick={signOut} className="text-[#E5E2E1]/40 hover:text-[#E5E2E1] text-xs transition-colors p-2" title="Sign Out">
+              <button onClick={signOut} className="text-[#E5E2E1]/40 hover:text-[#E5E2E1] text-xs transition-colors p-2" title={t('nav_signout')}>
                 <span className="material-symbols-outlined text-[18px]">logout</span>
               </button>
             </div>
@@ -143,13 +198,13 @@ export default function Navbar({ debugMode, onDebugToggle }: NavbarProps) {
               onClick={() => openAuth('login')}
               className="ml-2 px-4 py-1.5 bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant/20 rounded-lg text-on-surface text-sm font-semibold transition-all font-body"
             >
-              Sign In
+              {t('nav_signin')}
             </button>
           )}
 
           {isWorkspace && (
             <button className="bg-gradient-to-br from-primary to-primary-container text-on-primary px-5 py-1.5 rounded-lg text-sm font-bold active:scale-95 transition-transform ml-2">
-              Publish
+              {t('nav_publish')}
             </button>
           )}
         </div>

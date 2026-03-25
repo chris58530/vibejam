@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
+import { useI18n } from './lib/i18n';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import BottomTabBar from './components/BottomTabBar';
@@ -16,6 +17,7 @@ import { supabase } from './lib/supabase';
 import { useAIKeyStore } from './lib/aiKeyStore';
 
 export default function App() {
+  const { t } = useI18n();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [debugMode, setDebugMode] = useState(false);
 
@@ -73,7 +75,7 @@ export default function App() {
             <Route path="/:username" element={<Profile />} />
             <Route path="*" element={
               <div className="flex items-center justify-center h-full text-white/50">
-                404 | 找不到該頁面。
+                {t('app_not_found')}
               </div>
             } />
           </Routes>
