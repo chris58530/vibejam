@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api, toSlug, Vibe, Version, Comment, User } from '../lib/api';
+import ThinkingLoader from '../components/ThinkingLoader';
 
 interface VibeDetailProps {
   currentUser?: User;
@@ -118,8 +119,8 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
   };
 
   if (loading || !vibe) return (
-    <div className="md:ml-16 pt-20 flex items-center justify-center min-h-screen bg-surface text-on-surface/40 font-mono text-lg tracking-widest uppercase">
-      Loading Stage...
+    <div className="md:ml-16 pt-20 flex items-center justify-center min-h-screen bg-surface">
+      <ThinkingLoader />
     </div>
   );
 
