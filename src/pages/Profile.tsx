@@ -32,12 +32,6 @@ export default function Profile() {
   const navigate = useNavigate();
   const { search } = useLocation();
 
-  // ?tab=saves 自動切換
-  useEffect(() => {
-    const params = new URLSearchParams(search);
-    if (params.get('tab') === 'saves') setActiveTab('Saves');
-  }, [search]);
-
   const rawUsername = username?.startsWith('@') ? username.substring(1) : username;
   const decodedUsername = rawUsername ? decodeURIComponent(rawUsername) : 'Guest Creator';
 
@@ -45,21 +39,28 @@ export default function Profile() {
     supabase.auth.getSession().then(({ data }) => setCurrentUser(data.session?.user ?? null));
   }, []);
 
-  // 載入存檔（用 userProfile.id 對應 Workspace 的 key）
-  useEffect(() => {
-    if (!isOwner || !userProfile?.id) return;
-    const key = `vibejam_saves_${userProfile.id}`;
-    try {
-      const stored = localStorage.getItem(key);
-      if (stored) setSaves(JSON.parse(stored));
-    } catch {}
-  }, [isOwner, userProfile?.id]);
-
   const isOwner = currentUser && (
     currentUser.user_metadata?.user_name === decodedUsername ||
     currentUser.user_metadata?.name === decodedUsername ||
     currentUser.email === decodedUsername
   );
+
+  // ?tab=saves 自動切換
+  useEffect(() => {
+    const params = new URLSearchParams(search);
+    if (params.get('tab') === 'saves') setActiveTab('Saves');
+  }, [search]);
+
+  // 載入存檔（用 userProfile.id 對應 Workspace 的 key）
+  useEffect(() => {
+    if (!userProfile?.id) return;
+    const key = `vibejam_saves_${userProfile.id}`;
+    try {
+      const stored = localStorage.getItem(key);
+      if (stored) setSaves(JSON.parse(stored));
+      else setSaves([]);
+    } catch { setSaves([]); }
+  }, [userProfile?.id]);
 
   useEffect(() => {
     Promise.all([
