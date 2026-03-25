@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import ThinkingLoader from '../components/ThinkingLoader';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Maximize2,
@@ -109,8 +110,8 @@ export default function IterationLab({ vibeId, onBack, onRemix, currentUser }: I
   };
 
   if (loading || !vibe) return (
-    <div className="pt-20 flex items-center justify-center h-screen text-white/20 font-bold text-2xl">
-      Loading Lab...
+    <div className="pt-20 flex items-center justify-center h-screen bg-zinc-950">
+      <ThinkingLoader dark />
     </div>
   );
 

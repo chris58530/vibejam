@@ -409,9 +409,12 @@ ${code}
                             <div className="flex justify-start">
                                 <div className="bg-surface-container-high rounded-2xl rounded-bl-md px-4 py-3">
                                     <div className="flex items-center gap-2">
-                                        <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                                        <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                                        <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                                        <span className="text-sm font-mono thinking-shimmer-text">thinking</span>
+                                        <span className="flex items-end gap-[3px]">
+                                            <span className="thinking-dot w-1.5 h-1.5 rounded-full bg-primary/70" />
+                                            <span className="thinking-dot w-1.5 h-1.5 rounded-full bg-primary/70" />
+                                            <span className="thinking-dot w-1.5 h-1.5 rounded-full bg-primary/70" />
+                                        </span>
                                     </div>
                                 </div>
                             </div>
