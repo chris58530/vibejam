@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, toSlug, User } from '../lib/api';
 import { EditorMode, detectFramework, wrapReactForPreview, wrapVueForPreview, mergeCode } from '../lib/codeUtils';
+import { useAIKeyStore } from '../lib/aiKeyStore';
 
 // ── 存檔 ─────────────────────────────────────────────────────────────
 interface SaveSlot {
@@ -65,7 +66,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
     try {
       const stored = localStorage.getItem(saveKey);
       if (stored) setSaves(JSON.parse(stored));
-    } catch {}
+    } catch { }
   }, [saveKey]);
 
   // 從 Profile 頁的存檔「前往 Workspace 載入」傳遞進來
@@ -83,8 +84,8 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
       setActiveTab('html');
       sessionStorage.removeItem('vibejam_pending_load');
       showToast(`已載入「${slot.title}」`, 'download');
-    } catch {}
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    } catch { }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const currentCode = activeTab === 'html' ? htmlCode : activeTab === 'css' ? cssCode : jsCode;
@@ -104,6 +105,41 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
     setToast({ show: true, message, icon });
     setTimeout(() => setToast({ show: false, message: '', icon: 'auto_awesome' }), 3000);
   };
+
+  // ── iframe ref + VibeJam API postMessage bridge ────────────────────
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const getKey = useAIKeyStore(s => s.getKey);
+
+  useEffect(() => {
+    const userId = currentUser?.id ?? 'guest';
+    const handleMsg = (e: MessageEvent) => {
+      const d = e.data;
+      if (typeof d?.type !== 'string' || !d.type.startsWith('vibejam:')) return;
+      const win = iframeRef.current?.contentWindow;
+      if (!win) return;
+
+      if (d.type === 'vibejam:save') {
+        const k = `vibejam_proj_${userId}_${d.key}`;
+        try { localStorage.setItem(k, JSON.stringify(d.data)); } catch { /* storage full */ }
+        win.postMessage({ type: 'vibejam:save:ok', id: d.id, result: true }, '*');
+
+      } else if (d.type === 'vibejam:load') {
+        const k = `vibejam_proj_${userId}_${d.key}`;
+        let result = null;
+        try {
+          const raw = localStorage.getItem(k);
+          if (raw) result = JSON.parse(raw);
+        } catch { /* corrupted */ }
+        win.postMessage({ type: 'vibejam:load:ok', id: d.id, result }, '*');
+
+      } else if (d.type === 'vibejam:getApiKey') {
+        const apiKey = getKey(d.provider) ?? null;
+        win.postMessage({ type: 'vibejam:getApiKey:ok', id: d.id, result: apiKey }, '*');
+      }
+    };
+    window.addEventListener('message', handleMsg);
+    return () => window.removeEventListener('message', handleMsg);
+  }, [currentUser?.id, getKey]);
 
   const previewDoc = useMemo(() => {
     if (!htmlCode && !cssCode && !jsCode) return '';
@@ -291,9 +327,8 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
                     <button
                       key={opt.id}
                       onClick={() => handleModeChange(opt.id)}
-                      className={`w-full text-left px-4 py-3 hover:bg-surface-container transition-colors flex items-start gap-3 ${
-                        editorMode === opt.id ? 'bg-primary/5' : ''
-                      }`}
+                      className={`w-full text-left px-4 py-3 hover:bg-surface-container transition-colors flex items-start gap-3 ${editorMode === opt.id ? 'bg-primary/5' : ''
+                        }`}
                     >
                       <span className="text-lg mt-0.5">{opt.emoji}</span>
                       <div>
@@ -316,11 +351,10 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 text-xs font-medium rounded-t-lg flex items-center gap-1.5 border-t border-x transition-colors ${
-                  activeTab === tab.id
+                className={`px-4 py-2 text-xs font-medium rounded-t-lg flex items-center gap-1.5 border-t border-x transition-colors ${activeTab === tab.id
                     ? 'bg-surface-container-lowest text-primary border-outline-variant/10'
                     : 'text-on-surface/40 border-transparent hover:text-on-surface/70'
-                }`}
+                  }`}
               >
                 <span className="material-symbols-outlined text-[14px]">{tab.icon}</span>
                 {tab.label}
@@ -352,8 +386,8 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
                   ? activeTab === 'html'
                     ? '<div>Your HTML here</div>'
                     : activeTab === 'css'
-                    ? 'body { font-family: sans-serif; }'
-                    : 'console.log("hello!");'
+                      ? 'body { font-family: sans-serif; }'
+                      : 'console.log("hello!");'
                   : '把 AI 生成的程式碼貼在這裡 ✨\n\n💡 小提示：\n• 跟 AI 說「請輸出成一個完整的 HTML 檔案」效果最好\n• 也支援 React 和 Vue 元件，貼上後會自動偵測'
               }
               className="flex-1 w-full bg-transparent p-4 sm:pl-12 py-4 font-mono text-sm text-[#E5E2E1] outline-none resize-none hide-scrollbar placeholder:text-on-surface/20 whitespace-pre"
@@ -385,6 +419,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
             <div className={`bg-white rounded-xl shadow-2xl overflow-hidden border border-outline-variant/20 transition-all duration-500 relative flex ${viewMode === 'mobile' ? 'w-[375px] h-[667px]' : 'w-full h-full'}`}>
               {previewDoc ? (
                 <iframe
+                  ref={iframeRef}
                   srcDoc={previewDoc}
                   className="w-full h-full border-none absolute inset-0 bg-white"
                   title="Live Preview"

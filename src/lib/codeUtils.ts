@@ -1,5 +1,40 @@
 export type EditorMode = 'single' | 'split' | 'react' | 'vue';
 
+// ── VibeJam API Bridge（注入進每個 preview iframe）────────────────────
+// 讓用戶的專案程式碼可使用：
+//   await window.VibeJam.save('key', data)     → 儲存專案資料
+//   await window.VibeJam.load('key')           → 讀取專案資料
+//   await window.VibeJam.getApiKey('gemini')   → 取得用戶的 AI API Key
+export const VIBEJAM_API_SCRIPT = `
+window.VibeJam = (function () {
+  function req(payload, responseType) {
+    return new Promise(function (resolve) {
+      var id = Math.random().toString(36).slice(2);
+      payload.id = id;
+      window.parent.postMessage(payload, '*');
+      function handler(e) {
+        if (e.data && e.data.type === responseType && e.data.id === id) {
+          window.removeEventListener('message', handler);
+          resolve(e.data.result);
+        }
+      }
+      window.addEventListener('message', handler);
+    });
+  }
+  return {
+    save: function (key, data) {
+      return req({ type: 'vibejam:save', key: key, data: data }, 'vibejam:save:ok');
+    },
+    load: function (key) {
+      return req({ type: 'vibejam:load', key: key }, 'vibejam:load:ok');
+    },
+    getApiKey: function (provider) {
+      return req({ type: 'vibejam:getApiKey', provider: provider }, 'vibejam:getApiKey:ok');
+    },
+  };
+})();
+`.trim();
+
 // ── 框架偵測 ─────────────────────────────────────────────────────────
 export function detectFramework(code: string): EditorMode {
   // React
@@ -74,6 +109,7 @@ export function wrapReactForPreview(rawCode: string): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>${VIBEJAM_API_SCRIPT}</script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -98,13 +134,17 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 // ── 合併 HTML / CSS / JS 成完整文件 ──────────────────────────────────
 export function mergeCode(html: string, css: string, js: string): string {
   const isComplete = /^\s*<!DOCTYPE|^\s*<html/i.test(html);
-  if (isComplete && !css.trim() && !js.trim()) return html;
+  if (isComplete && !css.trim() && !js.trim()) {
+    // inject VibeJam API into pass-through complete docs
+    return html.replace(/<\/body>/i, `<script>${VIBEJAM_API_SCRIPT}<\/script></body>`);
+  }
 
   return `<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>${VIBEJAM_API_SCRIPT}</script>
   <style>
 ${css}
   </style>
@@ -142,6 +182,7 @@ export function wrapVueForPreview(rawCode: string): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>${VIBEJAM_API_SCRIPT}</script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <style>${styleContent}</style>
@@ -176,6 +217,7 @@ app.mount('#app');
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>${VIBEJAM_API_SCRIPT}</script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 </head>
