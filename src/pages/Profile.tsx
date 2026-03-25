@@ -22,7 +22,7 @@ export default function Profile() {
   const [userVibes, setUserVibes] = useState<Vibe[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('Published');
-  
+
   const [isEditingMotto, setIsEditingMotto] = useState(false);
   const [mottoDraft, setMottoDraft] = useState('');
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -38,15 +38,15 @@ export default function Profile() {
     supabase.auth.getSession().then(({ data }) => setCurrentUser(data.session?.user ?? null));
   }, []);
 
-  // 載入存檔
+  // 載入存檔（用 userProfile.id 對應 Workspace 的 key）
   useEffect(() => {
-    if (!currentUser) return;
-    const key = `vibejam_saves_${currentUser.id ?? 'guest'}`;
+    if (!isOwner || !userProfile?.id) return;
+    const key = `vibejam_saves_${userProfile.id}`;
     try {
       const stored = localStorage.getItem(key);
       if (stored) setSaves(JSON.parse(stored));
     } catch {}
-  }, [currentUser]);
+  }, [isOwner, userProfile?.id]);
 
   const isOwner = currentUser && (
     currentUser.user_metadata?.user_name === decodedUsername ||
@@ -61,7 +61,7 @@ export default function Profile() {
     ]).then(([profile, allVibes]) => {
       setUserProfile(profile);
       setMottoDraft(profile?.motto || 'INIT. DEV. VIBE. System online.');
-      
+
       const filtered = Array.isArray(allVibes)
         ? allVibes.filter(v => v.author_name === decodedUsername)
         : [];
@@ -98,8 +98,8 @@ export default function Profile() {
   };
 
   const handleDeleteSave = (id: string) => {
-    if (!currentUser) return;
-    const key = `vibejam_saves_${currentUser.id ?? 'guest'}`;
+    if (!userProfile?.id) return;
+    const key = `vibejam_saves_${userProfile.id}`;
     const updated = saves.filter(s => s.id !== id);
     setSaves(updated);
     localStorage.setItem(key, JSON.stringify(updated));
@@ -210,11 +210,10 @@ export default function Profile() {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`pb-4 text-xs font-mono font-bold tracking-widest uppercase transition-colors border-b-2 -mb-px px-2 ${
-                activeTab === tab
+              className={`pb-4 text-xs font-mono font-bold tracking-widest uppercase transition-colors border-b-2 -mb-px px-2 ${activeTab === tab
                   ? 'text-primary border-primary'
                   : 'text-on-surface/30 border-transparent hover:text-on-surface/60'
-              }`}
+                }`}
             >
               {tab}{tab === 'Saves' && saves.length > 0 && (
                 <span className="ml-1.5 text-[9px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full">{saves.length}/5</span>
@@ -260,8 +259,8 @@ export default function Profile() {
 
         {activeTab === 'Remixes' && (
           <div className="col-span-full flex flex-col items-center justify-center py-20 text-on-surface/20 border border-dashed border-outline-variant/10 rounded-xl bg-surface-container-lowest">
-             <span className="material-symbols-outlined text-2xl mb-2 opacity-50">repeat</span>
-             <p className="font-mono text-xs uppercase tracking-widest">No remixes yet</p>
+            <span className="material-symbols-outlined text-2xl mb-2 opacity-50">repeat</span>
+            <p className="font-mono text-xs uppercase tracking-widest">No remixes yet</p>
           </div>
         )}
 
@@ -312,7 +311,7 @@ export default function Profile() {
 
 
       </div>
-      
+
       {/* Footer */}
       <Footer />
 
