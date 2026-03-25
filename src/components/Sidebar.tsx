@@ -329,8 +329,7 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
           <div className="mt-2 px-2">
             <button
               onClick={() => {
-                const username = currentUser?.user_metadata?.user_name || currentUser?.user_metadata?.name;
-                if (username) navigate(`/@${username}?tab=saves`);
+                if (dbUser?.username) navigate(`/@${dbUser.username}?tab=saves`);
               }}
               className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-[#2A2A2A] transition-colors group/saves"
             >
