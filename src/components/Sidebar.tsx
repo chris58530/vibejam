@@ -327,11 +327,18 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
         {/* My Saves */}
         {dbUser && (
           <div className="mt-2 px-2">
-            <div className="flex items-center gap-2 px-3 py-1.5">
-              <span className="material-symbols-outlined text-[14px] text-[#FFB3B6]" style={{ fontVariationSettings: "'FILL' 1" }}>folder</span>
-              <span className="text-[10px] uppercase tracking-[0.15em] text-[#E5E2E1]/40 font-bold whitespace-nowrap flex-1">My Saves</span>
+            <button
+              onClick={() => {
+                const username = currentUser?.user_metadata?.user_name || currentUser?.user_metadata?.name;
+                if (username) navigate(`/@${username}?tab=saves`);
+              }}
+              className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-[#2A2A2A] transition-colors group/saves"
+            >
+              <span className="material-symbols-outlined text-[14px] text-[#FFB3B6] group-hover/saves:text-[#FFB3B6]" style={{ fontVariationSettings: "'FILL' 1" }}>folder</span>
+              <span className="text-[10px] uppercase tracking-[0.15em] text-[#E5E2E1]/40 group-hover/saves:text-[#E5E2E1]/70 font-bold whitespace-nowrap flex-1 transition-colors">My Saves</span>
               <span className={`text-[9px] font-mono tabular-nums ${saves.length >= 5 ? 'text-red-400/70' : 'text-[#E5E2E1]/25'}`}>{saves.length}/5</span>
-            </div>
+              <span className="material-symbols-outlined text-[12px] text-[#E5E2E1]/20 group-hover/saves:text-[#E5E2E1]/50 transition-colors">chevron_right</span>
+            </button>
             {saves.length === 0 ? (
               <p className="text-[10px] text-[#E5E2E1]/20 px-3 py-1 font-body whitespace-nowrap">尚無存檔</p>
             ) : (

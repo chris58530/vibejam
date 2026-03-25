@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { api, Vibe, User, toSlug } from '../lib/api';
 import { EditorMode } from '../lib/codeUtils';
 import VibeCard from '../components/VibeCard';
@@ -30,6 +30,13 @@ export default function Profile() {
   const [saves, setSaves] = useState<SaveSlot[]>([]);
 
   const navigate = useNavigate();
+  const { search } = useLocation();
+
+  // ?tab=saves 自動切換
+  useEffect(() => {
+    const params = new URLSearchParams(search);
+    if (params.get('tab') === 'saves') setActiveTab('Saves');
+  }, [search]);
 
   const rawUsername = username?.startsWith('@') ? username.substring(1) : username;
   const decodedUsername = rawUsername ? decodeURIComponent(rawUsername) : 'Guest Creator';
