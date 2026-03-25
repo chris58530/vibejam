@@ -68,6 +68,25 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
     } catch {}
   }, [saveKey]);
 
+  // 從 Profile 頁的存檔「前往 Workspace 載入」傳遞進來
+  useEffect(() => {
+    const pending = sessionStorage.getItem('vibejam_pending_load');
+    if (!pending) return;
+    try {
+      const slot = JSON.parse(pending) as SaveSlot;
+      setTitle(slot.title);
+      setTags(slot.tags);
+      setEditorMode(slot.editorMode);
+      setHtmlCode(slot.code.html);
+      setCssCode(slot.code.css);
+      setJsCode(slot.code.js);
+      setActiveTab('html');
+      sessionStorage.removeItem('vibejam_pending_load');
+      showToast(`已載入「${slot.title}」`, 'download');
+    } catch {}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const currentCode = activeTab === 'html' ? htmlCode : activeTab === 'css' ? cssCode : jsCode;
 
   // 點擊外部關閉下拉

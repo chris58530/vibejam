@@ -2,9 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api, Vibe, User, toSlug } from '../lib/api';
+import { EditorMode } from '../lib/codeUtils';
 import VibeCard from '../components/VibeCard';
 import Footer from '../components/Footer';
 import { supabase } from '../lib/supabase';
+
+interface SaveSlot {
+  id: string;
+  title: string;
+  tags: string;
+  editorMode: EditorMode;
+  code: { html: string; css: string; js: string };
+  savedAt: string;
+}
 
 export default function Profile() {
   const { username } = useParams<{ username: string }>();
@@ -17,6 +27,7 @@ export default function Profile() {
   const [mottoDraft, setMottoDraft] = useState('');
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  const [saves, setSaves] = useState<SaveSlot[]>([]);
 
   const navigate = useNavigate();
 
@@ -26,6 +37,16 @@ export default function Profile() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setCurrentUser(data.session?.user ?? null));
   }, []);
+
+  // 載入存檔
+  useEffect(() => {
+    if (!currentUser) return;
+    const key = `vibejam_saves_${currentUser.id ?? 'guest'}`;
+    try {
+      const stored = localStorage.getItem(key);
+      if (stored) setSaves(JSON.parse(stored));
+    } catch {}
+  }, [currentUser]);
 
   const isOwner = currentUser && (
     currentUser.user_metadata?.user_name === decodedUsername ||
@@ -69,6 +90,19 @@ export default function Profile() {
     } finally {
       setDeleteConfirm(null);
     }
+  };
+
+  const handleLoadSave = (slot: SaveSlot) => {
+    sessionStorage.setItem('vibejam_pending_load', JSON.stringify(slot));
+    navigate('/workspace');
+  };
+
+  const handleDeleteSave = (id: string) => {
+    if (!currentUser) return;
+    const key = `vibejam_saves_${currentUser.id ?? 'guest'}`;
+    const updated = saves.filter(s => s.id !== id);
+    setSaves(updated);
+    localStorage.setItem(key, JSON.stringify(updated));
   };
 
   const followersCount = userProfile?.followers_count || 0;
@@ -172,7 +206,7 @@ export default function Profile() {
 
         {/* Channel Tabs */}
         <div className="border-b border-outline-variant/10 mb-8 flex gap-8">
-          {['Published', 'Remixes'].map(tab => (
+          {['Published', 'Remixes', ...(isOwner ? ['Saves'] : [])].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -182,7 +216,9 @@ export default function Profile() {
                   : 'text-on-surface/30 border-transparent hover:text-on-surface/60'
               }`}
             >
-              {tab}
+              {tab}{tab === 'Saves' && saves.length > 0 && (
+                <span className="ml-1.5 text-[9px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full">{saves.length}/5</span>
+              )}
             </button>
           ))}
         </div>
@@ -226,6 +262,51 @@ export default function Profile() {
           <div className="col-span-full flex flex-col items-center justify-center py-20 text-on-surface/20 border border-dashed border-outline-variant/10 rounded-xl bg-surface-container-lowest">
              <span className="material-symbols-outlined text-2xl mb-2 opacity-50">repeat</span>
              <p className="font-mono text-xs uppercase tracking-widest">No remixes yet</p>
+          </div>
+        )}
+
+        {activeTab === 'Saves' && isOwner && (
+          <div>
+            {saves.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-on-surface/20 border border-dashed border-outline-variant/10 rounded-xl bg-surface-container-lowest">
+                <span className="material-symbols-outlined text-4xl mb-4">folder_open</span>
+                <p className="font-mono text-sm">No saves yet.</p>
+                <p className="font-mono text-xs mt-1 text-on-surface/15">Go to Workspace and save a project.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {saves.map(slot => (
+                  <div key={slot.id} className="bg-surface-container-low border border-outline-variant/10 rounded-xl p-4 flex flex-col gap-3 hover:border-outline-variant/25 transition-colors group">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-on-surface truncate">{slot.title}</p>
+                        {slot.tags && <p className="text-[11px] text-on-surface/40 truncate mt-0.5">{slot.tags}</p>}
+                      </div>
+                      <button
+                        onClick={() => handleDeleteSave(slot.id)}
+                        className="shrink-0 text-on-surface/20 hover:text-error transition-colors opacity-0 group-hover:opacity-100 p-1 rounded-lg hover:bg-error/10"
+                        title="刪除存檔"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">delete</span>
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] bg-surface-container-highest px-2 py-0.5 rounded font-mono text-on-surface/40">{slot.editorMode}</span>
+                      <span className="text-[10px] text-on-surface/30 font-mono ml-auto">
+                        {new Date(slot.savedAt).toLocaleString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => handleLoadSave(slot)}
+                      className="w-full flex items-center justify-center gap-2 text-xs font-bold text-primary bg-primary/5 hover:bg-primary/10 border border-primary/10 hover:border-primary/20 py-2 rounded-lg transition-colors active:scale-95"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+                      前往 Workspace 載入
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
