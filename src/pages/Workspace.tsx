@@ -3,8 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import { api, toSlug, User } from '../lib/api';
 import { EditorMode, detectFramework, wrapReactForPreview, wrapVueForPreview, mergeCode } from '../lib/codeUtils';
 
+// ── 存檔 ─────────────────────────────────────────────────────────────
+interface SaveSlot {
+  id: string;
+  title: string;
+  tags: string;
+  editorMode: EditorMode;
+  code: { html: string; css: string; js: string };
+  savedAt: string;
+}
+
+const MAX_SAVES = 5;
+
+// ─────────────────────────────────────────────────────────────────────
 interface WorkspaceProps {
   currentUser?: User;
+  savePanelOpen?: boolean;
 }
 
 type EditorTab = 'html' | 'css' | 'js';
@@ -18,7 +32,7 @@ const MODE_OPTIONS: { id: EditorMode; emoji: string; label: string; desc: string
 ];
 
 // ─────────────────────────────────────────────────────────────────────
-export default function Workspace({ currentUser }: WorkspaceProps) {
+export default function Workspace({ currentUser, savePanelOpen = false }: WorkspaceProps) {
   const navigate = useNavigate();
 
   const [htmlCode, setHtmlCode] = useState('');
@@ -41,6 +55,18 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
   const [tags, setTags] = useState('');
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
   const [isPublishing, setIsPublishing] = useState(false);
+
+  // ── 存檔 ───────────────────────────────────────────────────────────
+  const [saves, setSaves] = useState<SaveSlot[]>([]);
+
+  const saveKey = `vibejam_saves_${currentUser?.id ?? 'guest'}`;
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(saveKey);
+      if (stored) setSaves(JSON.parse(stored));
+    } catch {}
+  }, [saveKey]);
 
   const currentCode = activeTab === 'html' ? htmlCode : activeTab === 'css' ? cssCode : jsCode;
 
@@ -128,6 +154,55 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
     }
   };
 
+  // ── 存檔操作 ─────────────────────────────────────────────────────
+  const handleSave = () => {
+    const existing = saves.findIndex(s => s.title === title);
+    let newSaves: SaveSlot[];
+
+    if (existing !== -1) {
+      newSaves = saves.map((s, i) =>
+        i === existing
+          ? { ...s, tags, editorMode, code: { html: htmlCode, css: cssCode, js: jsCode }, savedAt: new Date().toISOString() }
+          : s
+      );
+      showToast(`已更新存檔「${title}」`, 'save');
+    } else if (saves.length >= MAX_SAVES) {
+      showToast(`存檔已滿 (5/5)，請先刪除一個`, 'folder_off');
+      return;
+    } else {
+      const slot: SaveSlot = {
+        id: Date.now().toString(),
+        title,
+        tags,
+        editorMode,
+        code: { html: htmlCode, css: cssCode, js: jsCode },
+        savedAt: new Date().toISOString(),
+      };
+      newSaves = [slot, ...saves];
+      showToast(`專案「${title}」已存檔 (${newSaves.length}/5)`, 'save');
+    }
+
+    setSaves(newSaves);
+    localStorage.setItem(saveKey, JSON.stringify(newSaves));
+  };
+
+  const handleLoadSave = (slot: SaveSlot) => {
+    setTitle(slot.title);
+    setTags(slot.tags);
+    setEditorMode(slot.editorMode);
+    setHtmlCode(slot.code.html);
+    setCssCode(slot.code.css);
+    setJsCode(slot.code.js);
+    setActiveTab('html');
+    showToast(`已載入「${slot.title}」`, 'download');
+  };
+
+  const handleDeleteSave = (id: string) => {
+    const newSaves = saves.filter(s => s.id !== id);
+    setSaves(newSaves);
+    localStorage.setItem(saveKey, JSON.stringify(newSaves));
+  };
+
   const tabs = [
     { id: 'html' as EditorTab, label: 'HTML', icon: 'html' },
     { id: 'css' as EditorTab, label: 'CSS', icon: 'css' },
@@ -135,7 +210,7 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
   ];
 
   return (
-    <main className="md:ml-16 pt-16 flex-1 flex flex-col h-[calc(100vh)] overflow-hidden bg-background">
+    <main className={`${savePanelOpen ? 'md:ml-72' : 'md:ml-16'} pt-16 flex-1 flex flex-col h-[calc(100vh)] overflow-hidden bg-background transition-[margin] duration-300`}>
       {/* ── Header ── */}
       <div className="bg-surface px-6 py-3 flex items-center gap-6 border-b border-outline-variant/10">
         <div className="flex items-center gap-3 bg-surface-container-low px-4 py-1.5 rounded-lg border-b-2 border-primary-container focus-within:border-primary transition-colors">
@@ -330,12 +405,80 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
         </div>
       </footer>
 
+      {/* ── 存檔面板 ── */}
+      {savePanelOpen && (
+        <aside className="fixed left-16 top-16 h-[calc(100vh-64px)] w-56 bg-[#1C1B1B] border-r border-outline-variant/10 z-30 flex-col hidden md:flex">
+          {/* Header */}
+          <div className="px-4 py-3 border-b border-outline-variant/10 flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[#FFB3B6] text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>folder</span>
+              <span className="text-[11px] uppercase tracking-widest font-bold text-[#E5E2E1]">存檔區</span>
+            </div>
+            <span className={`text-[10px] font-mono tabular-nums ${saves.length >= MAX_SAVES ? 'text-red-400' : 'text-[#E5E2E1]/40'}`}>
+              {saves.length}/{MAX_SAVES}
+            </span>
+          </div>
+
+          {/* Save button */}
+          <div className="px-3 py-2.5 border-b border-outline-variant/10 shrink-0">
+            <button
+              onClick={handleSave}
+              disabled={saves.length >= MAX_SAVES && !saves.find(s => s.title === title)}
+              className="w-full flex items-center justify-center gap-2 bg-[#2A2A2A] hover:bg-[#333] disabled:opacity-40 disabled:cursor-not-allowed text-[#E5E2E1] text-xs font-bold py-2 rounded-lg border border-outline-variant/10 transition-colors active:scale-95"
+            >
+              <span className="material-symbols-outlined text-[14px] text-[#FFB3B6]">save</span>
+              儲存目前專案
+            </button>
+            {!currentUser && (
+              <p className="text-[9px] text-yellow-400/60 text-center mt-1.5">⚠ 僅限本機儲存</p>
+            )}
+          </div>
+
+          {/* Save list */}
+          <div className="flex-1 overflow-y-auto custom-scrollbar py-2 space-y-1.5 px-2">
+            {saves.length === 0 ? (
+              <div className="text-center py-8 px-4">
+                <span className="material-symbols-outlined text-[#E5E2E1]/10 text-4xl block mb-2">folder_open</span>
+                <p className="text-[10px] text-[#E5E2E1]/30 leading-relaxed">尚無存檔<br />點擊上方按鈕開始</p>
+              </div>
+            ) : (
+              saves.map(slot => (
+                <div key={slot.id} className="bg-[#2A2A2A] rounded-lg p-2.5 border border-outline-variant/10 hover:border-outline-variant/25 transition-colors group">
+                  <div className="flex items-start justify-between gap-1 mb-1">
+                    <p className="text-[11px] font-bold text-[#E5E2E1] truncate leading-tight flex-1">{slot.title}</p>
+                    <button
+                      onClick={() => handleDeleteSave(slot.id)}
+                      className="text-[#E5E2E1]/20 hover:text-red-400 transition-colors shrink-0 opacity-0 group-hover:opacity-100"
+                      title="刪除存檔"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">close</span>
+                    </button>
+                  </div>
+                  {slot.tags && (
+                    <p className="text-[9px] text-[#E5E2E1]/30 truncate mb-1">{slot.tags}</p>
+                  )}
+                  <p className="text-[9px] text-[#E5E2E1]/25 font-mono mb-2">
+                    {new Date(slot.savedAt).toLocaleString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                  <button
+                    onClick={() => handleLoadSave(slot)}
+                    className="w-full text-[10px] font-bold text-[#FFB3B6] bg-[#FFB3B6]/5 hover:bg-[#FFB3B6]/10 py-1 rounded border border-[#FFB3B6]/10 hover:border-[#FFB3B6]/20 transition-colors active:scale-95"
+                  >
+                    載入
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </aside>
+      )}
+
       {/* ── Toast 通知 ── */}
-      {toast.visible && (
+      {toast.show && (
         <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 animate-[slideDown_0.3s_ease-out] pointer-events-none">
           <div className="bg-surface border border-outline-variant/20 rounded-2xl shadow-2xl px-5 py-3 flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <span className="material-symbols-outlined text-primary text-lg">auto_awesome</span>
+              <span className="material-symbols-outlined text-primary text-lg">{toast.icon}</span>
             </div>
             <span className="text-on-surface text-sm font-medium">{toast.message}</span>
           </div>

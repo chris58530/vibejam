@@ -20,6 +20,7 @@ export default function App() {
   const { t } = useI18n();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [debugMode, setDebugMode] = useState(false);
+  const [savePanelOpen, setSavePanelOpen] = useState(false);
 
   // Initialize AI Key Store
   useEffect(() => {
@@ -63,11 +64,11 @@ export default function App() {
     <div className="min-h-screen bg-surface text-on-surface font-sans selection:bg-primary/30">
       <Navbar debugMode={debugMode} onDebugToggle={() => setDebugMode(d => !d)} />
       <div className="flex w-full min-h-screen">
-        <Sidebar />
+        <Sidebar savePanelOpen={savePanelOpen} onToggleSavePanel={() => setSavePanelOpen(p => !p)} />
         <main className="flex-1 pb-16 md:pb-0 relative">
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/workspace" element={<Workspace currentUser={currentUser ?? undefined} />} />
+            <Route path="/workspace" element={<Workspace currentUser={currentUser ?? undefined} savePanelOpen={savePanelOpen} />} />
             <Route path="/remix" element={<RemixStudio currentUser={currentUser ?? undefined} />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/ai-chat" element={<AIChat />} />
