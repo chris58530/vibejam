@@ -1,6 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { User } from '../lib/api';
+import { EditorMode } from '../lib/codeUtils';
+
+interface SaveSlot {
+  id: string;
+  title: string;
+  tags: string;
+  editorMode: EditorMode;
+  code: { html: string; css: string; js: string };
+  savedAt: string;
+}
 
 const navItems = [
   { label: 'Home', icon: 'home', path: '/' },
@@ -172,13 +183,15 @@ function HelpModal({ onClose }: { onClose: () => void }) {
 interface SidebarProps {
   savePanelOpen?: boolean;
   onToggleSavePanel?: () => void;
+  dbUser?: User;
 }
 
-export default function Sidebar({ savePanelOpen, onToggleSavePanel }: SidebarProps = {}) {
+export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: SidebarProps = {}) {
   const navigate = useNavigate();
   const location = useLocation();
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [saves, setSaves] = useState<SaveSlot[]>([]);
 
   const isWorkspace = location.pathname.includes('/workspace');
 
@@ -189,6 +202,15 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel }: SidebarPro
     });
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!dbUser?.id) return;
+    try {
+      const stored = localStorage.getItem(`vibejam_saves_${dbUser.id}`);
+      if (stored) setSaves(JSON.parse(stored));
+      else setSaves([]);
+    } catch { setSaves([]); }
+  }, [dbUser?.id]);
 
   const handleNavClick = (label: string, path: string | null) => {
     if (label === 'Profile') {
@@ -205,47 +227,47 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel }: SidebarPro
   if (isWorkspace) {
     return (
       <>
-      <aside className="fixed left-0 top-16 h-[calc(100vh-64px)] w-16 bg-[#1C1B1B] flex flex-col items-center py-4 gap-6 border-r border-outline-variant/10 z-40 hidden md:flex">
-        <button onClick={() => navigate('/')} className="text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1] p-2.5 rounded-xl transition-all duration-300" title="Home">
-          <span className="material-symbols-outlined">home</span>
-        </button>
-        <button onClick={() => navigate('/workspace')} className="text-[#FFB3B6] bg-[#2A2A2A] p-2.5 rounded-xl transition-all duration-300" title="Workspace">
-          <span className="material-symbols-outlined">workspace_premium</span>
-        </button>
-        <button
-          onClick={onToggleSavePanel}
-          className={`p-2.5 rounded-xl transition-all duration-300 ${savePanelOpen ? 'text-[#FFB3B6] bg-[#2A2A2A]' : 'text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1]'}`}
-          title="存檔區"
-        >
-          <span className="material-symbols-outlined" style={savePanelOpen ? { fontVariationSettings: "'FILL' 1" } : {}}>folder</span>
-        </button>
-        <button className="text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1] p-2.5 rounded-xl transition-all duration-300" title="Search">
-          <span className="material-symbols-outlined">search</span>
-        </button>
-        <button className="text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1] p-2.5 rounded-xl transition-all duration-300" title="History">
-          <span className="material-symbols-outlined">history</span>
-        </button>
-        
-        <div className="mt-auto flex flex-col gap-6 items-center">
-          <button onClick={() => setHelpOpen(true)} className="text-[#E5E2E1]/70 hover:text-[#FFB3B6] transition-colors" title="使用說明">
-            <span className="material-symbols-outlined">help</span>
+        <aside className="fixed left-0 top-16 h-[calc(100vh-64px)] w-16 bg-[#1C1B1B] flex flex-col items-center py-4 gap-6 border-r border-outline-variant/10 z-40 hidden md:flex">
+          <button onClick={() => navigate('/')} className="text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1] p-2.5 rounded-xl transition-all duration-300" title="Home">
+            <span className="material-symbols-outlined">home</span>
           </button>
-          {currentUser && (
-            <div 
-              className="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden border border-outline-variant/30 cursor-pointer"
-              onClick={() => handleNavClick('Profile', null)}
-            >
-              <img 
-                src={currentUser.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.email}`} 
-                alt="User Profile" 
-                className="w-full h-full object-cover" 
-              />
-            </div>
-          )}
-        </div>
-      </aside>
-      {helpOpen && <HelpModal onClose={() => setHelpOpen(false)} />}
-    </>
+          <button onClick={() => navigate('/workspace')} className="text-[#FFB3B6] bg-[#2A2A2A] p-2.5 rounded-xl transition-all duration-300" title="Workspace">
+            <span className="material-symbols-outlined">workspace_premium</span>
+          </button>
+          <button
+            onClick={onToggleSavePanel}
+            className={`p-2.5 rounded-xl transition-all duration-300 ${savePanelOpen ? 'text-[#FFB3B6] bg-[#2A2A2A]' : 'text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1]'}`}
+            title="存檔區"
+          >
+            <span className="material-symbols-outlined" style={savePanelOpen ? { fontVariationSettings: "'FILL' 1" } : {}}>folder</span>
+          </button>
+          <button className="text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1] p-2.5 rounded-xl transition-all duration-300" title="Search">
+            <span className="material-symbols-outlined">search</span>
+          </button>
+          <button className="text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1] p-2.5 rounded-xl transition-all duration-300" title="History">
+            <span className="material-symbols-outlined">history</span>
+          </button>
+
+          <div className="mt-auto flex flex-col gap-6 items-center">
+            <button onClick={() => setHelpOpen(true)} className="text-[#E5E2E1]/70 hover:text-[#FFB3B6] transition-colors" title="使用說明">
+              <span className="material-symbols-outlined">help</span>
+            </button>
+            {currentUser && (
+              <div
+                className="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden border border-outline-variant/30 cursor-pointer"
+                onClick={() => handleNavClick('Profile', null)}
+              >
+                <img
+                  src={currentUser.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.email}`}
+                  alt="User Profile"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+          </div>
+        </aside>
+        {helpOpen && <HelpModal onClose={() => setHelpOpen(false)} />}
+      </>
     );
   }
 
@@ -254,23 +276,22 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel }: SidebarPro
     <aside className="group/sidebar fixed left-0 top-16 h-[calc(100vh-64px)] w-16 hover:w-64 bg-[#1C1B1B] flex flex-col pt-3 pb-2 hidden md:flex z-40 border-r border-outline-variant/5 transition-[width] duration-300 overflow-hidden">
       <nav className="space-y-1 px-2">
         {navItems.map(({ label, icon, path }) => {
-          const isActive = 
+          const isActive =
             (label === 'Trending' && location.search.includes('feed=trending')) ||
             (label === 'Following' && location.search.includes('feed=following')) ||
             (label === 'Home' && location.pathname === '/' && !location.search) ||
             (label === 'Workspace' && location.pathname === '/workspace') ||
             (label === 'AI Chat' && location.pathname === '/ai-chat') ||
             (label === 'Settings' && location.pathname === '/settings');
-          
+
           return (
             <button
               key={label}
               onClick={() => handleNavClick(label, path)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors duration-200 font-body font-medium text-sm cursor-pointer ${
-                isActive 
-                  ? 'text-[#FFB3B6] bg-[#2A2A2A]' 
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors duration-200 font-body font-medium text-sm cursor-pointer ${isActive
+                  ? 'text-[#FFB3B6] bg-[#2A2A2A]'
                   : 'text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1]'
-              }`}
+                }`}
               title={label}
             >
               <span className="material-symbols-outlined shrink-0 text-[22px]" style={isActive ? { fontVariationSettings: "'FILL' 1" } : {}}>
@@ -285,7 +306,7 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel }: SidebarPro
       </nav>
 
       {/* Divider + Library — only visible when expanded */}
-      <div className="overflow-hidden max-h-0 group-hover/sidebar:max-h-48 transition-[max-height] duration-300">
+      <div className="overflow-hidden max-h-0 group-hover/sidebar:max-h-[320px] transition-[max-height] duration-300">
         <div className="my-3 h-px bg-[#584142]/10 mx-4"></div>
         <div className="px-5 mb-2">
           <span className="text-[10px] uppercase tracking-[0.2em] text-[#E5E2E1]/30 font-bold whitespace-nowrap">Your Library</span>
@@ -302,6 +323,40 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel }: SidebarPro
             </button>
           ))}
         </nav>
+
+        {/* My Saves */}
+        {dbUser && (
+          <div className="mt-2 px-2">
+            <div className="flex items-center gap-2 px-3 py-1.5">
+              <span className="material-symbols-outlined text-[14px] text-[#FFB3B6]" style={{ fontVariationSettings: "'FILL' 1" }}>folder</span>
+              <span className="text-[10px] uppercase tracking-[0.15em] text-[#E5E2E1]/40 font-bold whitespace-nowrap flex-1">My Saves</span>
+              <span className={`text-[9px] font-mono tabular-nums ${saves.length >= 5 ? 'text-red-400/70' : 'text-[#E5E2E1]/25'}`}>{saves.length}/5</span>
+            </div>
+            {saves.length === 0 ? (
+              <p className="text-[10px] text-[#E5E2E1]/20 px-3 py-1 font-body whitespace-nowrap">尚無存檔</p>
+            ) : (
+              <div className="space-y-0.5">
+                {saves.map(slot => (
+                  <button
+                    key={slot.id}
+                    onClick={() => {
+                      sessionStorage.setItem('vibejam_pending_load', JSON.stringify(slot));
+                      navigate('/workspace');
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-1.5 text-[#E5E2E1]/60 hover:bg-[#2A2A2A] hover:text-[#E5E2E1] rounded-lg transition-colors text-left"
+                    title={slot.title}
+                  >
+                    <span className="material-symbols-outlined text-[13px] text-[#E5E2E1]/25 shrink-0">draft</span>
+                    <span className="text-[11px] font-body whitespace-nowrap overflow-hidden text-ellipsis flex-1">{slot.title}</span>
+                    <span className="text-[9px] font-mono text-[#E5E2E1]/20 shrink-0">
+                      {new Date(slot.savedAt).toLocaleDateString('zh-TW', { month: '2-digit', day: '2-digit' })}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Footer — only visible when expanded */}
@@ -321,14 +376,14 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel }: SidebarPro
       {/* User avatar — always visible at bottom */}
       {currentUser && (
         <div className="flex items-center gap-3 px-3 py-2 mt-1 shrink-0">
-          <div 
+          <div
             className="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden border border-outline-variant/30 cursor-pointer shrink-0"
             onClick={() => handleNavClick('Profile', null)}
           >
-            <img 
-              src={currentUser.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.email}`} 
-              alt="User Profile" 
-              className="w-full h-full object-cover" 
+            <img
+              src={currentUser.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.email}`}
+              alt="User Profile"
+              className="w-full h-full object-cover"
             />
           </div>
           <span className="whitespace-nowrap overflow-hidden max-w-0 group-hover/sidebar:max-w-[140px] transition-[max-width] duration-300 text-xs text-[#E5E2E1]/60 font-body opacity-0 group-hover/sidebar:opacity-100">
