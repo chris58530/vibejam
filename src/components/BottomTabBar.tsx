@@ -10,6 +10,7 @@ export default function BottomTabBar() {
   const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
+    if (!supabase) return;
     supabase.auth.getSession().then(({ data }) => setCurrentUser(data.session?.user ?? null));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setCurrentUser(session?.user ?? null);

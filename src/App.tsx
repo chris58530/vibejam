@@ -63,7 +63,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-surface text-on-surface font-sans selection:bg-primary/30">
       <Navbar debugMode={debugMode} onDebugToggle={() => setDebugMode(d => !d)} />
-      <div className="flex w-full min-h-screen">
+      <div className="flex w-full min-h-screen pt-16">
         <Sidebar savePanelOpen={savePanelOpen} onToggleSavePanel={() => setSavePanelOpen(p => !p)} dbUser={currentUser ?? undefined} />
         <main className="flex-1 pb-16 md:pb-0 relative">
           <Routes>
