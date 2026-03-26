@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { User } from '../lib/api';
 import { EditorMode } from '../lib/codeUtils';
+import { useI18n } from '../lib/i18n';
 
 interface SaveSlot {
   id: string;
@@ -13,14 +14,6 @@ interface SaveSlot {
   savedAt: string;
 }
 
-const navItems = [
-  { label: 'Home', icon: 'home', path: '/' },
-  { label: 'Trending', icon: 'trending_up', path: '/?feed=trending' },
-  { label: 'Following', icon: 'subscriptions', path: '/?feed=following' },
-  { label: 'Workspace', icon: 'terminal', path: '/workspace' },
-  { label: 'AI Chat', icon: 'smart_toy', path: '/ai-chat' },
-  { label: 'Settings', icon: 'settings', path: '/settings' },
-];
 
 // ── 說明分類資料 ──────────────────────────────────────────────────────
 const HELP_SECTIONS = [
@@ -191,9 +184,19 @@ interface SidebarProps {
 export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: SidebarProps = {}) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useI18n();
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [helpOpen, setHelpOpen] = useState(false);
   const [saves, setSaves] = useState<SaveSlot[]>([]);
+
+  const navItems = [
+    { key: 'home', label: t('sidebar_home'), icon: 'home', path: '/' },
+    { key: 'trending', label: t('sidebar_trending'), icon: 'trending_up', path: '/?feed=trending' },
+    { key: 'following', label: t('sidebar_following'), icon: 'subscriptions', path: '/?feed=following' },
+    { key: 'workspace', label: t('sidebar_workspace'), icon: 'terminal', path: '/workspace' },
+    { key: 'ai_chat', label: t('sidebar_ai_chat'), icon: 'smart_toy', path: '/ai-chat' },
+    { key: 'settings', label: t('sidebar_settings'), icon: 'settings', path: '/settings' },
+  ];
 
   const isWorkspace = location.pathname.includes('/workspace');
 
@@ -214,8 +217,8 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
     } catch { setSaves([]); }
   }, [dbUser?.id]);
 
-  const handleNavClick = (label: string, path: string | null) => {
-    if (label === 'Profile') {
+  const handleNavClick = (key: string, path: string | null) => {
+    if (key === 'profile') {
       const username = currentUser?.user_metadata?.user_name || currentUser?.user_metadata?.name;
       if (username) {
         navigate(`/@${username}`);
@@ -277,19 +280,19 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
   return (
     <aside className="group/sidebar fixed left-0 top-16 h-[calc(100vh-64px)] w-16 hover:w-64 bg-[#1C1B1B] flex flex-col pt-3 pb-2 hidden md:flex z-40 border-r border-outline-variant/5 transition-[width] duration-300 overflow-hidden">
       <nav className="space-y-1 px-2">
-        {navItems.map(({ label, icon, path }) => {
+        {navItems.map(({ key, label, icon, path }) => {
           const isActive =
-            (label === 'Trending' && location.search.includes('feed=trending')) ||
-            (label === 'Following' && location.search.includes('feed=following')) ||
-            (label === 'Home' && location.pathname === '/' && !location.search) ||
-            (label === 'Workspace' && location.pathname === '/workspace') ||
-            (label === 'AI Chat' && location.pathname === '/ai-chat') ||
-            (label === 'Settings' && location.pathname === '/settings');
+            (key === 'trending' && location.search.includes('feed=trending')) ||
+            (key === 'following' && location.search.includes('feed=following')) ||
+            (key === 'home' && location.pathname === '/' && !location.search) ||
+            (key === 'workspace' && location.pathname === '/workspace') ||
+            (key === 'ai_chat' && location.pathname === '/ai-chat') ||
+            (key === 'settings' && location.pathname === '/settings');
 
           return (
             <button
-              key={label}
-              onClick={() => handleNavClick(label, path)}
+              key={key}
+              onClick={() => handleNavClick(key, path)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors duration-200 font-body font-medium text-sm cursor-pointer ${isActive
                   ? 'text-[#FFB3B6] bg-[#2A2A2A]'
                   : 'text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1]'

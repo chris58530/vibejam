@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import ThinkingLoader from '../components/ThinkingLoader';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Maximize2,
@@ -31,7 +30,7 @@ export default function IterationLab({ vibeId, onBack, onRemix, currentUser }: I
   const [loading, setLoading] = useState(true);
   const isSending = useRef(false);
 
-  const [activeTab, setActiveTab] = useState<'chat'|'versions'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'versions'>('chat');
 
   useEffect(() => {
     loadVibe();
@@ -110,8 +109,8 @@ export default function IterationLab({ vibeId, onBack, onRemix, currentUser }: I
   };
 
   if (loading || !vibe) return (
-    <div className="pt-20 flex items-center justify-center h-screen bg-zinc-950">
-      <ThinkingLoader dark />
+    <div className="pt-20 flex items-center justify-center h-screen text-white/20 font-bold text-2xl">
+      Loading Lab...
     </div>
   );
 
@@ -172,16 +171,16 @@ export default function IterationLab({ vibeId, onBack, onRemix, currentUser }: I
 
         {/* Right: Chat / Comments & Timeline */}
         <div className="w-[400px] flex flex-col border-l border-white/5 bg-zinc-900/30 overflow-hidden">
-          
+
           {/* Tabs header for Chat vs Timeline */}
           <div className="flex w-full items-center border-b border-white/5 bg-zinc-900/50 cursor-pointer">
-            <div 
+            <div
               onClick={() => setActiveTab('chat')}
               className={`flex-1 py-3 text-center text-xs font-bold text-white uppercase tracking-widest transition-colors ${activeTab === 'chat' ? 'border-b-2 border-indigo-500 bg-white/5' : 'text-white/40 hover:text-white hover:bg-white/5'}`}>
               <MessageSquare className="w-4 h-4 inline-block mr-2" />
               Chat
             </div>
-            <div 
+            <div
               onClick={() => setActiveTab('versions')}
               className={`flex-1 py-3 text-center text-xs font-bold text-white uppercase tracking-widest transition-colors ${activeTab === 'versions' ? 'border-b-2 border-indigo-500 bg-white/5' : 'text-white/40 hover:text-white hover:bg-white/5'}`}>
               <Clock className="w-4 h-4 inline-block mr-2" />
@@ -191,7 +190,7 @@ export default function IterationLab({ vibeId, onBack, onRemix, currentUser }: I
 
           {/* Tab Content */}
           <div className="flex-1 flex flex-col overflow-hidden relative">
-            
+
             {/* Chat Window */}
             {activeTab === 'chat' && (
               <div className="flex-1 flex flex-col overflow-hidden absolute inset-0">
@@ -213,7 +212,7 @@ export default function IterationLab({ vibeId, onBack, onRemix, currentUser }: I
                           {comment.optimistic ? (
                             <span className="text-[10px] text-white/30 italic">Sending…</span>
                           ) : (
-                            <span className="text-[10px] text-white/20">{new Date(comment.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                            <span className="text-[10px] text-white/20">{new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                           )}
                         </div>
                         <p className="text-white/80 text-sm leading-relaxed whitespace-pre-wrap">{comment.content}</p>
