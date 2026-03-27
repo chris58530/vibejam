@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api, toSlug, User } from '../lib/api';
 import { EditorMode, detectFramework, wrapReactForPreview, wrapVueForPreview, mergeCode, extractCodeFromAIResponse, extractPartialCode } from '../lib/codeUtils';
 import { useAIKeyStore, AI_PROVIDER_MODELS } from '../lib/aiKeyStore';
+import { useWorkspaceStore } from '../lib/workspaceStore';
 import { chatWithAIStream, ChatMessage, AIServiceError } from '../lib/aiService';
 
 // ── 存檔 ─────────────────────────────────────────────────────────────
@@ -44,6 +45,7 @@ const MODE_OPTIONS: { id: EditorMode; emoji: string; label: string; desc: string
 // ─────────────────────────────────────────────────────────────────────
 export default function Workspace({ currentUser, savePanelOpen = false }: WorkspaceProps) {
   const navigate = useNavigate();
+  const { setPublishFn, setIsPublishing: setStoreIsPublishing } = useWorkspaceStore();
 
   const [htmlCode, setHtmlCode] = useState('');
   const [cssCode, setCssCode] = useState('');
@@ -206,6 +208,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
   const handlePublish = async () => {
     if (!title || !previewDoc) return;
     setIsPublishing(true);
+    setStoreIsPublishing(true);
     try {
       await api.createVibe({
         title,
@@ -222,8 +225,15 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
       console.error(err);
     } finally {
       setIsPublishing(false);
+      setStoreIsPublishing(false);
     }
   };
+
+  useEffect(() => {
+    setPublishFn(handlePublish);
+    return () => setPublishFn(null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, previewDoc, currentUser]);
 
   // ── 存檔操作 ─────────────────────────────────────────────────────
   const handleSave = () => {
