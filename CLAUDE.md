@@ -181,11 +181,11 @@ npm run clean     # 清除 dist 目录
 - API 路由：通过 `vercel.json` 将 `/api/*` 重写到 `api/index.ts`
 - Serverless 函数入口：`api/index.ts`
 
-### 本地 / Railway / Render
+### 本地開發
 
-- 使用 `server.ts` 作为 Express 服务器
-- 需要 PostgreSQL 数据库（可本地或云端）
-- 详见 `DEPLOYMENT.md`
+- 使用 `server.ts` 作為 Express 伺服器
+- 需要 PostgreSQL 資料庫（可本地或雲端）
+- 詳見 `DEPLOYMENT.md`
 
 ---
 
