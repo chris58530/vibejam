@@ -63,9 +63,10 @@ export default function Profile() {
   }, [userProfile?.id]);
 
   useEffect(() => {
+    const supabaseId = currentUser?.id;
     Promise.all([
       api.getUserProfile(decodedUsername).catch(() => null),
-      api.getVibes().catch(() => [])
+      api.getVibes(supabaseId).catch(() => [])
     ]).then(([profile, allVibes]) => {
       setUserProfile(profile);
       setMottoDraft(profile?.motto || 'INIT. DEV. VIBE. System online.');
@@ -76,7 +77,7 @@ export default function Profile() {
       setUserVibes(filtered);
       setLoading(false);
     }).catch(() => setLoading(false));
-  }, [decodedUsername]);
+  }, [decodedUsername, currentUser]);
 
   const handleSaveMotto = async () => {
     try {

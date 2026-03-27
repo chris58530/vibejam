@@ -81,6 +81,13 @@ export default function VibeCard({ vibe, onClick }: VibeCardProps) {
         <div className="absolute bottom-2 right-2 bg-black/80 px-1.5 py-0.5 rounded text-[10px] font-mono text-white z-20 pointer-events-none">
           V{vibe.latest_version}
         </div>
+        {/* Visibility badge - top left */}
+        {vibe.visibility && vibe.visibility !== 'public' && (
+          <div className="absolute top-2 left-2 flex items-center gap-0.5 bg-black/70 px-1.5 py-0.5 rounded text-[9px] font-mono text-white z-20 pointer-events-none">
+            <span className="material-symbols-outlined text-[10px]">{vibe.visibility === 'private' ? 'lock' : 'link'}</span>
+            {vibe.visibility}
+          </div>
+        )}
       </div>
 
       {/* Details */}

@@ -1,10 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { api, toSlug, Vibe, Version, Comment, User } from '../lib/api';
+import { api, toSlug, Vibe, Version, Comment, User, Collaborator, InviteLink, AccessDeniedError } from '../lib/api';
+import { supabase } from '../lib/supabase';
 
 interface VibeDetailProps {
   currentUser?: User;
 }
+
+type ActiveTab = 'chat' | 'versions' | 'manage';
 
 export default function VibeDetail({ currentUser }: VibeDetailProps) {
   const { username, vibeSlug } = useParams<{ username: string; vibeSlug: string }>();
@@ -16,36 +19,61 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
   const [commentCode, setCommentCode] = useState('');
   const [showCodeInput, setShowCodeInput] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
   const isSending = useRef(false);
 
-  const [activeTab, setActiveTab] = useState<'chat' | 'versions'>('chat');
+  const [activeTab, setActiveTab] = useState<ActiveTab>('chat');
   const [mobilePanel, setMobilePanel] = useState<'preview' | 'panel'>('preview');
+
+  // Supabase user for API calls requiring supabase_id
+  const [supabaseUser, setSupabaseUser] = useState<any>(null);
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setSupabaseUser(data.session?.user ?? null));
+  }, []);
+
+  // Collaborator management state
+  const [collabInput, setCollabInput] = useState('');
+  const [collabError, setCollabError] = useState('');
+  const [collabLoading, setCollabLoading] = useState(false);
+  const [inviteLinks, setInviteLinks] = useState<InviteLink[]>([]);
+  const [inviteCopied, setInviteCopied] = useState<string | null>(null);
+  const [visibilityUpdating, setVisibilityUpdating] = useState(false);
 
   useEffect(() => {
     loadVibe();
-  }, [username, vibeSlug]);
+  }, [username, vibeSlug, supabaseUser]);
 
   const loadVibe = async () => {
+    if (supabaseUser === undefined) return; // still loading auth
+    const rawUsername = username?.startsWith('@') ? username.substring(1) : username;
+    const decodedUsername = rawUsername ? decodeURIComponent(rawUsername) : '';
+    const decodedSlug = vibeSlug ? decodeURIComponent(vibeSlug) : '';
     try {
-      const vibes = await api.getVibes();
-      const rawUsername = username?.startsWith('@') ? username.substring(1) : username;
-      const decodedUsername = rawUsername ? decodeURIComponent(rawUsername) : '';
-      const decodedSlug = vibeSlug ? decodeURIComponent(vibeSlug) : '';
-      const found = vibes.find(
-        v => v.author_name === decodedUsername && toSlug(v.title) === decodedSlug
-      );
-      if (!found) {
-        navigate('/');
-        return;
-      }
-      const data = await api.getVibe(found.id);
+      const data = await api.getVibeBySlug(decodedUsername, decodedSlug, supabaseUser?.id);
       setVibe(data);
       if (data.versions && data.versions.length > 0) {
         setSelectedVersion(data.versions[0]);
       }
+      // Load invite links if owner
+      if (data.user_role === 'owner' && supabaseUser?.id) {
+        loadInviteLinks(data.id, supabaseUser.id);
+      }
+    } catch (err) {
+      if (err instanceof AccessDeniedError) {
+        setAccessDenied(true);
+      } else {
+        navigate('/');
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadInviteLinks = async (vibeId: number, sid: string) => {
+    try {
+      const links = await api.getInviteLinks(vibeId, sid);
+      setInviteLinks(links);
+    } catch {}
   };
 
   const handleAddComment = async () => {
@@ -114,15 +142,95 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
         title: vibe.title,
         authorName: vibe.author_name,
         versionNumber: selectedVersion?.version_number || 1,
+        parentVisibility: vibe.visibility || 'public',
       },
     });
   };
 
-  if (loading || !vibe) return (
+  const handleAddCollaborator = async () => {
+    if (!vibe || !supabaseUser?.id || !collabInput.trim()) return;
+    setCollabLoading(true);
+    setCollabError('');
+    try {
+      const collab = await api.addCollaborator(vibe.id, supabaseUser.id, collabInput.trim());
+      setVibe(prev => prev ? { ...prev, collaborators: [...(prev.collaborators ?? []), collab] } : prev);
+      setCollabInput('');
+    } catch (err: any) {
+      setCollabError(err.message || '新增失敗');
+    } finally {
+      setCollabLoading(false);
+    }
+  };
+
+  const handleRemoveCollaborator = async (userId: number) => {
+    if (!vibe || !supabaseUser?.id) return;
+    try {
+      await api.removeCollaborator(vibe.id, userId, supabaseUser.id);
+      setVibe(prev => prev ? { ...prev, collaborators: (prev.collaborators ?? []).filter(c => c.user_id !== userId) } : prev);
+    } catch {}
+  };
+
+  const handleCreateInviteLink = async () => {
+    if (!vibe || !supabaseUser?.id) return;
+    try {
+      const { token } = await api.createInviteLink(vibe.id, supabaseUser.id);
+      const newLink: InviteLink = { id: Date.now(), vibe_id: vibe.id, token, created_by: currentUser?.id ?? 0, revoked: false, created_at: new Date().toISOString() };
+      setInviteLinks(prev => [newLink, ...prev]);
+    } catch {}
+  };
+
+  const handleRevokeInviteLink = async (token: string) => {
+    if (!vibe || !supabaseUser?.id) return;
+    try {
+      await api.revokeInviteLink(vibe.id, token, supabaseUser.id);
+      setInviteLinks(prev => prev.map(l => l.token === token ? { ...l, revoked: true } : l));
+    } catch {}
+  };
+
+  const handleCopyInviteLink = (token: string) => {
+    navigator.clipboard.writeText(`${window.location.origin}/invite/${token}`);
+    setInviteCopied(token);
+    setTimeout(() => setInviteCopied(null), 2000);
+  };
+
+  const handleVisibilityChange = async (newVisibility: 'public' | 'unlisted' | 'private') => {
+    if (!vibe || !supabaseUser?.id) return;
+    setVisibilityUpdating(true);
+    try {
+      await api.updateVisibility(vibe.id, supabaseUser.id, newVisibility);
+      setVibe(prev => prev ? { ...prev, visibility: newVisibility } : prev);
+    } catch {} finally {
+      setVisibilityUpdating(false);
+    }
+  };
+
+  const visibilityIcon = { public: 'public', unlisted: 'link', private: 'lock' };
+  const visibilityLabel = { public: 'Public', unlisted: 'Unlisted', private: 'Private' };
+
+  if (loading) return (
     <div className="md:ml-16 pt-20 flex items-center justify-center min-h-screen bg-surface text-on-surface/40 font-mono text-lg tracking-widest uppercase">
       Loading Stage...
     </div>
   );
+
+  if (accessDenied) return (
+    <div className="md:ml-16 pt-20 flex flex-col items-center justify-center min-h-screen bg-surface gap-6">
+      <div className="w-20 h-20 rounded-full bg-surface-container-high flex items-center justify-center">
+        <span className="material-symbols-outlined text-[40px] text-on-surface/40">lock</span>
+      </div>
+      <div className="text-center">
+        <h1 className="text-on-surface font-bold text-xl mb-2">存取被拒</h1>
+        <p className="text-on-surface/50 text-sm">此作品為私人作品。僅擁有者和協作者可以查看。</p>
+      </div>
+      <button onClick={() => navigate('/')} className="px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-bold">
+        返回首頁
+      </button>
+    </div>
+  );
+
+  if (!vibe) return null;
+
+  const isOwner = vibe.user_role === 'owner';
 
   return (
     <div className="md:ml-16 pt-[64px] h-screen flex flex-col bg-surface overflow-hidden">
@@ -144,7 +252,15 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
               )}
             </div>
             <div className="group-hover:opacity-80 transition-opacity flex flex-col justify-center">
-              <h1 className="text-on-surface font-sans font-bold text-sm tracking-tight">{vibe.title}</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-on-surface font-sans font-bold text-sm tracking-tight">{vibe.title}</h1>
+                {vibe.visibility && vibe.visibility !== 'public' && (
+                  <span className="flex items-center gap-0.5 text-[9px] text-on-surface/40 font-mono uppercase tracking-widest border border-outline-variant/20 rounded px-1 py-0.5">
+                    <span className="material-symbols-outlined text-[10px]">{visibilityIcon[vibe.visibility]}</span>
+                    {visibilityLabel[vibe.visibility]}
+                  </span>
+                )}
+              </div>
               <p className="text-on-surface/40 font-mono text-[10px] mt-0.5">Original by {vibe.author_name} • V{selectedVersion?.version_number}</p>
             </div>
           </div>
@@ -205,7 +321,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
         {/* Right: Chat / Comments & Timeline */}
         <div className={`${mobilePanel === 'panel' ? 'flex' : 'hidden'} md:flex w-full md:w-[35%] md:min-w-[320px] md:max-w-[440px] flex-col border-l border-outline-variant/10 bg-surface-container-low overflow-hidden shrink-0`}>
 
-          {/* Tabs header for Chat vs Timeline */}
+          {/* Tabs header */}
           <div className="flex w-full items-center border-b border-outline-variant/10 bg-surface-container-lowest cursor-pointer shrink-0 h-12">
             <div
               onClick={() => setActiveTab('chat')}
@@ -219,6 +335,14 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
               <span className="material-symbols-outlined text-[14px]">history</span>
               Versions
             </div>
+            {isOwner && (
+              <div
+                onClick={() => setActiveTab('manage')}
+                className={`flex-1 h-full flex items-center justify-center gap-2 text-[10px] font-mono font-bold uppercase tracking-widest transition-colors ${activeTab === 'manage' ? 'border-b-2 border-primary text-primary bg-surface-container-high' : 'text-on-surface/40 hover:text-on-surface hover:bg-surface-container-low'}`}>
+                <span className="material-symbols-outlined text-[14px]">manage_accounts</span>
+                Manage
+              </div>
+            )}
           </div>
 
           {/* Tab Content */}
@@ -361,10 +485,123 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                 </div>
               </div>
             )}
+
+            {/* Manage Window (owner only) */}
+            {activeTab === 'manage' && isOwner && (
+              <div className="flex-1 overflow-y-auto p-4 space-y-6 hide-scrollbar absolute inset-0">
+
+                {/* Visibility */}
+                <div>
+                  <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-on-surface/40 mb-3">可見性</p>
+                  <div className="flex gap-2">
+                    {(['public', 'unlisted', 'private'] as const).map((v) => (
+                      <button
+                        key={v}
+                        onClick={() => handleVisibilityChange(v)}
+                        disabled={visibilityUpdating}
+                        className={`flex-1 flex flex-col items-center gap-1 py-2 px-1 rounded-lg border transition-colors text-[10px] font-bold uppercase tracking-wide ${
+                          vibe.visibility === v
+                            ? 'bg-primary/10 border-primary text-primary'
+                            : 'border-outline-variant/20 text-on-surface/50 hover:border-outline-variant/40 hover:text-on-surface/80'
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-[16px]">{visibilityIcon[v]}</span>
+                        {visibilityLabel[v]}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-on-surface/30 mt-2 font-mono">
+                    {vibe.visibility === 'public' && '在探索頁顯示，所有人可見'}
+                    {vibe.visibility === 'unlisted' && '僅能透過直接連結存取，不出現在探索頁'}
+                    {vibe.visibility === 'private' && '僅限您和協作者存取'}
+                  </p>
+                </div>
+
+                {/* Collaborators */}
+                <div>
+                  <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-on-surface/40 mb-3">協作者</p>
+                  <div className="flex gap-2 mb-3">
+                    <input
+                      type="text"
+                      value={collabInput}
+                      onChange={(e) => { setCollabInput(e.target.value); setCollabError(''); }}
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleAddCollaborator(); }}
+                      placeholder="輸入使用者名稱"
+                      className="flex-1 bg-surface-container-lowest border border-outline-variant/20 rounded px-3 py-2 text-sm text-on-surface placeholder:text-on-surface/30 focus:border-primary/50 outline-none"
+                    />
+                    <button
+                      onClick={handleAddCollaborator}
+                      disabled={collabLoading || !collabInput.trim()}
+                      className="px-3 py-2 bg-primary text-on-primary rounded text-xs font-bold disabled:opacity-50"
+                    >
+                      新增
+                    </button>
+                  </div>
+                  {collabError && <p className="text-xs text-error font-mono mb-2">{collabError}</p>}
+                  <div className="space-y-2">
+                    {(vibe.collaborators ?? []).length === 0 && (
+                      <p className="text-on-surface/30 text-xs font-mono">尚無協作者</p>
+                    )}
+                    {(vibe.collaborators ?? []).map((c: Collaborator) => (
+                      <div key={c.user_id} className="flex items-center gap-3 p-2 bg-surface-container-lowest rounded border border-outline-variant/10">
+                        <img src={c.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${c.username}`} className="w-7 h-7 rounded" alt="avatar" />
+                        <span className="flex-1 text-sm text-on-surface font-sans">{c.username}</span>
+                        <button
+                          onClick={() => handleRemoveCollaborator(c.user_id)}
+                          className="text-[10px] text-error/60 hover:text-error font-mono uppercase tracking-wide transition-colors"
+                        >
+                          移除
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Invite Links */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-on-surface/40">邀請連結</p>
+                    <button
+                      onClick={handleCreateInviteLink}
+                      className="text-[10px] font-mono font-bold text-primary hover:text-primary/80 uppercase tracking-wide transition-colors"
+                    >
+                      + 建立連結
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {inviteLinks.length === 0 && (
+                      <p className="text-on-surface/30 text-xs font-mono">尚無邀請連結</p>
+                    )}
+                    {inviteLinks.map((link) => (
+                      <div key={link.token} className={`flex items-center gap-2 p-2 rounded border text-[11px] font-mono ${link.revoked ? 'opacity-40 border-outline-variant/10' : 'border-outline-variant/20 bg-surface-container-lowest'}`}>
+                        <span className="flex-1 text-on-surface/50 truncate">{link.token.slice(0, 12)}…</span>
+                        {!link.revoked && (
+                          <>
+                            <button
+                              onClick={() => handleCopyInviteLink(link.token)}
+                              className="text-primary hover:text-primary/80 transition-colors"
+                            >
+                              {inviteCopied === link.token ? '已複製！' : '複製'}
+                            </button>
+                            <button
+                              onClick={() => handleRevokeInviteLink(link.token)}
+                              className="text-error/60 hover:text-error transition-colors"
+                            >
+                              撤銷
+                            </button>
+                          </>
+                        )}
+                        {link.revoked && <span className="text-on-surface/30">已撤銷</span>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+            )}
           </div>
         </div>
       </div>
     </div>
   );
 }
-

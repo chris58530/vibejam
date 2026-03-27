@@ -3,6 +3,7 @@ import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import crypto from 'crypto';
 dotenv.config({ path: '.env.local' });
 import { db, initializeDatabase } from './src/lib/dbPostgres.js';
 
@@ -14,6 +15,26 @@ async function startServer() {
   app.use(express.json());
 
   await initializeDatabase();
+
+  // Access control helper
+  async function checkVibeAccess(vibeId: number | string, supabaseId: string | null): Promise<{ allowed: boolean; role: 'owner' | 'collaborator' | 'viewer' | 'none'; vibe: any }> {
+    const vibe = await db.get(`
+      SELECT v.*, u.supabase_id as owner_supabase_id
+      FROM vibes v JOIN users u ON v.author_id = u.id WHERE v.id = $1
+    `, [vibeId]);
+    if (!vibe) return { allowed: false, role: 'none', vibe: null };
+    const visibility = vibe.visibility || 'public';
+    if (!supabaseId) {
+      return { allowed: visibility === 'public' || visibility === 'unlisted', role: 'viewer', vibe };
+    }
+    if (vibe.owner_supabase_id === supabaseId) return { allowed: true, role: 'owner', vibe };
+    const user = await db.get('SELECT id FROM users WHERE supabase_id = $1', [supabaseId]);
+    if (user) {
+      const collab = await db.get('SELECT id FROM collaborators WHERE vibe_id = $1 AND user_id = $2', [vibeId, user.id]);
+      if (collab) return { allowed: true, role: 'collaborator', vibe };
+    }
+    return { allowed: visibility === 'public' || visibility === 'unlisted', role: 'viewer', vibe };
+  }
 
   // API Routes
 
@@ -44,9 +65,19 @@ async function startServer() {
     } catch (err: any) { res.status(500).json({ error: err.message }); }
   });
 
-  // Get all vibes
+  // Get all vibes (public only; or include own + collaborated if supabase_id provided)
   app.get('/api/vibes', async (req, res) => {
+    const supabaseId = req.query.supabase_id as string | undefined;
     try {
+      let whereClause = `v.visibility = 'public'`;
+      const params: (string | number)[] = [];
+      if (supabaseId) {
+        const user = await db.get('SELECT id FROM users WHERE supabase_id = $1', [supabaseId]);
+        if (user) {
+          whereClause = `(v.visibility = 'public' OR v.author_id = $1 OR v.id IN (SELECT vibe_id FROM collaborators WHERE user_id = $1))`;
+          params.push(user.id);
+        }
+      }
       const vibes = await db.query(`
         SELECT v.*, u.username as author_name, u.avatar as author_avatar,
         (SELECT code FROM versions WHERE vibe_id = v.id ORDER BY version_number DESC LIMIT 1) as latest_code,
@@ -55,20 +86,55 @@ async function startServer() {
         (SELECT COUNT(*) FROM remixes WHERE parent_vibe_id = v.id) as remix_count
         FROM vibes v
         JOIN users u ON v.author_id = u.id
+        WHERE ${whereClause}
         ORDER BY v.created_at DESC
-      `);
+      `, params);
       res.json(vibes);
+    } catch (err: any) { res.status(500).json({ error: err.message }); }
+  });
+
+  // Resolve vibe by username + slug (with access control)
+  app.get('/api/vibes/by-slug/:username/:slug', async (req, res) => {
+    const username = decodeURIComponent(req.params.username);
+    const slug = decodeURIComponent(req.params.slug);
+    const supabaseId = req.query.supabase_id as string | null || null;
+    try {
+      const allVibes = await db.query(`
+        SELECT v.id, v.title FROM vibes v
+        JOIN users u ON v.author_id = u.id WHERE u.username = $1
+      `, [username]);
+      const toSlug = (title: string) => title.toLowerCase().replace(/[^\w\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff]+/g, '-').replace(/^-+|-+$/g, '');
+      const found = allVibes.find((v: any) => toSlug(v.title) === slug);
+      if (!found) return res.status(404).json({ error: 'Vibe not found' });
+
+      const { allowed, role, vibe } = await checkVibeAccess(found.id, supabaseId);
+      if (!allowed) return res.status(403).json({ error: 'Access denied', code: 'PRIVATE_VIBE' });
+
+      const versions = await db.query(`
+        SELECT v.*, u.username as author_name, u.avatar as author_avatar
+        FROM versions v LEFT JOIN users u ON v.author_id = u.id
+        WHERE v.vibe_id = $1 ORDER BY v.version_number DESC
+      `, [found.id]);
+      const comments = await db.query(`
+        SELECT c.*, u.username as author_name, u.avatar as author_avatar
+        FROM comments c JOIN users u ON c.author_id = u.id
+        WHERE c.vibe_id = $1 ORDER BY c.created_at DESC
+      `, [found.id]);
+      const collaborators = role === 'owner' ? await db.query(`
+        SELECT c.id, c.user_id, u.username, u.avatar, c.created_at
+        FROM collaborators c JOIN users u ON c.user_id = u.id WHERE c.vibe_id = $1
+      `, [found.id]) : [];
+      res.json({ ...vibe, versions, comments, user_role: role, collaborators });
     } catch (err: any) { res.status(500).json({ error: err.message }); }
   });
 
   // Get single vibe with versions and comments
   app.get('/api/vibes/:id', async (req, res) => {
+    const supabaseId = req.query.supabase_id as string | null || null;
     try {
-      const vibe = await db.get(`
-        SELECT v.*, u.username as author_name, u.avatar as author_avatar
-        FROM vibes v JOIN users u ON v.author_id = u.id WHERE v.id = $1
-      `, [req.params.id]);
+      const { allowed, role, vibe } = await checkVibeAccess(req.params.id, supabaseId);
       if (!vibe) return res.status(404).json({ error: 'Vibe not found' });
+      if (!allowed) return res.status(403).json({ error: 'Access denied', code: 'PRIVATE_VIBE' });
 
       const versions = await db.query(`
         SELECT v.*, u.username as author_name, u.avatar as author_avatar
@@ -80,18 +146,29 @@ async function startServer() {
         FROM comments c JOIN users u ON c.author_id = u.id
         WHERE c.vibe_id = $1 ORDER BY c.created_at DESC
       `, [req.params.id]);
-
-      res.json({ ...vibe, versions, comments });
+      const collaborators = role === 'owner' ? await db.query(`
+        SELECT c.id, c.user_id, u.username, u.avatar, c.created_at
+        FROM collaborators c JOIN users u ON c.user_id = u.id WHERE c.vibe_id = $1
+      `, [req.params.id]) : [];
+      res.json({ ...vibe, versions, comments, user_role: role, collaborators });
     } catch (err: any) { res.status(500).json({ error: err.message }); }
   });
 
   // Create new vibe
   app.post('/api/vibes', async (req, res) => {
-    const { title, tags, code, author_id = 1, parent_vibe_id } = req.body;
+    const { title, tags, code, author_id = 1, parent_vibe_id, parent_version_number } = req.body;
+    let { visibility = 'public' } = req.body;
+    if (!['public', 'unlisted', 'private'].includes(visibility)) visibility = 'public';
     try {
+      // Enforce remix visibility rules
+      if (parent_vibe_id) {
+        const parent = await db.get('SELECT visibility FROM vibes WHERE id = $1', [parent_vibe_id]);
+        if (parent?.visibility === 'private') visibility = 'private';
+        else if (parent?.visibility === 'unlisted' && visibility === 'public') visibility = 'unlisted';
+      }
       const vibe = await db.get(
-        'INSERT INTO vibes (title, author_id, tags) VALUES ($1, $2, $3) RETURNING id',
-        [title, author_id, tags]
+        'INSERT INTO vibes (title, author_id, tags, visibility) VALUES ($1, $2, $3, $4) RETURNING id',
+        [title, author_id, tags, visibility]
       );
       const vibeId = vibe.id;
       await db.run(
@@ -99,7 +176,7 @@ async function startServer() {
         [vibeId, 1, author_id, code, 'Initial version']
       );
       if (parent_vibe_id) {
-        await db.run('INSERT INTO remixes (parent_vibe_id, child_vibe_id) VALUES ($1, $2)', [parent_vibe_id, vibeId]);
+        await db.run('INSERT INTO remixes (parent_vibe_id, child_vibe_id, parent_version_number) VALUES ($1, $2, $3)', [parent_vibe_id, vibeId, parent_version_number || null]);
       }
       res.json({ id: vibeId });
     } catch (err: any) { res.status(500).json({ error: err.message }); }
@@ -129,6 +206,22 @@ async function startServer() {
     } catch (err: any) { res.status(500).json({ error: err.message }); }
   });
 
+  // Update vibe visibility (owner only)
+  app.patch('/api/vibes/:id/visibility', async (req, res) => {
+    const { supabase_id, visibility } = req.body;
+    if (!supabase_id) return res.status(401).json({ error: 'Unauthorized' });
+    if (!['public', 'unlisted', 'private'].includes(visibility)) return res.status(400).json({ error: 'Invalid visibility' });
+    try {
+      const user = await db.get('SELECT id FROM users WHERE supabase_id = $1', [supabase_id]);
+      if (!user) return res.status(401).json({ error: 'Unauthorized' });
+      const vibe = await db.get('SELECT author_id FROM vibes WHERE id = $1', [req.params.id]);
+      if (!vibe) return res.status(404).json({ error: 'Vibe not found' });
+      if (vibe.author_id !== user.id) return res.status(403).json({ error: 'Forbidden' });
+      await db.run('UPDATE vibes SET visibility = $1 WHERE id = $2', [visibility, req.params.id]);
+      res.json({ success: true });
+    } catch (err: any) { res.status(500).json({ error: err.message }); }
+  });
+
   // Delete vibe (owner only, verified by supabase_id)
   app.delete('/api/vibes/:id', async (req, res) => {
     const { supabase_id } = req.body;
@@ -143,8 +236,143 @@ async function startServer() {
       await db.run('DELETE FROM reactions WHERE vibe_id = $1', [req.params.id]);
       await db.run('DELETE FROM remixes WHERE parent_vibe_id = $1 OR child_vibe_id = $1', [req.params.id, req.params.id]);
       await db.run('DELETE FROM versions WHERE vibe_id = $1', [req.params.id]);
+      await db.run('DELETE FROM collaborators WHERE vibe_id = $1', [req.params.id]);
+      await db.run('DELETE FROM invite_links WHERE vibe_id = $1', [req.params.id]);
       await db.run('DELETE FROM vibes WHERE id = $1', [req.params.id]);
       res.json({ success: true });
+    } catch (err: any) { res.status(500).json({ error: err.message }); }
+  });
+
+  // ── Collaborator Routes ──────────────────────────────────────────
+
+  // List collaborators
+  app.get('/api/vibes/:id/collaborators', async (req, res) => {
+    const supabaseId = req.query.supabase_id as string | null || null;
+    try {
+      const { allowed } = await checkVibeAccess(req.params.id, supabaseId);
+      if (!allowed) return res.status(403).json({ error: 'Access denied' });
+      const collaborators = await db.query(`
+        SELECT c.id, c.user_id, u.username, u.avatar, c.created_at
+        FROM collaborators c JOIN users u ON c.user_id = u.id WHERE c.vibe_id = $1
+      `, [req.params.id]);
+      res.json(collaborators);
+    } catch (err: any) { res.status(500).json({ error: err.message }); }
+  });
+
+  // Add collaborator by username (owner only)
+  app.post('/api/vibes/:id/collaborators', async (req, res) => {
+    const { supabase_id, username } = req.body;
+    if (!supabase_id || !username) return res.status(400).json({ error: 'supabase_id and username required' });
+    try {
+      const owner = await db.get('SELECT id FROM users WHERE supabase_id = $1', [supabase_id]);
+      if (!owner) return res.status(401).json({ error: 'Unauthorized' });
+      const vibe = await db.get('SELECT author_id FROM vibes WHERE id = $1', [req.params.id]);
+      if (!vibe) return res.status(404).json({ error: 'Vibe not found' });
+      if (vibe.author_id !== owner.id) return res.status(403).json({ error: 'Forbidden' });
+      const target = await db.get('SELECT id FROM users WHERE username = $1', [username]);
+      if (!target) return res.status(404).json({ error: 'User not found' });
+      if (target.id === owner.id) return res.status(400).json({ error: 'Cannot add owner as collaborator' });
+      await db.run('INSERT INTO collaborators (vibe_id, user_id) VALUES ($1, $2) ON CONFLICT (vibe_id, user_id) DO NOTHING', [req.params.id, target.id]);
+      const collaborator = await db.get(`
+        SELECT c.id, c.user_id, u.username, u.avatar, c.created_at
+        FROM collaborators c JOIN users u ON c.user_id = u.id
+        WHERE c.vibe_id = $1 AND c.user_id = $2
+      `, [req.params.id, target.id]);
+      res.json(collaborator);
+    } catch (err: any) { res.status(500).json({ error: err.message }); }
+  });
+
+  // Remove collaborator (owner only)
+  app.delete('/api/vibes/:id/collaborators/:userId', async (req, res) => {
+    const { supabase_id } = req.body;
+    if (!supabase_id) return res.status(401).json({ error: 'Unauthorized' });
+    try {
+      const owner = await db.get('SELECT id FROM users WHERE supabase_id = $1', [supabase_id]);
+      if (!owner) return res.status(401).json({ error: 'Unauthorized' });
+      const vibe = await db.get('SELECT author_id FROM vibes WHERE id = $1', [req.params.id]);
+      if (!vibe) return res.status(404).json({ error: 'Vibe not found' });
+      if (vibe.author_id !== owner.id) return res.status(403).json({ error: 'Forbidden' });
+      await db.run('DELETE FROM collaborators WHERE vibe_id = $1 AND user_id = $2', [req.params.id, req.params.userId]);
+      res.json({ success: true });
+    } catch (err: any) { res.status(500).json({ error: err.message }); }
+  });
+
+  // ── Invite Link Routes ──────────────────────────────────────────
+
+  // Create invite link (owner only)
+  app.post('/api/vibes/:id/invite-link', async (req, res) => {
+    const { supabase_id } = req.body;
+    if (!supabase_id) return res.status(401).json({ error: 'Unauthorized' });
+    try {
+      const owner = await db.get('SELECT id FROM users WHERE supabase_id = $1', [supabase_id]);
+      if (!owner) return res.status(401).json({ error: 'Unauthorized' });
+      const vibe = await db.get('SELECT author_id FROM vibes WHERE id = $1', [req.params.id]);
+      if (!vibe) return res.status(404).json({ error: 'Vibe not found' });
+      if (vibe.author_id !== owner.id) return res.status(403).json({ error: 'Forbidden' });
+      const token = crypto.randomBytes(16).toString('hex');
+      await db.run('INSERT INTO invite_links (vibe_id, token, created_by) VALUES ($1, $2, $3)', [req.params.id, token, owner.id]);
+      res.json({ token });
+    } catch (err: any) { res.status(500).json({ error: err.message }); }
+  });
+
+  // List invite links for a vibe (owner only)
+  app.get('/api/vibes/:id/invite-links', async (req, res) => {
+    const supabaseId = req.query.supabase_id as string | null || null;
+    if (!supabaseId) return res.status(401).json({ error: 'Unauthorized' });
+    try {
+      const owner = await db.get('SELECT id FROM users WHERE supabase_id = $1', [supabaseId]);
+      if (!owner) return res.status(401).json({ error: 'Unauthorized' });
+      const vibe = await db.get('SELECT author_id FROM vibes WHERE id = $1', [req.params.id]);
+      if (!vibe) return res.status(404).json({ error: 'Vibe not found' });
+      if (vibe.author_id !== owner.id) return res.status(403).json({ error: 'Forbidden' });
+      const links = await db.query('SELECT * FROM invite_links WHERE vibe_id = $1 ORDER BY created_at DESC', [req.params.id]);
+      res.json(links);
+    } catch (err: any) { res.status(500).json({ error: err.message }); }
+  });
+
+  // Revoke invite link (owner only)
+  app.delete('/api/vibes/:id/invite-link/:token', async (req, res) => {
+    const { supabase_id } = req.body;
+    if (!supabase_id) return res.status(401).json({ error: 'Unauthorized' });
+    try {
+      const owner = await db.get('SELECT id FROM users WHERE supabase_id = $1', [supabase_id]);
+      if (!owner) return res.status(401).json({ error: 'Unauthorized' });
+      const vibe = await db.get('SELECT author_id FROM vibes WHERE id = $1', [req.params.id]);
+      if (!vibe) return res.status(404).json({ error: 'Vibe not found' });
+      if (vibe.author_id !== owner.id) return res.status(403).json({ error: 'Forbidden' });
+      await db.run('UPDATE invite_links SET revoked = TRUE WHERE vibe_id = $1 AND token = $2', [req.params.id, req.params.token]);
+      res.json({ success: true });
+    } catch (err: any) { res.status(500).json({ error: err.message }); }
+  });
+
+  // Resolve invite token (public)
+  app.get('/api/invite/:token', async (req, res) => {
+    try {
+      const link = await db.get(`
+        SELECT il.*, v.title as vibe_title, u.username as author_name
+        FROM invite_links il
+        JOIN vibes v ON il.vibe_id = v.id
+        JOIN users u ON v.author_id = u.id
+        WHERE il.token = $1
+      `, [req.params.token]);
+      if (!link || link.revoked) return res.json({ valid: false });
+      res.json({ valid: true, vibe_id: link.vibe_id, vibe_title: link.vibe_title, author_name: link.author_name });
+    } catch (err: any) { res.status(500).json({ error: err.message }); }
+  });
+
+  // Accept invite (authenticated)
+  app.post('/api/invite/:token/accept', async (req, res) => {
+    const { supabase_id } = req.body;
+    if (!supabase_id) return res.status(401).json({ error: 'Unauthorized' });
+    try {
+      const link = await db.get('SELECT * FROM invite_links WHERE token = $1', [req.params.token]);
+      if (!link || link.revoked) return res.status(400).json({ error: 'Invalid or revoked invite link' });
+      const user = await db.get('SELECT id FROM users WHERE supabase_id = $1', [supabase_id]);
+      if (!user) return res.status(401).json({ error: 'Unauthorized' });
+      const vibe = await db.get('SELECT author_id FROM vibes WHERE id = $1', [link.vibe_id]);
+      if (vibe && vibe.author_id === user.id) return res.json({ success: true, already_owner: true, vibe_id: link.vibe_id });
+      await db.run('INSERT INTO collaborators (vibe_id, user_id) VALUES ($1, $2) ON CONFLICT (vibe_id, user_id) DO NOTHING', [link.vibe_id, user.id]);
+      res.json({ success: true, vibe_id: link.vibe_id });
     } catch (err: any) { res.status(500).json({ error: err.message }); }
   });
 

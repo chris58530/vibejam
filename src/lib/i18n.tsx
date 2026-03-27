@@ -90,6 +90,40 @@ export const translations = {
     auth_change_pwd_subtitle: 'Please enter the new password you want to use',
     auth_sending: 'Sending…',
     auth_updating: 'Updating…',
+    // Visibility
+    visibility_public: 'Public',
+    visibility_unlisted: 'Unlisted',
+    visibility_private: 'Private',
+    visibility_label: 'Visibility',
+    visibility_public_desc: 'Visible on explore page',
+    visibility_unlisted_desc: 'Only accessible via direct link',
+    visibility_private_desc: 'Only you and collaborators can access',
+    // Collaborators
+    collab_title: 'Collaborators',
+    collab_add: 'Add Collaborator',
+    collab_remove: 'Remove',
+    collab_username_placeholder: 'Enter username',
+    collab_added: 'Collaborator added',
+    collab_not_found: 'User not found',
+    collab_already_added: 'User is already a collaborator',
+    collab_cannot_add_owner: 'Cannot add the owner as a collaborator',
+    // Invite links
+    invite_title: 'Invite Link',
+    invite_create: 'Create Invite Link',
+    invite_copy: 'Copy Link',
+    invite_copied: 'Link copied!',
+    invite_revoke: 'Revoke',
+    invite_accept: 'Accept Invitation',
+    invite_accepting: 'Accepting...',
+    invite_accepted: 'You are now a collaborator!',
+    invite_invalid: 'This invite link is invalid or has been revoked',
+    invite_login_required: 'Please sign in to accept this invitation',
+    invite_welcome: 'You have been invited to collaborate on',
+    // Access denied
+    access_denied: 'Access Denied',
+    access_denied_private: 'This vibe is private. Only the owner and collaborators can view it.',
+    // Remix visibility
+    remix_visibility_forced: 'Remixes of private vibes must be private',
   },
   'zh-TW': {
     // Navbar
@@ -178,6 +212,40 @@ export const translations = {
     auth_change_pwd_subtitle: '請輸入您想要使用的新密碼',
     auth_sending: '發送中…',
     auth_updating: '更新中…',
+    // Visibility
+    visibility_public: '公開',
+    visibility_unlisted: '不公開',
+    visibility_private: '私人',
+    visibility_label: '可見性',
+    visibility_public_desc: '在探索頁顯示',
+    visibility_unlisted_desc: '僅能透過直接連結存取',
+    visibility_private_desc: '僅限您和協作者存取',
+    // Collaborators
+    collab_title: '協作者',
+    collab_add: '新增協作者',
+    collab_remove: '移除',
+    collab_username_placeholder: '輸入使用者名稱',
+    collab_added: '已新增協作者',
+    collab_not_found: '找不到使用者',
+    collab_already_added: '該使用者已是協作者',
+    collab_cannot_add_owner: '無法將擁有者新增為協作者',
+    // Invite links
+    invite_title: '邀請連結',
+    invite_create: '建立邀請連結',
+    invite_copy: '複製連結',
+    invite_copied: '連結已複製！',
+    invite_revoke: '撤銷',
+    invite_accept: '接受邀請',
+    invite_accepting: '接受中...',
+    invite_accepted: '您現在是協作者了！',
+    invite_invalid: '此邀請連結無效或已被撤銷',
+    invite_login_required: '請先登入以接受此邀請',
+    invite_welcome: '您已被邀請協作於',
+    // Access denied
+    access_denied: '存取被拒',
+    access_denied_private: '此作品為私人作品。僅擁有者和協作者可以查看。',
+    // Remix visibility
+    remix_visibility_forced: '私人作品的 Remix 必須為私人',
   },
 } as const;
 

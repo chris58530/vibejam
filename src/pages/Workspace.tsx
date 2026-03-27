@@ -67,6 +67,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
   const [tags, setTags] = useState('');
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
   const [isPublishing, setIsPublishing] = useState(false);
+  const [visibility, setVisibility] = useState<'public' | 'unlisted' | 'private'>('public');
 
   // Mobile tab
   const [mobileTab, setMobileTab] = useState<MobileTab>('code');
@@ -215,6 +216,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
         tags,
         code: previewDoc,
         author_id: currentUser?.id,
+        visibility,
       });
       if (currentUser) {
         navigate(`/@${currentUser.username}/${toSlug(title)}`);
@@ -443,7 +445,29 @@ ${currentCode || '（尚無程式碼）'}
             onChange={(e) => setTags(e.target.value)}
           />
         </div>
-        <div className="ml-auto flex gap-3">
+        <div className="ml-auto flex items-center gap-2">
+          {/* Visibility selector */}
+          <div className="flex items-center gap-1 bg-surface-container-low rounded-lg p-1">
+            {(['public', 'unlisted', 'private'] as const).map((v) => {
+              const icons = { public: 'public', unlisted: 'link', private: 'lock' };
+              const labels = { public: 'Public', unlisted: 'Unlisted', private: 'Private' };
+              return (
+                <button
+                  key={v}
+                  onClick={() => setVisibility(v)}
+                  title={labels[v]}
+                  className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide transition-colors ${
+                    visibility === v
+                      ? 'bg-primary text-on-primary'
+                      : 'text-on-surface/50 hover:text-on-surface/80'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[12px]">{icons[v]}</span>
+                  <span className="hidden sm:inline">{labels[v]}</span>
+                </button>
+              );
+            })}
+          </div>
           <button
             onClick={handlePublish}
             disabled={isPublishing || !title || !previewDoc || !currentUser?.id}

@@ -80,6 +80,25 @@ export async function initializeDatabase() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
       ALTER TABLE remixes ADD COLUMN IF NOT EXISTS parent_version_number INTEGER;
+
+      ALTER TABLE vibes ADD COLUMN IF NOT EXISTS visibility TEXT DEFAULT 'public';
+
+      CREATE TABLE IF NOT EXISTS collaborators (
+        id SERIAL PRIMARY KEY,
+        vibe_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(vibe_id, user_id)
+      );
+
+      CREATE TABLE IF NOT EXISTS invite_links (
+        id SERIAL PRIMARY KEY,
+        vibe_id INTEGER NOT NULL,
+        token TEXT UNIQUE NOT NULL,
+        created_by INTEGER NOT NULL,
+        revoked BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
     `);
 
     console.log('Database schema initialized');

@@ -23,6 +23,7 @@ interface RemixState {
     title: string;
     authorName: string;
     versionNumber: number;
+    parentVisibility?: 'public' | 'unlisted' | 'private';
 }
 
 export default function RemixStudio({ currentUser }: RemixStudioProps) {
@@ -60,6 +61,14 @@ export default function RemixStudio({ currentUser }: RemixStudioProps) {
     const [code, setCode] = useState(remixFrom?.code || '');
     const [title, setTitle] = useState(remixFrom ? `Remix of ${remixFrom.title}` : '');
     const [isPublishing, setIsPublishing] = useState(false);
+
+    // Visibility: follow parent rules
+    const parentVisibility = remixFrom?.parentVisibility || 'public';
+    const visibilityLocked = parentVisibility === 'private';
+    const defaultVisibility: 'public' | 'unlisted' | 'private' =
+        parentVisibility === 'private' ? 'private' :
+        parentVisibility === 'unlisted' ? 'unlisted' : 'public';
+    const [visibility, setVisibility] = useState<'public' | 'unlisted' | 'private'>(defaultVisibility);
 
     useEffect(() => {
         if (!initialized) initialize();
@@ -212,6 +221,7 @@ ${code}
                 author_id: currentUser?.id,
                 parent_vibe_id: remixFrom.parentVibeId,
                 parent_version_number: remixFrom.versionNumber,
+                visibility,
             });
             if (currentUser) {
                 navigate(`/@${currentUser.username}/${toSlug(title.trim())}`);
@@ -473,6 +483,27 @@ ${code}
                             className="bg-transparent border-none focus:ring-0 text-sm font-medium text-on-surface p-0 w-64 outline-none"
                             placeholder="Remix 標題"
                         />
+                    </div>
+                    {/* Visibility selector */}
+                    <div className="flex items-center gap-1">
+                        {(['public', 'unlisted', 'private'] as const).map(v => (
+                            <button
+                                key={v}
+                                onClick={() => !visibilityLocked && setVisibility(v)}
+                                disabled={visibilityLocked}
+                                title={visibilityLocked ? 'Remixes of private vibes must be private' : v}
+                                className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-mono font-bold uppercase tracking-wide transition-colors ${
+                                    visibility === v
+                                        ? 'bg-primary/15 text-primary border border-primary/30'
+                                        : 'text-on-surface/40 hover:text-on-surface/70 border border-transparent'
+                                } ${visibilityLocked && v !== 'private' ? 'opacity-30 cursor-not-allowed' : ''}`}
+                            >
+                                <span className="material-symbols-outlined text-[12px]">
+                                    {v === 'public' ? 'public' : v === 'unlisted' ? 'link' : 'lock'}
+                                </span>
+                                {v}
+                            </button>
+                        ))}
                     </div>
                     <button
                         onClick={handlePublish}
