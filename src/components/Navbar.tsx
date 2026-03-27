@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase, signOut } from '../lib/supabase';
 import AuthModal, { AuthView } from './AuthModal';
 import { useI18n, Language } from '../lib/i18n';
+import { useWorkspaceStore } from '../lib/workspaceStore';
 
 interface NavbarProps {
   debugMode?: boolean;
@@ -18,6 +19,7 @@ export default function Navbar({ debugMode, onDebugToggle }: NavbarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { t, language, setLanguage } = useI18n();
+  const { publishFn, isPublishing } = useWorkspaceStore();
   const [user, setUser] = useState<any>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [authView, setAuthView] = useState<AuthView>('login');
@@ -113,12 +115,12 @@ export default function Navbar({ debugMode, onDebugToggle }: NavbarProps) {
                 {t('nav_live_sync')}
               </div>
               <div className="h-6 w-px bg-outline-variant/20 mx-2"></div>
-              <button className="material-symbols-outlined text-[#E5E2E1]/60 hover:text-on-background transition-colors p-2 rounded-lg">notifications</button>
-              <button className="material-symbols-outlined text-[#E5E2E1]/60 hover:text-on-background transition-colors p-2 rounded-lg">settings</button>
+              <button className="material-symbols-outlined text-[#E5E2E1]/30 p-2 rounded-lg cursor-not-allowed" title={t('nav_coming_soon')}>notifications</button>
+              <button onClick={() => navigate('/settings')} className="material-symbols-outlined text-[#E5E2E1]/60 hover:text-on-background transition-colors p-2 rounded-lg" title={t('nav_settings')}>settings</button>
             </>
           ) : (
             <div className="flex items-center gap-1 hidden sm:flex">
-              <button className="p-2 rounded-lg text-[#E5E2E1]/60 hover:bg-[#2A2A2A] transition-colors duration-200">
+              <button className="p-2 rounded-lg text-[#E5E2E1]/30 cursor-not-allowed" title={t('nav_coming_soon')}>
                 <span className="material-symbols-outlined">notifications</span>
               </button>
               <button
@@ -203,8 +205,12 @@ export default function Navbar({ debugMode, onDebugToggle }: NavbarProps) {
           )}
 
           {isWorkspace && (
-            <button className="bg-gradient-to-br from-primary to-primary-container text-on-primary px-5 py-1.5 rounded-lg text-sm font-bold active:scale-95 transition-transform ml-2">
-              {t('nav_publish')}
+            <button
+              onClick={() => publishFn?.()}
+              disabled={isPublishing || !publishFn}
+              className="bg-gradient-to-br from-primary to-primary-container text-on-primary px-5 py-1.5 rounded-lg text-sm font-bold active:scale-95 transition-transform ml-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
+            >
+              {isPublishing ? t('nav_publishing') : t('nav_publish')}
             </button>
           )}
         </div>
