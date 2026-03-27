@@ -231,7 +231,7 @@ ${code}
     if (!remixFrom) return null;
 
     return (
-        <div className="md:ml-16 pt-16 flex-1 flex flex-col md:flex-row h-[calc(100vh)] overflow-hidden bg-background">
+        <div className="md:ml-16 pt-16 flex-1 flex flex-col md:flex-row h-[calc(100vh-4rem)] md:h-[calc(100vh)] overflow-hidden bg-background">
             {/* Mobile Tab Switcher — 3 tabs */}
             <div className="flex md:hidden border-b border-outline-variant/10 bg-surface-container-lowest shrink-0">
                 <button
