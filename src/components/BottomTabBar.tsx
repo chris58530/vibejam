@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useI18n } from '../lib/i18n';
+import AuthModal, { AuthView } from './AuthModal';
 
 export default function BottomTabBar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useI18n();
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authView, setAuthView] = useState<AuthView>('login');
 
   useEffect(() => {
     if (!supabase) return;
@@ -19,6 +22,11 @@ export default function BottomTabBar() {
   }, []);
 
   const handleProfileClick = () => {
+    if (!currentUser) {
+      setAuthView('login');
+      setAuthOpen(true);
+      return;
+    }
     const username = currentUser?.user_metadata?.user_name || currentUser?.user_metadata?.name;
     if (username) {
       navigate(`/@${username}`);
@@ -70,6 +78,12 @@ export default function BottomTabBar() {
         <span className="material-symbols-outlined">person</span>
         <span className="text-[10px] font-medium font-body">{t('tab_you')}</span>
       </button>
+
+      <AuthModal
+        isOpen={authOpen}
+        onClose={() => setAuthOpen(false)}
+        initialView={authView}
+      />
     </nav>
   );
 }
