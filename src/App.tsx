@@ -63,7 +63,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-surface text-on-surface font-sans selection:bg-primary/30">
-      <Navbar debugMode={debugMode} onDebugToggle={() => setDebugMode(d => !d)} />
+      <Navbar />
       <div className="flex w-full min-h-screen pt-16">
         <Sidebar savePanelOpen={savePanelOpen} onToggleSavePanel={() => setSavePanelOpen(p => !p)} dbUser={currentUser ?? undefined} />
         <main className="flex-1 pb-16 md:pb-0 relative">
@@ -85,6 +85,19 @@ export default function App() {
         </main>
       </div>
       <BottomTabBar />
+
+      {/* ── Debug FAB（所有頁面浮空顯示）── */}
+      <button
+        onClick={() => setDebugMode(d => !d)}
+        title={debugMode ? '關閉 Debug 模式' : '開啟 Debug 模式'}
+        className={`fixed bottom-20 right-4 md:bottom-6 md:right-6 z-[199] w-11 h-11 rounded-full shadow-2xl flex items-center justify-center transition-all duration-200 ${
+          debugMode
+            ? 'bg-red-500 text-white ring-4 ring-red-500/30 scale-110'
+            : 'bg-surface-container-high text-on-surface/50 hover:text-red-400 hover:bg-red-500/10 hover:ring-2 hover:ring-red-500/20'
+        }`}
+      >
+        <span className="material-symbols-outlined text-[20px]">bug_report</span>
+      </button>
 
       {debugMode && <DebugOverlay onClose={() => setDebugMode(false)} />}
 

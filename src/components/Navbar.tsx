@@ -6,8 +6,6 @@ import { useI18n, Language } from '../lib/i18n';
 import { useWorkspaceStore } from '../lib/workspaceStore';
 
 interface NavbarProps {
-  debugMode?: boolean;
-  onDebugToggle?: () => void;
 }
 
 const LANGUAGES: { code: Language; label: string; flag: string }[] = [
@@ -15,7 +13,7 @@ const LANGUAGES: { code: Language; label: string; flag: string }[] = [
   { code: 'zh-TW', label: '繁體中文', flag: '🇹🇼' },
 ];
 
-export default function Navbar({ debugMode, onDebugToggle }: NavbarProps) {
+export default function Navbar({}: NavbarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { t, language, setLanguage } = useI18n();
@@ -123,18 +121,7 @@ export default function Navbar({ debugMode, onDebugToggle }: NavbarProps) {
               <button className="p-2 rounded-lg text-[#E5E2E1]/30 cursor-not-allowed" title={t('nav_coming_soon')}>
                 <span className="material-symbols-outlined">notifications</span>
               </button>
-              <button
-                onClick={onDebugToggle}
-                className={`p-2 rounded-lg transition-colors duration-200 ${
-                  debugMode
-                    ? 'text-red-400 bg-red-500/15 hover:bg-red-500/25'
-                    : 'text-[#E5E2E1]/40 hover:bg-[#2A2A2A] hover:text-[#E5E2E1]/70'
-                }`}
-                title={debugMode ? t('nav_debug_off') : t('nav_debug_on')}
-              >
-                <span className="material-symbols-outlined text-[20px]">bug_report</span>
-              </button>
-              <button className="p-2 rounded-lg text-[#E5E2E1]/60 hover:bg-[#2A2A2A] transition-colors duration-200">
+<button className="p-2 rounded-lg text-[#E5E2E1]/60 hover:bg-[#2A2A2A] transition-colors duration-200">
                 <span className="material-symbols-outlined">apps</span>
               </button>
             </div>
