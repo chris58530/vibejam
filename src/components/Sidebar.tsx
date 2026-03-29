@@ -2,17 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { User } from '../lib/api';
-import { EditorMode } from '../lib/codeUtils';
 import { useI18n } from '../lib/i18n';
-
-interface SaveSlot {
-  id: string;
-  title: string;
-  tags: string;
-  editorMode: EditorMode;
-  code: { html: string; css: string; js: string };
-  savedAt: string;
-}
 
 
 // ── 說明分類資料 ──────────────────────────────────────────────────────
@@ -187,8 +177,6 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
   const { t } = useI18n();
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [helpOpen, setHelpOpen] = useState(false);
-  const [saves, setSaves] = useState<SaveSlot[]>([]);
-
   const navItems = [
     { key: 'home', label: t('sidebar_home'), icon: 'home', path: '/' },
     { key: 'trending', label: t('sidebar_trending'), icon: 'trending_up', path: '/?feed=trending' },
@@ -208,14 +196,6 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
     return () => subscription.unsubscribe();
   }, []);
 
-  useEffect(() => {
-    if (!dbUser?.id) return;
-    try {
-      const stored = localStorage.getItem(`vibejam_saves_${dbUser.id}`);
-      if (stored) setSaves(JSON.parse(stored));
-      else setSaves([]);
-    } catch { setSaves([]); }
-  }, [dbUser?.id]);
 
   const handleNavClick = (key: string, path: string | null) => {
     if (key === 'profile') {
@@ -329,45 +309,6 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
           ))}
         </nav>
 
-        {/* My Saves */}
-        {dbUser && (
-          <div className="mt-2 px-2">
-            <button
-              onClick={() => {
-                if (dbUser?.username) navigate(`/@${dbUser.username}?tab=saves`);
-              }}
-              className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-[#2A2A2A] transition-colors group/saves"
-            >
-              <span className="material-symbols-outlined text-[14px] text-[#FFB3B6] group-hover/saves:text-[#FFB3B6]" style={{ fontVariationSettings: "'FILL' 1" }}>folder</span>
-              <span className="text-[10px] uppercase tracking-[0.15em] text-[#E5E2E1]/40 group-hover/saves:text-[#E5E2E1]/70 font-bold whitespace-nowrap flex-1 transition-colors">My Saves</span>
-              <span className={`text-[9px] font-mono tabular-nums ${saves.length >= 5 ? 'text-red-400/70' : 'text-[#E5E2E1]/25'}`}>{saves.length}/5</span>
-              <span className="material-symbols-outlined text-[12px] text-[#E5E2E1]/20 group-hover/saves:text-[#E5E2E1]/50 transition-colors">chevron_right</span>
-            </button>
-            {saves.length === 0 ? (
-              <p className="text-[10px] text-[#E5E2E1]/20 px-3 py-1 font-body whitespace-nowrap">尚無存檔</p>
-            ) : (
-              <div className="space-y-0.5">
-                {saves.map(slot => (
-                  <button
-                    key={slot.id}
-                    onClick={() => {
-                      sessionStorage.setItem('vibejam_pending_load', JSON.stringify(slot));
-                      navigate('/workspace');
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-1.5 text-[#E5E2E1]/60 hover:bg-[#2A2A2A] hover:text-[#E5E2E1] rounded-lg transition-colors text-left"
-                    title={slot.title}
-                  >
-                    <span className="material-symbols-outlined text-[13px] text-[#E5E2E1]/25 shrink-0">draft</span>
-                    <span className="text-[11px] font-body whitespace-nowrap overflow-hidden text-ellipsis flex-1">{slot.title}</span>
-                    <span className="text-[9px] font-mono text-[#E5E2E1]/20 shrink-0">
-                      {new Date(slot.savedAt).toLocaleDateString('zh-TW', { month: '2-digit', day: '2-digit' })}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Footer — only visible when expanded */}

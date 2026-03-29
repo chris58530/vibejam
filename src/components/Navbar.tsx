@@ -22,7 +22,9 @@ export default function Navbar({}: NavbarProps) {
   const [authOpen, setAuthOpen] = useState(false);
   const [authView, setAuthView] = useState<AuthView>('login');
   const [langMenuOpen, setLangMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const langMenuRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   const isWorkspace = location.pathname.includes('/workspace');
 
@@ -43,6 +45,9 @@ export default function Navbar({}: NavbarProps) {
     const handleClickOutside = (e: MouseEvent) => {
       if (langMenuRef.current && !langMenuRef.current.contains(e.target as Node)) {
         setLangMenuOpen(false);
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -164,23 +169,82 @@ export default function Navbar({}: NavbarProps) {
           </div>
 
           {user ? (
-            <div className="flex items-center gap-2 ml-2">
-              <div
-                className="h-8 w-8 rounded-full border border-outline-variant/30 overflow-hidden bg-surface-container-high cursor-pointer"
-                onClick={() => {
-                  const username = user.user_metadata?.user_name || user.user_metadata?.name || user.email || 'anonymous';
-                  navigate(`/@${encodeURIComponent(username)}`);
-                }}
+            <div className="relative ml-2" ref={userMenuRef}>
+              {/* Avatar trigger */}
+              <button
+                onClick={() => setUserMenuOpen(v => !v)}
+                className={`h-8 w-8 rounded-full border-2 overflow-hidden bg-surface-container-high transition-all ${userMenuOpen ? 'border-primary' : 'border-outline-variant/30 hover:border-outline-variant/60'}`}
               >
                 <img
                   src={user.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`}
                   alt="User Profile"
                   className="w-full h-full object-cover"
                 />
-              </div>
-              <button onClick={signOut} className="text-[#E5E2E1]/40 hover:text-[#E5E2E1] text-xs transition-colors p-2" title={t('nav_signout')}>
-                <span className="material-symbols-outlined text-[18px]">logout</span>
               </button>
+
+              {/* Dropdown */}
+              {userMenuOpen && (
+                <div className="absolute right-0 top-full mt-2 w-64 bg-[#1C1B1B] border border-outline-variant/20 rounded-2xl shadow-2xl overflow-hidden z-50">
+
+                  {/* User info header */}
+                  <div className="px-4 py-3.5 border-b border-outline-variant/10">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={user.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`}
+                        alt="avatar"
+                        className="w-10 h-10 rounded-full border border-outline-variant/20 shrink-0"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-on-surface truncate">
+                          {user.user_metadata?.user_name || user.user_metadata?.name || '使用者'}
+                        </p>
+                        <p className="text-[11px] text-on-surface-variant truncate">
+                          @{user.user_metadata?.user_name || user.user_metadata?.name || user.email}
+                        </p>
+                        <button
+                          onClick={() => {
+                            const username = user.user_metadata?.user_name || user.user_metadata?.name || user.email || 'anonymous';
+                            navigate(`/@${encodeURIComponent(username)}`);
+                            setUserMenuOpen(false);
+                          }}
+                          className="text-[11px] text-primary hover:text-primary/80 transition-colors mt-0.5"
+                        >
+                          查看個人頁面 →
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Menu items */}
+                  <div className="py-1.5">
+                    {[
+                      { icon: 'settings', label: t('nav_settings'), action: () => { navigate('/settings'); setUserMenuOpen(false); } },
+                      { icon: 'terminal', label: 'Workspace', action: () => { navigate('/workspace'); setUserMenuOpen(false); } },
+                      { icon: 'smart_toy', label: 'AI Chat', action: () => { navigate('/ai-chat'); setUserMenuOpen(false); } },
+                    ].map(({ icon, label, action }) => (
+                      <button
+                        key={icon}
+                        onClick={action}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1] transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-[18px] text-on-surface-variant">{icon}</span>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Divider + Sign out */}
+                  <div className="border-t border-outline-variant/10 py-1.5">
+                    <button
+                      onClick={() => { signOut(); setUserMenuOpen(false); }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1] transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[18px] text-on-surface-variant">logout</span>
+                      {t('nav_signout')}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <button
