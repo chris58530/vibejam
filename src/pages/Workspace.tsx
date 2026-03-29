@@ -5,6 +5,7 @@ import { EditorMode, detectFramework, wrapReactForPreview, wrapVueForPreview, me
 import { useAIKeyStore, AI_PROVIDER_MODELS } from '../lib/aiKeyStore';
 import { useWorkspaceStore } from '../lib/workspaceStore';
 import { chatWithAIStream, ChatMessage, AIServiceError } from '../lib/aiService';
+import VibeJamAPIGuide from '../components/VibeJamAPIGuide';
 
 // ── 存檔 ─────────────────────────────────────────────────────────────
 interface SaveSlot {
@@ -71,6 +72,9 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
 
   // Mobile tab
   const [mobileTab, setMobileTab] = useState<MobileTab>('code');
+
+  // API 說明面板
+  const [showApiGuide, setShowApiGuide] = useState(false);
 
   // ── 存檔 ───────────────────────────────────────────────────────────
   const [saves, setSaves] = useState<SaveSlot[]>([]);
@@ -764,6 +768,14 @@ ${currentCode || '（尚無程式碼）'}
             </div>
             <div className="flex items-center gap-3">
               <button
+                onClick={() => setShowApiGuide(v => !v)}
+                title="VibeJam API 說明"
+                className={`flex items-center gap-1 px-2 py-0.5 rounded transition-colors text-[10px] font-mono font-bold uppercase tracking-wider border ${showApiGuide ? 'bg-primary/15 text-primary border-primary/30' : 'text-on-surface/40 hover:text-primary border-transparent hover:border-outline-variant/20'}`}
+              >
+                <span className="material-symbols-outlined text-[14px]">api</span>
+                API
+              </button>
+              <button
                 onClick={() => setViewMode(viewMode === 'desktop' ? 'mobile' : 'desktop')}
                 className="material-symbols-outlined text-on-surface/40 hover:text-primary transition-colors text-lg"
               >
@@ -773,25 +785,27 @@ ${currentCode || '（尚無程式碼）'}
           </div>
 
           <div className="flex-1 p-4 md:p-8 bg-surface-container flex items-center justify-center overflow-hidden">
-            <div className={`bg-white rounded-xl shadow-2xl overflow-hidden border border-outline-variant/20 transition-all duration-500 relative flex ${viewMode === 'mobile' ? 'w-[375px] h-[667px]' : 'w-full h-full'}`}>
-              {previewDoc ? (
-                <iframe
-                  ref={iframeRef}
-                  srcDoc={previewDoc}
-                  className="w-full h-full border-none absolute inset-0 bg-white"
-                  title="Live Preview"
-                  sandbox="allow-scripts allow-same-origin"
-                />
-              ) : (
-                <div className="w-full h-full bg-[#050505] flex flex-col items-center justify-center p-12 relative z-10">
-                  <div className="w-full h-full border border-dashed border-outline-variant/20 rounded-lg flex flex-col items-center justify-center text-center">
-                    <span className="material-symbols-outlined text-6xl text-primary/20 mb-4" style={{ fontVariationSettings: "'FILL' 1" }}>fluid</span>
-                    <h3 className="text-on-surface-variant font-mono text-lg">render_engine.init("{title || 'untitled'}")</h3>
-                    <p className="text-on-surface-variant/40 text-sm mt-2 font-mono">Ready for execution...</p>
+            {showApiGuide ? (
+              <div className="w-full h-full rounded-xl overflow-hidden border border-outline-variant/20">
+                <VibeJamAPIGuide compact />
+              </div>
+            ) : (
+              <div className={`bg-white rounded-xl shadow-2xl overflow-hidden border border-outline-variant/20 transition-all duration-500 relative flex ${viewMode === 'mobile' ? 'w-[375px] h-[667px]' : 'w-full h-full'}`}>
+                {previewDoc ? (
+                  <iframe
+                    ref={iframeRef}
+                    srcDoc={previewDoc}
+                    className="w-full h-full border-none absolute inset-0 bg-white"
+                    title="Live Preview"
+                    sandbox="allow-scripts allow-same-origin"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-[#050505] flex flex-col items-center justify-center relative z-10">
+                    <VibeJamAPIGuide compact />
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
           </div>
         </section>
       </div>
