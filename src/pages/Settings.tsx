@@ -122,7 +122,7 @@ export default function Settings() {
     try {
       const systemPrompt: ChatMessage = {
         role: 'system',
-        content: '你是 VibeBot，The Bower 平台的 AI 助理。你善於回答關於網頁開發、AI API 設定、HTML/CSS/JS 的問題。回答時保持友善、簡潔，使用繁體中文。',
+        content: '你是 BeaverBot，BeaverKit 平台的 AI 助理。你善於回答關於網頁開發、AI API 設定、HTML/CSS/JS 的問題。回答時保持友善、簡潔，使用繁體中文。',
       };
       const response = await chatWithAI(selectedProvider as ChatProvider, [systemPrompt, ...newMessages], { model: selectedModel || undefined });
       setChatMessages(prev => [...prev, { role: 'assistant', content: response.text }]);
@@ -160,7 +160,7 @@ export default function Settings() {
         <div className="px-4 py-3 border-b border-outline-variant/10 shrink-0">
           <div className="flex items-center gap-2 mb-2.5">
             <span className="material-symbols-outlined text-primary text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>smart_toy</span>
-            <span className="text-sm font-bold text-on-surface">VibeBot Chat</span>
+            <span className="text-sm font-bold text-on-surface">BeaverBot Chat</span>
             {hasActiveProvider && (
               <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full bg-tertiary/15 text-tertiary font-mono font-bold">
                 {CHAT_PROVIDER_LABEL[selectedProvider as ChatProvider]}
@@ -209,7 +209,7 @@ export default function Settings() {
           ) : chatMessages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center gap-3 px-3">
               <span className="material-symbols-outlined text-4xl text-primary/20">smart_toy</span>
-              <p className="text-xs text-on-surface/50 font-medium">嗨！我是 VibeBot</p>
+              <p className="text-xs text-on-surface/50 font-medium">嗨！我是 BeaverBot</p>
               <p className="text-[11px] text-on-surface/30">問我任何關於 API 設定或網頁開發的問題</p>
               <div className="flex flex-col gap-1.5 w-full mt-1">
                 {['如何使用 Gemini API？', '怎麼做 CSS 動畫？', '推薦的 AI 模型？'].map(q => (

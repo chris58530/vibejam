@@ -4,12 +4,12 @@ import { api, toSlug, Vibe } from '../lib/api';
 import VibeCard from '../components/VibeCard';
 import Footer from '../components/Footer';
 
-const FILTERS = ['All Vibes', '3D Effects', 'SaaS UI', 'Micro-interactions', 'Tailwind Magic', 'Data Viz', 'Shaders', 'Typography', 'Layouts', 'Canvas Art'];
+const FILTERS = ['All Kits', '3D Effects', 'SaaS UI', 'Micro-interactions', 'Tailwind Magic', 'Data Viz', 'Shaders', 'Typography', 'Layouts', 'Canvas Art'];
 
 export default function Home() {
   const [vibes, setVibes] = useState<Vibe[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeFilter, setActiveFilter] = useState('All Vibes');
+  const [activeFilter, setActiveFilter] = useState('All Kits');
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -28,7 +28,7 @@ export default function Home() {
   const isTrending = location.search.includes('feed=trending');
   const isFollowing = location.search.includes('feed=following');
 
-  let filteredVibes = activeFilter === 'All Vibes'
+  let filteredVibes = activeFilter === 'All Kits'
     ? vibes
     : vibes.filter(v => v.tags?.toLowerCase().includes(activeFilter.replace(' ', '').toLowerCase()));
 

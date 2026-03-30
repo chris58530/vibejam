@@ -13,7 +13,7 @@ const HELP_SECTIONS = [
     title: '快速入門',
     color: '#FFB3B6',
     items: [
-      { q: 'The Bower 是什麼？', a: '一個讓你發佈、探索、Remix 創意網頁作品的社群平台。每件作品稱為「Vibe」，由 HTML/CSS/JS 組成，直接在瀏覽器裡跑。' },
+      { q: 'BeaverKit 是什麼？', a: '一個讓你發佈、探索、Remix 創意網頁作品的社群平台。每件作品稱為「Kit」，由 HTML/CSS/JS 組成，直接在瀏覽器裡跑。' },
       { q: '怎麼開始創作？', a: '點左側「Workspace」進入編輯器，貼上程式碼或自行撰寫，即時預覽後按「Publish」發布。' },
       { q: '需要登入嗎？', a: '瀏覽與預覽不需登入。發布作品、留言、Remix 則需要登入帳號。' },
     ],
@@ -52,7 +52,7 @@ const HELP_SECTIONS = [
     items: [
       { q: '支援哪些 AI？', a: '支援 Gemini、OpenAI、MiniMax 三家。需要在 Settings 頁面輸入自己的 API Key 並驗證。' },
       { q: '有使用限制嗎？', a: '每個 provider 各有每日上限次數，可在 AI Chat 頁面看到剩餘額度。' },
-      { q: '怎麼用 AI 生成 Vibe？', a: '在 AI Chat 打「幫我做一個 XX 的動畫效果，輸出完整 HTML 檔案」，把回答的程式碼貼進 Workspace 即可。' },
+      { q: '怎麼用 AI 生成 Kit？', a: '在 AI Chat 打「幫我做一個 XX 的動畫效果，輸出完整 HTML 檔案」，把回答的程式碼貼進 Workspace 即可。' },
       { q: '在作品程式碼裡呼叫 AI', a: '你的作品可以用 window.BeaverKit.getApiKey(\'gemini\') 取得用戶在 Settings 設定的 API Key，再直接對 AI API 發送請求，不需要自己保管 Key。\n支援：gemini、openai、minimax。\n\n範例：\nconst key = await window.BeaverKit.getApiKey(\'gemini\');\nif (!key) alert(\'請先在 Settings 設定 Gemini Key\');' },
     ],
   },
@@ -62,7 +62,7 @@ const HELP_SECTIONS = [
     title: 'Remix 玩法',
     color: '#FFE4B3',
     items: [
-      { q: '什麼是 Remix？', a: '找到喜歡的 Vibe，點「Remix」進入 Remix Studio，在原始程式碼基礎上加以改造，發布後會顯示來源作者。' },
+      { q: '什麼是 Remix？', a: '找到喜歡的 Kit，點「Remix」進入 Remix Studio，在原始程式碼基礎上加以改造，發布後會顯示來源作者。' },
       { q: 'Remix Studio 有什麼特別？', a: '左邊是原始版本，右邊是你的改造版本，可以即時對比差異後直接發布。' },
       { q: 'Remix 有版本記錄嗎？', a: '每次發布都會建立新 version，在作品頁面可以看到完整的版本歷史。' },
     ],
@@ -74,7 +74,7 @@ const HELP_SECTIONS = [
     color: '#B3F0FF',
     items: [
       { q: '首頁有哪些動態？', a: '全部：所有最新作品；Trending：按熱度排序；Following：只看你追蹤的人的作品。' },
-      { q: '如何互動？', a: '點 Vibe 進入詳情頁，可以留言、回應貼文、查看原始碼，或直接 Fork Remix。' },
+      { q: '如何互動？', a: '點 Kit 進入詳情頁，可以留言、回應貼文、查看原始碼，或直接 Fork Remix。' },
       { q: 'Tags 怎麼用？', a: '發布時加上 Tags（如 #animation #ui-design），讓其他人更容易找到你的作品。' },
     ],
   },
@@ -101,7 +101,7 @@ function HelpModal({ onClose }: { onClose: () => void }) {
               <span className="material-symbols-outlined text-[#FFB3B6] text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>help</span>
               <span className="text-[11px] uppercase tracking-widest font-bold text-[#E5E2E1]">使用說明</span>
             </div>
-            <p className="text-[10px] text-[#E5E2E1]/30 mt-1 leading-relaxed">The Bower 玩法指南</p>
+            <p className="text-[10px] text-[#E5E2E1]/30 mt-1 leading-relaxed">BeaverKit 玩法指南</p>
           </div>
           {HELP_SECTIONS.map(s => (
             <button
@@ -299,7 +299,7 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
         <nav className="space-y-0.5 px-2">
           {[
             { icon: 'history', label: 'History' },
-            { icon: 'playlist_play', label: 'Saved Vibes' },
+            { icon: 'playlist_play', label: 'Saved Kits' },
             { icon: 'thumb_up', label: 'Liked Code' },
           ].map(({ icon, label }) => (
             <button key={label} onClick={() => alert('機能建構中 (WIP)')} className="w-full flex items-center gap-3 px-3 py-2 text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1] rounded-lg transition-colors text-sm font-body whitespace-nowrap">
@@ -320,7 +320,7 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
             <a href="#" className="text-[10px] text-[#E5E2E1]/40 hover:text-primary transition-colors uppercase tracking-widest font-body">About</a>
           </div>
           <div className="px-4 pb-2">
-            <p className="text-[10px] text-[#E5E2E1]/20 font-medium font-body whitespace-nowrap">© 2024 THE BOWER EDITORIAL</p>
+            <p className="text-[10px] text-[#E5E2E1]/20 font-medium font-body whitespace-nowrap">© 2024 BEAVERKIT EDITORIAL</p>
           </div>
         </div>
       </div>

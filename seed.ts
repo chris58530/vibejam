@@ -11,11 +11,11 @@ import { db, initializeDatabase } from './src/lib/dbPostgres.js';
 async function main() {
   await initializeDatabase();
 
-  let user = await db.get('SELECT id FROM users WHERE username = $1', ['VibeBot']);
+  let user = await db.get('SELECT id FROM users WHERE username = $1', ['BeaverBot']);
   if (!user) {
     user = await db.get(
       'INSERT INTO users (username, avatar) VALUES ($1, $2) RETURNING id',
-      ['VibeBot', 'https://api.dicebear.com/7.x/bottts/svg?seed=VibeBot']
+      ['BeaverBot', 'https://api.dicebear.com/7.x/bottts/svg?seed=BeaverBot']
     );
   }
   const userId = user.id;
@@ -379,7 +379,7 @@ function renderMessages(){
   },
     tags: 'AI, Chatbot, API',
     code: `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>VibeBot AI Chat</title>
+<title>BeaverBot AI Chat</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#131313;color:#E5E2E1;font-family:'Segoe UI',system-ui,sans-serif;height:100vh;display:flex;flex-direction:column}
@@ -417,7 +417,7 @@ body{background:#131313;color:#E5E2E1;font-family:'Segoe UI',system-ui,sans-seri
 <div class="header">
   <div class="avatar">\u{1F916}</div>
   <div>
-    <h1>VibeBot Chat</h1>
+    <h1>BeaverBot Chat</h1>
     <div style="font-size:11px;color:rgba(229,226,225,0.4);margin-top:2px">AI-powered coding assistant</div>
   </div>
   <div class="badge" id="status">Offline</div>
@@ -479,7 +479,7 @@ async function send(){
     const contents=chatHistory.filter(m=>m.role!=='system').map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]}));
     const r=await fetch(\`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=\${encodeURIComponent(API_KEY)}\`,{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents,systemInstruction:{parts:[{text:'You are VibeBot, a creative coding assistant on the BeaverKit platform. Help users with HTML, CSS, JS, Canvas, animations, and creative web development. Be concise, friendly, and provide code examples when appropriate. Respond in the same language as the user.'}]},generationConfig:{temperature:0.7,maxOutputTokens:2048}})
+      body:JSON.stringify({contents,systemInstruction:{parts:[{text:'You are BeaverBot, a creative coding assistant on the BeaverKit platform. Help users with HTML, CSS, JS, Canvas, animations, and creative web development. Be concise, friendly, and provide code examples when appropriate. Respond in the same language as the user.'}]},generationConfig:{temperature:0.7,maxOutputTokens:2048}})
     });
     if(!r.ok) throw new Error('API error '+r.status);
     const d=await r.json();

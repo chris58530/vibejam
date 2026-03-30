@@ -122,7 +122,7 @@ export default function RemixStudio({ currentUser }: RemixStudioProps) {
     // Build system prompt with current code context
     const buildSystemPrompt = (): ChatMessage => ({
         role: 'system',
-        content: `你是 VibeBot，The Bower 平台的 AI 程式碼助理。使用者正在 remix 一個專案。
+        content: `你是 BeaverBot，BeaverKit 平台的 AI 程式碼助理。使用者正在 remix 一個專案。
 
 你的任務：
 1. 根據使用者的指令修改程式碼

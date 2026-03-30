@@ -75,7 +75,7 @@ export default function AIChat() {
     try {
       const systemPrompt: ChatMessage = {
         role: 'system',
-        content: '你是 VibeBot，The Bower 平台的 AI 助理。你善於回答關於網頁開發、創意程式設計、HTML/CSS/JS 的問題。回答時保持友善、簡潔，並在適當時提供程式碼範例。使用繁體中文回答。',
+        content: '你是 BeaverBot，BeaverKit 平台的 AI 助理。你善於回答關於網頁開發、創意程式設計、HTML/CSS/JS 的問題。回答時保持友善、簡潔，並在適當時提供程式碼範例。使用繁體中文回答。',
       };
       const response = await chatWithAI(selectedProvider, [systemPrompt, ...newMessages], { model: selectedModel || undefined });
       setMessages(prev => [...prev, { role: 'assistant', content: response.text }]);
@@ -116,7 +116,7 @@ export default function AIChat() {
           </button>
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-primary">smart_toy</span>
-            <h2 className="font-semibold font-headline text-on-surface">VibeBot Chat</h2>
+            <h2 className="font-semibold font-headline text-on-surface">BeaverBot Chat</h2>
             {hasActiveProvider && (
               <span className="text-[11px] px-2 py-0.5 rounded-full bg-tertiary/15 text-tertiary font-semibold">
                 Active: {CHAT_PROVIDER_LABEL[selectedProvider]}
@@ -198,7 +198,7 @@ export default function AIChat() {
           <div className="flex flex-col items-center justify-center h-full gap-4 text-center">
             <span className="material-symbols-outlined text-6xl text-primary/30">smart_toy</span>
             <div>
-              <p className="text-on-surface font-semibold mb-1">嗨！我是 VibeBot 🎵</p>
+              <p className="text-on-surface font-semibold mb-1">嗨！我是 BeaverBot 🎵</p>
               <p className="text-sm text-on-surface-variant">問我任何關於網頁開發、CSS 動畫、JS 的問題！</p>
             </div>
             <div className="flex flex-wrap justify-center gap-2 mt-2">

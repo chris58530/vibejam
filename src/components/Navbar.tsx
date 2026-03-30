@@ -71,7 +71,7 @@ export default function Navbar({}: NavbarProps) {
               onClick={() => navigate('/')}
             >
               <span className="material-symbols-outlined text-primary">terminal</span>
-              The Bower Studio
+              BeaverKit Studio
             </div>
           ) : (
             <div className="flex items-center gap-4">
@@ -80,7 +80,7 @@ export default function Navbar({}: NavbarProps) {
                 className="text-xl font-bold tracking-tighter text-[#E5E2E1] font-headline cursor-pointer"
                 onClick={() => navigate('/')}
               >
-                The Bower
+                BeaverKit
               </h1>
             </div>
           )}

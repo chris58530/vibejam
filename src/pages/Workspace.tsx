@@ -337,7 +337,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
 
   const buildSystemPrompt = (): ChatMessage => ({
     role: 'system',
-    content: `你是 VibeBot，BeaverKit 的 AI 程式碼助理。使用者正在 Workspace 建立作品（目前模式：${editorMode}）。
+    content: `你是 BeaverBot，BeaverKit 的 AI 程式碼助理。使用者正在 Workspace 建立作品（目前模式：${editorMode}）。
 
 目前的程式碼：
 \`\`\`
@@ -823,7 +823,7 @@ ${currentCode || '（尚無程式碼）'}
         <div className="flex items-center gap-4 text-[10px] font-mono text-on-surface/40">
           <span className="flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
-            The Bower Cloud
+            BeaverKit Cloud
           </span>
           <span>UTF-8</span>
           <span className="text-primary">{isReactMode ? 'React JSX' : isVueMode ? 'Vue 3' : isSplitMode ? 'HTML / CSS / JS' : 'HTML (All-in-One)'}</span>
