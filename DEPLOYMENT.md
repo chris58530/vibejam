@@ -1,4 +1,4 @@
-# VibeJamer 部署指南
+# BeaverKit 部署指南
 
 ## 本地開發（使用 PostgreSQL）
 
@@ -9,7 +9,7 @@ npm install pg dotenv
 
 ### 2. 建立 `.env` 檔案
 ```
-DATABASE_URL=postgresql://user:password@localhost:5432/vibejamer
+DATABASE_URL=postgresql://user:password@localhost:5432/beaverkit
 NODE_ENV=development
 PORT=3000
 ```
@@ -21,7 +21,7 @@ brew install postgresql@15
 brew services start postgresql@15
 
 # 或用 Docker
-docker run --name vibejamer-db -e POSTGRES_DB=vibejamer -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres:15
+docker run --name beaverkit-db -e POSTGRES_DB=beaverkit -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres:15
 ```
 
 ### 4. 啟動開發服務器
@@ -50,7 +50,7 @@ npm run dev
 git init
 git add .
 git commit -m "Initial commit"
-git remote add origin https://github.com/your-username/vibejamer.git
+git remote add origin https://github.com/your-username/beaverkit.git
 git push -u origin main
 ```
 
@@ -86,13 +86,13 @@ Render 會自動部署每個 Git push
 - 點擊「Create New Project」
 
 ### 2️⃣ 選擇「Deploy from GitHub repo」
-- 連接你的 vibejamer GitHub 倉庫
+- 連接你的 beaverkit GitHub 倉庫
 
 ### 3️⃣ 建立 PostgreSQL 服務
 - Railway 會自動添加 `DATABASE_URL`
 
 ### 4️⃣ 部署完成！
-URL 會自動生成（例如 `https://vibejamer-production.up.railway.app`）
+URL 會自動生成（例如 `https://beaverkit-production.up.railway.app`）
 
 ---
 

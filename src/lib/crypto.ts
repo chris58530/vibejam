@@ -9,7 +9,7 @@ const KEY_USAGE: KeyUsage[] = ['encrypt', 'decrypt'];
 // Derive a stable CryptoKey from a passphrase (device-bound fingerprint)
 async function deriveKey(): Promise<CryptoKey> {
   // Use a device-stable fingerprint as the passphrase
-  const passphrase = `vibejam-${navigator.userAgent}-${location.origin}`;
+  const passphrase = `beaverkit-${navigator.userAgent}-${location.origin}`;
   const enc = new TextEncoder();
   const keyMaterial = await crypto.subtle.importKey(
     'raw',
@@ -19,7 +19,7 @@ async function deriveKey(): Promise<CryptoKey> {
     ['deriveKey']
   );
   return crypto.subtle.deriveKey(
-    { name: 'PBKDF2', salt: enc.encode('vibejam-salt-v1'), iterations: 100000, hash: 'SHA-256' },
+    { name: 'PBKDF2', salt: enc.encode('beaverkit-salt-v1'), iterations: 100000, hash: 'SHA-256' },
     keyMaterial,
     { name: ALGO, length: 256 },
     false,

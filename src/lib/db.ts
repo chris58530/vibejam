@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 
-const db = new Database('vibejamer.db');
+const db = new Database('beaverkit.db');
 
 // Initialize schema
 db.exec(`

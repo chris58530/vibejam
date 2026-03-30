@@ -1,5 +1,5 @@
-// VibeJamAPIGuide.tsx
-// 顯示給專案開發者的 VibeJam API 使用說明
+// BeaverKitAPIGuide.tsx
+// 顯示給專案開發者的 BeaverKit API 使用說明
 
 interface Props {
   compact?: boolean; // true = 用在空白預覽區；false = 用在獨立面板
@@ -38,9 +38,9 @@ function tokenize(code: string): { type: TokenType; value: string }[] {
     { type: 'comment', re: /^\/\/[^\n]*/ },
     { type: 'string',  re: /^(['"`])(?:\\.|(?!\1)[^\\])*\1/ },
     { type: 'keyword', re: /^(?:await|async|const|let|var|function|return|if|else|new|typeof|null|undefined|true|false)\b/ },
-    { type: 'fn',      re: /^(?:window\.VibeJam\.\w+|fetch|console\.\w+)/ },
+    { type: 'fn',      re: /^(?:window\.BeaverKit\.\w+|fetch|console\.\w+)/ },
     { type: 'num',     re: /^\d+/ },
-    { type: 'plain',   re: /^[^\n]+?(?=\/\/|['"`]|\bawait\b|\basync\b|\bconst\b|\blet\b|\bvar\b|\bfunction\b|\breturn\b|\bif\b|\belse\b|\bnew\b|\btypeof\b|\bnull\b|\bundefined\b|\btrue\b|\bfalse\b|window\.VibeJam|\bfetch\b|\bconsole\.|$|\n)/ },
+    { type: 'plain',   re: /^[^\n]+?(?=\/\/|['"`]|\bawait\b|\basync\b|\bconst\b|\blet\b|\bvar\b|\bfunction\b|\breturn\b|\bif\b|\belse\b|\bnew\b|\btypeof\b|\bnull\b|\bundefined\b|\btrue\b|\bfalse\b|window\.BeaverKit|\bfetch\b|\bconsole\.|$|\n)/ },
     { type: 'plain',   re: /^\n/ },
   ];
 
@@ -96,7 +96,7 @@ function Param({ name, type, desc }: { name: string; type: string; desc: string 
 }
 
 // ── 主元件 ────────────────────────────────────────────────────────────
-export default function VibeJamAPIGuide({ compact = false }: Props) {
+export default function BeaverKitAPIGuide({ compact = false }: Props) {
   return (
     <div className={`w-full h-full overflow-y-auto bg-[#050505] text-on-surface ${compact ? 'p-6' : 'p-8'}`}>
 
@@ -107,7 +107,7 @@ export default function VibeJamAPIGuide({ compact = false }: Props) {
             <span className="material-symbols-outlined text-primary text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>api</span>
           </div>
           <div>
-            <h1 className="text-base font-bold text-on-surface tracking-tight">VibeJam API</h1>
+            <h1 className="text-base font-bold text-on-surface tracking-tight">BeaverKit API</h1>
             <p className="text-[10px] text-on-surface/40 font-mono uppercase tracking-widest">Developer Reference</p>
           </div>
           <div className="ml-auto px-2.5 py-1 bg-tertiary/10 border border-tertiary/20 rounded-full">
@@ -115,13 +115,13 @@ export default function VibeJamAPIGuide({ compact = false }: Props) {
           </div>
         </div>
         <p className="text-xs text-on-surface/50 leading-relaxed mt-3 pl-0.5">
-          平台自動將 <code className="bg-surface-container px-1.5 py-0.5 rounded text-primary font-mono">window.VibeJam</code> 注入到每個專案的 iframe，
+          平台自動將 <code className="bg-surface-container px-1.5 py-0.5 rounded text-primary font-mono">window.BeaverKit</code> 注入到每個專案的 iframe，
           無需任何 import 或外部 script — 直接在你的 HTML 裡 <code className="bg-surface-container px-1.5 py-0.5 rounded text-primary font-mono">await</code> 就能用。
         </p>
       </div>
 
       {/* Save */}
-      <Section icon="save" color="bg-blue-500/15 text-blue-400" title="VibeJam.save()" badge="async">
+      <Section icon="save" color="bg-blue-500/15 text-blue-400" title="BeaverKit.save()" badge="async">
         <p className="text-[11px] text-on-surface/50 mb-3 leading-relaxed">
           將任意資料儲存至使用者的本機（localStorage），以 <code className="bg-surface-container px-1 rounded text-primary font-mono">key</code> 隔離，不同專案互不干擾。
         </p>
@@ -130,7 +130,7 @@ export default function VibeJamAPIGuide({ compact = false }: Props) {
           <Param name="data" type="any" desc="任何可 JSON 序列化的值（物件、陣列、數字…）" />
         </div>
         <Code>{`// 儲存玩家資料
-await window.VibeJam.save('player', {
+await window.BeaverKit.save('player', {
   name: '勇者',
   level: 5,
   hp: 100,
@@ -138,11 +138,11 @@ await window.VibeJam.save('player', {
 });
 
 // 儲存設定
-await window.VibeJam.save('settings', { theme: 'dark', lang: 'zh' });`}</Code>
+await window.BeaverKit.save('settings', { theme: 'dark', lang: 'zh' });`}</Code>
       </Section>
 
       {/* Load */}
-      <Section icon="folder_open" color="bg-yellow-500/15 text-yellow-400" title="VibeJam.load()" badge="async">
+      <Section icon="folder_open" color="bg-yellow-500/15 text-yellow-400" title="BeaverKit.load()" badge="async">
         <p className="text-[11px] text-on-surface/50 mb-3 leading-relaxed">
           讀取先前 <code className="bg-surface-container px-1 rounded text-primary font-mono">save()</code> 存入的資料。若該 key 不存在則回傳 <code className="bg-surface-container px-1 rounded text-on-surface/60 font-mono">null</code>。
         </p>
@@ -151,18 +151,18 @@ await window.VibeJam.save('settings', { theme: 'dark', lang: 'zh' });`}</Code>
           <Param name="→ 回傳" type="any | null" desc="先前儲存的值，或 null（若不存在）" />
         </div>
         <Code>{`// 讀取玩家資料
-const player = await window.VibeJam.load('player');
+const player = await window.BeaverKit.load('player');
 
 if (player === null) {
   // 首次啟動，建立新存檔
-  await window.VibeJam.save('player', { name: '新手', level: 1 });
+  await window.BeaverKit.save('player', { name: '新手', level: 1 });
 } else {
   console.log('歡迎回來，' + player.name);
 }`}</Code>
       </Section>
 
       {/* getApiKey */}
-      <Section icon="key" color="bg-primary/15 text-primary" title="VibeJam.getApiKey()" badge="async">
+      <Section icon="key" color="bg-primary/15 text-primary" title="BeaverKit.getApiKey()" badge="async">
         <p className="text-[11px] text-on-surface/50 mb-3 leading-relaxed">
           取得使用者在 Settings 頁面填入的 AI API 金鑰。金鑰存在使用者本機，不會透過伺服器傳遞。若使用者未填入則回傳 <code className="bg-surface-container px-1 rounded text-on-surface/60 font-mono">null</code>。
         </p>
@@ -171,7 +171,7 @@ if (player === null) {
           <Param name="→ 回傳" type="string | null" desc="API 金鑰字串，或 null（未設定時）" />
         </div>
         <Code>{`// 取得金鑰並呼叫 Gemini
-const apiKey = await window.VibeJam.getApiKey('gemini');
+const apiKey = await window.BeaverKit.getApiKey('gemini');
 
 if (!apiKey) {
   alert('請先至平台設定頁面填入 Gemini API Key');
@@ -210,7 +210,7 @@ console.log(json.candidates[0].content.parts[0].text);`}</Code>
   </style>
 </head>
 <body>
-  <h2>VibeJam API 測試</h2>
+  <h2>BeaverKit API 測試</h2>
   <button onclick="doSave()">💾 存檔</button>
   <button onclick="doLoad()">📂 讀取</button>
   <button onclick="askAI()">🤖 問 AI</button>
@@ -220,17 +220,17 @@ console.log(json.candidates[0].content.parts[0].text);`}</Code>
     const out = s => document.getElementById('output').textContent = s;
 
     async function doSave() {
-      await window.VibeJam.save('demo', { score: 42, ts: Date.now() });
+      await window.BeaverKit.save('demo', { score: 42, ts: Date.now() });
       out('✅ 已儲存 score=42');
     }
 
     async function doLoad() {
-      const d = await window.VibeJam.load('demo');
+      const d = await window.BeaverKit.load('demo');
       out(d ? '📂 讀取成功：' + JSON.stringify(d) : '⚠️ 無存檔');
     }
 
     async function askAI() {
-      const key = await window.VibeJam.getApiKey('gemini');
+      const key = await window.BeaverKit.getApiKey('gemini');
       if (!key) { out('❌ 請先至 Settings 填入 Gemini Key'); return; }
       out('🤖 呼叫 AI 中…');
       const res = await fetch(
@@ -257,7 +257,7 @@ console.log(json.candidates[0].content.parts[0].text);`}</Code>
             ['存檔位置', '資料存在 使用者的瀏覽器 localStorage，換裝置不同步。'],
             ['Key 隔離', '儲存 key 自動加上 userId 前綴，不同帳號資料完全隔離。'],
             ['金鑰安全', 'getApiKey() 直接讀取本機，不經過伺服器。使用者必須先在 Settings 頁面填入。'],
-            ['不需 import', 'window.VibeJam 由平台自動注入，任何模式（HTML/React/Vue）皆可用。'],
+            ['不需 import', 'window.BeaverKit 由平台自動注入，任何模式（HTML/React/Vue）皆可用。'],
           ].map(([title, desc]) => (
             <li key={title} className="flex items-start gap-2 text-[11px]">
               <span className="text-primary shrink-0 mt-0.5">▸</span>

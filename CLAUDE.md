@@ -1,12 +1,12 @@
 # CLAUDE.md — AI 助手開發指南
 
-本文件為 AI 程式設計助手提供關於 VibeJam（The Bower）程式碼庫的結構、開發工作流程和約定規範。
+本文件為 AI 程式設計助手提供關於 BeaverKit（The Bower）程式碼庫的結構、開發工作流程和約定規範。
 
 ---
 
 ## 專案概述
 
-**VibeJam（The Bower）** 是一個基於瀏覽器的協作程式碼原型平台，支援 AI 輔助程式碼生成。使用者可以建立、分享、改編（Remix）互動式 Web 專案（稱為「Vibes」），並透過多個 AI 提供商獲取程式碼生成支援。
+**BeaverKit（The Bower）** 是一個基於瀏覽器的協作程式碼原型平台，支援 AI 輔助程式碼生成。使用者可以建立、分享、改編（Remix）互動式 Web 專案（稱為「Vibes」），並透過多個 AI 提供商獲取程式碼生成支援。
 
 **主要功能：**
 - 即時程式碼編輯與沙箱 iframe 預覽
@@ -41,7 +41,7 @@
 ## 目錄結構
 
 ```
-vibejam/
+beaverkit/
 ├── src/
 │   ├── pages/          # 頁面級元件
 │   ├── components/     # 可複用 UI 元件

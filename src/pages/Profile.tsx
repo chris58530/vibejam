@@ -54,7 +54,7 @@ export default function Profile() {
   // 載入存檔（用 userProfile.id 對應 Workspace 的 key）
   useEffect(() => {
     if (!userProfile?.id) return;
-    const key = `vibejam_saves_${userProfile.id}`;
+    const key = `beaverkit_saves_${userProfile.id}`;
     try {
       const stored = localStorage.getItem(key);
       if (stored) setSaves(JSON.parse(stored));
@@ -102,13 +102,13 @@ export default function Profile() {
   };
 
   const handleLoadSave = (slot: SaveSlot) => {
-    sessionStorage.setItem('vibejam_pending_load', JSON.stringify(slot));
+    sessionStorage.setItem('beaverkit_pending_load', JSON.stringify(slot));
     navigate('/workspace');
   };
 
   const handleDeleteSave = (id: string) => {
     if (!userProfile?.id) return;
-    const key = `vibejam_saves_${userProfile.id}`;
+    const key = `beaverkit_saves_${userProfile.id}`;
     const updated = saves.filter(s => s.id !== id);
     setSaves(updated);
     localStorage.setItem(key, JSON.stringify(updated));

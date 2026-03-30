@@ -76,10 +76,10 @@ interface AIKeyState {
   isOverLimit: (provider: AIProvider) => boolean;
 }
 
-const STORAGE_PREFIX = 'vibejam_aikey_';
-const USAGE_PREFIX = 'vibejam_usage_';
-const LIMIT_PREFIX = 'vibejam_limit_';
-const VALID_PREFIX = 'vibejam_valid_';
+const STORAGE_PREFIX = 'beaverkit_aikey_';
+const USAGE_PREFIX = 'beaverkit_usage_';
+const LIMIT_PREFIX = 'beaverkit_limit_';
+const VALID_PREFIX = 'beaverkit_valid_';
 
 function sanitizeApiKey(raw: string): string {
   // Remove wrapping quotes and invisible whitespace that often appears when copying keys.

@@ -5,7 +5,7 @@ import { EditorMode, detectFramework, wrapReactForPreview, wrapVueForPreview, me
 import { useAIKeyStore, AI_PROVIDER_MODELS } from '../lib/aiKeyStore';
 import { useWorkspaceStore } from '../lib/workspaceStore';
 import { chatWithAIStream, ChatMessage, AIServiceError } from '../lib/aiService';
-import VibeJamAPIGuide from '../components/VibeJamAPIGuide';
+import BeaverKitAPIGuide from '../components/BeaverKitAPIGuide';
 
 // ── 存檔 ─────────────────────────────────────────────────────────────
 interface SaveSlot {
@@ -79,7 +79,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
   // ── 存檔 ───────────────────────────────────────────────────────────
   const [saves, setSaves] = useState<SaveSlot[]>([]);
 
-  const saveKey = `vibejam_saves_${currentUser?.id ?? 'guest'}`;
+  const saveKey = `beaverkit_saves_${currentUser?.id ?? 'guest'}`;
 
   useEffect(() => {
     try {
@@ -90,7 +90,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
 
   // 從 Profile 頁的存檔「前往 Workspace 載入」傳遞進來
   useEffect(() => {
-    const pending = sessionStorage.getItem('vibejam_pending_load');
+    const pending = sessionStorage.getItem('beaverkit_pending_load');
     if (!pending) return;
     try {
       const slot = JSON.parse(pending) as SaveSlot;
@@ -101,7 +101,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
       setCssCode(slot.code.css);
       setJsCode(slot.code.js);
       setActiveTab('html');
-      sessionStorage.removeItem('vibejam_pending_load');
+      sessionStorage.removeItem('beaverkit_pending_load');
       showToast(`已載入「${slot.title}」`, 'download');
     } catch { }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -125,7 +125,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
     setTimeout(() => setToast({ show: false, message: '', icon: 'auto_awesome' }), 3000);
   };
 
-  // ── iframe ref + VibeJam API postMessage bridge ────────────────────
+  // ── iframe ref + BeaverKit API postMessage bridge ────────────────────
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { keys, validated, initialized: aiInitialized, initialize: initializeAI, getUsage, dailyLimits, getKey } = useAIKeyStore();
 
@@ -137,27 +137,27 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
     const userId = currentUser?.id ?? 'guest';
     const handleMsg = (e: MessageEvent) => {
       const d = e.data;
-      if (typeof d?.type !== 'string' || !d.type.startsWith('vibejam:')) return;
+      if (typeof d?.type !== 'string' || !d.type.startsWith('beaverkit:')) return;
       const win = iframeRef.current?.contentWindow;
       if (!win) return;
 
-      if (d.type === 'vibejam:save') {
-        const k = `vibejam_proj_${userId}_${d.key}`;
+      if (d.type === 'beaverkit:save') {
+        const k = `beaverkit_proj_${userId}_${d.key}`;
         try { localStorage.setItem(k, JSON.stringify(d.data)); } catch { /* storage full */ }
-        win.postMessage({ type: 'vibejam:save:ok', id: d.id, result: true }, '*');
+        win.postMessage({ type: 'beaverkit:save:ok', id: d.id, result: true }, '*');
 
-      } else if (d.type === 'vibejam:load') {
-        const k = `vibejam_proj_${userId}_${d.key}`;
+      } else if (d.type === 'beaverkit:load') {
+        const k = `beaverkit_proj_${userId}_${d.key}`;
         let result = null;
         try {
           const raw = localStorage.getItem(k);
           if (raw) result = JSON.parse(raw);
         } catch { /* corrupted */ }
-        win.postMessage({ type: 'vibejam:load:ok', id: d.id, result }, '*');
+        win.postMessage({ type: 'beaverkit:load:ok', id: d.id, result }, '*');
 
-      } else if (d.type === 'vibejam:getApiKey') {
+      } else if (d.type === 'beaverkit:getApiKey') {
         const apiKey = getKey(d.provider) ?? null;
-        win.postMessage({ type: 'vibejam:getApiKey:ok', id: d.id, result: apiKey }, '*');
+        win.postMessage({ type: 'beaverkit:getApiKey:ok', id: d.id, result: apiKey }, '*');
       }
     };
     window.addEventListener('message', handleMsg);
@@ -337,7 +337,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
 
   const buildSystemPrompt = (): ChatMessage => ({
     role: 'system',
-    content: `你是 VibeBot，VibeJam 的 AI 程式碼助理。使用者正在 Workspace 建立作品（目前模式：${editorMode}）。
+    content: `你是 VibeBot，BeaverKit 的 AI 程式碼助理。使用者正在 Workspace 建立作品（目前模式：${editorMode}）。
 
 目前的程式碼：
 \`\`\`
@@ -769,7 +769,7 @@ ${currentCode || '（尚無程式碼）'}
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setShowApiGuide(v => !v)}
-                title="VibeJam API 說明"
+                title="BeaverKit API 說明"
                 className={`flex items-center gap-1 px-2 py-0.5 rounded transition-colors text-[10px] font-mono font-bold uppercase tracking-wider border ${showApiGuide ? 'bg-primary/15 text-primary border-primary/30' : 'text-on-surface/40 hover:text-primary border-transparent hover:border-outline-variant/20'}`}
               >
                 <span className="material-symbols-outlined text-[14px]">api</span>
@@ -787,7 +787,7 @@ ${currentCode || '（尚無程式碼）'}
           <div className="flex-1 p-4 md:p-8 bg-surface-container flex items-center justify-center overflow-hidden">
             {showApiGuide ? (
               <div className="w-full h-full rounded-xl overflow-hidden border border-outline-variant/20">
-                <VibeJamAPIGuide compact />
+                <BeaverKitAPIGuide compact />
               </div>
             ) : (
               <div className={`bg-white rounded-xl shadow-2xl overflow-hidden border border-outline-variant/20 transition-all duration-500 relative flex ${viewMode === 'mobile' ? 'w-[375px] h-[667px]' : 'w-full h-full'}`}>
@@ -801,7 +801,7 @@ ${currentCode || '（尚無程式碼）'}
                   />
                 ) : (
                   <div className="w-full h-full bg-[#050505] flex flex-col items-center justify-center relative z-10">
-                    <VibeJamAPIGuide compact />
+                    <BeaverKitAPIGuide compact />
                   </div>
                 )}
               </div>

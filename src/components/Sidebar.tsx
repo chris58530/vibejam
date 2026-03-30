@@ -41,7 +41,7 @@ const HELP_SECTIONS = [
       { q: '如何載入？', a: '在存檔面板點「載入」，會完整還原標題、Tags、模式和程式碼。' },
       { q: '存檔滿了怎辦？', a: '達到 5 個上限時請先刪除舊存檔（hover 顯示 ✕ 按鈕），才能新增。' },
       { q: '未登入能用嗎？', a: '可以，但存檔只保存在本機瀏覽器。換裝置或清除瀏覽器資料後會消失。' },
-      { q: '在作品程式碼裡存讀資料', a: '平台提供 window.VibeJam.save(key, data) 和 window.VibeJam.load(key) 兩個非同步 API，讓你的作品程式碼直接把遊戲進度、設定等 JSON 資料存進用戶瀏覽器，下次載入自動讀回。\n\n範例：\nawait window.VibeJam.save(\'progress\', { score: 100 });\nconst data = await window.VibeJam.load(\'progress\');' },
+      { q: '在作品程式碼裡存讀資料', a: '平台提供 window.BeaverKit.save(key, data) 和 window.BeaverKit.load(key) 兩個非同步 API，讓你的作品程式碼直接把遊戲進度、設定等 JSON 資料存進用戶瀏覽器，下次載入自動讀回。\n\n範例：\nawait window.BeaverKit.save(\'progress\', { score: 100 });\nconst data = await window.BeaverKit.load(\'progress\');' },
     ],
   },
   {
@@ -53,7 +53,7 @@ const HELP_SECTIONS = [
       { q: '支援哪些 AI？', a: '支援 Gemini、OpenAI、MiniMax 三家。需要在 Settings 頁面輸入自己的 API Key 並驗證。' },
       { q: '有使用限制嗎？', a: '每個 provider 各有每日上限次數，可在 AI Chat 頁面看到剩餘額度。' },
       { q: '怎麼用 AI 生成 Vibe？', a: '在 AI Chat 打「幫我做一個 XX 的動畫效果，輸出完整 HTML 檔案」，把回答的程式碼貼進 Workspace 即可。' },
-      { q: '在作品程式碼裡呼叫 AI', a: '你的作品可以用 window.VibeJam.getApiKey(\'gemini\') 取得用戶在 Settings 設定的 API Key，再直接對 AI API 發送請求，不需要自己保管 Key。\n支援：gemini、openai、minimax。\n\n範例：\nconst key = await window.VibeJam.getApiKey(\'gemini\');\nif (!key) alert(\'請先在 Settings 設定 Gemini Key\');' },
+      { q: '在作品程式碼裡呼叫 AI', a: '你的作品可以用 window.BeaverKit.getApiKey(\'gemini\') 取得用戶在 Settings 設定的 API Key，再直接對 AI API 發送請求，不需要自己保管 Key。\n支援：gemini、openai、minimax。\n\n範例：\nconst key = await window.BeaverKit.getApiKey(\'gemini\');\nif (!key) alert(\'請先在 Settings 設定 Gemini Key\');' },
     ],
   },
   {

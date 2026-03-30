@@ -285,7 +285,7 @@ input:focus{border-color:rgba(99,149,255,0.5);box-shadow:0 0 0 3px rgba(99,149,2
 </div>
 
 <script>
-let API_KEY = localStorage.getItem('vibejam_minimax_key') || '';
+let API_KEY = localStorage.getItem('beaverkit_minimax_key') || '';
 let totalTokens = 0;
 const chatHistory = [];
 if(API_KEY) document.getElementById('keyInput').value = API_KEY;
@@ -301,7 +301,7 @@ async function testKey(){
   const key = document.getElementById('keyInput').value.trim();
   if(!key){showResult('err','❌','No Key Entered','Please paste your MiniMax API key above.');return;}
   API_KEY = key;
-  localStorage.setItem('vibejam_minimax_key', key);
+  localStorage.setItem('beaverkit_minimax_key', key);
   const btn = document.getElementById('testBtn');
   btn.disabled = true;
   btn.textContent = '⏳ Testing...';
@@ -324,7 +324,7 @@ async function testKey(){
       document.getElementById('chatArea').style.display='flex';
     }
   }catch(e){
-    showResult('err','⚠️','Network Error',e.message+'\\n\\nNote: CORS may block direct calls in some browsers. The key may still be valid — try using the VibeJam AI Chat page.');
+    showResult('err','⚠️','Network Error',e.message+'\\n\\nNote: CORS may block direct calls in some browsers. The key may still be valid — try using the BeaverKit AI Chat page.');
   }
   btn.disabled = false;
   btn.textContent = '🔄 Test Again';
@@ -425,7 +425,7 @@ body{background:#131313;color:#E5E2E1;font-family:'Segoe UI',system-ui,sans-seri
 <div id="app"></div>
 <script>
 const app=document.getElementById('app');
-let API_KEY=localStorage.getItem('vibejam_demo_gemini_key')||'';
+let API_KEY=localStorage.getItem('beaverkit_demo_gemini_key')||'';
 let chatHistory=[];
 function renderKeySetup(){
   app.innerHTML=\`<div class="key-setup">
@@ -440,7 +440,7 @@ function saveKey(){
   const k=document.getElementById('keyInput').value.trim();
   if(!k)return;
   API_KEY=k;
-  localStorage.setItem('vibejam_demo_gemini_key',k);
+  localStorage.setItem('beaverkit_demo_gemini_key',k);
   renderChat();
 }
 function renderChat(){
@@ -479,7 +479,7 @@ async function send(){
     const contents=chatHistory.filter(m=>m.role!=='system').map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]}));
     const r=await fetch(\`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=\${encodeURIComponent(API_KEY)}\`,{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents,systemInstruction:{parts:[{text:'You are VibeBot, a creative coding assistant on the VibeJam platform. Help users with HTML, CSS, JS, Canvas, animations, and creative web development. Be concise, friendly, and provide code examples when appropriate. Respond in the same language as the user.'}]},generationConfig:{temperature:0.7,maxOutputTokens:2048}})
+      body:JSON.stringify({contents,systemInstruction:{parts:[{text:'You are VibeBot, a creative coding assistant on the BeaverKit platform. Help users with HTML, CSS, JS, Canvas, animations, and creative web development. Be concise, friendly, and provide code examples when appropriate. Respond in the same language as the user.'}]},generationConfig:{temperature:0.7,maxOutputTokens:2048}})
     });
     if(!r.ok) throw new Error('API error '+r.status);
     const d=await r.json();
