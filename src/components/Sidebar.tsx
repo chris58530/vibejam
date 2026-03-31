@@ -182,7 +182,6 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
     { key: 'trending', label: t('sidebar_trending'), icon: 'trending_up', path: '/?feed=trending' },
     { key: 'following', label: t('sidebar_following'), icon: 'subscriptions', path: '/?feed=following' },
     { key: 'workspace', label: t('sidebar_workspace'), icon: 'terminal', path: '/workspace' },
-    { key: 'ai_chat', label: t('sidebar_ai_chat'), icon: 'smart_toy', path: '/ai-chat' },
     { key: 'settings', label: t('sidebar_settings'), icon: 'settings', path: '/settings' },
   ];
 
@@ -254,7 +253,6 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
             (key === 'following' && location.search.includes('feed=following')) ||
             (key === 'home' && location.pathname === '/' && !location.search) ||
             (key === 'workspace' && location.pathname === '/workspace') ||
-            (key === 'ai_chat' && location.pathname === '/ai-chat') ||
             (key === 'settings' && location.pathname === '/settings');
 
           return (

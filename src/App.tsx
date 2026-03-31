@@ -11,12 +11,10 @@ import RemixStudio from './pages/RemixStudio';
 import VibeDetail from './pages/VibeDetail';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
-import AIChat from './pages/AIChat';
 import InviteAccept from './pages/InviteAccept';
 import { api, User } from './lib/api';
 import { supabase } from './lib/supabase';
 import { useAIKeyStore } from './lib/aiKeyStore';
-import './lib/themeStore'; // bootstrap: apply saved theme CSS vars on load
 
 export default function App() {
   const { t } = useI18n();
@@ -73,7 +71,6 @@ export default function App() {
             <Route path="/workspace" element={<Workspace currentUser={currentUser ?? undefined} savePanelOpen={savePanelOpen} />} />
             <Route path="/remix" element={<RemixStudio currentUser={currentUser ?? undefined} />} />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/ai-chat" element={<AIChat />} />
             <Route path="/invite/:token" element={<InviteAccept />} />
             <Route path="/:username/:vibeSlug" element={<VibeDetail currentUser={currentUser ?? undefined} />} />
             <Route path="/:username" element={<Profile />} />

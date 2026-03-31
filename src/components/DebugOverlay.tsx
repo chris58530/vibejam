@@ -6,7 +6,6 @@ const PAGE_NAMES: Record<string, string> = {
   '/workspace': '工作區 (Workspace)',
   '/remix': 'Remix 工作室 (RemixStudio)',
   '/settings': '設定頁 (Settings)',
-  '/ai-chat': 'AI 聊天 (AIChat)',
 };
 
 function getPageName(pathname: string, search: string): string {

@@ -152,10 +152,10 @@ export default function Settings() {
 
   return (
     <div className="flex h-[calc(100vh-64px)] overflow-hidden justify-center bg-background">
-      <div className="flex w-full max-w-[1536px] gap-4 md:gap-6 p-4 md:p-6 overflow-hidden">
+      <div className="flex w-full max-w-[1600px] gap-4 md:gap-6 p-4 md:p-6 overflow-hidden">
 
         {/* ══ 左欄：AI Chat ══════════════════════════════════════════════ */}
-        <div className="hidden lg:flex flex-col w-80 xl:w-96 shrink-0 bg-surface-container-low border border-outline-variant/10 rounded-xl overflow-hidden">
+        <div className="hidden lg:flex flex-col flex-1 bg-surface-container-low border border-outline-variant/10 rounded-xl overflow-hidden shadow-sm">
 
           {/* Chat Header */}
         <div className="px-4 py-3 border-b border-outline-variant/10 shrink-0">
@@ -227,7 +227,7 @@ export default function Settings() {
           ) : (
             chatMessages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[88%] rounded-2xl px-3 py-2 text-xs leading-relaxed whitespace-pre-wrap ${
+                <div className={`max-w-[85%] rounded-[20px] px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
                   msg.role === 'user'
                     ? 'bg-primary text-on-primary rounded-br-sm'
                     : 'bg-surface-container text-on-surface rounded-bl-sm border border-outline-variant/10'
@@ -257,30 +257,30 @@ export default function Settings() {
 
         {/* Input */}
         {hasActiveProvider && (
-          <div className="p-2.5 border-t border-outline-variant/10 shrink-0">
-            <div className="flex items-end gap-1.5 bg-surface-container border border-outline-variant/10 rounded-xl px-2.5 py-1.5 focus-within:ring-1 focus-within:ring-primary/30 transition-all">
+          <div className="p-4 border-t border-outline-variant/10 shrink-0">
+            <div className="flex items-end gap-2 bg-surface-container border border-outline-variant/10 rounded-2xl px-4 py-3 focus-within:ring-2 focus-within:ring-primary/30 transition-all shadow-sm">
               <textarea
                 ref={chatInputRef}
                 value={chatInput}
                 onChange={e => setChatInput(e.target.value)}
                 onKeyDown={handleChatKeyDown}
-                placeholder="輸入訊息..."
+                placeholder="有什麼我可以幫忙的嗎？..."
                 rows={1}
                 disabled={chatLoading}
-                className="flex-1 bg-transparent text-xs text-on-surface placeholder:text-on-surface/30 focus:outline-none resize-none"
-                style={{ maxHeight: '72px' }}
+                className="flex-1 bg-transparent text-sm text-on-surface placeholder:text-on-surface/30 focus:outline-none resize-none pt-0.5"
+                style={{ maxHeight: '120px' }}
                 onInput={e => {
                   const t = e.target as HTMLTextAreaElement;
                   t.style.height = 'auto';
-                  t.style.height = Math.min(t.scrollHeight, 72) + 'px';
+                  t.style.height = Math.min(t.scrollHeight, 120) + 'px';
                 }}
               />
               <button
                 onClick={handleChatSend}
                 disabled={chatLoading || !chatInput.trim()}
-                className="w-7 h-7 bg-primary text-on-primary rounded-lg flex items-center justify-center hover:bg-primary/90 transition-colors disabled:opacity-40 shrink-0"
+                className="w-8 h-8 bg-primary text-on-primary rounded-xl flex items-center justify-center hover:bg-primary/90 transition-colors disabled:opacity-40 shrink-0 mb-0.5"
               >
-                <span className="material-symbols-outlined text-[14px]">send</span>
+                <span className="material-symbols-outlined text-[16px]">send</span>
               </button>
             </div>
           </div>
@@ -288,7 +288,7 @@ export default function Settings() {
       </div>
 
       {/* ══ 中欄：API Key 管理 ════════════════════════════════════════ */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex flex-col w-full lg:w-[400px] xl:w-[460px] shrink-0 min-w-0">
 
         {/* Header */}
         <div className="flex items-center gap-3 mb-3 shrink-0">
