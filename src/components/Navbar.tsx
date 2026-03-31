@@ -71,7 +71,7 @@ export default function Navbar({}: NavbarProps) {
               className="text-xl font-bold tracking-tighter text-on-surface flex items-center gap-2 cursor-pointer font-headline"
               onClick={() => navigate('/')}
             >
-              <img src="/favicon.svg" alt="BeaverKit" className="w-8 h-8" />
+              <img src="/Icon.png" alt="BeaverKit" className="w-8 h-8" />
               BeaverKit Studio
             </div>
           ) : (
@@ -81,7 +81,7 @@ export default function Navbar({}: NavbarProps) {
                 className="text-xl font-bold tracking-tighter text-on-surface font-headline cursor-pointer flex items-center gap-2"
                 onClick={() => navigate('/')}
               >
-                <img src="/favicon.svg" alt="BeaverKit" className="w-8 h-8" />
+                <img src="/Icon.png" alt="BeaverKit" className="w-8 h-8" />
                 BeaverKit
               </h1>
             </div>
