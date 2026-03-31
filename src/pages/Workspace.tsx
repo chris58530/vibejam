@@ -777,7 +777,7 @@ ${currentCode || '（尚無程式碼）'}
             >smartphone</button>
           </div>
 
-          <div className="flex-1 p-4 md:p-8 bg-surface-container flex items-center justify-center overflow-hidden">
+          <div className="flex-1 px-4 pb-4 pt-0 md:px-6 md:pb-6 bg-surface-container flex items-center justify-center overflow-hidden">
             {showApiGuide ? (
               <div className="w-full h-full rounded-xl overflow-hidden border border-outline-variant/20">
                 <BeaverKitAPIGuide compact />
