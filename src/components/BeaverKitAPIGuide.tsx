@@ -98,7 +98,7 @@ function Param({ name, type, desc }: { name: string; type: string; desc: string 
 // ── 主元件 ────────────────────────────────────────────────────────────
 export default function BeaverKitAPIGuide({ compact = false }: Props) {
   return (
-    <div className={`w-full h-full overflow-y-auto bg-[#050505] text-on-surface ${compact ? 'p-6' : 'p-8'}`}>
+    <div className={`w-full h-full overflow-hidden bg-[#050505] text-on-surface ${compact ? 'p-6' : 'p-8'}`}>
 
       {/* Header */}
       <div className="mb-8">

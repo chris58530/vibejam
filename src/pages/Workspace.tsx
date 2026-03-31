@@ -66,7 +66,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
 
   const [title, setTitle] = useState('Untitled Project');
   const [tags, setTags] = useState('');
-  const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
+  const [viewMode, setViewMode] = useState<'desktop' | 'mobile' | 'round'>('desktop');
   const [isPublishing, setIsPublishing] = useState(false);
   const [visibility, setVisibility] = useState<'public' | 'unlisted' | 'private'>('public');
 
@@ -759,27 +759,36 @@ ${currentCode || '（尚無程式碼）'}
 
         {/* ── Preview ── */}
         <section className={`${mobileTab === 'preview' ? 'flex' : 'hidden'} md:flex flex-1 bg-surface flex-col`}>
-          <div className="h-10 bg-surface-container-low border-b border-outline-variant/10 flex items-center justify-between px-4 shrink-0">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 bg-surface-container-highest rounded px-2 py-0.5">
-                <span className="material-symbols-outlined text-[14px] text-tertiary">lock</span>
-                <span className="text-[10px] text-on-surface/60 font-mono tracking-tight">localhost:3000/vibe/preview</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
+          <div className="h-10 bg-surface-container-low border-b border-outline-variant/10 flex items-center justify-end px-4 shrink-0 gap-3">
+            <button
+              onClick={() => setShowApiGuide(v => !v)}
+              title="BeaverKit API 說明"
+              className={`flex items-center gap-1 px-2 py-0.5 rounded transition-colors text-[10px] font-mono font-bold uppercase tracking-wider border ${showApiGuide ? 'bg-primary/15 text-primary border-primary/30' : 'text-on-surface/40 hover:text-primary border-transparent hover:border-outline-variant/20'}`}
+            >
+              <span className="material-symbols-outlined text-[14px]">api</span>
+              API
+            </button>
+            {/* View mode buttons */}
+            <div className="flex items-center gap-1">
               <button
-                onClick={() => setShowApiGuide(v => !v)}
-                title="BeaverKit API 說明"
-                className={`flex items-center gap-1 px-2 py-0.5 rounded transition-colors text-[10px] font-mono font-bold uppercase tracking-wider border ${showApiGuide ? 'bg-primary/15 text-primary border-primary/30' : 'text-on-surface/40 hover:text-primary border-transparent hover:border-outline-variant/20'}`}
-              >
-                <span className="material-symbols-outlined text-[14px]">api</span>
-                API
-              </button>
+                onClick={() => setViewMode('desktop')}
+                title="桌面"
+                className={`material-symbols-outlined text-[18px] p-1 rounded transition-colors ${viewMode === 'desktop' ? 'text-primary' : 'text-on-surface/40 hover:text-primary'}`}
+              >desktop_windows</button>
               <button
-                onClick={() => setViewMode(viewMode === 'desktop' ? 'mobile' : 'desktop')}
-                className="material-symbols-outlined text-on-surface/40 hover:text-primary transition-colors text-lg"
+                onClick={() => setViewMode('mobile')}
+                title="手機"
+                className={`material-symbols-outlined text-[18px] p-1 rounded transition-colors ${viewMode === 'mobile' ? 'text-primary' : 'text-on-surface/40 hover:text-primary'}`}
+              >smartphone</button>
+              <button
+                onClick={() => setViewMode('round')}
+                title="圓形螢幕"
+                className={`p-1 rounded transition-colors ${viewMode === 'round' ? 'text-primary' : 'text-on-surface/40 hover:text-primary'}`}
               >
-                {viewMode === 'desktop' ? 'smartphone' : 'desktop_windows'}
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <circle cx="9" cy="9" r="7.5" stroke="currentColor" strokeWidth="1.5"/>
+                  <circle cx="9" cy="9" r="4.5" stroke="currentColor" strokeWidth="1" strokeDasharray="2 1.5" opacity="0.5"/>
+                </svg>
               </button>
             </div>
           </div>
@@ -789,21 +798,102 @@ ${currentCode || '（尚無程式碼）'}
               <div className="w-full h-full rounded-xl overflow-hidden border border-outline-variant/20">
                 <BeaverKitAPIGuide compact />
               </div>
-            ) : (
-              <div className={`bg-white rounded-xl shadow-2xl overflow-hidden border border-outline-variant/20 transition-all duration-500 relative flex ${viewMode === 'mobile' ? 'w-[375px] h-[667px]' : 'w-full h-full'}`}>
-                {previewDoc ? (
-                  <iframe
-                    ref={iframeRef}
-                    srcDoc={previewDoc}
-                    className="w-full h-full border-none absolute inset-0 bg-white"
-                    title="Live Preview"
-                    sandbox="allow-scripts allow-same-origin"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-[#050505] flex flex-col items-center justify-center relative z-10">
-                    <BeaverKitAPIGuide compact />
+            ) : viewMode === 'round' ? (
+              /* ── Round / Smartwatch frame ── */
+              <div className="flex items-center justify-center w-full h-full">
+                <div className="relative" style={{ width: '320px', height: '320px' }}>
+                  {/* Outer bezel */}
+                  <div className="absolute inset-0 rounded-full shadow-2xl" style={{ background: 'linear-gradient(145deg,#3a3a3a,#1a1a1a)', padding: '10px' }}>
+                    <div className="w-full h-full rounded-full overflow-hidden relative bg-black">
+                      {previewDoc ? (
+                        <iframe
+                          ref={iframeRef}
+                          srcDoc={previewDoc}
+                          className="absolute inset-0 w-full h-full border-none"
+                          title="Round Preview"
+                          sandbox="allow-scripts allow-same-origin"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-[#050505] flex items-center justify-center">
+                          <span className="material-symbols-outlined text-on-surface/20 text-4xl">watch</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                )}
+                  {/* Crown button */}
+                  <div className="absolute right-[-8px] top-1/2 -translate-y-1/2 w-3 h-8 rounded-r-md bg-gradient-to-b from-[#444] to-[#222] shadow-md"></div>
+                </div>
+              </div>
+            ) : viewMode === 'mobile' ? (
+              /* ── Mobile phone frame ── */
+              <div className="flex items-center justify-center w-full h-full">
+                <div className="relative flex flex-col shadow-2xl" style={{ width: '375px', height: '667px' }}>
+                  <div className="absolute inset-0 rounded-[40px] overflow-hidden border-[10px] border-[#2A2A2A] bg-[#2A2A2A] flex flex-col">
+                    {/* Status bar */}
+                    <div className="h-7 bg-[#1A1A1A] flex items-center justify-between px-5 shrink-0">
+                      <span className="text-[10px] text-white/60 font-mono">9:41</span>
+                      <div className="flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[11px] text-white/60">signal_cellular_alt</span>
+                        <span className="material-symbols-outlined text-[11px] text-white/60">wifi</span>
+                        <span className="material-symbols-outlined text-[11px] text-white/60">battery_full</span>
+                      </div>
+                    </div>
+                    {/* Notch */}
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-[#1A1A1A] rounded-b-2xl z-10"></div>
+                    {/* Screen */}
+                    <div className="flex-1 relative overflow-hidden bg-white">
+                      {previewDoc ? (
+                        <iframe
+                          ref={iframeRef}
+                          srcDoc={previewDoc}
+                          className="absolute inset-0 w-full h-full border-none"
+                          title="Mobile Preview"
+                          sandbox="allow-scripts allow-same-origin"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-[#050505] flex items-center justify-center">
+                          <BeaverKitAPIGuide compact />
+                        </div>
+                      )}
+                    </div>
+                    {/* Home bar */}
+                    <div className="h-6 bg-[#1A1A1A] flex items-center justify-center shrink-0">
+                      <div className="w-24 h-1 rounded-full bg-white/30"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* ── Desktop browser frame ── */
+              <div className="w-full h-full flex flex-col rounded-xl shadow-2xl overflow-hidden border border-outline-variant/20 transition-all duration-500">
+                {/* Browser chrome */}
+                <div className="bg-[#242424] px-4 py-2 flex items-center gap-3 shrink-0 border-b border-white/5">
+                  <div className="flex gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-[#FF5F57]"></div>
+                    <div className="w-3 h-3 rounded-full bg-[#FEBC2E]"></div>
+                    <div className="w-3 h-3 rounded-full bg-[#28C840]"></div>
+                  </div>
+                  <div className="flex-1 bg-[#1A1A1A] rounded-md px-3 py-1 flex items-center gap-2 max-w-sm mx-auto">
+                    <span className="material-symbols-outlined text-[12px] text-on-surface/30">lock</span>
+                    <span className="text-[11px] text-on-surface/40 font-mono">preview</span>
+                  </div>
+                </div>
+                {/* Page content */}
+                <div className="flex-1 relative bg-white overflow-hidden">
+                  {previewDoc ? (
+                    <iframe
+                      ref={iframeRef}
+                      srcDoc={previewDoc}
+                      className="absolute inset-0 w-full h-full border-none"
+                      title="Live Preview"
+                      sandbox="allow-scripts allow-same-origin"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-[#050505] overflow-hidden">
+                      <BeaverKitAPIGuide compact />
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
