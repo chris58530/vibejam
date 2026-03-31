@@ -91,23 +91,23 @@ function HelpModal({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" onClick={onClose}>
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
       <div
-        className="relative bg-[#1C1B1B] border border-outline-variant/20 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex overflow-hidden"
+        className="relative bg-surface-container-low border border-outline-variant/20 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* Left nav */}
-        <div className="w-48 shrink-0 bg-[#161616] border-r border-outline-variant/10 flex flex-col py-4 gap-1 px-2">
+        <div className="w-48 shrink-0 bg-surface-container-lowest border-r border-outline-variant/10 flex flex-col py-4 gap-1 px-2">
           <div className="px-3 mb-3">
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-[#FFB3B6] text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>help</span>
-              <span className="text-[11px] uppercase tracking-widest font-bold text-[#E5E2E1]">使用說明</span>
+              <span className="material-symbols-outlined text-primary text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>help</span>
+              <span className="text-[11px] uppercase tracking-widest font-bold text-on-surface">使用說明</span>
             </div>
-            <p className="text-[10px] text-[#E5E2E1]/30 mt-1 leading-relaxed">BeaverKit 玩法指南</p>
+            <p className="text-[10px] text-on-surface/30 mt-1 leading-relaxed">BeaverKit 玩法指南</p>
           </div>
           {HELP_SECTIONS.map(s => (
             <button
               key={s.id}
               onClick={() => { setActiveSection(s.id); setOpenItem(null); }}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors ${activeSection === s.id ? 'bg-[#2A2A2A] text-[#E5E2E1]' : 'text-[#E5E2E1]/50 hover:bg-[#222] hover:text-[#E5E2E1]/80'}`}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors ${activeSection === s.id ? 'bg-surface-container-high text-on-surface' : 'text-on-surface/50 hover:bg-surface-container hover:text-on-surface/80'}`}
             >
               <span className="material-symbols-outlined text-[16px] shrink-0" style={{ color: activeSection === s.id ? s.color : undefined, fontVariationSettings: activeSection === s.id ? "'FILL' 1" : "'FILL' 0" }}>{s.icon}</span>
               <span className="text-[12px] font-medium">{s.title}</span>
@@ -123,9 +123,9 @@ function HelpModal({ onClose }: { onClose: () => void }) {
               <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: section.color + '18' }}>
                 <span className="material-symbols-outlined text-[18px]" style={{ color: section.color, fontVariationSettings: "'FILL' 1" }}>{section.icon}</span>
               </div>
-              <h2 className="text-[15px] font-bold text-[#E5E2E1]">{section.title}</h2>
+              <h2 className="text-[15px] font-bold text-on-surface">{section.title}</h2>
             </div>
-            <button onClick={onClose} className="text-[#E5E2E1]/30 hover:text-[#E5E2E1] transition-colors">
+            <button onClick={onClose} className="text-on-surface/30 hover:text-on-surface transition-colors">
               <span className="material-symbols-outlined text-[20px]">close</span>
             </button>
           </div>
@@ -136,17 +136,17 @@ function HelpModal({ onClose }: { onClose: () => void }) {
               const key = `${activeSection}-${idx}`;
               const isOpen = openItem === key;
               return (
-                <div key={key} className={`border rounded-xl overflow-hidden transition-colors ${isOpen ? 'border-outline-variant/30 bg-[#222]' : 'border-outline-variant/10 bg-[#1E1E1E] hover:border-outline-variant/20'}`}>
+                <div key={key} className={`border rounded-xl overflow-hidden transition-colors ${isOpen ? 'border-outline-variant/30 bg-surface-container' : 'border-outline-variant/10 bg-surface-container-low hover:border-outline-variant/20'}`}>
                   <button
                     className="w-full flex items-center justify-between px-4 py-3 text-left gap-3"
                     onClick={() => setOpenItem(isOpen ? null : key)}
                   >
-                    <span className="text-[13px] font-semibold text-[#E5E2E1]">{item.q}</span>
-                    <span className="material-symbols-outlined text-[16px] text-[#E5E2E1]/40 shrink-0 transition-transform" style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>expand_more</span>
+                    <span className="text-[13px] font-semibold text-on-surface">{item.q}</span>
+                    <span className="material-symbols-outlined text-[16px] text-on-surface/40 shrink-0 transition-transform" style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>expand_more</span>
                   </button>
                   {isOpen && (
                     <div className="px-4 pb-4">
-                      <p className="text-[12px] text-[#E5E2E1]/60 leading-relaxed">{item.a}</p>
+                      <p className="text-[12px] text-on-surface/60 leading-relaxed">{item.a}</p>
                     </div>
                   )}
                 </div>
@@ -156,7 +156,7 @@ function HelpModal({ onClose }: { onClose: () => void }) {
 
           {/* Footer hint */}
           <div className="px-5 py-3 border-t border-outline-variant/10 shrink-0">
-            <p className="text-[10px] text-[#E5E2E1]/25 text-center">點擊問題展開說明 · 點背景關閉</p>
+            <p className="text-[10px] text-on-surface/25 text-center">點擊問題展開說明 · 點背景關閉</p>
           </div>
         </div>
       </div>
@@ -189,6 +189,7 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
   const isWorkspace = location.pathname.includes('/workspace');
 
   useEffect(() => {
+    if (!supabase) return;
     supabase.auth.getSession().then(({ data }) => setCurrentUser(data.session?.user ?? null));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setCurrentUser(session?.user ?? null);
@@ -212,29 +213,29 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
   if (isWorkspace) {
     return (
       <>
-        <aside className="fixed left-0 top-16 h-[calc(100vh-64px)] w-16 bg-[#1C1B1B] flex flex-col items-center py-4 gap-6 border-r border-outline-variant/10 z-40 hidden md:flex">
-          <button onClick={() => navigate('/')} className="text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1] p-2.5 rounded-xl transition-all duration-300" title="Home">
+        <aside className="fixed left-0 top-16 h-[calc(100vh-64px)] w-16 bg-surface-container-low flex flex-col items-center py-4 gap-6 border-r border-outline-variant/10 z-40 hidden md:flex">
+          <button onClick={() => navigate('/')} className="text-on-surface/70 hover:bg-surface-container-high hover:text-on-surface p-2.5 rounded-xl transition-all duration-300" title="Home">
             <span className="material-symbols-outlined">home</span>
           </button>
-          <button onClick={() => navigate('/workspace')} className="text-[#FFB3B6] bg-[#2A2A2A] p-2.5 rounded-xl transition-all duration-300" title="Workspace">
+          <button onClick={() => navigate('/workspace')} className="text-primary bg-surface-container-high p-2.5 rounded-xl transition-all duration-300" title="Workspace">
             <span className="material-symbols-outlined">workspace_premium</span>
           </button>
           <button
             onClick={onToggleSavePanel}
-            className={`p-2.5 rounded-xl transition-all duration-300 ${savePanelOpen ? 'text-[#FFB3B6] bg-[#2A2A2A]' : 'text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1]'}`}
+            className={`p-2.5 rounded-xl transition-all duration-300 ${savePanelOpen ? 'text-primary bg-surface-container-high' : 'text-on-surface/70 hover:bg-surface-container-high hover:text-on-surface'}`}
             title="存檔區"
           >
             <span className="material-symbols-outlined" style={savePanelOpen ? { fontVariationSettings: "'FILL' 1" } : {}}>folder</span>
           </button>
-          <button className="text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1] p-2.5 rounded-xl transition-all duration-300" title="Search">
+          <button className="text-on-surface/70 hover:bg-surface-container-high hover:text-on-surface p-2.5 rounded-xl transition-all duration-300" title="Search">
             <span className="material-symbols-outlined">search</span>
           </button>
-          <button className="text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1] p-2.5 rounded-xl transition-all duration-300" title="History">
+          <button className="text-on-surface/70 hover:bg-surface-container-high hover:text-on-surface p-2.5 rounded-xl transition-all duration-300" title="History">
             <span className="material-symbols-outlined">history</span>
           </button>
 
           <div className="mt-auto flex flex-col gap-6 items-center">
-            <button onClick={() => setHelpOpen(true)} className="text-[#E5E2E1]/70 hover:text-[#FFB3B6] transition-colors" title="使用說明">
+            <button onClick={() => setHelpOpen(true)} className="text-on-surface/70 hover:text-primary transition-colors" title="使用說明">
               <span className="material-symbols-outlined">help</span>
             </button>
             {currentUser && (
@@ -258,7 +259,7 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
 
   // Regular Sidebar — collapsed by default, expands on hover
   return (
-    <aside className="group/sidebar fixed left-0 top-16 h-[calc(100vh-64px)] w-16 hover:w-64 bg-[#1C1B1B] flex flex-col pt-3 pb-2 hidden md:flex z-40 border-r border-outline-variant/5 transition-[width] duration-300 overflow-hidden">
+    <aside className="group/sidebar fixed left-0 top-16 h-[calc(100vh-64px)] w-16 hover:w-64 bg-surface-container-low flex flex-col pt-3 pb-2 hidden md:flex z-40 border-r border-outline-variant/5 transition-[width] duration-300 overflow-hidden">
       <nav className="space-y-1 px-2">
         {navItems.map(({ key, label, icon, path }) => {
           const isActive =
@@ -274,8 +275,8 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
               key={key}
               onClick={() => handleNavClick(key, path)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors duration-200 font-body font-medium text-sm cursor-pointer ${isActive
-                  ? 'text-[#FFB3B6] bg-[#2A2A2A]'
-                  : 'text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1]'
+                  ? 'text-primary bg-surface-container-high'
+                  : 'text-on-surface/70 hover:bg-surface-container-high hover:text-on-surface'
                 }`}
               title={label}
             >
@@ -292,9 +293,9 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
 
       {/* Divider + Library — only visible when expanded */}
       <div className="overflow-hidden max-h-0 group-hover/sidebar:max-h-[320px] transition-[max-height] duration-300">
-        <div className="my-3 h-px bg-[#584142]/10 mx-4"></div>
+        <div className="my-3 h-px bg-outline-variant/10 mx-4"></div>
         <div className="px-5 mb-2">
-          <span className="text-[10px] uppercase tracking-[0.2em] text-[#E5E2E1]/30 font-bold whitespace-nowrap">Your Library</span>
+          <span className="text-[10px] uppercase tracking-[0.2em] text-on-surface/30 font-bold whitespace-nowrap">Your Library</span>
         </div>
         <nav className="space-y-0.5 px-2">
           {[
@@ -302,7 +303,7 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
             { icon: 'playlist_play', label: 'Saved Kits' },
             { icon: 'thumb_up', label: 'Liked Code' },
           ].map(({ icon, label }) => (
-            <button key={label} onClick={() => alert('機能建構中 (WIP)')} className="w-full flex items-center gap-3 px-3 py-2 text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1] rounded-lg transition-colors text-sm font-body whitespace-nowrap">
+            <button key={label} onClick={() => alert('機能建構中 (WIP)')} className="w-full flex items-center gap-3 px-3 py-2 text-on-surface/70 hover:bg-surface-container-high hover:text-on-surface rounded-lg transition-colors text-sm font-body whitespace-nowrap">
               <span className="material-symbols-outlined text-[18px] shrink-0">{icon}</span>
               <span>{label}</span>
             </button>
@@ -315,12 +316,12 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
       <div className="mt-auto overflow-hidden max-h-0 group-hover/sidebar:max-h-24 transition-[max-height] duration-300 border-t border-outline-variant/10">
         <div className="pt-3 space-y-2">
           <div className="flex flex-wrap gap-x-3 gap-y-1 px-4">
-            <a href="#" className="text-[10px] text-[#E5E2E1]/40 hover:text-primary transition-colors uppercase tracking-widest font-body">Terms</a>
-            <a href="#" className="text-[10px] text-[#E5E2E1]/40 hover:text-primary transition-colors uppercase tracking-widest font-body">Privacy</a>
-            <a href="#" className="text-[10px] text-[#E5E2E1]/40 hover:text-primary transition-colors uppercase tracking-widest font-body">About</a>
+            <a href="#" className="text-[10px] text-on-surface/40 hover:text-primary transition-colors uppercase tracking-widest font-body">Terms</a>
+            <a href="#" className="text-[10px] text-on-surface/40 hover:text-primary transition-colors uppercase tracking-widest font-body">Privacy</a>
+            <a href="#" className="text-[10px] text-on-surface/40 hover:text-primary transition-colors uppercase tracking-widest font-body">About</a>
           </div>
           <div className="px-4 pb-2">
-            <p className="text-[10px] text-[#E5E2E1]/20 font-medium font-body whitespace-nowrap">© 2024 BEAVERKIT EDITORIAL</p>
+            <p className="text-[10px] text-on-surface/20 font-medium font-body whitespace-nowrap">© 2024 BEAVERKIT EDITORIAL</p>
           </div>
         </div>
       </div>
@@ -338,7 +339,7 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
               className="w-full h-full object-cover"
             />
           </div>
-          <span className="whitespace-nowrap overflow-hidden max-w-0 group-hover/sidebar:max-w-[140px] transition-[max-width] duration-300 text-xs text-[#E5E2E1]/60 font-body opacity-0 group-hover/sidebar:opacity-100">
+          <span className="whitespace-nowrap overflow-hidden max-w-0 group-hover/sidebar:max-w-[140px] transition-[max-width] duration-300 text-xs text-on-surface/60 font-body opacity-0 group-hover/sidebar:opacity-100">
             {currentUser.user_metadata?.user_name || currentUser.user_metadata?.name || ''}
           </span>
         </div>
@@ -347,7 +348,7 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
       {/* Help button — always visible at bottom */}
       <button
         onClick={() => setHelpOpen(true)}
-        className="shrink-0 flex items-center gap-3 px-3 py-2.5 text-[#E5E2E1]/40 hover:text-[#FFB3B6] hover:bg-[#2A2A2A] rounded-xl transition-colors"
+        className="shrink-0 flex items-center gap-3 px-3 py-2.5 text-on-surface/40 hover:text-primary hover:bg-surface-container-high rounded-xl transition-colors"
         title="使用說明"
       >
         <span className="material-symbols-outlined shrink-0 text-[22px]">help</span>
