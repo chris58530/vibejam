@@ -4,6 +4,7 @@ import { supabase, signOut } from '../lib/supabase';
 import AuthModal, { AuthView } from './AuthModal';
 import { useI18n, Language } from '../lib/i18n';
 import { useWorkspaceStore } from '../lib/workspaceStore';
+import ThemeSwitcher from './ThemeSwitcher';
 
 interface NavbarProps {
 }
@@ -63,11 +64,11 @@ export default function Navbar({}: NavbarProps) {
 
   return (
     <>
-      <header className={`fixed top-0 w-full z-50 bg-[#131313]/80 backdrop-blur-xl flex items-center justify-between px-6 h-16 ${!isWorkspace ? 'border-b border-transparent' : 'border-b border-outline-variant/10'}`}>
+      <header className={`fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl flex items-center justify-between px-6 h-16 ${!isWorkspace ? 'border-b border-transparent' : 'border-b border-outline-variant/10'}`}>
         <div className="flex items-center gap-8">
           {isWorkspace ? (
             <div
-              className="text-xl font-bold tracking-tighter text-[#E5E2E1] flex items-center gap-2 cursor-pointer font-headline"
+              className="text-xl font-bold tracking-tighter text-on-surface flex items-center gap-2 cursor-pointer font-headline"
               onClick={() => navigate('/')}
             >
               <span className="material-symbols-outlined text-primary">terminal</span>
@@ -75,9 +76,9 @@ export default function Navbar({}: NavbarProps) {
             </div>
           ) : (
             <div className="flex items-center gap-4">
-              <span className="material-symbols-outlined text-[#E5E2E1]/60 cursor-pointer hover:bg-[#2A2A2A] p-2 rounded-lg transition-colors md:hidden">menu</span>
+              <span className="material-symbols-outlined text-on-surface/60 cursor-pointer hover:bg-surface-container-high p-2 rounded-lg transition-colors md:hidden">menu</span>
               <h1
-                className="text-xl font-bold tracking-tighter text-[#E5E2E1] font-headline cursor-pointer"
+                className="text-xl font-bold tracking-tighter text-on-surface font-headline cursor-pointer"
                 onClick={() => navigate('/')}
               >
                 BeaverKit
@@ -102,7 +103,7 @@ export default function Navbar({}: NavbarProps) {
                 <span className="material-symbols-outlined text-sm">desktop_windows</span>
                 {t('nav_desktop')}
               </button>
-              <button className="px-3 py-1.5 rounded-md text-[#E5E2E1]/60 hover:bg-surface-container-high transition-colors text-sm flex items-center gap-2">
+              <button className="px-3 py-1.5 rounded-md text-on-surface/60 hover:bg-surface-container-high transition-colors text-sm flex items-center gap-2">
                 <span className="material-symbols-outlined text-sm">smartphone</span>
                 {t('nav_mobile')}
               </button>
@@ -118,25 +119,28 @@ export default function Navbar({}: NavbarProps) {
                 {t('nav_live_sync')}
               </div>
               <div className="h-6 w-px bg-outline-variant/20 mx-2"></div>
-              <button className="material-symbols-outlined text-[#E5E2E1]/30 p-2 rounded-lg cursor-not-allowed" title={t('nav_coming_soon')}>notifications</button>
-              <button onClick={() => navigate('/settings')} className="material-symbols-outlined text-[#E5E2E1]/60 hover:text-on-background transition-colors p-2 rounded-lg" title={t('nav_settings')}>settings</button>
+              <button className="material-symbols-outlined text-on-surface/30 p-2 rounded-lg cursor-not-allowed" title={t('nav_coming_soon')}>notifications</button>
+              <button onClick={() => navigate('/settings')} className="material-symbols-outlined text-on-surface/60 hover:text-on-background transition-colors p-2 rounded-lg" title={t('nav_settings')}>settings</button>
             </>
           ) : (
             <div className="flex items-center gap-1 hidden sm:flex">
-              <button className="p-2 rounded-lg text-[#E5E2E1]/30 cursor-not-allowed" title={t('nav_coming_soon')}>
+              <button className="p-2 rounded-lg text-on-surface/30 cursor-not-allowed" title={t('nav_coming_soon')}>
                 <span className="material-symbols-outlined">notifications</span>
               </button>
-<button className="p-2 rounded-lg text-[#E5E2E1]/60 hover:bg-[#2A2A2A] transition-colors duration-200">
+<button className="p-2 rounded-lg text-on-surface/60 hover:bg-surface-container-high transition-colors duration-200">
                 <span className="material-symbols-outlined">apps</span>
               </button>
             </div>
           )}
 
+          {/* Theme Switcher */}
+          <ThemeSwitcher />
+
           {/* Language Switcher */}
           <div className="relative" ref={langMenuRef}>
             <button
               onClick={() => setLangMenuOpen(v => !v)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[#E5E2E1]/60 hover:bg-[#2A2A2A] hover:text-[#E5E2E1] transition-colors duration-200 text-sm font-body"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-on-surface/60 hover:bg-surface-container-high hover:text-on-surface transition-colors duration-200 text-sm font-body"
               title={t('lang_switcher_label')}
             >
               <span className="material-symbols-outlined text-[18px]">language</span>
@@ -146,7 +150,7 @@ export default function Navbar({}: NavbarProps) {
             </button>
 
             {langMenuOpen && (
-              <div className="absolute right-0 top-full mt-2 bg-[#1C1B1B] border border-outline-variant/20 rounded-xl shadow-xl overflow-hidden z-50 min-w-[140px]">
+              <div className="absolute right-0 top-full mt-2 bg-surface-container-low border border-outline-variant/20 rounded-xl shadow-xl overflow-hidden z-50 min-w-[140px]">
                 {LANGUAGES.map(lang => (
                   <button
                     key={lang.code}
@@ -154,7 +158,7 @@ export default function Navbar({}: NavbarProps) {
                     className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-body transition-colors ${
                       language === lang.code
                         ? 'text-primary bg-primary/10'
-                        : 'text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1]'
+                        : 'text-on-surface/70 hover:bg-surface-container-high hover:text-on-surface'
                     }`}
                   >
                     <span>{lang.flag}</span>
@@ -184,7 +188,7 @@ export default function Navbar({}: NavbarProps) {
 
               {/* Dropdown */}
               {userMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-64 bg-[#1C1B1B] border border-outline-variant/20 rounded-2xl shadow-2xl overflow-hidden z-50">
+                <div className="absolute right-0 top-full mt-2 w-64 bg-surface-container-low border border-outline-variant/20 rounded-2xl shadow-2xl overflow-hidden z-50">
 
                   {/* User info header */}
                   <div className="px-4 py-3.5 border-b border-outline-variant/10">
@@ -225,7 +229,7 @@ export default function Navbar({}: NavbarProps) {
                       <button
                         key={icon}
                         onClick={action}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1] transition-colors"
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface/70 hover:bg-surface-container-high hover:text-on-surface transition-colors"
                       >
                         <span className="material-symbols-outlined text-[18px] text-on-surface-variant">{icon}</span>
                         {label}
@@ -237,7 +241,7 @@ export default function Navbar({}: NavbarProps) {
                   <div className="border-t border-outline-variant/10 py-1.5">
                     <button
                       onClick={() => { signOut(); setUserMenuOpen(false); }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1] transition-colors"
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface/70 hover:bg-surface-container-high hover:text-on-surface transition-colors"
                     >
                       <span className="material-symbols-outlined text-[18px] text-on-surface-variant">logout</span>
                       {t('nav_signout')}

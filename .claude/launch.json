@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "BeaverKit Dev Server",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000
+    },
+    {
+      "name": "BeaverKit Preview (Production Build)",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "preview"],
+      "port": 4173
+    },
+    {
+      "name": "Color Preview",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", ".", "-l", "8090", "--no-clipboard"],
+      "port": 8090
+    }
+  ]
+}
