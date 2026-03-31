@@ -151,13 +151,13 @@ export default function Settings() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-64px)] overflow-hidden justify-center">
-    <div className="flex w-full max-w-6xl gap-3 p-3 md:p-4 overflow-hidden">
+    <div className="flex h-[calc(100vh-64px)] overflow-hidden justify-center bg-background">
+      <div className="flex w-full max-w-[1536px] gap-4 md:gap-6 p-4 md:p-6 overflow-hidden">
 
-      {/* ══ 左欄：AI Chat ══════════════════════════════════════════════ */}
-      <div className="hidden lg:flex flex-col w-72 xl:w-80 shrink-0 bg-surface-container-low border border-outline-variant/10 rounded-xl overflow-hidden">
+        {/* ══ 左欄：AI Chat ══════════════════════════════════════════════ */}
+        <div className="hidden lg:flex flex-col w-80 xl:w-96 shrink-0 bg-surface-container-low border border-outline-variant/10 rounded-xl overflow-hidden">
 
-        {/* Chat Header */}
+          {/* Chat Header */}
         <div className="px-4 py-3 border-b border-outline-variant/10 shrink-0">
           <div className="flex items-center gap-2 mb-2.5">
             <span className="material-symbols-outlined text-primary text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>smart_toy</span>
@@ -288,7 +288,7 @@ export default function Settings() {
       </div>
 
       {/* ══ 中欄：API Key 管理 ════════════════════════════════════════ */}
-      <div className="flex-1 flex flex-col min-w-0 max-w-2xl">
+      <div className="flex-1 flex flex-col min-w-0">
 
         {/* Header */}
         <div className="flex items-center gap-3 mb-3 shrink-0">
