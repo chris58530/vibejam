@@ -38,10 +38,10 @@ export default function BottomTabBar() {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="fixed bottom-0 left-0 w-full bg-[#1C1B1B] h-16 md:hidden flex items-center justify-around z-50 border-t border-outline-variant/10">
+    <nav className="fixed bottom-0 left-0 w-full bg-surface-container-low h-16 md:hidden flex items-center justify-around z-50 border-t border-outline-variant/10">
       <button
         onClick={() => navigate('/')}
-        className={`flex flex-col items-center gap-1 transition-colors ${isActive('/') ? 'text-[#FFB3B6]' : 'text-[#E5E2E1]/60 hover:text-[#E5E2E1]'}`}
+        className={`flex flex-col items-center gap-1 transition-colors ${isActive('/') ? 'text-primary' : 'text-on-surface/60 hover:text-on-surface'}`}
       >
         <span className="material-symbols-outlined" style={isActive('/') ? { fontVariationSettings: "'FILL' 1" } : {}}>home</span>
         <span className="text-[10px] font-medium font-body">{t('tab_home')}</span>
@@ -49,7 +49,7 @@ export default function BottomTabBar() {
 
       <button
         onClick={() => navigate('/ai-chat')}
-        className={`flex flex-col items-center gap-1 transition-colors ${isActive('/ai-chat') ? 'text-[#FFB3B6]' : 'text-[#E5E2E1]/60 hover:text-[#E5E2E1]'}`}
+        className={`flex flex-col items-center gap-1 transition-colors ${isActive('/ai-chat') ? 'text-primary' : 'text-on-surface/60 hover:text-on-surface'}`}
       >
         <span className="material-symbols-outlined" style={isActive('/ai-chat') ? { fontVariationSettings: "'FILL' 1" } : {}}>smart_toy</span>
         <span className="text-[10px] font-medium font-body">{t('tab_ai_chat')}</span>
@@ -57,7 +57,7 @@ export default function BottomTabBar() {
 
       <button
         onClick={() => navigate('/workspace')}
-        className={`flex flex-col items-center gap-1 transition-colors ${isActive('/workspace') ? 'text-[#FFB3B6]' : 'text-[#E5E2E1]/60 hover:text-[#E5E2E1]'}`}
+        className={`flex flex-col items-center gap-1 transition-colors ${isActive('/workspace') ? 'text-primary' : 'text-on-surface/60 hover:text-on-surface'}`}
       >
         <span className="material-symbols-outlined">add_circle</span>
         <span className="text-[10px] font-medium font-body">{t('tab_create')}</span>
@@ -65,7 +65,7 @@ export default function BottomTabBar() {
 
       <button
         onClick={() => navigate('/')}
-        className="flex flex-col items-center gap-1 text-[#E5E2E1]/60 hover:text-[#E5E2E1] transition-colors"
+        className="flex flex-col items-center gap-1 text-on-surface/60 hover:text-on-surface transition-colors"
       >
         <span className="material-symbols-outlined">subscriptions</span>
         <span className="text-[10px] font-medium font-body">{t('tab_subs')}</span>
@@ -73,7 +73,7 @@ export default function BottomTabBar() {
 
       <button
         onClick={handleProfileClick}
-        className="flex flex-col items-center gap-1 text-[#E5E2E1]/60 hover:text-[#E5E2E1] transition-colors"
+        className="flex flex-col items-center gap-1 text-on-surface/60 hover:text-on-surface transition-colors"
       >
         <span className="material-symbols-outlined">person</span>
         <span className="text-[10px] font-medium font-body">{t('tab_you')}</span>
