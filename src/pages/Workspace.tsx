@@ -82,6 +82,11 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
   const saveKey = `beaverkit_saves_${currentUser?.id ?? 'guest'}`;
 
   useEffect(() => {
+    document.body.style.overflowY = 'hidden';
+    return () => { document.body.style.overflowY = ''; };
+  }, []);
+
+  useEffect(() => {
     try {
       const stored = localStorage.getItem(saveKey);
       if (stored) setSaves(JSON.parse(stored));
@@ -428,7 +433,7 @@ ${currentCode || '（尚無程式碼）'}
   return (
     <main className={`${savePanelOpen ? 'md:ml-72' : 'md:ml-16'} pt-16 flex-1 flex flex-col h-[calc(100vh)] overflow-hidden bg-background transition-[margin] duration-300`}>
       {/* ── Header ── */}
-      <div className="bg-surface px-6 py-3 flex items-center gap-6 border-b border-outline-variant/10 shrink-0">
+      <div className="bg-surface px-6 py-1.5 flex items-center gap-6 border-b border-outline-variant/10 shrink-0">
         <div className="flex items-center gap-3 bg-surface-container-low px-4 py-1.5 rounded-lg border-b-2 border-primary-container focus-within:border-primary transition-colors">
           <span className="material-symbols-outlined text-primary-container text-sm">edit_note</span>
           <input
@@ -759,38 +764,17 @@ ${currentCode || '（尚無程式碼）'}
 
         {/* ── Preview ── */}
         <section className={`${mobileTab === 'preview' ? 'flex' : 'hidden'} md:flex flex-1 bg-surface flex-col`}>
-          <div className="h-10 bg-surface-container-low border-b border-outline-variant/10 flex items-center justify-end px-4 shrink-0 gap-3">
+          <div className="h-10 bg-surface-container-low border-b border-outline-variant/10 flex items-center justify-end px-4 shrink-0 gap-1">
             <button
-              onClick={() => setShowApiGuide(v => !v)}
-              title="BeaverKit API 說明"
-              className={`flex items-center gap-1 px-2 py-0.5 rounded transition-colors text-[10px] font-mono font-bold uppercase tracking-wider border ${showApiGuide ? 'bg-primary/15 text-primary border-primary/30' : 'text-on-surface/40 hover:text-primary border-transparent hover:border-outline-variant/20'}`}
-            >
-              <span className="material-symbols-outlined text-[14px]">api</span>
-              API
-            </button>
-            {/* View mode buttons */}
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setViewMode('desktop')}
-                title="桌面"
-                className={`material-symbols-outlined text-[18px] p-1 rounded transition-colors ${viewMode === 'desktop' ? 'text-primary' : 'text-on-surface/40 hover:text-primary'}`}
-              >desktop_windows</button>
-              <button
-                onClick={() => setViewMode('mobile')}
-                title="手機"
-                className={`material-symbols-outlined text-[18px] p-1 rounded transition-colors ${viewMode === 'mobile' ? 'text-primary' : 'text-on-surface/40 hover:text-primary'}`}
-              >smartphone</button>
-              <button
-                onClick={() => setViewMode('round')}
-                title="圓形螢幕"
-                className={`p-1 rounded transition-colors ${viewMode === 'round' ? 'text-primary' : 'text-on-surface/40 hover:text-primary'}`}
-              >
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                  <circle cx="9" cy="9" r="7.5" stroke="currentColor" strokeWidth="1.5"/>
-                  <circle cx="9" cy="9" r="4.5" stroke="currentColor" strokeWidth="1" strokeDasharray="2 1.5" opacity="0.5"/>
-                </svg>
-              </button>
-            </div>
+              onClick={() => setViewMode('desktop')}
+              title="桌面"
+              className={`material-symbols-outlined text-[18px] p-1 rounded transition-colors ${viewMode === 'desktop' ? 'text-primary' : 'text-on-surface/40 hover:text-primary'}`}
+            >desktop_windows</button>
+            <button
+              onClick={() => setViewMode('mobile')}
+              title="手機"
+              className={`material-symbols-outlined text-[18px] p-1 rounded transition-colors ${viewMode === 'mobile' ? 'text-primary' : 'text-on-surface/40 hover:text-primary'}`}
+            >smartphone</button>
           </div>
 
           <div className="flex-1 p-4 md:p-8 bg-surface-container flex items-center justify-center overflow-hidden">
