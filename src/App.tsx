@@ -16,6 +16,7 @@ import InviteAccept from './pages/InviteAccept';
 import { api, User } from './lib/api';
 import { supabase } from './lib/supabase';
 import { useAIKeyStore } from './lib/aiKeyStore';
+import './lib/themeStore'; // bootstrap: apply saved theme CSS vars on load
 
 export default function App() {
   const { t } = useI18n();

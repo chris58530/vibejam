@@ -83,6 +83,14 @@ export const translations = {
     auth_err_image_process: 'Image processing failed, please choose a different image',
     // Language switcher
     lang_switcher_label: 'Language',
+    // Theme switcher
+    theme_label: 'Theme',
+    theme_rose: 'Rose Pink',
+    theme_indigo: 'Electric Indigo',
+    theme_amber: 'Amber Gold',
+    theme_mint: 'Mint Green',
+    theme_aurora: 'Aurora Purple',
+    theme_ocean: 'Ocean Cyan',
     // Misc
     misc_or: 'or',
     misc_upload: 'Upload',
@@ -205,6 +213,14 @@ export const translations = {
     auth_err_image_process: '圖片處理失敗，請選擇其他圖片',
     // Language switcher
     lang_switcher_label: '語言',
+    // Theme switcher
+    theme_label: '主題配色',
+    theme_rose: '玫瑰粉紅',
+    theme_indigo: '電光紫藍',
+    theme_amber: '琥珀金',
+    theme_mint: '薄荷綠',
+    theme_aurora: '極光紫',
+    theme_ocean: '海洋青',
     // Misc
     misc_or: '或',
     misc_upload: '上傳',
