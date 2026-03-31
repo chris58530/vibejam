@@ -431,7 +431,7 @@ ${currentCode || '（尚無程式碼）'}
 
   // ── Render ────────────────────────────────────────────────────────
   return (
-    <main className={`${savePanelOpen ? 'md:ml-72' : 'md:ml-16'} pt-16 flex-1 flex flex-col h-[calc(100vh)] overflow-hidden bg-background transition-[margin] duration-300`}>
+    <main className={`${savePanelOpen ? 'md:ml-72' : 'md:ml-16'} flex-1 flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-background transition-[margin] duration-300`}>
       {/* ── Header ── */}
       <div className="bg-surface px-6 py-1.5 flex items-center gap-6 border-b border-outline-variant/10 shrink-0">
         <div className="flex items-center gap-3 bg-surface-container-low px-4 py-1.5 rounded-lg border-b-2 border-primary-container focus-within:border-primary transition-colors">
