@@ -241,300 +241,290 @@ ${code}
     if (!remixFrom) return null;
 
     return (
-        <div className="md:ml-16 pt-16 flex-1 flex flex-col md:flex-row h-[calc(100vh)] overflow-hidden bg-background">
+        <div className="md:ml-16 pt-16 flex-1 flex flex-col h-[calc(100vh)] overflow-hidden bg-[#0f0f1a]">
+
+            {/* ── Topbar ── */}
+            <div className="flex items-center gap-3 px-4 py-2.5 shrink-0 border-b bg-[#13131f] border-[#2a2a4a]">
+                {/* Left: Source info */}
+                <div className="flex items-center gap-2 text-xs font-mono min-w-0 flex-1">
+                    <span className="material-symbols-outlined text-[14px] text-[#818cf8] shrink-0">repeat</span>
+                    <span className="text-[#6b7280] shrink-0">Remixing from</span>
+                    <button
+                        onClick={() => navigate(`/@${encodeURIComponent(remixFrom.authorName)}/${toSlug(remixFrom.title)}`)}
+                        className="text-[#a5b4fc] font-bold truncate max-w-[160px] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4f46e5] rounded"
+                        aria-label={`View source vibe: ${remixFrom.title}`}
+                    >
+                        {remixFrom.title}
+                    </button>
+                    <span className="text-[#6b7280] shrink-0 truncate">by {remixFrom.authorName}</span>
+                </div>
+
+                {/* Center: Title input */}
+                <div className="flex justify-center shrink-0">
+                    <input
+                        value={title}
+                        onChange={e => setTitle(e.target.value)}
+                        className="w-[280px] rounded-lg px-3 py-1.5 text-sm font-medium outline-none border focus:ring-2 focus:ring-[#4f46e5]/40 transition-shadow bg-[#1a1a2e] border-[#2a2a4a] text-[#e0e7ff] placeholder:text-[#6b7280]"
+                        placeholder="Remix 標題"
+                    />
+                </div>
+
+                {/* Right: Visibility + Publish */}
+                <div className="flex items-center gap-2 shrink-0 flex-1 justify-end">
+                    <select
+                        value={visibility}
+                        onChange={e => !visibilityLocked && setVisibility(e.target.value as 'public' | 'unlisted' | 'private')}
+                        disabled={visibilityLocked}
+                        aria-label="Visibility"
+                        className="rounded-lg px-2 py-1.5 text-xs font-mono font-bold outline-none border cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-[#1a1a2e] border-[#2a2a4a] text-[#a5b4fc] focus-visible:ring-2 focus-visible:ring-[#4f46e5]"
+                        title={visibilityLocked ? 'Remixes of private vibes must be private' : undefined}
+                    >
+                        <option value="public">🌐 Public</option>
+                        <option value="unlisted">🔗 Unlisted</option>
+                        <option value="private">🔒 Private</option>
+                    </select>
+                    <button
+                        onClick={handlePublish}
+                        disabled={isPublishing || !title.trim() || !code}
+                        className="flex items-center gap-2 px-4 py-1.5 bg-[#4f46e5] text-white text-xs font-mono font-bold rounded-lg transition-opacity disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+                    >
+                        <span className="material-symbols-outlined text-[16px]">publish</span>
+                        {isPublishing ? '發布中...' : '發布 Remix'}
+                    </button>
+                </div>
+            </div>
+
             {/* Mobile Tab Switcher — 3 tabs */}
-            <div className="flex md:hidden border-b border-outline-variant/10 bg-surface-container-lowest shrink-0">
+            <div className="flex md:hidden border-b border-[#2a2a4a] bg-[#13131f] shrink-0">
                 <button
                     onClick={() => setMobileTab('code')}
-                    className={`flex-1 py-3 text-center text-xs font-mono font-bold uppercase tracking-widest transition-colors ${mobileTab === 'code' ? 'border-b-2 border-primary text-primary bg-surface-container-high' : 'text-on-surface/40'}`}
+                    className={`flex-1 py-3 text-center text-xs font-mono font-bold uppercase tracking-widest transition-colors ${mobileTab === 'code' ? 'border-b-2 border-[#4f46e5] text-[#818cf8] bg-[#1a1a2e]' : 'text-[#6b7280]'}`}
                 >
                     <span className="material-symbols-outlined text-[14px] mr-1 align-middle">code</span>
                     Code
                 </button>
                 <button
                     onClick={() => setMobileTab('chat')}
-                    className={`flex-1 py-3 text-center text-xs font-mono font-bold uppercase tracking-widest transition-colors ${mobileTab === 'chat' ? 'border-b-2 border-primary text-primary bg-surface-container-high' : 'text-on-surface/40'}`}
+                    className={`flex-1 py-3 text-center text-xs font-mono font-bold uppercase tracking-widest transition-colors ${mobileTab === 'chat' ? 'border-b-2 border-[#4f46e5] text-[#818cf8] bg-[#1a1a2e]' : 'text-[#6b7280]'}`}
                 >
                     <span className="material-symbols-outlined text-[14px] mr-1 align-middle">chat</span>
                     AI Chat
                 </button>
                 <button
                     onClick={() => setMobileTab('preview')}
-                    className={`flex-1 py-3 text-center text-xs font-mono font-bold uppercase tracking-widest transition-colors ${mobileTab === 'preview' ? 'border-b-2 border-primary text-primary bg-surface-container-high' : 'text-on-surface/40'}`}
+                    className={`flex-1 py-3 text-center text-xs font-mono font-bold uppercase tracking-widest transition-colors ${mobileTab === 'preview' ? 'border-b-2 border-[#4f46e5] text-[#818cf8] bg-[#1a1a2e]' : 'text-[#6b7280]'}`}
                 >
                     <span className="material-symbols-outlined text-[14px] mr-1 align-middle">preview</span>
                     Preview
                 </button>
             </div>
 
-            {/* ── Left Column: Code Editor (top) + AI Chat (bottom) ── */}
-            <div
-                className={`${mobileTab === 'preview' ? 'hidden' : 'flex'
-                    } md:flex w-full md:w-[48%] md:min-w-[380px] flex-col border-r border-outline-variant/10 bg-surface-container-low`}
-            >
-                {/* ─ Code Editor Panel (top 3/5 on desktop) ─ */}
-                <div
-                    className={`${mobileTab === 'chat' ? 'hidden md:flex' : 'flex'
-                        } flex-col overflow-hidden border-b border-outline-variant/10`}
-                    style={{ flex: '3 3 0', minHeight: 0 }}
-                >
-                    {/* Code editor header */}
-                    <div className="px-4 py-2.5 border-b border-outline-variant/10 bg-surface-container-lowest flex items-center gap-2 shrink-0">
-                        <span className="material-symbols-outlined text-[14px] text-primary">code</span>
-                        <span className="text-xs font-mono font-bold text-on-surface/60 uppercase tracking-widest">Code Editor</span>
-                        <span className="ml-auto text-[10px] font-mono text-on-surface/25">{code.length} chars</span>
-                    </div>
-                    {/* Code textarea with line highlight overlay */}
-                    <div className="flex-1 relative overflow-hidden bg-surface-container-lowest">
-                        {/* Highlighted line strip — positioned by line index minus scroll offset */}
-                        {highlightedLine !== null && (
-                            <div
-                                className="absolute left-0 right-0 pointer-events-none z-10 border-l-2 border-primary/80 bg-primary/[0.08]"
-                                style={{
-                                    top: Math.max(0, 16 + highlightedLine * 19.5 - codeEditorScrollTop),
-                                    height: 20,
-                                }}
-                            />
-                        )}
-                        <textarea
-                            ref={codeEditorRef}
-                            value={code}
-                            onChange={e => setCode(e.target.value)}
-                            onScroll={e => setCodeEditorScrollTop((e.target as HTMLTextAreaElement).scrollTop)}
-                            className="absolute inset-0 w-full h-full bg-transparent text-on-surface/85 font-mono text-xs p-4 resize-none outline-none leading-relaxed custom-scrollbar"
-                            style={{ tabSize: 2, whiteSpace: 'pre', overflowWrap: 'normal', overflowX: 'auto' }}
-                            spellCheck={false}
-                            autoCapitalize="none"
-                            autoCorrect="off"
-                            autoComplete="off"
-                            placeholder="// 程式碼在這裡..."
-                        />
-                    </div>
-                </div>
+            {/* ── Main Content Area ── */}
+            <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
 
-                {/* ─ AI Chat Panel (bottom 2/5 on desktop) ─ */}
-                <div
-                    className={`${mobileTab === 'code' ? 'hidden md:flex' : 'flex'
-                        } flex-col overflow-hidden`}
-                    style={{ flex: '2 2 0', minHeight: 0 }}
-                >
-                    {/* Source Info Header */}
-                    <div className="px-4 py-3 border-b border-outline-variant/10 bg-surface-container-lowest shrink-0">
-                        <div className="flex items-center gap-2 text-xs text-on-surface/50 font-mono">
-                            <span className="material-symbols-outlined text-[14px]">repeat</span>
-                            <span>Remixing from</span>
-                            <button
-                                onClick={() => navigate(`/@${encodeURIComponent(remixFrom.authorName)}/${toSlug(remixFrom.title)}`)}
-                                className="text-primary hover:underline font-bold truncate max-w-[200px]"
-                            >
-                                {remixFrom.title}
-                            </button>
-                            <span className="text-on-surface/30">V{remixFrom.versionNumber}</span>
-                            <span className="text-on-surface/30">by {remixFrom.authorName}</span>
-                        </div>
-                    </div>
-
-                    {/* Provider + Model Selector */}
-                    {activeChatProviders.length > 0 && (
-                        <div className="px-4 py-2 border-b border-outline-variant/10 flex flex-wrap items-center gap-2 shrink-0">
-                            {activeChatProviders.map(p => (
-                                <button
-                                    key={p}
-                                    onClick={() => setSelectedProvider(p)}
-                                    className={`px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider transition-colors ${selectedProvider === p
-                                        ? 'bg-primary text-on-primary'
-                                        : 'bg-surface-container-high text-on-surface/50 hover:text-on-surface'
-                                        }`}
-                                >
-                                    {CHAT_PROVIDER_LABEL[p]}
-                                </button>
-                            ))}
-                            {selectedProvider && AI_PROVIDER_MODELS[selectedProvider] && (
-                                <div className="flex items-center gap-1 bg-surface-container-high rounded-full pl-2 pr-1 py-0.5 border border-outline-variant/10">
-                                    <span className="material-symbols-outlined text-[12px] text-on-surface-variant">model_training</span>
-                                    <select
-                                        value={selectedModel}
-                                        onChange={(e) => setSelectedModel(e.target.value)}
-                                        className="bg-transparent text-[10px] font-mono font-bold text-on-surface focus:outline-none max-w-[120px]"
-                                    >
-                                        {AI_PROVIDER_MODELS[selectedProvider]!.map(m => (
-                                            <option key={m.id} value={m.id}>{m.label}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            )}
-                            {selectedProvider && limit > 0 && (
-                                <span className="ml-auto text-[10px] font-mono text-on-surface/30">
-                                    {todayUsage}/{limit}
-                                </span>
-                            )}
-                        </div>
-                    )}
-
-                    {/* Chat Messages */}
+                {/* ── Left Column: Code Editor (top) + AI Chat (bottom) ── */}
+                <div className={`${mobileTab === 'preview' ? 'hidden' : 'flex'} md:flex w-full md:w-[48%] md:min-w-[380px] flex-col border-r border-[#2a2a4a] bg-[#0f0f1a]`}>
+                    {/* ─ Code Editor Panel (top 3/5 on desktop) ─ */}
                     <div
-                        ref={chatScrollRef}
-                        className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar"
-                        style={{ minHeight: 0 }}
-                        onScroll={e => {
-                            const el = e.currentTarget;
-                            const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
-                            autoScrollEnabledRef.current = atBottom;
-                        }}
+                        className={`${mobileTab === 'chat' ? 'hidden md:flex' : 'flex'} flex-col overflow-hidden border-b border-[#2a2a4a]`}
+                        style={{ flex: '3 3 0', minHeight: 0 }}
                     >
-                        {!hasActiveProvider && (
-                            <div className="flex flex-col items-center justify-center h-full text-center px-6">
-                                <span className="material-symbols-outlined text-4xl text-on-surface/20 mb-3">key</span>
-                                <p className="text-sm text-on-surface/40 mb-2">尚未設定 AI API Key</p>
-                                <p className="text-xs text-on-surface/30 mb-4">請先至設定頁面輸入至少一個 AI 服務的 API Key</p>
-                                <button
-                                    onClick={() => navigate('/settings')}
-                                    className="px-4 py-2 bg-primary text-on-primary text-xs font-bold rounded-lg hover:bg-primary-fixed transition-colors"
-                                >
-                                    前往設定
-                                </button>
-                            </div>
-                        )}
-
-                        {hasActiveProvider && messages.length === 0 && (
-                            <div className="flex flex-col items-center justify-center h-full text-center px-6">
-                                <span className="material-symbols-outlined text-5xl text-primary/30 mb-4">auto_awesome</span>
-                                <p className="text-sm text-on-surface/60 font-medium mb-2">告訴 AI 你想要什麼修改</p>
-                                <p className="text-xs text-on-surface/30">例如：「把背景改成漸層色」、「加一個按鈕」、「改成暗色主題」</p>
-                            </div>
-                        )}
-
-                        {messages.map((msg, i) => (
-                            <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm whitespace-pre-wrap ${msg.role === 'user'
-                                    ? 'bg-primary text-on-primary rounded-br-md'
-                                    : 'bg-surface-container-high text-on-surface rounded-bl-md'
-                                    }`}>
-                                    {msg.role === 'assistant' ? formatAssistantMessage(msg.content) : msg.content}
-                                </div>
-                            </div>
-                        ))}
-
-                        {loading && (
-                            <div className="flex justify-start">
-                                <div className="bg-surface-container-high rounded-2xl rounded-bl-md px-4 py-3">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-sm font-mono thinking-shimmer-text">thinking</span>
-                                        <span className="flex items-end gap-[3px]">
-                                            <span className="thinking-dot w-1.5 h-1.5 rounded-full bg-primary/70" />
-                                            <span className="thinking-dot w-1.5 h-1.5 rounded-full bg-primary/70" />
-                                            <span className="thinking-dot w-1.5 h-1.5 rounded-full bg-primary/70" />
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {error && (
-                            <div className="bg-error-container text-on-error-container text-xs rounded-lg px-3 py-2">
-                                {error}
-                            </div>
-                        )}
-
-                        <div ref={messagesEndRef} />
-                    </div>
-
-                    {/* Input Area */}
-                    {hasActiveProvider && (
-                        <div className="p-3 border-t border-outline-variant/10 bg-surface-container-lowest shrink-0">
-                            <div className="flex items-end gap-2">
-                                <textarea
-                                    ref={inputRef}
-                                    value={input}
-                                    onChange={e => setInput(e.target.value)}
-                                    onKeyDown={handleKeyDown}
-                                    rows={1}
-                                    placeholder="描述你想要的修改..."
-                                    className="flex-1 bg-surface-container-high text-on-surface text-sm rounded-xl px-4 py-3 resize-none outline-none focus:ring-2 focus:ring-primary/30 transition-shadow placeholder:text-on-surface/30"
-                                    style={{ maxHeight: '100px', overflowY: 'auto' }}
-                                    onInput={(e) => {
-                                        const target = e.target as HTMLTextAreaElement;
-                                        target.style.height = 'auto';
-                                        target.style.height = Math.min(target.scrollHeight, 100) + 'px';
+                        {/* Code editor header */}
+                        <div className="px-4 py-2.5 border-b border-[#2a2a4a] bg-[#13131f] flex items-center gap-2 shrink-0">
+                            <span className="material-symbols-outlined text-[14px] text-[#818cf8]">code</span>
+                            <span className="text-xs font-mono font-bold uppercase tracking-widest text-[#a5b4fc]">Code Editor</span>
+                            <span className="ml-auto text-[10px] font-mono text-[#6b7280]">{code.length} chars</span>
+                        </div>
+                        {/* Code textarea with line highlight overlay */}
+                        <div className="flex-1 relative overflow-hidden bg-[#13131f]">
+                            {highlightedLine !== null && (
+                                <div
+                                    className="absolute left-0 right-0 pointer-events-none z-10 border-l-2 border-[#4f46e5] bg-[#4f46e5]/[0.08]"
+                                    style={{
+                                        top: Math.max(0, 16 + highlightedLine * 19.5 - codeEditorScrollTop),
+                                        height: 20,
                                     }}
                                 />
-                                <button
-                                    onClick={handleSend}
-                                    disabled={!input.trim() || loading}
-                                    className="w-9 h-9 bg-primary text-on-primary rounded-xl flex items-center justify-center hover:bg-primary-fixed transition-colors disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
-                                >
-                                    <span className="material-symbols-outlined text-[16px]">send</span>
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {/* ── Right: Preview Panel ── */}
-            <div className={`${mobileTab === 'preview' ? 'flex' : 'hidden'} md:flex flex-1 flex-col bg-surface-container-lowest`}>
-                {/* Preview Header */}
-                <div className="px-6 py-3 border-b border-outline-variant/10 flex items-center gap-4 bg-surface shrink-0">
-                    <div className="flex items-center gap-3 flex-1">
-                        <span className="material-symbols-outlined text-primary text-sm">edit_note</span>
-                        <input
-                            value={title}
-                            onChange={e => setTitle(e.target.value)}
-                            className="bg-transparent border-none focus:ring-0 text-sm font-medium text-on-surface p-0 w-64 outline-none"
-                            placeholder="Remix 標題"
-                        />
-                    </div>
-                    {/* Visibility selector */}
-                    <div className="flex items-center gap-1">
-                        {(['public', 'unlisted', 'private'] as const).map(v => (
-                            <button
-                                key={v}
-                                onClick={() => !visibilityLocked && setVisibility(v)}
-                                disabled={visibilityLocked}
-                                title={visibilityLocked ? 'Remixes of private vibes must be private' : v}
-                                className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-mono font-bold uppercase tracking-wide transition-colors ${
-                                    visibility === v
-                                        ? 'bg-primary/15 text-primary border border-primary/30'
-                                        : 'text-on-surface/40 hover:text-on-surface/70 border border-transparent'
-                                } ${visibilityLocked && v !== 'private' ? 'opacity-30 cursor-not-allowed' : ''}`}
-                            >
-                                <span className="material-symbols-outlined text-[12px]">
-                                    {v === 'public' ? 'public' : v === 'unlisted' ? 'link' : 'lock'}
-                                </span>
-                                {v}
-                            </button>
-                        ))}
-                    </div>
-                    <button
-                        onClick={handlePublish}
-                        disabled={isPublishing || !title.trim() || !code}
-                        className="flex items-center gap-2 px-5 py-2 bg-primary hover:bg-primary-fixed text-on-primary text-xs font-mono font-bold rounded-lg shadow-lg shadow-primary/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                        <span className="material-symbols-outlined text-[16px]">publish</span>
-                        {isPublishing ? '發布中...' : '發布 Remix'}
-                    </button>
-                </div>
-
-                {/* Preview iframe */}
-                <div className="flex-1 relative p-4 lg:p-8">
-                    <div className="w-full h-full bg-white rounded-xl shadow-2xl overflow-hidden border border-outline-variant/20 relative">
-                        {previewDoc ? (
-                            <iframe
-                                srcDoc={previewDoc}
-                                className="w-full h-full border-none absolute inset-0 bg-white"
-                                title="Remix Preview"
-                                sandbox="allow-scripts allow-same-origin allow-forms"
+                            )}
+                            <textarea
+                                ref={codeEditorRef}
+                                value={code}
+                                onChange={e => setCode(e.target.value)}
+                                onScroll={e => setCodeEditorScrollTop((e.target as HTMLTextAreaElement).scrollTop)}
+                                className="absolute inset-0 w-full h-full bg-transparent text-[#e0e7ff] font-mono text-xs p-4 resize-none outline-none leading-relaxed custom-scrollbar"
+                                style={{ tabSize: 2, whiteSpace: 'pre', overflowWrap: 'normal', overflowX: 'auto' }}
+                                spellCheck={false}
+                                autoCapitalize="none"
+                                autoCorrect="off"
+                                autoComplete="off"
+                                placeholder="// 程式碼在這裡..."
                             />
-                        ) : (
-                            <div className="absolute inset-0 flex items-center justify-center text-on-surface/20">
-                                <div className="text-center">
-                                    <span className="material-symbols-outlined text-5xl mb-3 block">preview</span>
-                                    <p className="text-sm font-mono">預覽區域</p>
+                        </div>
+                    </div>
+
+                    {/* ─ AI Chat Panel (bottom 2/5 on desktop) ─ */}
+                    <div
+                        className={`${mobileTab === 'code' ? 'hidden md:flex' : 'flex'} flex-col overflow-hidden`}
+                        style={{ flex: '2 2 0', minHeight: 0 }}
+                    >
+                        {/* Provider + Model Selector */}
+                        {activeChatProviders.length > 0 && (
+                            <div className="px-4 py-2 border-b border-[#2a2a4a] bg-[#13131f] flex flex-wrap items-center gap-2 shrink-0">
+                                {activeChatProviders.map(p => (
+                                    <button
+                                        key={p}
+                                        onClick={() => setSelectedProvider(p)}
+                                        className={`px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider transition-colors ${selectedProvider === p ? 'bg-[#4f46e5] text-white' : 'bg-[#1a1a2e] text-[#6b7280]'}`}
+                                    >
+                                        {CHAT_PROVIDER_LABEL[p]}
+                                    </button>
+                                ))}
+                                {selectedProvider && AI_PROVIDER_MODELS[selectedProvider] && (
+                                    <div className="flex items-center gap-1 bg-[#1a1a2e] border border-[#2a2a4a] rounded-full pl-2 pr-1 py-0.5">
+                                        <span className="material-symbols-outlined text-[12px] text-[#818cf8]">model_training</span>
+                                        <select
+                                            value={selectedModel}
+                                            onChange={(e) => setSelectedModel(e.target.value)}
+                                            className="bg-transparent text-[10px] font-mono font-bold text-[#e0e7ff] focus:outline-none max-w-[120px]"
+                                        >
+                                            {AI_PROVIDER_MODELS[selectedProvider]!.map(m => (
+                                                <option key={m.id} value={m.id}>{m.label}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+                                {selectedProvider && limit > 0 && (
+                                    <span className="ml-auto text-[10px] font-mono text-[#6b7280]">
+                                        {todayUsage}/{limit}
+                                    </span>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Chat Messages */}
+                        <div
+                            ref={chatScrollRef}
+                            className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar"
+                            style={{ minHeight: 0 }}
+                            onScroll={e => {
+                                const el = e.currentTarget;
+                                const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+                                autoScrollEnabledRef.current = atBottom;
+                            }}
+                        >
+                            {!hasActiveProvider && (
+                                <div className="flex flex-col items-center justify-center h-full text-center px-6">
+                                    <span className="material-symbols-outlined text-4xl text-[#6b7280] mb-3">key</span>
+                                    <p className="text-sm text-[#a5b4fc] mb-2">尚未設定 AI API Key</p>
+                                    <p className="text-xs text-[#6b7280] mb-4">請先至設定頁面輸入至少一個 AI 服務的 API Key</p>
+                                    <button
+                                        onClick={() => navigate('/settings')}
+                                        className="px-4 py-2 bg-[#4f46e5] text-white text-xs font-bold rounded-lg transition-opacity"
+                                    >
+                                        前往設定
+                                    </button>
+                                </div>
+                            )}
+
+                            {hasActiveProvider && messages.length === 0 && (
+                                <div className="flex flex-col items-center justify-center h-full text-center px-6">
+                                    <span className="material-symbols-outlined text-5xl text-[#818cf8]/40 mb-4">auto_awesome</span>
+                                    <p className="text-sm font-medium text-[#a5b4fc] mb-2">告訴 AI 你想要什麼修改</p>
+                                    <p className="text-xs text-[#6b7280]">例如：「把背景改成漸層色」、「加一個按鈕」、「改成暗色主題」</p>
+                                </div>
+                            )}
+
+                            {messages.map((msg, i) => (
+                                <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                    <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm whitespace-pre-wrap ${msg.role === 'user'
+                                        ? 'bg-[#4f46e5] text-white rounded-br-[4px]'
+                                        : 'bg-[#1a1a2e] text-[#e0e7ff] rounded-bl-[4px]'
+                                    }`}>
+                                        {msg.role === 'assistant' ? formatAssistantMessage(msg.content) : msg.content}
+                                    </div>
+                                </div>
+                            ))}
+
+                            {loading && (
+                                <div className="flex justify-start">
+                                    <div className="bg-[#1a1a2e] rounded-2xl rounded-bl-[4px] px-4 py-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm font-mono thinking-shimmer-text text-[#818cf8]">thinking</span>
+                                            <span className="flex items-end gap-[3px]">
+                                                <span className="thinking-dot w-1.5 h-1.5 rounded-full bg-[#818cf8]/70" />
+                                                <span className="thinking-dot w-1.5 h-1.5 rounded-full bg-[#818cf8]/70" />
+                                                <span className="thinking-dot w-1.5 h-1.5 rounded-full bg-[#818cf8]/70" />
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {error && (
+                                <div className="bg-error-container text-on-error-container text-xs rounded-lg px-3 py-2">
+                                    {error}
+                                </div>
+                            )}
+
+                            <div ref={messagesEndRef} />
+                        </div>
+
+                        {/* Input Area */}
+                        {hasActiveProvider && (
+                            <div className="p-3 border-t border-[#2a2a4a] bg-[#13131f] shrink-0">
+                                <div className="flex items-end gap-2">
+                                    <textarea
+                                        ref={inputRef}
+                                        value={input}
+                                        onChange={e => setInput(e.target.value)}
+                                        onKeyDown={handleKeyDown}
+                                        rows={1}
+                                        placeholder="描述你想要的修改..."
+                                        className="flex-1 bg-[#1a1a2e] border border-[#2a2a4a] text-[#e0e7ff] text-sm rounded-xl px-4 py-3 resize-none outline-none transition-shadow placeholder:text-[#6b7280] focus-visible:ring-2 focus-visible:ring-[#4f46e5]"
+                                        style={{ maxHeight: '100px', overflowY: 'auto' }}
+                                        onInput={(e) => {
+                                            const target = e.target as HTMLTextAreaElement;
+                                            target.style.height = 'auto';
+                                            target.style.height = Math.min(target.scrollHeight, 100) + 'px';
+                                        }}
+                                    />
+                                    <button
+                                        onClick={handleSend}
+                                        disabled={!input.trim() || loading}
+                                        className="w-9 h-9 bg-[#4f46e5] text-white rounded-xl flex items-center justify-center transition-opacity disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
+                                    >
+                                        <span className="material-symbols-outlined text-[16px]">send</span>
+                                    </button>
                                 </div>
                             </div>
                         )}
                     </div>
                 </div>
+
+                {/* ── Right: Preview Panel ── */}
+                <div className={`${mobileTab === 'preview' ? 'flex' : 'hidden'} md:flex flex-1 flex-col bg-[#0f0f1a]`}>
+                    {/* Preview iframe */}
+                    <div className="flex-1 relative p-4 lg:p-8">
+                        <div className="w-full h-full bg-white rounded-xl shadow-2xl overflow-hidden border border-[#2a2a4a] relative">
+                            {previewDoc ? (
+                                <iframe
+                                    srcDoc={previewDoc}
+                                    className="w-full h-full border-none absolute inset-0 bg-white"
+                                    title="Remix Preview"
+                                    sandbox="allow-scripts allow-same-origin allow-forms"
+                                />
+                            ) : (
+                                <div className="absolute inset-0 flex items-center justify-center text-[#6b7280]">
+                                    <div className="text-center">
+                                        <span className="material-symbols-outlined text-5xl mb-3 block">preview</span>
+                                        <p className="text-sm font-mono">預覽區域</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     );
@@ -552,8 +542,8 @@ function formatAssistantMessage(content: string): React.ReactNode {
         if (/^```[\s\S]*```$/.test(part)) {
             // Complete code block — replace with pill
             nodes.push(
-                <div key={i} className="my-2 bg-surface-container-lowest rounded-lg px-3 py-2 border border-outline-variant/10">
-                    <div className="flex items-center gap-2 text-[10px] font-mono text-primary/60">
+                <div key={i} className="my-2 bg-[#13131f] border border-[#2a2a4a] rounded-lg px-3 py-2">
+                    <div className="flex items-center gap-2 text-[10px] font-mono text-[#818cf8]">
                         <span className="material-symbols-outlined text-[12px]">check_circle</span>
                         程式碼已自動套用至編輯區
                     </div>
