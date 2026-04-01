@@ -480,32 +480,180 @@ ${currentCode || '（尚無程式碼）'}
   return (
     <main className={`${savePanelOpen ? 'md:ml-72' : 'md:ml-16'} flex-1 flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-background transition-[margin] duration-300`}>
       {/* ── Header ── */}
-      <div className="bg-surface px-6 py-1.5 flex items-center gap-6 border-b border-outline-variant/10 shrink-0">
-        <div className="flex items-center gap-3 bg-surface-container-low px-4 py-1.5 rounded-lg border-b-2 border-primary-container focus-within:border-primary transition-colors">
+      <div className="bg-surface px-4 py-1.5 flex items-center gap-3 border-b border-outline-variant/10 shrink-0">
+        {/* Left: Title + Tags */}
+        <div className="flex items-center gap-3 bg-surface-container-low px-3 py-1 rounded-lg border-b-2 border-primary-container focus-within:border-primary transition-colors">
           <span className="material-symbols-outlined text-primary-container text-sm">edit_note</span>
           <input
-            className="bg-transparent border-none focus:ring-0 text-sm font-medium text-on-surface p-0 w-64 outline-none"
+            className="bg-transparent border-none focus:ring-0 text-sm font-medium text-on-surface p-0 w-48 outline-none"
             placeholder="Untitled Project"
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
         </div>
-        <div className="flex items-center gap-3 bg-surface-container-low px-4 py-1.5 rounded-lg focus-within:border-primary/50 transition-colors border-b-2 border-transparent">
+        <div className="flex items-center gap-2 bg-surface-container-low px-3 py-1 rounded-lg focus-within:border-primary/50 transition-colors border-b-2 border-transparent">
           <span className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Tags</span>
           <input
-            className="bg-transparent border-none focus:ring-0 text-xs text-on-surface/80 p-0 w-48 outline-none"
-            placeholder="#ui-design #editorial"
+            className="bg-transparent border-none focus:ring-0 text-xs text-on-surface/80 p-0 w-32 outline-none"
+            placeholder="#tag"
             type="text"
             value={tags}
             onChange={(e) => setTags(e.target.value)}
           />
         </div>
-        <div className="ml-auto flex items-center gap-2">
+
+        {/* Separator */}
+        <div className="w-px h-5 bg-outline-variant/15 hidden md:block"></div>
+
+        {/* Right panel tabs (desktop only) */}
+        <div className="hidden md:flex items-center gap-0.5">
+          <button
+            onClick={() => setRightTab('code')}
+            className={`px-2.5 py-1 text-[11px] font-bold flex items-center gap-1 rounded transition-colors ${rightTab === 'code'
+              ? 'text-primary bg-primary/5'
+              : 'text-on-surface/40 hover:text-on-surface/70'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[13px]">code</span>
+            程式碼
+          </button>
+          <button
+            onClick={() => setRightTab('preview')}
+            className={`px-2.5 py-1 text-[11px] font-bold flex items-center gap-1 rounded transition-colors ${rightTab === 'preview'
+              ? 'text-primary bg-primary/5'
+              : 'text-on-surface/40 hover:text-on-surface/70'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[13px]">preview</span>
+            預覽
+          </button>
+        </div>
+
+        {/* Split mode file tabs (inline) */}
+        {rightTab === 'code' && isSplitMode && (
+          <div className="hidden md:flex items-center gap-0.5">
+            <div className="w-px h-4 bg-outline-variant/15 mx-1"></div>
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-2 py-1 text-[11px] font-medium flex items-center gap-1 rounded transition-colors ${activeTab === tab.id
+                  ? 'text-primary bg-primary/5'
+                  : 'text-on-surface/30 hover:text-on-surface/60'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[12px]">{tab.icon}</span>
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Right controls */}
+        <div className="ml-auto flex items-center gap-1.5">
+          {/* Visibility dropdown */}
+          <div className="relative hidden md:block" ref={visibilityDropdownRef}>
+            <button
+              onClick={() => setVisibilityDropdownOpen(!visibilityDropdownOpen)}
+              className="flex items-center gap-1 bg-surface-container-low text-on-surface text-[11px] font-bold uppercase tracking-wider rounded px-2 py-1 border border-outline-variant/20 hover:border-outline-variant/40 transition-colors"
+            >
+              <span className="material-symbols-outlined text-[12px]">
+                {{ public: 'public', unlisted: 'link', private: 'lock' }[visibility]}
+              </span>
+              {{ public: 'Public', unlisted: 'Unlisted', private: 'Private' }[visibility]}
+              <span className="material-symbols-outlined text-[10px] text-on-surface/40">expand_more</span>
+            </button>
+            {visibilityDropdownOpen && (
+              <div className="absolute top-full right-0 mt-1 w-40 bg-surface border border-outline-variant/20 rounded-xl shadow-2xl overflow-hidden z-50">
+                {(['public', 'unlisted', 'private'] as const).map(v => {
+                  const icons = { public: 'public', unlisted: 'link', private: 'lock' };
+                  const labels = { public: 'Public', unlisted: 'Unlisted', private: 'Private' };
+                  const descs = { public: '所有人可見', unlisted: '僅透過連結', private: '僅自己可見' };
+                  return (
+                    <button
+                      key={v}
+                      onClick={() => { setVisibility(v); setVisibilityDropdownOpen(false); }}
+                      className={`w-full text-left px-3 py-2.5 hover:bg-surface-container transition-colors flex items-center gap-2.5 ${visibility === v ? 'bg-primary/5' : ''}`}
+                    >
+                      <span className={`material-symbols-outlined text-[14px] ${visibility === v ? 'text-primary' : 'text-on-surface/50'}`}>{icons[v]}</span>
+                      <div>
+                        <div className={`text-xs font-bold ${visibility === v ? 'text-primary' : 'text-on-surface'}`}>{labels[v]}</div>
+                        <div className="text-[10px] text-on-surface-variant leading-tight">{descs[v]}</div>
+                      </div>
+                      {visibility === v && <span className="material-symbols-outlined text-primary text-[14px] ml-auto">check</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Mode dropdown (code tab) */}
+          {rightTab === 'code' && (
+            <div className="relative hidden md:flex items-center" ref={dropdownRef}>
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="flex items-center gap-1.5 bg-surface-container-low text-on-surface text-[11px] font-bold uppercase tracking-wider rounded px-2.5 py-1 border border-outline-variant/20 hover:border-outline-variant/40 transition-colors"
+              >
+                <span className="text-sm">{MODE_OPTIONS.find(m => m.id === editorMode)?.emoji}</span>
+                {MODE_OPTIONS.find(m => m.id === editorMode)?.label}
+                <span className="material-symbols-outlined text-[12px] text-on-surface/40 ml-0.5">expand_more</span>
+              </button>
+
+              {dropdownOpen && (
+                <div className="absolute top-full right-0 mt-1 w-64 bg-surface border border-outline-variant/20 rounded-xl shadow-2xl overflow-hidden z-50">
+                  {MODE_OPTIONS.map(opt => (
+                    <button
+                      key={opt.id}
+                      onClick={() => handleModeChange(opt.id)}
+                      className={`w-full text-left px-4 py-3 hover:bg-surface-container transition-colors flex items-start gap-3 ${editorMode === opt.id ? 'bg-primary/5' : ''}`}
+                    >
+                      <span className="text-lg mt-0.5">{opt.emoji}</span>
+                      <div>
+                        <div className={`text-sm font-bold ${editorMode === opt.id ? 'text-primary' : 'text-on-surface'}`}>
+                          {opt.label}
+                        </div>
+                        <div className="text-[11px] text-on-surface-variant leading-tight mt-0.5">{opt.desc}</div>
+                      </div>
+                      {editorMode === opt.id && (
+                        <span className="material-symbols-outlined text-primary text-[16px] ml-auto mt-1">check</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* View mode buttons (preview tab) */}
+          {rightTab === 'preview' && (
+            <div className="hidden md:flex items-center gap-0.5">
+              <button
+                onClick={() => setViewMode('desktop')}
+                title="桌面"
+                className={`material-symbols-outlined text-[16px] p-1 rounded transition-colors ${viewMode === 'desktop' ? 'text-primary' : 'text-on-surface/40 hover:text-primary'}`}
+              >desktop_windows</button>
+              <button
+                onClick={() => setViewMode('mobile')}
+                title="手機"
+                className={`material-symbols-outlined text-[16px] p-1 rounded transition-colors ${viewMode === 'mobile' ? 'text-primary' : 'text-on-surface/40 hover:text-primary'}`}
+              >smartphone</button>
+            </div>
+          )}
+
+          {/* API Guide info button */}
+          <button
+            onClick={() => setShowApiGuidePopup(!showApiGuidePopup)}
+            title="BeaverKit API 說明"
+            className="material-symbols-outlined text-[15px] p-1 rounded transition-colors text-on-surface/30 hover:text-primary hidden md:inline-flex"
+          >info</button>
+
+          {/* Publish */}
           <button
             onClick={handlePublish}
             disabled={isPublishing || !title || !previewDoc || !currentUser?.id}
-            className="bg-gradient-to-br from-primary to-primary-container text-on-primary px-5 py-1.5 rounded-lg text-sm font-bold active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed group relative flex items-center gap-2"
+            className="bg-gradient-to-br from-primary to-primary-container text-on-primary px-4 py-1 rounded-lg text-xs font-bold active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed group relative flex items-center gap-1.5"
           >
             {isPublishing ? 'Publishing...' : 'Publish'}
             {!currentUser?.id && (
@@ -702,151 +850,6 @@ ${currentCode || '（尚無程式碼）'}
 
         {/* ── Right Column: Code + Preview ── */}
         <section className={`${mobileTab === 'chat' ? 'hidden' : 'flex'} md:flex flex-1 flex-col bg-surface overflow-hidden`}>
-
-          {/* Tab Bar — single bar with tabs + controls */}
-          <div className="h-9 bg-surface-container-low border-b border-outline-variant/10 flex items-center px-2 shrink-0">
-            {/* Code / Preview tabs */}
-            <button
-              onClick={() => setRightTab('code')}
-              className={`px-3 h-full text-xs font-bold flex items-center gap-1.5 border-b-2 transition-colors ${rightTab === 'code'
-                ? 'text-primary border-primary'
-                : 'text-on-surface/40 border-transparent hover:text-on-surface/70'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[14px]">code</span>
-              程式碼
-            </button>
-            <button
-              onClick={() => setRightTab('preview')}
-              className={`px-3 h-full text-xs font-bold flex items-center gap-1.5 border-b-2 transition-colors ${rightTab === 'preview'
-                ? 'text-primary border-primary'
-                : 'text-on-surface/40 border-transparent hover:text-on-surface/70'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[14px]">preview</span>
-              預覽
-            </button>
-
-            {/* Split mode file tabs (inline, code tab only) */}
-            {rightTab === 'code' && isSplitMode && (
-              <>
-                <div className="w-px h-4 bg-outline-variant/15 mx-1.5"></div>
-                {tabs.map(tab => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`px-2.5 h-full text-[11px] font-medium flex items-center gap-1 transition-colors ${activeTab === tab.id
-                      ? 'text-primary'
-                      : 'text-on-surface/30 hover:text-on-surface/60'
-                    }`}
-                  >
-                    <span className="material-symbols-outlined text-[12px]">{tab.icon}</span>
-                    {tab.label}
-                  </button>
-                ))}
-              </>
-            )}
-
-            {/* Right-side controls */}
-            <div className="ml-auto flex items-center gap-1">
-              {/* Visibility dropdown */}
-              <div className="relative" ref={visibilityDropdownRef}>
-                <button
-                  onClick={() => setVisibilityDropdownOpen(!visibilityDropdownOpen)}
-                  className="flex items-center gap-1 bg-surface-container-highest text-on-surface text-[11px] font-bold uppercase tracking-wider rounded px-2 py-1 border border-outline-variant/20 hover:border-outline-variant/40 transition-colors"
-                >
-                  <span className="material-symbols-outlined text-[12px]">
-                    {{ public: 'public', unlisted: 'link', private: 'lock' }[visibility]}
-                  </span>
-                  {{ public: 'Public', unlisted: 'Unlisted', private: 'Private' }[visibility]}
-                  <span className="material-symbols-outlined text-[10px] text-on-surface/40">expand_more</span>
-                </button>
-                {visibilityDropdownOpen && (
-                  <div className="absolute top-full right-0 mt-1 w-40 bg-surface border border-outline-variant/20 rounded-xl shadow-2xl overflow-hidden z-50">
-                    {(['public', 'unlisted', 'private'] as const).map(v => {
-                      const icons = { public: 'public', unlisted: 'link', private: 'lock' };
-                      const labels = { public: 'Public', unlisted: 'Unlisted', private: 'Private' };
-                      const descs = { public: '所有人可見', unlisted: '僅透過連結', private: '僅自己可見' };
-                      return (
-                        <button
-                          key={v}
-                          onClick={() => { setVisibility(v); setVisibilityDropdownOpen(false); }}
-                          className={`w-full text-left px-3 py-2.5 hover:bg-surface-container transition-colors flex items-center gap-2.5 ${visibility === v ? 'bg-primary/5' : ''}`}
-                        >
-                          <span className={`material-symbols-outlined text-[14px] ${visibility === v ? 'text-primary' : 'text-on-surface/50'}`}>{icons[v]}</span>
-                          <div>
-                            <div className={`text-xs font-bold ${visibility === v ? 'text-primary' : 'text-on-surface'}`}>{labels[v]}</div>
-                            <div className="text-[10px] text-on-surface-variant leading-tight">{descs[v]}</div>
-                          </div>
-                          {visibility === v && <span className="material-symbols-outlined text-primary text-[14px] ml-auto">check</span>}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Mode dropdown (code tab) */}
-              {rightTab === 'code' && (
-                <div className="relative flex items-center" ref={dropdownRef}>
-                  <button
-                    onClick={() => setDropdownOpen(!dropdownOpen)}
-                    className="flex items-center gap-1.5 bg-surface-container-highest text-on-surface text-[11px] font-bold uppercase tracking-wider rounded px-2.5 py-1 border border-outline-variant/20 hover:border-outline-variant/40 transition-colors"
-                  >
-                    <span className="text-sm">{MODE_OPTIONS.find(m => m.id === editorMode)?.emoji}</span>
-                    {MODE_OPTIONS.find(m => m.id === editorMode)?.label}
-                    <span className="material-symbols-outlined text-[12px] text-on-surface/40 ml-0.5">expand_more</span>
-                  </button>
-
-                  {dropdownOpen && (
-                    <div className="absolute top-full right-0 mt-1 w-64 bg-surface border border-outline-variant/20 rounded-xl shadow-2xl overflow-hidden z-50">
-                      {MODE_OPTIONS.map(opt => (
-                        <button
-                          key={opt.id}
-                          onClick={() => handleModeChange(opt.id)}
-                          className={`w-full text-left px-4 py-3 hover:bg-surface-container transition-colors flex items-start gap-3 ${editorMode === opt.id ? 'bg-primary/5' : ''}`}
-                        >
-                          <span className="text-lg mt-0.5">{opt.emoji}</span>
-                          <div>
-                            <div className={`text-sm font-bold ${editorMode === opt.id ? 'text-primary' : 'text-on-surface'}`}>
-                              {opt.label}
-                            </div>
-                            <div className="text-[11px] text-on-surface-variant leading-tight mt-0.5">{opt.desc}</div>
-                          </div>
-                          {editorMode === opt.id && (
-                            <span className="material-symbols-outlined text-primary text-[16px] ml-auto mt-1">check</span>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* View mode buttons (preview tab) */}
-              {rightTab === 'preview' && (
-                <>
-                  <button
-                    onClick={() => setViewMode('desktop')}
-                    title="桌面"
-                    className={`material-symbols-outlined text-[18px] p-1 rounded transition-colors ${viewMode === 'desktop' ? 'text-primary' : 'text-on-surface/40 hover:text-primary'}`}
-                  >desktop_windows</button>
-                  <button
-                    onClick={() => setViewMode('mobile')}
-                    title="手機"
-                    className={`material-symbols-outlined text-[18px] p-1 rounded transition-colors ${viewMode === 'mobile' ? 'text-primary' : 'text-on-surface/40 hover:text-primary'}`}
-                  >smartphone</button>
-                </>
-              )}
-
-              {/* API Guide info button */}
-              <button
-                onClick={() => setShowApiGuidePopup(!showApiGuidePopup)}
-                title="BeaverKit API 說明"
-                className="material-symbols-outlined text-[16px] p-1 rounded transition-colors text-on-surface/30 hover:text-primary"
-              >info</button>
-            </div>
-          </div>
 
           {/* ── Code Editor ── */}
           {rightTab === 'code' && (
