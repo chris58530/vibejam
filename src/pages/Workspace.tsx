@@ -665,11 +665,11 @@ ${currentCode || '（尚無程式碼）'}
       </div>
 
       {/* ── Split Pane ── */}
-      <div ref={splitContainerRef} className="flex-1 flex overflow-hidden flex-col md:flex-row relative">
+      <div ref={splitContainerRef} className="flex-1 flex overflow-hidden flex-col md:flex-row relative md:p-3 md:gap-3">
 
         {/* ── Left Column: AI Chat (full height) ── */}
         <div
-          className={`${mobileTab !== 'chat' ? 'hidden' : 'flex'} md:flex w-full flex-col border-r border-outline-variant/10 bg-surface-container-low shrink-0 relative group transition-all duration-300 ${!isAiSidebarOpen ? 'md:hidden' : ''}`}
+          className={`${mobileTab !== 'chat' ? 'hidden' : 'flex'} md:flex w-full flex-col bg-surface-container-low shrink-0 relative group transition-all duration-300 md:rounded-xl md:border md:border-outline-variant/8 md:shadow-xl ${!isAiSidebarOpen ? 'md:hidden' : ''}`}
           style={{ width: `${splitPercent}%`, minWidth: '280px' }}
         >
 
@@ -678,49 +678,52 @@ ${currentCode || '（尚無程式碼）'}
             <span className="material-symbols-outlined text-[14px]">chevron_left</span>
           </button>
           {/* AI Assistant Header */}
-          <div className="px-4 py-3 border-b border-outline-variant/5 text-on-surface/80 font-medium text-sm flex items-center gap-2 shrink-0">
-            <span>✨</span> AI 助手
+          <div className="px-4 py-3 border-b border-outline-variant/5 text-on-surface/80 font-semibold text-sm flex items-center gap-2 shrink-0">
+            <span className="text-base">✨</span>
+            <span>AI 助手</span>
           </div>
           {/* Provider + Model Selector */}
           {activeChatProviders.length > 0 ? (
-            <div className="px-4 py-2 border-b border-outline-variant/10 flex flex-wrap items-center gap-2 shrink-0">
-              {activeChatProviders.map(p => (
-                <button
-                  key={p}
-                  onClick={() => setSelectedProvider(p)}
-                  className={`px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider transition-colors ${selectedProvider === p
-                    ? 'bg-primary text-on-primary'
-                    : 'bg-surface-container-high text-on-surface/50 hover:text-on-surface'
-                    }`}
+            <div className="px-3 py-2 border-b border-outline-variant/5 flex items-center gap-2 shrink-0 bg-surface-container-lowest/50">
+              {/* Provider select */}
+              {activeChatProviders.length > 1 ? (
+                <select
+                  value={selectedProvider}
+                  onChange={(e) => setSelectedProvider(e.target.value)}
+                  className="bg-surface-container-high text-on-surface text-[11px] font-medium rounded-lg px-2 py-1 border border-outline-variant/10 focus:outline-none focus:ring-1 focus:ring-primary/40 cursor-pointer"
                 >
-                  {CHAT_PROVIDER_LABEL[p]}
-                </button>
-              ))}
+                  {activeChatProviders.map(p => (
+                    <option key={p} value={p}>{CHAT_PROVIDER_LABEL[p]}</option>
+                  ))}
+                </select>
+              ) : (
+                <span className="px-2 py-1 bg-primary/10 text-primary text-[11px] font-semibold rounded-lg border border-primary/15">
+                  {CHAT_PROVIDER_LABEL[activeChatProviders[0]]}
+                </span>
+              )}
+              {/* Model select */}
               {selectedProvider && AI_PROVIDER_MODELS[selectedProvider as ChatProvider] && (
-                <div className="flex items-center gap-1 bg-surface-container-high rounded-full pl-2 pr-1 py-0.5 border border-outline-variant/10">
-                  <span className="material-symbols-outlined text-[12px] text-on-surface-variant">model_training</span>
-                  <select
-                    value={selectedModel}
-                    onChange={(e) => setSelectedModel(e.target.value)}
-                    className="bg-transparent text-[10px] font-mono font-bold text-on-surface focus:outline-none max-w-[120px]"
-                  >
-                    {AI_PROVIDER_MODELS[selectedProvider as ChatProvider]!.map(m => (
-                      <option key={m.id} value={m.id}>{m.label}</option>
-                    ))}
-                  </select>
-                </div>
+                <select
+                  value={selectedModel}
+                  onChange={(e) => setSelectedModel(e.target.value)}
+                  className="flex-1 bg-surface-container-high text-on-surface/70 text-[11px] rounded-lg px-2 py-1 border border-outline-variant/10 focus:outline-none focus:ring-1 focus:ring-primary/40 cursor-pointer truncate"
+                >
+                  {AI_PROVIDER_MODELS[selectedProvider as ChatProvider]!.map(m => (
+                    <option key={m.id} value={m.id}>{m.label}</option>
+                  ))}
+                </select>
               )}
               {selectedProvider && limit > 0 && (
-                <span className="ml-auto text-[10px] font-mono text-on-surface/30">
+                <span className="text-[10px] font-mono text-on-surface/30 shrink-0">
                   {todayUsage}/{limit}
                 </span>
               )}
             </div>
           ) : (
-            <div className="px-4 py-2 border-b border-outline-variant/10 shrink-0">
+            <div className="px-4 py-2 border-b border-outline-variant/5 shrink-0 bg-surface-container-lowest/50">
               <p className="text-[10px] font-mono text-on-surface/30 uppercase tracking-widest">
-                <span className="material-symbols-outlined text-[11px] mr-1 align-middle">smart_toy</span>
-                AI Chat — 請先至設定頁面輸入 API Key
+                <span className="material-symbols-outlined text-[11px] mr-1 align-middle">key</span>
+                請先設定 AI API Key
               </p>
             </div>
           )}
@@ -758,9 +761,9 @@ ${currentCode || '（尚無程式碼）'}
 
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[88%] rounded-2xl px-3 py-2 text-xs whitespace-pre-wrap ${msg.role === 'user'
-                  ? 'bg-primary text-on-primary rounded-br-md'
-                  : 'bg-surface-container-high text-on-surface rounded-bl-md'
+                <div className={`max-w-[88%] rounded-2xl px-3 py-2.5 text-xs whitespace-pre-wrap leading-relaxed border ${msg.role === 'user'
+                  ? 'bg-primary text-on-primary rounded-br-none border-primary/30 shadow-sm'
+                  : 'bg-surface-container-high text-on-surface rounded-tl-none border-outline-variant/5 shadow-sm'
                   }`}>
                   {msg.role === 'assistant' ? formatAssistantMessage(msg.content) : msg.content}
                 </div>
@@ -769,7 +772,7 @@ ${currentCode || '（尚無程式碼）'}
 
             {aiLoading && (
               <div className="flex justify-start">
-                <div className="bg-surface-container-high rounded-2xl rounded-bl-md px-3 py-2">
+                <div className="bg-surface-container-high rounded-2xl rounded-tl-none px-3 py-2.5 border border-outline-variant/5 shadow-sm">
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs font-mono thinking-shimmer-text">thinking</span>
                     <span className="flex items-end gap-[3px]">
@@ -808,16 +811,16 @@ ${currentCode || '（尚無程式碼）'}
           )}
           {/* Input Area */}
           {hasActiveProvider && (
-            <div className="p-3 border-t border-outline-variant/10 bg-surface-container-lowest shrink-0">
-              <div className="flex items-end gap-2">
+            <div className="p-3 border-t border-outline-variant/5 shrink-0">
+              <div className="flex items-end bg-background border border-outline-variant/15 rounded-xl shadow-inner overflow-hidden">
                 <textarea
                   ref={aiInputRef}
                   value={aiInput}
                   onChange={e => setAiInput(e.target.value)}
                   onKeyDown={handleAiKeyDown}
                   rows={1}
-                  placeholder="描述你想要的功能或修改..."
-                  className="flex-1 bg-surface-container-high text-on-surface text-xs rounded-xl px-3 py-2.5 resize-none outline-none focus:ring-2 focus:ring-primary/30 transition-shadow placeholder:text-on-surface/30"
+                  placeholder="輸入需求..."
+                  className="flex-1 bg-transparent text-on-surface text-xs px-3 py-2.5 resize-none outline-none placeholder:text-on-surface/30"
                   style={{ maxHeight: '80px', overflowY: 'auto' }}
                   onInput={(e) => {
                     const target = e.target as HTMLTextAreaElement;
@@ -828,9 +831,9 @@ ${currentCode || '（尚無程式碼）'}
                 <button
                   onClick={handleAiSend}
                   disabled={!aiInput.trim() || aiLoading}
-                  className="w-8 h-8 bg-primary text-on-primary rounded-xl flex items-center justify-center hover:bg-primary-fixed transition-colors disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
+                  className="w-9 h-9 m-1 bg-primary text-on-primary rounded-lg flex items-center justify-center hover:bg-primary-fixed transition-colors disabled:opacity-30 disabled:cursor-not-allowed shrink-0 shadow-md"
                 >
-                  <span className="material-symbols-outlined text-[14px]">send</span>
+                  <span className="material-symbols-outlined text-[15px]">arrow_upward</span>
                 </button>
               </div>
             </div>
@@ -857,7 +860,7 @@ ${currentCode || '（尚無程式碼）'}
         )}
 
         {/* ── Right Column: Code + Preview ── */}
-        <section className={`${mobileTab === 'chat' ? 'hidden' : 'flex'} md:flex flex-1 flex-col bg-surface overflow-hidden relative`}>
+        <section className={`${mobileTab === 'chat' ? 'hidden' : 'flex'} md:flex flex-1 flex-col bg-background overflow-hidden relative md:rounded-xl md:border md:border-outline-variant/8 md:shadow-xl`}>
 
           {/* ── Floating Tab Toggle (Canvas Style) ── */}
           <div className="hidden md:flex absolute top-4 left-1/2 -translate-x-1/2 z-20 bg-surface-container p-1 rounded-lg border border-outline-variant/10 shadow-xl">
