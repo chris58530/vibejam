@@ -90,6 +90,16 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
 
   // API 說明面板
   const [showApiGuide, setShowApiGuide] = useState(false);
+  const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(true);
+  const [isManualEditMode, setIsManualEditMode] = useState(false);
+  const [highlightEditBtn, setHighlightEditBtn] = useState(false);
+  
+  const handleEditorClick = () => {
+    if (!isManualEditMode) {
+      setHighlightEditBtn(true);
+      setTimeout(() => setHighlightEditBtn(false), 1000);
+    }
+  };
 
   // ── 存檔 ───────────────────────────────────────────────────────────
   const [saves, setSaves] = useState<SaveSlot[]>([]);
@@ -290,7 +300,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
   useEffect(() => {
     setPublishFn(handlePublish);
     return () => setPublishFn(null);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title, previewDoc, currentUser]);
 
   // ── 存檔操作 ─────────────────────────────────────────────────────
@@ -371,7 +381,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
         setSelectedProvider(activeChatProviders[0]);
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aiInitialized, JSON.stringify(activeChatProviders)]);
 
   useEffect(() => {
@@ -405,8 +415,8 @@ ${currentCode || '（尚無程式碼）'}
 使用繁體中文回答。`,
   });
 
-  const handleAiSend = async () => {
-    const text = aiInput.trim();
+  const handleAiSend = async (overrideText?: string | React.MouseEvent) => {
+    const text = (typeof overrideText === "string" ? overrideText : aiInput).trim();
     if (!text || aiLoading || !selectedProvider) return;
 
     setAiError('');
@@ -473,6 +483,13 @@ ${currentCode || '（尚無程式碼）'}
   };
 
   const hasActiveProvider = !!selectedProvider;
+  
+  const PRESET_PROMPTS = [
+    { icon: 'palette', text: '把顏色改成藍色' },
+    { icon: 'person', text: '加上我的名字' },
+    { icon: 'speed', text: '速度加快兩倍' },
+    { icon: 'dark_mode', text: '改成紫色主題' }
+  ];
   const todayUsage = selectedProvider ? getUsage(selectedProvider as ChatProvider) : 0;
   const limit = selectedProvider ? (dailyLimits[selectedProvider] || 0) : 0;
 
@@ -513,7 +530,7 @@ ${currentCode || '（尚無程式碼）'}
             className={`px-2.5 py-1 text-[11px] font-bold flex items-center gap-1 rounded transition-colors ${rightTab === 'code'
               ? 'text-primary bg-primary/5'
               : 'text-on-surface/40 hover:text-on-surface/70'
-            }`}
+              }`}
           >
             <span className="material-symbols-outlined text-[13px]">code</span>
             程式碼
@@ -523,32 +540,14 @@ ${currentCode || '（尚無程式碼）'}
             className={`px-2.5 py-1 text-[11px] font-bold flex items-center gap-1 rounded transition-colors ${rightTab === 'preview'
               ? 'text-primary bg-primary/5'
               : 'text-on-surface/40 hover:text-on-surface/70'
-            }`}
+              }`}
           >
             <span className="material-symbols-outlined text-[13px]">preview</span>
             預覽
           </button>
         </div>
 
-        {/* Split mode file tabs (inline) */}
-        {rightTab === 'code' && isSplitMode && (
-          <div className="hidden md:flex items-center gap-0.5">
-            <div className="w-px h-4 bg-outline-variant/15 mx-1"></div>
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-2 py-1 text-[11px] font-medium flex items-center gap-1 rounded transition-colors ${activeTab === tab.id
-                  ? 'text-primary bg-primary/5'
-                  : 'text-on-surface/30 hover:text-on-surface/60'
-                }`}
-              >
-                <span className="material-symbols-outlined text-[12px]">{tab.icon}</span>
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        )}
+        
 
         {/* Right controls */}
         <div className="ml-auto flex items-center gap-1.5">
@@ -695,10 +694,14 @@ ${currentCode || '（尚無程式碼）'}
 
         {/* ── Left Column: AI Chat (full height) ── */}
         <div
-          className={`${mobileTab !== 'chat' ? 'hidden' : 'flex'} md:flex w-full flex-col border-r border-outline-variant/10 bg-surface-container-low shrink-0`}
+          className={`${mobileTab !== 'chat' ? 'hidden' : 'flex'} md:flex w-full flex-col border-r border-outline-variant/10 bg-surface-container-low shrink-0 relative group transition-all duration-300 ${!isAiSidebarOpen ? 'md:hidden' : ''}`}
           style={{ width: `${splitPercent}%`, minWidth: '280px' }}
         >
 
+          {/* Close Sidebar Button */}
+          <button onClick={() => setIsAiSidebarOpen(false)} className="absolute -right-3 top-4 w-6 h-6 bg-surface-container border border-outline-variant rounded-full hidden md:flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-variant z-20 transition-all shadow-md opacity-0 group-hover:opacity-100" title="收合側邊欄">
+            <span className="material-symbols-outlined text-[14px]">chevron_left</span>
+          </button>
           {/* Provider + Model Selector */}
           {activeChatProviders.length > 0 ? (
             <div className="px-4 py-2 border-b border-outline-variant/10 flex flex-wrap items-center gap-2 shrink-0">
@@ -809,6 +812,21 @@ ${currentCode || '（尚無程式碼）'}
             <div ref={messagesEndRef} />
           </div>
 
+          {/* Preset Prompts */}
+          {hasActiveProvider && messages.length === 0 && (
+            <div className="px-3 pb-2 flex items-center gap-2 overflow-x-auto hide-scrollbar shrink-0">
+              {PRESET_PROMPTS.map((p, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleAiSend(p.text)}
+                  className="whitespace-nowrap px-3 py-1.5 bg-surface-container rounded-full border border-outline-variant/10 text-on-surface/60 text-[11px] hover:text-on-surface hover:border-primary/30 transition-colors flex items-center gap-1.5"
+                >
+                  <span className="material-symbols-outlined text-[12px]">{p.icon}</span>
+                  {p.text}
+                </button>
+              ))}
+            </div>
+          )}
           {/* Input Area */}
           {hasActiveProvider && (
             <div className="p-3 border-t border-outline-variant/10 bg-surface-container-lowest shrink-0">
@@ -853,19 +871,27 @@ ${currentCode || '（尚無程式碼）'}
 
           {/* ── Code Editor ── */}
           {rightTab === 'code' && (
-            <div className="flex-1 flex flex-col overflow-hidden bg-surface-container-lowest">
-              {/* Filename label (non-split mode only) */}
-              {!isSplitMode && (
-                <div className="flex bg-surface-container-low px-2 border-b border-outline-variant/10 shrink-0">
-                  <div className="px-3 py-1 text-primary text-[11px] font-medium flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[12px]">{isReactMode ? 'code' : isVueMode ? 'code' : 'html'}</span>
-                    {isReactMode ? 'Component.jsx' : isVueMode ? 'Component.vue' : 'index.html'}
-                  </div>
+            <div className="flex-1 flex flex-col overflow-hidden bg-background">
+              <div className="flex items-center justify-between bg-[#1e1e1e] border-b border-outline-variant/10 px-4 h-10 shrink-0 select-none mt-14 md:mt-20 mx-4 md:mx-6 rounded-t-xl overflow-hidden shadow-sm">
+                <div className="flex bg-[#1e1e1e] text-xs h-full">
+                  {!isSplitMode ? (
+                    <div className="px-4 h-full flex items-center gap-2 border-b-2 border-primary bg-[#1e1e1e] text-on-surface font-medium">
+                      <span className="material-symbols-outlined text-[14px] text-primary">{isReactMode ? 'code' : isVueMode ? 'code' : 'html'}</span>
+                      {isReactMode ? 'App.jsx' : isVueMode ? 'App.vue' : 'index.html'}
+                    </div>
+                  ) : tabs.map(tab => (
+                    <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`px-4 h-full flex items-center gap-1.5 transition-colors border-b-2 ${activeTab === tab.id ? 'border-primary text-on-surface font-medium bg-[#252526]' : 'border-transparent text-on-surface-variant hover:bg-[#252526]'}`}><span className="material-symbols-outlined text-[13px]">{tab.icon}</span>{tab.label}</button>
+                  ))}
                 </div>
-              )}
+                <div className="flex items-center gap-2">
+                  <button onClick={() => { setIsManualEditMode(!isManualEditMode); setHighlightEditBtn(false); }} className={`flex items-center gap-1 px-2.5 py-1 rounded transition-all duration-300 ${isManualEditMode ? 'bg-primary/20 text-primary font-bold shadow-sm' : 'text-on-surface-variant hover:text-on-surface hover:bg-white/5'} ${highlightEditBtn ? 'bg-yellow-500/20 text-yellow-300 ring-2 ring-yellow-500/50 scale-105' : ''}`} title={isManualEditMode ? '切換回保護模式' : '開啟手動編輯 (防呆)'}><span className="material-symbols-outlined text-[14px]">{isManualEditMode ? 'edit' : 'edit_off'}</span><span className="text-[11px]">{isManualEditMode ? '編輯中' : '唯讀保護'}</span></button>
+                </div>
+              </div>
+              {/* Filename label (non-split mode only) */}
+              
 
               {/* Textarea */}
-              <div className="flex-1 p-0 font-mono text-sm leading-relaxed editor-well overflow-hidden flex relative group cursor-text">
+              <div className="flex-1 font-mono text-sm leading-relaxed editor-well overflow-hidden flex relative group cursor-text mb-4 mx-4 md:mx-6 rounded-b-xl border border-outline-variant/10 bg-[#1e1e1e] shadow-lg" onClick={handleEditorClick}>
                 <div className="absolute left-0 top-0 bottom-0 w-8 bg-surface-container-lowest border-r border-outline-variant/5 text-right py-4 pr-2 text-on-surface/20 select-none hidden sm:block">
                   {currentCode.split('\n').map((_, i) => (
                     <div key={i}>{i + 1}</div>
@@ -893,7 +919,7 @@ ${currentCode || '（尚無程式碼）'}
 
           {/* ── Preview ── */}
           {rightTab === 'preview' && (
-            <div className="flex-1 px-4 pb-4 md:px-6 md:pb-6 bg-surface-container flex items-center justify-center overflow-hidden">
+            <div className="flex-1 px-4 pb-4 md:px-6 md:pb-6 bg-background flex items-center justify-center overflow-hidden mt-14 md:mt-20">
               {viewMode === 'round' ? (
                 <div className="flex items-center justify-center w-full h-full">
                   <div className="relative" style={{ width: '320px', height: '320px' }}>

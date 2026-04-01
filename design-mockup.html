@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas Concept Preview</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        newBg: '#09090b', // zinc-950
+                        newSurface: '#18181b', // zinc-900
+                        newPrimary: '#6366f1', // indigo-500
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-800 text-white p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-4">Workspace UI - Canvas 模式 (分頁切換) 預覽</h1>
+        <p class="text-gray-300 mb-8">這展示了「左側 AI 可收合 + 右側大畫布 Code/Preview 切換」的現代概念。</p>
+
+        <div class="border-4 border-dashed border-indigo-500/50 p-2 rounded-xl">
+            <div class="bg-newBg h-[600px] flex flex-col font-sans text-sm border border-white/10 rounded-xl overflow-hidden shadow-2xl">
+                
+                <!-- Navbar (Clean) -->
+                <div class="h-14 bg-newBg border-b border-white/10 flex items-center px-4 justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-md bg-white/5 border border-white/10 flex items-center justify-center text-newPrimary font-bold shadow-sm">B</div>
+                        <div class="font-medium text-gray-200">My Vibe Project <span class="text-gray-500 ml-1 text-xs">✎</span></div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button class="text-gray-400 hover:text-white px-2 py-1 text-sm border border-transparent hover:border-white/10 rounded-md transition-colors">設定 ▼</button>
+                        <button class="bg-newPrimary hover:bg-indigo-400 text-white px-4 py-1.5 rounded-md font-medium text-sm transition-colors shadow-lg shadow-indigo-500/20">發布</button>
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 border border-white/10"></div>
+                    </div>
+                </div>
+
+                <!-- Main Layout -->
+                <div class="flex flex-1 overflow-hidden p-3 gap-3">
+                    
+                    <!-- Left: AI Assistant -->
+                    <div class="w-80 bg-newSurface border border-white/5 rounded-xl flex flex-col shadow-lg relative group">
+                        <div class="absolute -right-3 top-4 w-6 h-6 bg-newSurface border border-white/10 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 z-10 opacity-0 group-hover:opacity-100 transition-all shadow-md cursor-pointer" title="收合側邊欄">◀</div>
+                        <div class="p-3 border-b border-white/5 text-gray-300 font-medium">✨ AI 助手</div>
+                        <div class="flex-1 p-4 text-gray-400 overflow-y-auto">
+                            <div class="bg-white/5 rounded-2xl rounded-tl-none p-3 text-sm text-gray-200 max-w-[90%] border border-white/5 shadow-sm">
+                                我們現在使用 Canvas 模式了！你可以用上方的大 Tabs 來切換 Code 和 Preview。
+                            </div>
+                        </div>
+                        <div class="p-3">
+                            <div class="bg-newBg border border-white/10 rounded-xl p-1 flex shadow-inner">
+                                <input type="text" class="flex-1 bg-transparent border-none outline-none px-3 text-gray-200 placeholder-gray-600 text-sm" placeholder="輸入需求...">
+                                <button class="bg-newPrimary text-white w-8 h-8 rounded-lg flex items-center justify-center shadow-md hover:bg-indigo-400 transition-colors">→</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Canvas Area (Code / Preview Tabs) -->
+                    <div class="flex-1 flex flex-col min-w-0 bg-newBg relative">
+                        <!-- Floating Tab Toggle (Canvas Style) -->
+                        <div class="absolute top-4 left-1/2 -translate-x-1/2 z-10 flex bg-newSurface p-1 rounded-lg border border-white/10 shadow-xl">
+                            <!-- Active Tab -->
+                            <button class="px-6 py-1.5 rounded-md bg-white/10 text-white font-medium text-sm flex items-center gap-2 shadow-sm">
+                                💻 Code
+                            </button>
+                            <!-- Inactive Tab -->
+                            <button class="px-6 py-1.5 rounded-md text-gray-400 hover:text-gray-200 font-medium text-sm flex items-center gap-2 transition-colors">
+                                👁️ Preview
+                            </button>
+                        </div>
+
+                        <!-- Content Area (Currently showing Code) -->
+                        <div class="flex-1 bg-[#1e1e1e] border border-white/5 rounded-xl flex flex-col overflow-hidden shadow-lg mt-14">
+                            <div class="flex bg-[#18181b] border-b border-white/5 text-xs">
+                                <div class="px-4 py-2 border-t-2 border-newPrimary bg-[#1e1e1e] text-white">App.tsx</div>
+                                <div class="px-4 py-2 border-t-2 border-transparent text-gray-500">tailwind.config.js</div>
+                            </div>
+                            <div class="flex-1 p-6 font-mono text-gray-300 bg-[#1e1e1e] text-sm leading-relaxed">
+                                <div class="text-gray-500 mb-4">// 完全無干擾的編輯空間</div>
+                                <div class="text-blue-400">export default function <span class="text-yellow-200">App</span>() {</div>
+                                <div class="pl-4">return (</div>
+                                <div class="pl-8 text-gray-400">&lt;div className="<span class="text-green-300">h-screen flex items-center justify-center flex-col</span>"&gt;</div>
+                                <div class="pl-12 text-white text-lg">&lt;h1&gt;Canvas 模式超棒！&lt;/h1&gt;</div>
+                                <div class="pl-8 text-gray-400">&lt;/div&gt;</div>
+                                <div class="pl-4">);</div>
+                                <div>}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

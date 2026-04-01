@@ -3,39 +3,92 @@
 @tailwind utilities;
 
 @keyframes slideDown {
-  from { opacity: 0; transform: translate(-50%, -12px); }
-  to { opacity: 1; transform: translate(-50%, 0); }
+  from {
+    opacity: 0;
+    transform: translate(-50%, -12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 }
 
 @keyframes thinking-shimmer {
-  0% { background-position: -300% center; }
-  100% { background-position: 300% center; }
+  0% {
+    background-position: -300% center;
+  }
+
+  100% {
+    background-position: 300% center;
+  }
 }
 
 @keyframes thinking-dot-wave {
-  0%, 60%, 100% { transform: translateY(0); opacity: 0.3; }
-  30% { transform: translateY(-10px); opacity: 1; }
+
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.3;
+  }
+
+  30% {
+    transform: translateY(-10px);
+    opacity: 1;
+  }
 }
 
 @keyframes thinking-float {
-  0%, 100% { transform: translateY(0px) rotate(-1deg); }
-  50% { transform: translateY(-12px) rotate(1deg); }
+
+  0%,
+  100% {
+    transform: translateY(0px) rotate(-1deg);
+  }
+
+  50% {
+    transform: translateY(-12px) rotate(1deg);
+  }
 }
 
 @keyframes thinking-msg-in {
-  0% { opacity: 0; transform: translateY(10px); }
-  15%, 85% { opacity: 1; transform: translateY(0); }
-  100% { opacity: 0; transform: translateY(-10px); }
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  15%,
+  85% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
 }
 
 @keyframes thinking-ring-spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes thinking-glow {
-  0%, 100% { text-shadow: 0 0 8px rgba(168,85,247,0.4), 0 0 20px rgba(99,102,241,0.2); }
-  50% { text-shadow: 0 0 16px rgba(236,72,153,0.7), 0 0 40px rgba(168,85,247,0.4); }
+
+  0%,
+  100% {
+    text-shadow: 0 0 8px rgba(168, 85, 247, 0.4), 0 0 20px rgba(99, 102, 241, 0.2);
+  }
+
+  50% {
+    text-shadow: 0 0 16px rgba(236, 72, 153, 0.7), 0 0 40px rgba(168, 85, 247, 0.4);
+  }
 }
 
 .thinking-shimmer-text {
@@ -50,9 +103,18 @@
 .thinking-dot {
   animation: thinking-dot-wave 1.5s ease-in-out infinite;
 }
-.thinking-dot:nth-child(1) { animation-delay: 0s; }
-.thinking-dot:nth-child(2) { animation-delay: 0.25s; }
-.thinking-dot:nth-child(3) { animation-delay: 0.5s; }
+
+.thinking-dot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.thinking-dot:nth-child(2) {
+  animation-delay: 0.25s;
+}
+
+.thinking-dot:nth-child(3) {
+  animation-delay: 0.5s;
+}
 
 .thinking-float {
   animation: thinking-float 3s ease-in-out infinite;
@@ -75,13 +137,16 @@
   width: 6px;
   height: 6px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: #2a2a2a;
   border-radius: 10px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: #353534;
 }
@@ -95,5 +160,11 @@
   box-shadow: 0 0 60px -15px rgba(239, 97, 111, 0.15);
 }
 
-.hide-scrollbar::-webkit-scrollbar { display: none; }
-.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
