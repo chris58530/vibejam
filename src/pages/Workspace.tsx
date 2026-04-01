@@ -520,32 +520,7 @@ ${currentCode || '（尚無程式碼）'}
           />
         </div>
 
-        {/* Separator */}
-        <div className="w-px h-5 bg-outline-variant/15 hidden md:block"></div>
-
-        {/* Right panel tabs (desktop only) */}
-        <div className="hidden md:flex items-center gap-0.5">
-          <button
-            onClick={() => setRightTab('code')}
-            className={`px-2.5 py-1 text-[11px] font-bold flex items-center gap-1 rounded transition-colors ${rightTab === 'code'
-              ? 'text-primary bg-primary/5'
-              : 'text-on-surface/40 hover:text-on-surface/70'
-              }`}
-          >
-            <span className="material-symbols-outlined text-[13px]">code</span>
-            程式碼
-          </button>
-          <button
-            onClick={() => setRightTab('preview')}
-            className={`px-2.5 py-1 text-[11px] font-bold flex items-center gap-1 rounded transition-colors ${rightTab === 'preview'
-              ? 'text-primary bg-primary/5'
-              : 'text-on-surface/40 hover:text-on-surface/70'
-              }`}
-          >
-            <span className="material-symbols-outlined text-[13px]">preview</span>
-            預覽
-          </button>
-        </div>
+        {/* Spacer - tabs moved to floating pill on canvas */}
 
         
 
@@ -690,7 +665,7 @@ ${currentCode || '（尚無程式碼）'}
       </div>
 
       {/* ── Split Pane ── */}
-      <div ref={splitContainerRef} className="flex-1 flex overflow-hidden flex-col md:flex-row">
+      <div ref={splitContainerRef} className="flex-1 flex overflow-hidden flex-col md:flex-row relative">
 
         {/* ── Left Column: AI Chat (full height) ── */}
         <div
@@ -699,9 +674,13 @@ ${currentCode || '（尚無程式碼）'}
         >
 
           {/* Close Sidebar Button */}
-          <button onClick={() => setIsAiSidebarOpen(false)} className="absolute -right-3 top-4 w-6 h-6 bg-surface-container border border-outline-variant rounded-full hidden md:flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-variant z-20 transition-all shadow-md opacity-0 group-hover:opacity-100" title="收合側邊欄">
+          <button onClick={() => setIsAiSidebarOpen(false)} className="absolute -right-3 top-4 w-6 h-6 bg-surface-container border border-outline-variant/20 rounded-full hidden md:flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-variant z-20 transition-all shadow-md opacity-0 group-hover:opacity-100" title="收合側邊欄">
             <span className="material-symbols-outlined text-[14px]">chevron_left</span>
           </button>
+          {/* AI Assistant Header */}
+          <div className="px-4 py-3 border-b border-outline-variant/5 text-on-surface/80 font-medium text-sm flex items-center gap-2 shrink-0">
+            <span>✨</span> AI 助手
+          </div>
           {/* Provider + Model Selector */}
           {activeChatProviders.length > 0 ? (
             <div className="px-4 py-2 border-b border-outline-variant/10 flex flex-wrap items-center gap-2 shrink-0">
@@ -866,13 +845,50 @@ ${currentCode || '（尚無程式碼）'}
           <div className="w-0.5 h-8 bg-outline-variant/20 rounded-full group-hover:bg-primary/40 group-active:bg-primary/60 transition-colors"></div>
         </div>
 
+        {/* ── AI Sidebar Reopen Button (when collapsed) ── */}
+        {!isAiSidebarOpen && (
+          <button
+            onClick={() => setIsAiSidebarOpen(true)}
+            className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-20 w-6 h-12 bg-surface-container border border-outline-variant/20 rounded-r-lg items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-variant transition-all shadow-md ml-0"
+            title="展開 AI 助手"
+          >
+            <span className="material-symbols-outlined text-[14px]">chevron_right</span>
+          </button>
+        )}
+
         {/* ── Right Column: Code + Preview ── */}
-        <section className={`${mobileTab === 'chat' ? 'hidden' : 'flex'} md:flex flex-1 flex-col bg-surface overflow-hidden`}>
+        <section className={`${mobileTab === 'chat' ? 'hidden' : 'flex'} md:flex flex-1 flex-col bg-surface overflow-hidden relative`}>
+
+          {/* ── Floating Tab Toggle (Canvas Style) ── */}
+          <div className="hidden md:flex absolute top-4 left-1/2 -translate-x-1/2 z-20 bg-surface-container p-1 rounded-lg border border-outline-variant/10 shadow-xl">
+            <button
+              onClick={() => setRightTab('code')}
+              className={`px-6 py-1.5 rounded-md font-medium text-sm flex items-center gap-2 transition-colors ${
+                rightTab === 'code'
+                  ? 'bg-white/10 text-on-surface shadow-sm'
+                  : 'text-on-surface/40 hover:text-on-surface/70'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">code</span>
+              Code
+            </button>
+            <button
+              onClick={() => setRightTab('preview')}
+              className={`px-6 py-1.5 rounded-md font-medium text-sm flex items-center gap-2 transition-colors ${
+                rightTab === 'preview'
+                  ? 'bg-white/10 text-on-surface shadow-sm'
+                  : 'text-on-surface/40 hover:text-on-surface/70'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">visibility</span>
+              Preview
+            </button>
+          </div>
 
           {/* ── Code Editor ── */}
           {rightTab === 'code' && (
             <div className="flex-1 flex flex-col overflow-hidden bg-background">
-              <div className="flex items-center justify-between bg-[#1e1e1e] border-b border-outline-variant/10 px-4 h-10 shrink-0 select-none mt-14 md:mt-20 mx-4 md:mx-6 rounded-t-xl overflow-hidden shadow-sm">
+              <div className="flex items-center justify-between bg-[#1e1e1e] border-b border-outline-variant/10 px-4 h-10 shrink-0 select-none mt-14 mx-4 md:mx-6 rounded-t-xl overflow-hidden shadow-sm">
                 <div className="flex bg-[#1e1e1e] text-xs h-full">
                   {!isSplitMode ? (
                     <div className="px-4 h-full flex items-center gap-2 border-b-2 border-primary bg-[#1e1e1e] text-on-surface font-medium">
@@ -919,7 +935,7 @@ ${currentCode || '（尚無程式碼）'}
 
           {/* ── Preview ── */}
           {rightTab === 'preview' && (
-            <div className="flex-1 px-4 pb-4 md:px-6 md:pb-6 bg-background flex items-center justify-center overflow-hidden mt-14 md:mt-20">
+            <div className="flex-1 px-4 pb-4 md:px-6 md:pb-6 bg-background flex items-center justify-center overflow-hidden mt-14">
               {viewMode === 'round' ? (
                 <div className="flex items-center justify-center w-full h-full">
                   <div className="relative" style={{ width: '320px', height: '320px' }}>
