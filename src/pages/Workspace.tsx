@@ -539,7 +539,7 @@ ${currentCode || '（尚無程式碼）'}
               <span className="material-symbols-outlined text-[10px] text-on-surface/40">expand_more</span>
             </button>
             {visibilityDropdownOpen && (
-              <div className="absolute top-full right-0 mt-1 w-40 bg-surface border border-outline-variant/20 rounded-xl shadow-2xl overflow-hidden z-50">
+              <div className="absolute top-full right-0 mt-1 w-40 bg-surface border border-white/5 rounded-xl shadow-2xl overflow-hidden z-50">
                 {(['public', 'unlisted', 'private'] as const).map(v => {
                   const icons = { public: 'public', unlisted: 'link', private: 'lock' };
                   const labels = { public: 'Public', unlisted: 'Unlisted', private: 'Private' };
@@ -576,7 +576,7 @@ ${currentCode || '（尚無程式碼）'}
               </button>
 
               {dropdownOpen && (
-                <div className="absolute top-full right-0 mt-1 w-64 bg-surface border border-outline-variant/20 rounded-xl shadow-2xl overflow-hidden z-50">
+                <div className="absolute top-full right-0 mt-1 w-64 bg-surface border border-white/5 rounded-xl shadow-2xl overflow-hidden z-50">
                   {MODE_OPTIONS.map(opt => (
                     <button
                       key={opt.id}
@@ -669,12 +669,12 @@ ${currentCode || '（尚無程式碼）'}
 
         {/* ── Left Column: AI Chat (full height) ── */}
         <div
-          className={`${mobileTab !== 'chat' ? 'hidden' : 'flex'} md:flex w-full flex-col bg-surface-container-low shrink-0 relative group transition-all duration-300 md:rounded-xl md:border md:border-outline-variant/8 md:shadow-xl ${!isAiSidebarOpen ? 'md:hidden' : ''}`}
+          className={`${mobileTab !== 'chat' ? 'hidden' : 'flex'} md:flex w-full flex-col bg-surface-container-low shrink-0 relative group transition-all duration-300 md:rounded-xl md:shadow-lg ${!isAiSidebarOpen ? 'md:hidden' : ''}`}
           style={{ width: `${splitPercent}%`, minWidth: '280px' }}
         >
 
           {/* Close Sidebar Button */}
-          <button onClick={() => setIsAiSidebarOpen(false)} className="absolute -right-3 top-4 w-6 h-6 bg-surface-container border border-outline-variant/20 rounded-full hidden md:flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-variant z-20 transition-all shadow-md opacity-0 group-hover:opacity-100" title="收合側邊欄">
+          <button onClick={() => setIsAiSidebarOpen(false)} className="absolute -right-3 top-4 w-6 h-6 bg-surface-container border border-white/10 rounded-full hidden md:flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-variant z-20 transition-all shadow-md opacity-0 group-hover:opacity-100" title="收合側邊欄">
             <span className="material-symbols-outlined text-[14px]">chevron_left</span>
           </button>
           {/* AI Assistant Header */}
@@ -852,7 +852,7 @@ ${currentCode || '（尚無程式碼）'}
         {!isAiSidebarOpen && (
           <button
             onClick={() => setIsAiSidebarOpen(true)}
-            className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-20 w-6 h-12 bg-surface-container border border-outline-variant/20 rounded-r-lg items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-variant transition-all shadow-md ml-0"
+            className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-20 w-6 h-12 bg-surface-container border border-white/10 rounded-r-lg items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-variant transition-all shadow-md ml-0"
             title="展開 AI 助手"
           >
             <span className="material-symbols-outlined text-[14px]">chevron_right</span>
@@ -860,10 +860,10 @@ ${currentCode || '（尚無程式碼）'}
         )}
 
         {/* ── Right Column: Code + Preview ── */}
-        <section className={`${mobileTab === 'chat' ? 'hidden' : 'flex'} md:flex flex-1 flex-col bg-background overflow-hidden relative md:rounded-xl md:border md:border-outline-variant/8 md:shadow-xl`}>
+        <section className={`${mobileTab === 'chat' ? 'hidden' : 'flex'} md:flex flex-1 flex-col bg-background overflow-hidden relative md:rounded-xl md:shadow-lg`}>
 
           {/* ── Floating Tab Toggle (Canvas Style) ── */}
-          <div className="hidden md:flex absolute top-4 left-1/2 -translate-x-1/2 z-20 bg-surface-container p-1 rounded-lg border border-outline-variant/10 shadow-xl">
+          <div className="hidden md:flex absolute top-4 left-1/2 -translate-x-1/2 z-20 bg-surface-container p-1 rounded-lg shadow-lg">
             <button
               onClick={() => setRightTab('code')}
               className={`px-6 py-1.5 rounded-md font-medium text-sm flex items-center gap-2 transition-colors ${
@@ -985,7 +985,7 @@ ${currentCode || '（尚無程式碼）'}
                   </div>
                 </div>
               ) : (
-                <div className="w-full h-full flex flex-col rounded-xl shadow-2xl overflow-hidden border border-outline-variant/20 transition-all duration-500">
+                <div className="w-full h-full flex flex-col rounded-xl shadow-xl overflow-hidden border border-white/5 transition-all duration-500">
                   <div className="bg-[#242424] px-4 py-2 flex items-center gap-3 shrink-0 border-b border-white/5">
                     <div className="flex gap-1.5">
                       <div className="w-3 h-3 rounded-full bg-[#FF5F57]"></div>
