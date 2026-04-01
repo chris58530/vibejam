@@ -91,6 +91,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
   // API 說明面板
   const [showApiGuide, setShowApiGuide] = useState(false);
   const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(true);
+  const [chatFontScale, setChatFontScale] = useState(100);
   const [isManualEditMode, setIsManualEditMode] = useState(false);
   const [highlightEditBtn, setHighlightEditBtn] = useState(false);
   
@@ -674,13 +675,29 @@ ${currentCode || '（尚無程式碼）'}
         >
 
           {/* Close Sidebar Button */}
-          <button onClick={() => setIsAiSidebarOpen(false)} className="absolute -right-3 top-4 w-6 h-6 bg-surface-container border border-white/10 rounded-full hidden md:flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-variant z-20 transition-all shadow-md opacity-0 group-hover:opacity-100" title="收合側邊欄">
+          <button onClick={() => setIsAiSidebarOpen(false)} className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-12 bg-surface-container border border-white/10 rounded-r-lg hidden md:flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-variant z-20 transition-all shadow-md opacity-0 group-hover:opacity-100" title="收合側邊欄">
             <span className="material-symbols-outlined text-[14px]">chevron_left</span>
           </button>
           {/* AI Assistant Header */}
           <div className="px-4 py-3 border-b border-outline-variant/5 text-on-surface/80 font-semibold text-sm flex items-center gap-2 shrink-0">
             <span className="text-base">✨</span>
-            <span>AI 助手</span>
+            <span className="flex-1">AI 助手</span>
+            {/* Font Scale Selector */}
+            <div className="flex items-center gap-0.5 bg-surface-container rounded-lg p-0.5">
+              {([50, 100, 150, 200] as const).map(scale => (
+                <button
+                  key={scale}
+                  onClick={() => setChatFontScale(scale)}
+                  className={`px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold transition-colors ${
+                    chatFontScale === scale
+                      ? 'bg-primary/20 text-primary'
+                      : 'text-on-surface/30 hover:text-on-surface/60'
+                  }`}
+                >
+                  x{scale}
+                </button>
+              ))}
+            </div>
           </div>
           {/* Provider + Model Selector */}
           {activeChatProviders.length > 0 ? (
@@ -761,10 +778,13 @@ ${currentCode || '（尚無程式碼）'}
 
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[88%] rounded-2xl px-3 py-2.5 text-xs whitespace-pre-wrap leading-relaxed border ${msg.role === 'user'
+                <div
+                  className={`max-w-[88%] rounded-2xl px-3 py-2.5 whitespace-pre-wrap leading-relaxed border ${msg.role === 'user'
                   ? 'bg-primary text-on-primary rounded-br-none border-primary/30 shadow-sm'
                   : 'bg-surface-container-high text-on-surface rounded-tl-none border-outline-variant/5 shadow-sm'
-                  }`}>
+                  }`}
+                  style={{ fontSize: `${(chatFontScale / 100) * 24}px` }}
+                >
                   {msg.role === 'assistant' ? formatAssistantMessage(msg.content) : msg.content}
                 </div>
               </div>
@@ -812,7 +832,7 @@ ${currentCode || '（尚無程式碼）'}
           {/* Input Area */}
           {hasActiveProvider && (
             <div className="p-3 border-t border-outline-variant/5 shrink-0">
-              <div className="flex items-end bg-background border border-outline-variant/15 rounded-xl shadow-inner overflow-hidden">
+              <div className="flex items-end bg-background rounded-xl shadow-inner overflow-hidden">
                 <textarea
                   ref={aiInputRef}
                   value={aiInput}
@@ -820,8 +840,8 @@ ${currentCode || '（尚無程式碼）'}
                   onKeyDown={handleAiKeyDown}
                   rows={1}
                   placeholder="輸入需求..."
-                  className="flex-1 bg-transparent text-on-surface text-xs px-3 py-2.5 resize-none outline-none placeholder:text-on-surface/30"
-                  style={{ maxHeight: '80px', overflowY: 'auto' }}
+                  className="flex-1 bg-transparent text-on-surface px-3 py-2.5 resize-none outline-none placeholder:text-on-surface/30"
+                  style={{ fontSize: `${(chatFontScale / 100) * 24}px`, maxHeight: '80px', overflowY: 'auto' }}
                   onInput={(e) => {
                     const target = e.target as HTMLTextAreaElement;
                     target.style.height = 'auto';
