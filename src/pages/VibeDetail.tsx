@@ -24,6 +24,16 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('chat');
   const [mobilePanel, setMobilePanel] = useState<'preview' | 'panel'>('preview');
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // ESC key to exit fullscreen
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isFullscreen) setIsFullscreen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isFullscreen]);
 
   // Supabase user for API calls requiring supabase_id
   const [supabaseUser, setSupabaseUser] = useState<any>(null);
@@ -207,6 +217,24 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
   const visibilityIcon = { public: 'public', unlisted: 'link', private: 'lock' };
   const visibilityLabel = { public: 'Public', unlisted: 'Unlisted', private: 'Private' };
 
+  const timeAgo = (dateStr: string) => {
+    if (!dateStr) return '';
+    const diffMs = Date.now() - new Date(dateStr).getTime();
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    if (days === 0) return 'today';
+    if (days === 1) return '1 day ago';
+    if (days < 30) return `${days} days ago`;
+    const months = Math.floor(days / 30);
+    if (months === 1) return '1 month ago';
+    if (months < 12) return `${months} months ago`;
+    const years = Math.floor(months / 12);
+    return years === 1 ? '1 year ago' : `${years} years ago`;
+  };
+
+  const parsedTags = vibe?.tags ? vibe.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
+  const commentCount = vibe?.comment_count ?? vibe?.comments?.length ?? 0;
+  const remixCount = vibe?.remix_count ?? 0;
+
   if (loading) return (
     <div className="md:ml-16 pt-20 flex items-center justify-center min-h-screen bg-surface text-on-surface/40 font-mono text-lg tracking-widest uppercase">
       Loading Stage...
@@ -235,53 +263,97 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
   return (
     <div className="md:ml-16 pt-[64px] h-screen flex flex-col bg-surface overflow-hidden">
       {/* Platform Header */}
-      <div className="h-16 border-b border-outline-variant/10 flex items-center justify-between px-6 bg-surface-container-low shrink-0 z-10">
-        <div className="flex items-center gap-4">
-          <button onClick={() => navigate('/')} className="w-8 h-8 rounded-full hover:bg-surface-container-high transition-colors text-on-surface/60 hover:text-on-surface flex items-center justify-center">
-            <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-          </button>
-          <div
-            className="flex items-center gap-3 cursor-pointer group"
-            onClick={() => navigate(`/@${encodeURIComponent(vibe.author_name)}`)}
-          >
-            <div className="w-10 h-10 rounded-md bg-primary-container flex items-center justify-center font-bold text-on-primary-container overflow-hidden transition-all border border-transparent group-hover:border-primary">
-              {vibe.author_avatar ? (
-                <img src={vibe.author_avatar} alt="author" className="w-full h-full object-cover" />
-              ) : (
-                vibe.title[0]
-              )}
-            </div>
-            <div className="group-hover:opacity-80 transition-opacity flex flex-col justify-center">
-              <div className="flex items-center gap-2">
-                <h1 className="text-on-surface font-sans font-bold text-sm tracking-tight">{vibe.title}</h1>
-                {vibe.visibility && vibe.visibility !== 'public' && (
-                  <span className="flex items-center gap-0.5 text-[9px] text-on-surface/40 font-mono uppercase tracking-widest border border-outline-variant/20 rounded px-1 py-0.5">
-                    <span className="material-symbols-outlined text-[10px]">{visibilityIcon[vibe.visibility]}</span>
-                    {visibilityLabel[vibe.visibility]}
-                  </span>
+      <div className="border-b border-outline-variant/10 bg-surface-container-low shrink-0 z-10">
+        {/* Main header row */}
+        <div className="h-14 flex items-center justify-between px-4 md:px-6">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <button onClick={() => navigate(-1)} className="w-8 h-8 rounded-full hover:bg-surface-container-high transition-colors text-on-surface/60 hover:text-on-surface flex items-center justify-center shrink-0">
+              <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+            </button>
+            <div
+              className="flex items-center gap-3 cursor-pointer group min-w-0"
+              onClick={() => navigate(`/@${encodeURIComponent(vibe.author_name)}`)}
+            >
+              <div className="w-9 h-9 rounded-lg bg-primary-container flex items-center justify-center font-bold text-on-primary-container overflow-hidden ring-1 ring-black/[0.07] group-hover:ring-primary/40 transition-all shrink-0">
+                {vibe.author_avatar ? (
+                  <img src={vibe.author_avatar} alt="author" className="w-full h-full object-cover" />
+                ) : (
+                  vibe.title[0]
                 )}
               </div>
-              <p className="text-on-surface/40 font-mono text-[10px] mt-0.5">Original by {vibe.author_name} • V{selectedVersion?.version_number}</p>
+              <div className="group-hover:opacity-80 transition-opacity flex flex-col justify-center min-w-0">
+                <div className="flex items-center gap-2">
+                  <h1 className="text-on-surface font-sans font-bold text-base tracking-tight truncate">{vibe.title}</h1>
+                  {vibe.visibility && vibe.visibility !== 'public' && (
+                    <span className="flex items-center gap-0.5 text-[9px] text-on-surface/40 font-mono uppercase tracking-widest border border-outline-variant/20 rounded px-1 py-0.5 shrink-0">
+                      <span className="material-symbols-outlined text-[10px]">{visibilityIcon[vibe.visibility]}</span>
+                      {visibilityLabel[vibe.visibility]}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5 text-[11px] text-on-surface/40 font-mono mt-0.5">
+                  <span className="hover:text-on-surface/60 transition-colors">@{vibe.author_name}</span>
+                  <span className="text-on-surface/20">•</span>
+                  <span>V{selectedVersion?.version_number}</span>
+                  {vibe.parent_vibe_title && (
+                    <>
+                      <span className="text-on-surface/20">•</span>
+                      <span className="text-tertiary/60 truncate">remix of {vibe.parent_author_name}/{vibe.parent_vibe_title}</span>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0 ml-4">
+            {/* Stats */}
+            <div className="hidden lg:flex items-center gap-3 mr-3 text-on-surface/35">
+              <span className="flex items-center gap-1 text-[11px] font-mono" title="Views">
+                <span className="material-symbols-outlined text-[14px]">visibility</span>
+                {vibe.views}
+              </span>
+              <span className="flex items-center gap-1 text-[11px] font-mono" title="Comments">
+                <span className="material-symbols-outlined text-[14px]">chat_bubble</span>
+                {commentCount}
+              </span>
+              {remixCount > 0 && (
+                <span className="flex items-center gap-1 text-[11px] font-mono" title="Remixes">
+                  <span className="material-symbols-outlined text-[14px]">repeat</span>
+                  {remixCount}
+                </span>
+              )}
+            </div>
+            <button
+              onClick={handleCopyCode}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-xs font-mono font-bold rounded-lg ring-1 ring-black/[0.07] transition-colors"
+            >
+              <span className="material-symbols-outlined text-[14px]">content_copy</span>
+              <span className="hidden sm:inline">Copy</span>
+            </button>
+            <button
+              onClick={handleRemix}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-primary hover:bg-primary/90 text-on-primary text-xs font-mono font-bold rounded-lg shadow-lg shadow-primary/10 transition-colors"
+            >
+              <span className="material-symbols-outlined text-[14px]">repeat</span>
+              Remix
+            </button>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleCopyCode}
-            className="flex items-center gap-2 px-3 py-1.5 bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-xs font-mono font-bold rounded border border-outline-variant/10 transition-colors"
-          >
-            <span className="material-symbols-outlined text-[14px]">content_copy</span>
-            Copy
-          </button>
-          <button
-            onClick={handleRemix}
-            className="flex items-center gap-2 px-3 py-1.5 bg-primary hover:bg-primary-fixed text-on-primary text-xs font-mono font-bold rounded shadow-lg shadow-primary/10 transition-colors"
-          >
-            <span className="material-symbols-outlined text-[14px]">repeat</span>
-            Remix
-          </button>
-        </div>
+        {/* Tags & metadata row */}
+        {(parsedTags.length > 0 || vibe.created_at) && (
+          <div className="px-4 md:px-6 pb-2.5 flex items-center gap-2 overflow-x-auto hide-scrollbar">
+            {parsedTags.map((tag, i) => (
+              <span key={i} className="inline-flex items-center px-2 py-0.5 rounded-md bg-surface-container-high text-[10px] font-mono text-on-surface/50 whitespace-nowrap ring-1 ring-black/[0.05]">
+                {tag}
+              </span>
+            ))}
+            <span className="text-[10px] text-on-surface/25 font-mono ml-auto whitespace-nowrap">
+              {timeAgo(vibe.created_at)}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Mobile Panel Switcher */}
@@ -304,8 +376,8 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
 
       <div className="flex-1 flex overflow-hidden relative md:flex-row flex-col">
         {/* Left: Stage (Preview) */}
-        <div className={`${mobilePanel === 'preview' ? 'flex' : 'hidden'} md:flex flex-1 bg-surface-container-lowest relative items-center justify-center p-4 lg:p-12`}>
-          <div className="w-full h-full bg-white rounded-xl shadow-2xl overflow-hidden border border-outline-variant/20 relative">
+        <div className={`${mobilePanel === 'preview' ? 'flex' : 'hidden'} md:flex flex-1 bg-surface-container-lowest relative items-center justify-center p-3 lg:p-8 ${isFullscreen ? 'fixed inset-0 z-50 bg-black p-0' : ''}`}>
+          <div className={`bg-white overflow-hidden relative ${isFullscreen ? 'w-full h-full' : 'w-full h-full rounded-xl ring-1 ring-black/[0.07] shadow-xl'}`}>
             <iframe
               srcDoc={selectedVersion?.code}
               className="w-full h-full border-none absolute inset-0 bg-white"
@@ -313,8 +385,11 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
               sandbox="allow-scripts allow-same-origin allow-forms"
             />
           </div>
-          <button className="absolute bottom-6 right-6 lg:bottom-14 lg:right-14 w-10 h-10 bg-surface/80 backdrop-blur-md border border-outline-variant/20 text-on-surface rounded flex items-center justify-center hover:bg-surface transition-colors z-10 shadow-lg">
-            <span className="material-symbols-outlined text-[18px]">fullscreen</span>
+          <button
+            onClick={() => setIsFullscreen(!isFullscreen)}
+            className={`absolute w-9 h-9 backdrop-blur-md text-on-surface rounded-lg flex items-center justify-center hover:bg-surface transition-colors z-10 shadow-lg ring-1 ring-black/[0.07] ${isFullscreen ? 'bottom-4 right-4 bg-surface/90' : 'bottom-5 right-5 lg:bottom-10 lg:right-10 bg-surface/80'}`}
+          >
+            <span className="material-symbols-outlined text-[18px]">{isFullscreen ? 'fullscreen_exit' : 'fullscreen'}</span>
           </button>
         </div>
 
@@ -382,8 +457,14 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                     </div>
                   ))}
                   {(!vibe.comments || vibe.comments.length === 0) && (
-                    <div className="w-full h-full flex items-center justify-center text-on-surface/20 font-mono text-xs text-center p-8">
-                      Be the first to drop some knowledge.
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-3 p-8">
+                      <div className="w-14 h-14 rounded-2xl bg-surface-container-high/50 flex items-center justify-center">
+                        <span className="material-symbols-outlined text-[28px] text-on-surface/15">forum</span>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-on-surface/30 font-sans text-sm font-medium">No comments yet</p>
+                        <p className="text-on-surface/15 font-mono text-[11px] mt-1">Be the first to share your thoughts</p>
+                      </div>
                     </div>
                   )}
                 </div>
