@@ -76,6 +76,18 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
   // Right panel tab (code / preview)
   const [rightTab, setRightTab] = useState<RightTab>('code');
 
+  // Draggable splitter
+  const [splitPercent, setSplitPercent] = useState(40);
+  const isDraggingRef = useRef(false);
+  const splitContainerRef = useRef<HTMLDivElement>(null);
+
+  // API Guide popup
+  const [showApiGuidePopup, setShowApiGuidePopup] = useState(false);
+
+  // Visibility dropdown
+  const [visibilityDropdownOpen, setVisibilityDropdownOpen] = useState(false);
+  const visibilityDropdownRef = useRef<HTMLDivElement>(null);
+
   // API 說明面板
   const [showApiGuide, setShowApiGuide] = useState(false);
 
@@ -122,6 +134,38 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Splitter drag handler
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDraggingRef.current || !splitContainerRef.current) return;
+      const rect = splitContainerRef.current.getBoundingClientRect();
+      const percent = ((e.clientX - rect.left) / rect.width) * 100;
+      setSplitPercent(Math.max(20, Math.min(80, percent)));
+    };
+    const handleMouseUp = () => {
+      isDraggingRef.current = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, []);
+
+  // Click outside visibility dropdown
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (visibilityDropdownRef.current && !visibilityDropdownRef.current.contains(e.target as Node)) {
+        setVisibilityDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -458,28 +502,6 @@ ${currentCode || '（尚無程式碼）'}
           />
         </div>
         <div className="ml-auto flex items-center gap-2">
-          {/* Visibility selector */}
-          <div className="flex items-center gap-1 bg-surface-container-low rounded-lg p-1">
-            {(['public', 'unlisted', 'private'] as const).map((v) => {
-              const icons = { public: 'public', unlisted: 'link', private: 'lock' };
-              const labels = { public: 'Public', unlisted: 'Unlisted', private: 'Private' };
-              return (
-                <button
-                  key={v}
-                  onClick={() => setVisibility(v)}
-                  title={labels[v]}
-                  className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide transition-colors ${
-                    visibility === v
-                      ? 'bg-primary text-on-primary'
-                      : 'text-on-surface/50 hover:text-on-surface/80'
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-[12px]">{icons[v]}</span>
-                  <span className="hidden sm:inline">{labels[v]}</span>
-                </button>
-              );
-            })}
-          </div>
           <button
             onClick={handlePublish}
             disabled={isPublishing || !title || !previewDoc || !currentUser?.id}
@@ -521,10 +543,13 @@ ${currentCode || '（尚無程式碼）'}
       </div>
 
       {/* ── Split Pane ── */}
-      <div className="flex-1 flex overflow-hidden flex-col md:flex-row">
+      <div ref={splitContainerRef} className="flex-1 flex overflow-hidden flex-col md:flex-row">
 
         {/* ── Left Column: AI Chat (full height) ── */}
-        <div className={`${mobileTab !== 'chat' ? 'hidden' : 'flex'} md:flex w-full md:w-[40%] md:min-w-[320px] flex-col border-r border-outline-variant/10 bg-surface-container-low`}>
+        <div
+          className={`${mobileTab !== 'chat' ? 'hidden' : 'flex'} md:flex w-full flex-col border-r border-outline-variant/10 bg-surface-container-low shrink-0`}
+          style={{ width: `${splitPercent}%`, minWidth: '280px' }}
+        >
 
           {/* Provider + Model Selector */}
           {activeChatProviders.length > 0 ? (
@@ -667,14 +692,23 @@ ${currentCode || '（尚無程式碼）'}
           )}
         </div>
 
+        {/* ── Draggable Splitter ── */}
+        <div
+          className="hidden md:flex w-1.5 cursor-col-resize items-center justify-center hover:bg-primary/10 active:bg-primary/20 transition-colors group shrink-0 select-none"
+          onMouseDown={() => { isDraggingRef.current = true; document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none'; }}
+        >
+          <div className="w-0.5 h-8 bg-outline-variant/20 rounded-full group-hover:bg-primary/40 group-active:bg-primary/60 transition-colors"></div>
+        </div>
+
         {/* ── Right Column: Code + Preview ── */}
         <section className={`${mobileTab === 'chat' ? 'hidden' : 'flex'} md:flex flex-1 flex-col bg-surface overflow-hidden`}>
 
-          {/* Tab Bar */}
-          <div className="h-10 bg-surface-container-low border-b border-outline-variant/10 flex items-center px-2 shrink-0">
+          {/* Tab Bar — single bar with tabs + controls */}
+          <div className="h-9 bg-surface-container-low border-b border-outline-variant/10 flex items-center px-2 shrink-0">
+            {/* Code / Preview tabs */}
             <button
               onClick={() => setRightTab('code')}
-              className={`px-4 h-full text-xs font-bold flex items-center gap-1.5 border-b-2 transition-colors ${rightTab === 'code'
+              className={`px-3 h-full text-xs font-bold flex items-center gap-1.5 border-b-2 transition-colors ${rightTab === 'code'
                 ? 'text-primary border-primary'
                 : 'text-on-surface/40 border-transparent hover:text-on-surface/70'
               }`}
@@ -684,7 +718,7 @@ ${currentCode || '（尚無程式碼）'}
             </button>
             <button
               onClick={() => setRightTab('preview')}
-              className={`px-4 h-full text-xs font-bold flex items-center gap-1.5 border-b-2 transition-colors ${rightTab === 'preview'
+              className={`px-3 h-full text-xs font-bold flex items-center gap-1.5 border-b-2 transition-colors ${rightTab === 'preview'
                 ? 'text-primary border-primary'
                 : 'text-on-surface/40 border-transparent hover:text-on-surface/70'
               }`}
@@ -693,7 +727,65 @@ ${currentCode || '（尚無程式碼）'}
               預覽
             </button>
 
+            {/* Split mode file tabs (inline, code tab only) */}
+            {rightTab === 'code' && isSplitMode && (
+              <>
+                <div className="w-px h-4 bg-outline-variant/15 mx-1.5"></div>
+                {tabs.map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`px-2.5 h-full text-[11px] font-medium flex items-center gap-1 transition-colors ${activeTab === tab.id
+                      ? 'text-primary'
+                      : 'text-on-surface/30 hover:text-on-surface/60'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[12px]">{tab.icon}</span>
+                    {tab.label}
+                  </button>
+                ))}
+              </>
+            )}
+
+            {/* Right-side controls */}
             <div className="ml-auto flex items-center gap-1">
+              {/* Visibility dropdown */}
+              <div className="relative" ref={visibilityDropdownRef}>
+                <button
+                  onClick={() => setVisibilityDropdownOpen(!visibilityDropdownOpen)}
+                  className="flex items-center gap-1 bg-surface-container-highest text-on-surface text-[11px] font-bold uppercase tracking-wider rounded px-2 py-1 border border-outline-variant/20 hover:border-outline-variant/40 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[12px]">
+                    {{ public: 'public', unlisted: 'link', private: 'lock' }[visibility]}
+                  </span>
+                  {{ public: 'Public', unlisted: 'Unlisted', private: 'Private' }[visibility]}
+                  <span className="material-symbols-outlined text-[10px] text-on-surface/40">expand_more</span>
+                </button>
+                {visibilityDropdownOpen && (
+                  <div className="absolute top-full right-0 mt-1 w-40 bg-surface border border-outline-variant/20 rounded-xl shadow-2xl overflow-hidden z-50">
+                    {(['public', 'unlisted', 'private'] as const).map(v => {
+                      const icons = { public: 'public', unlisted: 'link', private: 'lock' };
+                      const labels = { public: 'Public', unlisted: 'Unlisted', private: 'Private' };
+                      const descs = { public: '所有人可見', unlisted: '僅透過連結', private: '僅自己可見' };
+                      return (
+                        <button
+                          key={v}
+                          onClick={() => { setVisibility(v); setVisibilityDropdownOpen(false); }}
+                          className={`w-full text-left px-3 py-2.5 hover:bg-surface-container transition-colors flex items-center gap-2.5 ${visibility === v ? 'bg-primary/5' : ''}`}
+                        >
+                          <span className={`material-symbols-outlined text-[14px] ${visibility === v ? 'text-primary' : 'text-on-surface/50'}`}>{icons[v]}</span>
+                          <div>
+                            <div className={`text-xs font-bold ${visibility === v ? 'text-primary' : 'text-on-surface'}`}>{labels[v]}</div>
+                            <div className="text-[10px] text-on-surface-variant leading-tight">{descs[v]}</div>
+                          </div>
+                          {visibility === v && <span className="material-symbols-outlined text-primary text-[14px] ml-auto">check</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
               {/* Mode dropdown (code tab) */}
               {rightTab === 'code' && (
                 <div className="relative flex items-center" ref={dropdownRef}>
@@ -746,33 +838,28 @@ ${currentCode || '（尚無程式碼）'}
                   >smartphone</button>
                 </>
               )}
+
+              {/* API Guide info button */}
+              <button
+                onClick={() => setShowApiGuidePopup(!showApiGuidePopup)}
+                title="BeaverKit API 說明"
+                className="material-symbols-outlined text-[16px] p-1 rounded transition-colors text-on-surface/30 hover:text-primary"
+              >info</button>
             </div>
           </div>
 
           {/* ── Code Editor ── */}
           {rightTab === 'code' && (
             <div className="flex-1 flex flex-col overflow-hidden bg-surface-container-lowest">
-              {/* Split mode tabs / filename label */}
-              <div className="flex bg-surface-container-low h-8 items-end px-2 gap-1 border-b border-outline-variant/10 shrink-0">
-                {isSplitMode ? tabs.map(tab => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`px-4 py-1.5 text-xs font-medium rounded-t-lg flex items-center gap-1.5 border-t border-x transition-colors ${activeTab === tab.id
-                      ? 'bg-surface-container-lowest text-primary border-outline-variant/10'
-                      : 'text-on-surface/40 border-transparent hover:text-on-surface/70'
-                    }`}
-                  >
-                    <span className="material-symbols-outlined text-[14px]">{tab.icon}</span>
-                    {tab.label}
-                  </button>
-                )) : (
-                  <div className="px-4 py-1.5 bg-surface-container-lowest text-primary text-xs font-medium rounded-t-lg flex items-center gap-1.5 border-t border-x border-outline-variant/10">
-                    <span className="material-symbols-outlined text-[14px]">{isReactMode ? 'code' : isVueMode ? 'code' : 'html'}</span>
+              {/* Filename label (non-split mode only) */}
+              {!isSplitMode && (
+                <div className="flex bg-surface-container-low px-2 border-b border-outline-variant/10 shrink-0">
+                  <div className="px-3 py-1 text-primary text-[11px] font-medium flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[12px]">{isReactMode ? 'code' : isVueMode ? 'code' : 'html'}</span>
                     {isReactMode ? 'Component.jsx' : isVueMode ? 'Component.vue' : 'index.html'}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* Textarea */}
               <div className="flex-1 p-0 font-mono text-sm leading-relaxed editor-well overflow-hidden flex relative group cursor-text">
@@ -804,24 +891,13 @@ ${currentCode || '（尚無程式碼）'}
           {/* ── Preview ── */}
           {rightTab === 'preview' && (
             <div className="flex-1 px-4 pb-4 md:px-6 md:pb-6 bg-surface-container flex items-center justify-center overflow-hidden">
-              {showApiGuide ? (
-                <div className="w-full h-full rounded-xl overflow-hidden border border-outline-variant/20">
-                  <BeaverKitAPIGuide compact />
-                </div>
-              ) : viewMode === 'round' ? (
-                /* ── Round / Smartwatch frame ── */
+              {viewMode === 'round' ? (
                 <div className="flex items-center justify-center w-full h-full">
                   <div className="relative" style={{ width: '320px', height: '320px' }}>
                     <div className="absolute inset-0 rounded-full shadow-2xl" style={{ background: 'linear-gradient(145deg,#3a3a3a,#1a1a1a)', padding: '10px' }}>
                       <div className="w-full h-full rounded-full overflow-hidden relative bg-black">
                         {previewDoc ? (
-                          <iframe
-                            ref={iframeRef}
-                            srcDoc={previewDoc}
-                            className="absolute inset-0 w-full h-full border-none"
-                            title="Round Preview"
-                            sandbox="allow-scripts allow-same-origin"
-                          />
+                          <iframe ref={iframeRef} srcDoc={previewDoc} className="absolute inset-0 w-full h-full border-none" title="Round Preview" sandbox="allow-scripts allow-same-origin" />
                         ) : (
                           <div className="w-full h-full bg-[#050505] flex items-center justify-center">
                             <span className="material-symbols-outlined text-on-surface/20 text-4xl">watch</span>
@@ -833,7 +909,6 @@ ${currentCode || '（尚無程式碼）'}
                   </div>
                 </div>
               ) : viewMode === 'mobile' ? (
-                /* ── Mobile phone frame ── */
                 <div className="flex items-center justify-center w-full h-full">
                   <div className="relative flex flex-col shadow-2xl" style={{ width: '375px', height: '667px' }}>
                     <div className="absolute inset-0 rounded-[40px] overflow-hidden border-[10px] border-[#2A2A2A] bg-[#2A2A2A] flex flex-col">
@@ -848,16 +923,10 @@ ${currentCode || '（尚無程式碼）'}
                       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-[#1A1A1A] rounded-b-2xl z-10"></div>
                       <div className="flex-1 relative overflow-hidden bg-white">
                         {previewDoc ? (
-                          <iframe
-                            ref={iframeRef}
-                            srcDoc={previewDoc}
-                            className="absolute inset-0 w-full h-full border-none"
-                            title="Mobile Preview"
-                            sandbox="allow-scripts allow-same-origin"
-                          />
+                          <iframe ref={iframeRef} srcDoc={previewDoc} className="absolute inset-0 w-full h-full border-none" title="Mobile Preview" sandbox="allow-scripts allow-same-origin" />
                         ) : (
                           <div className="w-full h-full bg-[#050505] flex items-center justify-center">
-                            <BeaverKitAPIGuide compact />
+                            <span className="material-symbols-outlined text-on-surface/15 text-5xl">smartphone</span>
                           </div>
                         )}
                       </div>
@@ -868,7 +937,6 @@ ${currentCode || '（尚無程式碼）'}
                   </div>
                 </div>
               ) : (
-                /* ── Desktop browser frame ── */
                 <div className="w-full h-full flex flex-col rounded-xl shadow-2xl overflow-hidden border border-outline-variant/20 transition-all duration-500">
                   <div className="bg-[#242424] px-4 py-2 flex items-center gap-3 shrink-0 border-b border-white/5">
                     <div className="flex gap-1.5">
@@ -883,16 +951,13 @@ ${currentCode || '（尚無程式碼）'}
                   </div>
                   <div className="flex-1 relative bg-white overflow-hidden">
                     {previewDoc ? (
-                      <iframe
-                        ref={iframeRef}
-                        srcDoc={previewDoc}
-                        className="absolute inset-0 w-full h-full border-none"
-                        title="Live Preview"
-                        sandbox="allow-scripts allow-same-origin"
-                      />
+                      <iframe ref={iframeRef} srcDoc={previewDoc} className="absolute inset-0 w-full h-full border-none" title="Live Preview" sandbox="allow-scripts allow-same-origin" />
                     ) : (
-                      <div className="w-full h-full bg-[#050505] overflow-hidden">
-                        <BeaverKitAPIGuide compact />
+                      <div className="w-full h-full bg-[#050505] flex items-center justify-center">
+                        <div className="text-center">
+                          <span className="material-symbols-outlined text-on-surface/10 text-5xl">preview</span>
+                          <p className="text-[11px] text-on-surface/20 mt-2">尚無預覽內容</p>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -902,6 +967,26 @@ ${currentCode || '（尚無程式碼）'}
           )}
         </section>
       </div>
+
+      {/* ── API Guide Popup ── */}
+      {showApiGuidePopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowApiGuidePopup(false)}>
+          <div className="w-[640px] max-h-[80vh] bg-surface rounded-xl shadow-2xl overflow-hidden border border-outline-variant/20 flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-outline-variant/10 shrink-0">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary text-[16px]">api</span>
+                <span className="text-sm font-bold text-on-surface">BeaverKit API 說明</span>
+              </div>
+              <button onClick={() => setShowApiGuidePopup(false)} className="text-on-surface/40 hover:text-on-surface transition-colors">
+                <span className="material-symbols-outlined text-[18px]">close</span>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <BeaverKitAPIGuide compact />
+            </div>
+          </div>
+        </div>
+      )}
 
       <footer className="bg-[#131313] border-t border-[#584142]/20 flex justify-between items-center px-6 h-8 w-full z-50 shrink-0">
         <div className="flex items-center gap-4">
