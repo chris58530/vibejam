@@ -29,6 +29,12 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
   const [chatSortOrder, setChatSortOrder] = useState<'newest' | 'oldest'>('oldest');
   const [showChatSortDropdown, setShowChatSortDropdown] = useState(false);
 
+  // Inline title editing
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [titleInput, setTitleInput] = useState('');
+  const [titleUpdating, setTitleUpdating] = useState(false);
+  const titleInputRef = useRef<HTMLInputElement>(null);
+
   // iframe fade animation
   const [iframeVisible, setIframeVisible] = useState(true);
 
@@ -253,6 +259,20 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
     }
   };
 
+  const handleTitleSave = async () => {
+    if (!vibe || !supabaseUser?.id || !titleInput.trim() || titleInput.trim() === vibe.title) {
+      setIsEditingTitle(false);
+      return;
+    }
+    setTitleUpdating(true);
+    try {
+      await api.updateTitle(vibe.id, supabaseUser.id, titleInput.trim());
+      setVibe(prev => prev ? { ...prev, title: titleInput.trim() } : prev);
+    } catch (_) {}
+    setTitleUpdating(false);
+    setIsEditingTitle(false);
+  };
+
   const visibilityIcon = { public: 'public', unlisted: 'link', private: 'lock' };
   const visibilityLabel = { public: 'Public', unlisted: 'Unlisted', private: 'Private' };
 
@@ -322,7 +342,34 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
               </div>
               <div className="group-hover:opacity-80 transition-opacity flex flex-col justify-center min-w-0">
                 <div className="flex items-center gap-2">
-                  <h1 className="text-on-surface font-sans font-bold text-base tracking-tight truncate">{vibe.title}</h1>
+                  {isOwner && isEditingTitle ? (
+                    <input
+                      ref={titleInputRef}
+                      value={titleInput}
+                      onChange={e => setTitleInput(e.target.value)}
+                      onBlur={handleTitleSave}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') { e.preventDefault(); handleTitleSave(); }
+                        if (e.key === 'Escape') { setIsEditingTitle(false); }
+                      }}
+                      disabled={titleUpdating}
+                      className="text-on-surface font-sans font-bold text-base tracking-tight bg-surface-container-high border border-primary/50 rounded px-2 py-0.5 outline-none min-w-0 w-48 max-w-[200px]"
+                      autoFocus
+                    />
+                  ) : (
+                    <h1
+                      className={`text-on-surface font-sans font-bold text-base tracking-tight truncate ${isOwner ? 'cursor-pointer hover:text-primary transition-colors' : ''}`}
+                      onClick={() => {
+                        if (!isOwner) return;
+                        setTitleInput(vibe.title);
+                        setIsEditingTitle(true);
+                      }}
+                      title={isOwner ? 'Click to rename' : undefined}
+                    >
+                      {vibe.title}
+                      {isOwner && <span className="material-symbols-outlined text-[13px] ml-1 opacity-0 group-hover:opacity-40 transition-opacity align-middle">edit</span>}
+                    </h1>
+                  )}
                   {isOwner ? (
                     <div className="relative shrink-0">
                       <button
