@@ -144,6 +144,15 @@ export const api = {
     });
     return res.json();
   },
+  async updateTitle(vibeId: number, supabaseId: string, title: string): Promise<{ success: boolean }> {
+    const res = await fetch(`${API_BASE}/vibes/${vibeId}/title`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ supabase_id: supabaseId, title }),
+    });
+    if (!res.ok) throw new Error('Failed to update title');
+    return res.json();
+  },
   async updateVisibility(vibeId: number, supabaseId: string, visibility: 'public' | 'unlisted' | 'private'): Promise<{ success: boolean }> {
     const res = await fetch(`${API_BASE}/vibes/${vibeId}/visibility`, {
       method: 'PATCH',

@@ -206,6 +206,22 @@ async function startServer() {
     } catch (err: any) { res.status(500).json({ error: err.message }); }
   });
 
+  // Update vibe title (owner only)
+  app.patch('/api/vibes/:id/title', async (req, res) => {
+    const { supabase_id, title } = req.body;
+    if (!supabase_id) return res.status(401).json({ error: 'Unauthorized' });
+    if (!title || !title.trim()) return res.status(400).json({ error: 'Title cannot be empty' });
+    try {
+      const user = await db.get('SELECT id FROM users WHERE supabase_id = $1', [supabase_id]);
+      if (!user) return res.status(401).json({ error: 'Unauthorized' });
+      const vibe = await db.get('SELECT author_id FROM vibes WHERE id = $1', [req.params.id]);
+      if (!vibe) return res.status(404).json({ error: 'Vibe not found' });
+      if (vibe.author_id !== user.id) return res.status(403).json({ error: 'Forbidden' });
+      await db.run('UPDATE vibes SET title = $1 WHERE id = $2', [title.trim(), req.params.id]);
+      res.json({ success: true });
+    } catch (err: any) { res.status(500).json({ error: err.message }); }
+  });
+
   // Update vibe visibility (owner only)
   app.patch('/api/vibes/:id/visibility', async (req, res) => {
     const { supabase_id, visibility } = req.body;
