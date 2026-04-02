@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { api, toSlug, User } from '../lib/api';
+import { api, User } from '../lib/api';
 import { useAIKeyStore, AI_PROVIDER_MODELS } from '../lib/aiKeyStore';
 import { chatWithAIStream, ChatMessage, AIServiceError } from '../lib/aiService';
 import { extractCodeFromAIResponse, extractPartialCode, generatePreviewDoc } from '../lib/codeUtils';
@@ -224,7 +224,7 @@ ${code}
                 visibility,
             });
             if (currentUser) {
-                navigate(`/@${currentUser.username}/${toSlug(title.trim())}`);
+                navigate(`/p/${result.id}`);
             } else {
                 navigate('/');
             }
@@ -250,7 +250,7 @@ ${code}
                     <span className="material-symbols-outlined text-[14px] text-[#818cf8] shrink-0">repeat</span>
                     <span className="text-[#6b7280] shrink-0">Remixing from</span>
                     <button
-                        onClick={() => navigate(`/@${encodeURIComponent(remixFrom.authorName)}/${toSlug(remixFrom.title)}`)}
+                        onClick={() => navigate(`/p/${remixFrom.parentVibeId}`)}
                         className="text-[#a5b4fc] font-bold truncate max-w-[160px] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4f46e5] rounded"
                         aria-label={`View source vibe: ${remixFrom.title}`}
                     >

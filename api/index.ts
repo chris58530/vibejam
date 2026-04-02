@@ -744,4 +744,46 @@ app.post('/api/ai/chat/stream', async (req, res) => {
   }
 });
 
+// OG meta endpoint – serves lightweight HTML with Open Graph tags for social bots
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+app.get('/api/og/vibe/:id', async (req, res) => {
+  try {
+    await ensureDb();
+    const vibeId = req.params.id;
+    const vibe = await db.get(`
+      SELECT v.title, v.tags, u.username as author_name
+      FROM vibes v JOIN users u ON v.author_id = u.id WHERE v.id = $1 AND v.visibility != 'private'
+    `, [vibeId]);
+    if (!vibe) return res.status(404).send('Not found');
+
+    const title = escapeHtml(vibe.title);
+    const author = escapeHtml(vibe.author_name);
+    const description = escapeHtml(`Interactive code by ${vibe.author_name}${vibe.tags ? ' · ' + vibe.tags : ''}`);
+    const pageUrl = `${req.protocol}://${req.get('host')}/p/${vibeId}`;
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>${title} by ${author} | BeaverKit</title>
+  <meta name="description" content="${description}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="${title} by ${author} | BeaverKit" />
+  <meta property="og:description" content="${description}" />
+  <meta property="og:url" content="${escapeHtml(pageUrl)}" />
+  <meta property="og:site_name" content="BeaverKit" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="${title} by ${author} | BeaverKit" />
+  <meta name="twitter:description" content="${description}" />
+  <meta http-equiv="refresh" content="0;url=${escapeHtml(pageUrl)}" />
+</head>
+<body><a href="${escapeHtml(pageUrl)}">${title}</a></body>
+</html>`);
+  } catch (err: any) { res.status(500).send('Error'); }
+});
+
 export default app;

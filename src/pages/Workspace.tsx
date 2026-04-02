@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api, toSlug, User } from '../lib/api';
+import { api, User } from '../lib/api';
 import { EditorMode, detectFramework, wrapReactForPreview, wrapVueForPreview, mergeCode, extractCodeFromAIResponse, extractPartialCode } from '../lib/codeUtils';
 import { useAIKeyStore, AI_PROVIDER_MODELS } from '../lib/aiKeyStore';
 import { useWorkspaceStore } from '../lib/workspaceStore';
@@ -278,7 +278,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
     setIsPublishing(true);
     setStoreIsPublishing(true);
     try {
-      await api.createVibe({
+      const result = await api.createVibe({
         title,
         tags,
         code: previewDoc,
@@ -286,7 +286,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
         visibility,
       });
       if (currentUser) {
-        navigate(`/@${currentUser.username}/${toSlug(title)}`);
+        navigate(`/p/${result.id}`);
       } else {
         navigate('/');
       }

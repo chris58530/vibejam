@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { api, toSlug, Vibe, Version, Comment, User, Collaborator, InviteLink, AccessDeniedError } from '../lib/api';
+import { api, Vibe, Version, Comment, User, Collaborator, InviteLink, AccessDeniedError } from '../lib/api';
 import { supabase } from '../lib/supabase';
 import AuthModal from '../components/AuthModal';
 
@@ -11,7 +11,7 @@ interface VibeDetailProps {
 type ActiveTab = 'chat' | 'versions' | 'manage';
 
 export default function VibeDetail({ currentUser }: VibeDetailProps) {
-  const { username, vibeSlug } = useParams<{ username: string; vibeSlug: string }>();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
   const [vibe, setVibe] = useState<Vibe | null>(null);
@@ -72,15 +72,13 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
 
   useEffect(() => {
     loadVibe();
-  }, [username, vibeSlug, supabaseUser]);
+  }, [id, supabaseUser]);
 
   const loadVibe = async () => {
     if (supabaseUser === undefined) return; // still loading auth
-    const rawUsername = username?.startsWith('@') ? username.substring(1) : username;
-    const decodedUsername = rawUsername ? decodeURIComponent(rawUsername) : '';
-    const decodedSlug = vibeSlug ? decodeURIComponent(vibeSlug) : '';
+    if (!id) { navigate('/'); return; }
     try {
-      const data = await api.getVibeBySlug(decodedUsername, decodedSlug, supabaseUser?.id);
+      const data = await api.getVibe(id, supabaseUser?.id);
       setVibe(data);
       if (data.versions && data.versions.length > 0) {
         setSelectedVersion(data.versions[0]);

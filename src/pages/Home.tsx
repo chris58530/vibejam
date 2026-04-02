@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { api, toSlug, Vibe } from '../lib/api';
+import { api, Vibe } from '../lib/api';
 import VibeCard from '../components/VibeCard';
 import Footer from '../components/Footer';
 
@@ -21,7 +21,7 @@ export default function Home() {
   }, []);
 
   const handleSelectVibe = (vibe: Vibe) => {
-    navigate(`/@${encodeURIComponent(vibe.author_name)}/${toSlug(vibe.title)}`);
+    navigate(`/p/${vibe.id}`);
   };
 
   // Determine which feed we are on based on the query param

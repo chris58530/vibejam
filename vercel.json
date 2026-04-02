@@ -3,6 +3,17 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/p/:id",
+      "destination": "/api/og/vibe/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(bot|crawler|spider|facebookexternalhit|twitterbot|linkedinbot|slackbot|discordbot|telegrambot|line|whatsapp).*"
+        }
+      ]
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/index"
     },

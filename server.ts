@@ -543,6 +543,76 @@ async function startServer() {
     }
   });
 
+  // Helper to escape HTML special chars for OG pages
+  function escapeHtml(str: string): string {
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // Shared helper: fetch vibe OG data and send OG-enriched HTML response
+  // Returns true if response was sent, false if vibe not found (call next())
+  async function sendOgHtml(
+    vibeId: string,
+    pageUrl: string,
+    res: express.Response,
+    includeRefresh = false,
+  ): Promise<boolean> {
+    const vibe = await db.get(`
+      SELECT v.title, v.tags, u.username as author_name
+      FROM vibes v JOIN users u ON v.author_id = u.id WHERE v.id = $1 AND v.visibility != 'private'
+    `, [vibeId]);
+    if (!vibe) return false;
+
+    const title = escapeHtml(vibe.title);
+    const author = escapeHtml(vibe.author_name);
+    const description = escapeHtml(`Interactive code by ${vibe.author_name}${vibe.tags ? ' · ' + vibe.tags : ''}`);
+    const safeUrl = escapeHtml(pageUrl);
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>${title} by ${author} | BeaverKit</title>
+  <meta name="description" content="${description}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="${title} by ${author} | BeaverKit" />
+  <meta property="og:description" content="${description}" />
+  <meta property="og:url" content="${safeUrl}" />
+  <meta property="og:site_name" content="BeaverKit" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="${title} by ${author} | BeaverKit" />
+  <meta name="twitter:description" content="${description}" />${includeRefresh ? `\n  <meta http-equiv="refresh" content="0;url=${safeUrl}" />` : ''}
+</head>
+<body><a href="${safeUrl}">${title}</a></body>
+</html>`);
+    return true;
+  }
+
+  // OG meta endpoint – serves OG-enriched HTML for social bots (also used by Vercel conditional rewrite)
+  app.get('/api/og/vibe/:id', async (req, res) => {
+    try {
+      const vibeId = req.params.id;
+      const pageUrl = `${req.protocol}://${req.get('host')}/p/${vibeId}`;
+      const sent = await sendOgHtml(vibeId, pageUrl, res, true);
+      if (!sent) res.status(404).send('Not found');
+    } catch (err: any) { res.status(500).send('Error'); }
+  });
+
+  // Bot detection for /p/:id – serve OG-enriched HTML to social crawlers in development
+  // Note: in production, Vercel's conditional rewrite in vercel.json handles this
+  // (keep bot UA pattern in sync with vercel.json)
+  const BOT_UA_RE = /bot|crawler|spider|facebookexternalhit|twitterbot|linkedinbot|slackbot|discordbot|telegrambot|line|whatsapp/i;
+  app.get('/p/:id', async (req, res, next) => {
+    const userAgent = req.headers['user-agent'] || '';
+    if (!BOT_UA_RE.test(userAgent)) return next();
+    try {
+      const vibeId = req.params.id;
+      const pageUrl = `${req.protocol}://${req.get('host')}/p/${vibeId}`;
+      const sent = await sendOgHtml(vibeId, pageUrl, res, false);
+      if (!sent) next();
+    } catch { next(); }
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
