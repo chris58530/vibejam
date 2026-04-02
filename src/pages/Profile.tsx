@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { api, Vibe, User, toSlug } from '../lib/api';
+import { api, Vibe, User } from '../lib/api';
 import { EditorMode } from '../lib/codeUtils';
 import VibeCard from '../components/VibeCard';
 import Footer from '../components/Footer';
@@ -243,7 +243,7 @@ export default function Profile() {
                 <div key={vibe.id} className="relative group/card">
                   <VibeCard
                     vibe={vibe}
-                    onClick={() => navigate(`/@${encodeURIComponent(vibe.author_name)}/${toSlug(vibe.title)}`)}
+                    onClick={() => navigate(`/p/${vibe.id}`)}
                   />
                   {isOwner && (
                     <button

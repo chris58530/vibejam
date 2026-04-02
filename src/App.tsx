@@ -72,7 +72,7 @@ export default function App() {
             <Route path="/remix" element={<RemixStudio currentUser={currentUser ?? undefined} />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/invite/:token" element={<InviteAccept />} />
-            <Route path="/:username/:vibeSlug" element={<VibeDetail currentUser={currentUser ?? undefined} />} />
+            <Route path="/p/:id" element={<VibeDetail currentUser={currentUser ?? undefined} />} />
             <Route path="/:username" element={<Profile />} />
             <Route path="*" element={
               <div className="flex items-center justify-center h-full text-white/50">
