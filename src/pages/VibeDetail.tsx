@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { api, Vibe, Version, Comment, User, Collaborator, InviteLink, AccessDeniedError } from '../lib/api';
+import { api, Vibe, Version, Comment, User, AccessDeniedError } from '../lib/api';
 import { supabase } from '../lib/supabase';
 import AuthModal from '../components/AuthModal';
 
@@ -8,7 +8,7 @@ interface VibeDetailProps {
   currentUser?: User;
 }
 
-type ActiveTab = 'chat' | 'versions' | 'manage';
+type ActiveTab = 'chat' | 'versions';
 
 export default function VibeDetail({ currentUser }: VibeDetailProps) {
   const { id } = useParams<{ id: string }>();
@@ -29,12 +29,6 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
   const [chatSortOrder, setChatSortOrder] = useState<'newest' | 'oldest'>('oldest');
   const [showChatSortDropdown, setShowChatSortDropdown] = useState(false);
 
-  // Inline title editing
-  const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [titleInput, setTitleInput] = useState('');
-  const [titleUpdating, setTitleUpdating] = useState(false);
-  const titleInputRef = useRef<HTMLInputElement>(null);
-
   // iframe fade animation
   const [iframeVisible, setIframeVisible] = useState(true);
 
@@ -43,12 +37,6 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
 
   // auth modal
   const [showAuthModal, setShowAuthModal] = useState(false);
-
-  // visibility dropdown (owner header)
-  const [showVisibilityDropdown, setShowVisibilityDropdown] = useState(false);
-
-  // collaborator remove confirmation
-  const [confirmRemoveId, setConfirmRemoveId] = useState<number | null>(null);
 
   // ESC key to exit fullscreen
   useEffect(() => {
@@ -70,13 +58,6 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
     supabase.auth.getSession().then(({ data }) => setSupabaseUser(data.session?.user ?? null));
   }, []);
 
-  // Collaborator management state
-  const [collabInput, setCollabInput] = useState('');
-  const [collabError, setCollabError] = useState('');
-  const [collabLoading, setCollabLoading] = useState(false);
-  const [inviteLinks, setInviteLinks] = useState<InviteLink[]>([]);
-  const [inviteCopied, setInviteCopied] = useState<string | null>(null);
-  const [visibilityUpdating, setVisibilityUpdating] = useState(false);
 
   useEffect(() => {
     loadVibe();
@@ -91,10 +72,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
       if (data.versions && data.versions.length > 0) {
         setSelectedVersion(data.versions[0]);
       }
-      // Load invite links if owner
-      if (data.user_role === 'owner' && supabaseUser?.id) {
-        loadInviteLinks(data.id, supabaseUser.id);
-      }
+
     } catch (err) {
       if (err instanceof AccessDeniedError) {
         setAccessDenied(true);
@@ -104,13 +82,6 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
     } finally {
       setLoading(false);
     }
-  };
-
-  const loadInviteLinks = async (vibeId: number, sid: string) => {
-    try {
-      const links = await api.getInviteLinks(vibeId, sid);
-      setInviteLinks(links);
-    } catch {}
   };
 
   const handleAddComment = async () => {
@@ -197,82 +168,6 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
     });
   };
 
-  const handleAddCollaborator = async () => {
-    if (!vibe || !supabaseUser?.id || !collabInput.trim()) return;
-    setCollabLoading(true);
-    setCollabError('');
-    try {
-      const collab = await api.addCollaborator(vibe.id, supabaseUser.id, collabInput.trim());
-      setVibe(prev => prev ? { ...prev, collaborators: [...(prev.collaborators ?? []), collab] } : prev);
-      setCollabInput('');
-    } catch (err: any) {
-      setCollabError(err.message || '新增失敗');
-    } finally {
-      setCollabLoading(false);
-    }
-  };
-
-  const handleRemoveCollaborator = async (userId: number) => {
-    if (!vibe || !supabaseUser?.id) return;
-    if (confirmRemoveId !== userId) {
-      setConfirmRemoveId(userId);
-      return;
-    }
-    setConfirmRemoveId(null);
-    try {
-      await api.removeCollaborator(vibe.id, userId, supabaseUser.id);
-      setVibe(prev => prev ? { ...prev, collaborators: (prev.collaborators ?? []).filter(c => c.user_id !== userId) } : prev);
-    } catch {}
-  };
-
-  const handleCreateInviteLink = async () => {
-    if (!vibe || !supabaseUser?.id) return;
-    try {
-      const { token } = await api.createInviteLink(vibe.id, supabaseUser.id);
-      const newLink: InviteLink = { id: Date.now(), vibe_id: vibe.id, token, created_by: currentUser?.id ?? 0, revoked: false, created_at: new Date().toISOString() };
-      setInviteLinks(prev => [newLink, ...prev]);
-    } catch {}
-  };
-
-  const handleRevokeInviteLink = async (token: string) => {
-    if (!vibe || !supabaseUser?.id) return;
-    try {
-      await api.revokeInviteLink(vibe.id, token, supabaseUser.id);
-      setInviteLinks(prev => prev.map(l => l.token === token ? { ...l, revoked: true } : l));
-    } catch {}
-  };
-
-  const handleCopyInviteLink = (token: string) => {
-    navigator.clipboard.writeText(`${window.location.origin}/invite/${token}`);
-    setInviteCopied(token);
-    setTimeout(() => setInviteCopied(null), 2000);
-  };
-
-  const handleVisibilityChange = async (newVisibility: 'public' | 'unlisted' | 'private') => {
-    if (!vibe || !supabaseUser?.id) return;
-    setVisibilityUpdating(true);
-    try {
-      await api.updateVisibility(vibe.id, supabaseUser.id, newVisibility);
-      setVibe(prev => prev ? { ...prev, visibility: newVisibility } : prev);
-    } catch {} finally {
-      setVisibilityUpdating(false);
-    }
-  };
-
-  const handleTitleSave = async () => {
-    if (!vibe || !supabaseUser?.id || !titleInput.trim() || titleInput.trim() === vibe.title) {
-      setIsEditingTitle(false);
-      return;
-    }
-    setTitleUpdating(true);
-    try {
-      await api.updateTitle(vibe.id, supabaseUser.id, titleInput.trim());
-      setVibe(prev => prev ? { ...prev, title: titleInput.trim() } : prev);
-    } catch (_) {}
-    setTitleUpdating(false);
-    setIsEditingTitle(false);
-  };
-
   const visibilityIcon = { public: 'public', unlisted: 'link', private: 'lock' };
   const visibilityLabel = { public: 'Public', unlisted: 'Unlisted', private: 'Private' };
 
@@ -342,69 +237,15 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
               </div>
               <div className="group-hover:opacity-80 transition-opacity flex flex-col justify-center min-w-0">
                 <div className="flex items-center gap-2">
-                  {isOwner && isEditingTitle ? (
-                    <input
-                      ref={titleInputRef}
-                      value={titleInput}
-                      onChange={e => setTitleInput(e.target.value)}
-                      onBlur={handleTitleSave}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') { e.preventDefault(); handleTitleSave(); }
-                        if (e.key === 'Escape') { setIsEditingTitle(false); }
-                      }}
-                      disabled={titleUpdating}
-                      className="text-on-surface font-sans font-bold text-base tracking-tight bg-surface-container-high border border-primary/50 rounded px-2 py-0.5 outline-none min-w-0 w-48 max-w-[200px]"
-                      autoFocus
-                    />
-                  ) : (
-                    <h1
-                      className={`text-on-surface font-sans font-bold text-base tracking-tight truncate ${isOwner ? 'cursor-pointer hover:text-primary transition-colors' : ''}`}
-                      onClick={() => {
-                        if (!isOwner) return;
-                        setTitleInput(vibe.title);
-                        setIsEditingTitle(true);
-                      }}
-                      title={isOwner ? 'Click to rename' : undefined}
-                    >
-                      {vibe.title}
-                      {isOwner && <span className="material-symbols-outlined text-[13px] ml-1 opacity-0 group-hover:opacity-40 transition-opacity align-middle">edit</span>}
-                    </h1>
-                  )}
-                  {isOwner ? (
-                    <div className="relative shrink-0">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setShowVisibilityDropdown(v => !v); }}
-                        className="flex items-center gap-0.5 text-[9px] text-on-surface/50 hover:text-on-surface font-mono uppercase tracking-widest border border-outline-variant/20 hover:border-outline-variant/50 rounded px-1 py-0.5 transition-colors"
-                      >
-                        <span className="material-symbols-outlined text-[10px]">{visibilityIcon[vibe.visibility ?? 'public']}</span>
-                        {visibilityLabel[vibe.visibility ?? 'public']}
-                      </button>
-                      {showVisibilityDropdown && (
-                        <>
-                          <div className="fixed inset-0 z-20" onClick={() => setShowVisibilityDropdown(false)} />
-                          <div className="absolute left-0 top-full mt-1 z-30 bg-surface-container-highest border border-outline-variant/20 rounded-lg shadow-xl overflow-hidden min-w-[120px]">
-                            {(['public', 'unlisted', 'private'] as const).map(v => (
-                              <button
-                                key={v}
-                                onClick={() => { handleVisibilityChange(v); setShowVisibilityDropdown(false); }}
-                                disabled={visibilityUpdating}
-                                className={`w-full flex items-center gap-2 px-3 py-2 text-[11px] font-mono hover:bg-surface-container-high transition-colors ${vibe.visibility === v ? 'text-primary' : 'text-on-surface/60'}`}
-                              >
-                                <span className="material-symbols-outlined text-[13px]">{visibilityIcon[v]}</span>
-                                {visibilityLabel[v]}
-                                {vibe.visibility === v && <span className="ml-auto material-symbols-outlined text-[12px]">check</span>}
-                              </button>
-                            ))}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  ) : (vibe.visibility && vibe.visibility !== 'public' && (
+                  <h1 className="text-on-surface font-sans font-bold text-base tracking-tight truncate">
+                    {vibe.title}
+                  </h1>
+                  {vibe.visibility && vibe.visibility !== 'public' && (
                     <span className="flex items-center gap-0.5 text-[9px] text-on-surface/40 font-mono uppercase tracking-widest border border-outline-variant/20 rounded px-1 py-0.5 shrink-0">
                       <span className="material-symbols-outlined text-[10px]">{visibilityIcon[vibe.visibility]}</span>
                       {visibilityLabel[vibe.visibility]}
                     </span>
-                  ))}
+                  )}
                 </div>
                 <div className="flex items-center gap-1.5 text-[11px] text-on-surface/40 font-mono mt-0.5">
                   <span className="hover:text-on-surface/60 transition-colors">@{vibe.author_name}</span>
@@ -439,6 +280,26 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                 </span>
               )}
             </div>
+            {isOwner && (
+              <button
+                onClick={() => {
+                  const slot = {
+                    id: `vibe-${vibe.id}`,
+                    title: vibe.title,
+                    tags: vibe.tags || '',
+                    editorMode: 'single',
+                    code: { html: selectedVersion?.code || '', css: '', js: '' },
+                    savedAt: new Date().toISOString(),
+                  };
+                  sessionStorage.setItem('beaverkit_pending_load', JSON.stringify(slot));
+                  navigate('/workspace');
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-xs font-mono font-bold rounded-lg ring-1 ring-black/[0.07] transition-colors"
+              >
+                <span className="material-symbols-outlined text-[14px]">edit</span>
+                <span className="hidden sm:inline">Edit</span>
+              </button>
+            )}
             <button
               onClick={handleCopyCode}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-xs font-mono font-bold rounded-lg ring-1 ring-black/[0.07] transition-colors"
@@ -526,14 +387,6 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
               <span className="material-symbols-outlined text-[14px]">history</span>
               Versions
             </div>
-            {isOwner && (
-              <div
-                onClick={() => setActiveTab('manage')}
-                className={`flex-1 h-full flex items-center justify-center gap-2 text-[10px] font-mono font-bold uppercase tracking-widest transition-colors ${activeTab === 'manage' ? 'border-b-2 border-primary text-primary bg-surface-container-high' : 'text-on-surface/40 hover:text-on-surface hover:bg-surface-container-low'}`}>
-                <span className="material-symbols-outlined text-[14px]">manage_accounts</span>
-                Manage
-              </div>
-            )}
           </div>
 
           {/* Tab Content */}
@@ -719,109 +572,6 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
               </div>
             )}
 
-            {/* Manage Window (owner only) */}
-            {activeTab === 'manage' && isOwner && (
-              <div className="flex-1 overflow-y-auto p-4 space-y-6 hide-scrollbar absolute inset-0">
-
-                {/* Collaborators */}
-                <div>
-                  <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-on-surface/40 mb-3">協作者</p>
-                  <div className="flex gap-2 mb-3">
-                    <input
-                      type="text"
-                      value={collabInput}
-                      onChange={(e) => { setCollabInput(e.target.value); setCollabError(''); }}
-                      onKeyDown={(e) => { if (e.key === 'Enter') handleAddCollaborator(); }}
-                      placeholder="輸入使用者名稱"
-                      className="flex-1 bg-surface-container-lowest border border-outline-variant/20 rounded px-3 py-2 text-sm text-on-surface placeholder:text-on-surface/30 focus:border-primary/50 outline-none"
-                    />
-                    <button
-                      onClick={handleAddCollaborator}
-                      disabled={collabLoading || !collabInput.trim()}
-                      className="px-3 py-2 bg-primary text-on-primary rounded text-xs font-bold disabled:opacity-50"
-                    >
-                      新增
-                    </button>
-                  </div>
-                  {collabError && <p className="text-xs text-error font-mono mb-2">{collabError}</p>}
-                  <div className="space-y-2">
-                    {(vibe.collaborators ?? []).length === 0 && (
-                      <p className="text-on-surface/30 text-xs font-mono">尚無協作者</p>
-                    )}
-                    {(vibe.collaborators ?? []).map((c: Collaborator) => (
-                      <div key={c.user_id} className="flex items-center gap-3 p-2 bg-surface-container-lowest rounded border border-outline-variant/10">
-                        <img src={c.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${c.username}`} className="w-7 h-7 rounded" alt="avatar" />
-                        <span className="flex-1 text-sm text-on-surface font-sans">{c.username}</span>
-                        {confirmRemoveId === c.user_id ? (
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={() => handleRemoveCollaborator(c.user_id)}
-                              className="text-[10px] text-error font-mono font-bold uppercase tracking-wide transition-colors"
-                            >
-                              確認移除
-                            </button>
-                            <button
-                              onClick={() => setConfirmRemoveId(null)}
-                              className="text-[10px] text-on-surface/30 hover:text-on-surface/60 font-mono uppercase tracking-wide transition-colors ml-1"
-                            >
-                              取消
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => handleRemoveCollaborator(c.user_id)}
-                            className="text-[10px] text-error/40 hover:text-error font-mono uppercase tracking-wide transition-colors"
-                          >
-                            移除
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Invite Links */}
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-on-surface/40">邀請連結</p>
-                    <button
-                      onClick={handleCreateInviteLink}
-                      className="text-[10px] font-mono font-bold text-primary hover:text-primary/80 uppercase tracking-wide transition-colors"
-                    >
-                      + 建立連結
-                    </button>
-                  </div>
-                  <div className="space-y-2">
-                    {inviteLinks.length === 0 && (
-                      <p className="text-on-surface/30 text-xs font-mono">尚無邀請連結</p>
-                    )}
-                    {inviteLinks.map((link) => (
-                      <div key={link.token} className={`flex items-center gap-2 p-2 rounded border text-[11px] font-mono ${link.revoked ? 'opacity-40 border-outline-variant/10' : 'border-outline-variant/20 bg-surface-container-lowest'}`}>
-                        <span className="flex-1 text-on-surface/50 truncate">{link.token.slice(0, 12)}…</span>
-                        {!link.revoked && (
-                          <>
-                            <button
-                              onClick={() => handleCopyInviteLink(link.token)}
-                              className="text-primary hover:text-primary/80 transition-colors"
-                            >
-                              {inviteCopied === link.token ? '已複製！' : '複製'}
-                            </button>
-                            <button
-                              onClick={() => handleRevokeInviteLink(link.token)}
-                              className="text-error/60 hover:text-error transition-colors"
-                            >
-                              撤銷
-                            </button>
-                          </>
-                        )}
-                        {link.revoked && <span className="text-on-surface/30">已撤銷</span>}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-              </div>
-            )}
           </div>
         </div>
       </div>
