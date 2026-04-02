@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api, toSlug, Vibe, Version, Comment, User, Collaborator, InviteLink, AccessDeniedError } from '../lib/api';
 import { supabase } from '../lib/supabase';
+import AuthModal from '../components/AuthModal';
 
 interface VibeDetailProps {
   currentUser?: User;
@@ -26,6 +27,21 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
   const [mobilePanel, setMobilePanel] = useState<'preview' | 'panel'>('preview');
   const [isFullscreen, setIsFullscreen] = useState(false);
 
+  // iframe fade animation
+  const [iframeVisible, setIframeVisible] = useState(true);
+
+  // comments auto-scroll
+  const commentsEndRef = useRef<HTMLDivElement>(null);
+
+  // auth modal
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
+  // visibility dropdown (owner header)
+  const [showVisibilityDropdown, setShowVisibilityDropdown] = useState(false);
+
+  // collaborator remove confirmation
+  const [confirmRemoveId, setConfirmRemoveId] = useState<number | null>(null);
+
   // ESC key to exit fullscreen
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -34,6 +50,11 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isFullscreen]);
+
+  // Auto-scroll comments to bottom when comments change
+  useEffect(() => {
+    commentsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [vibe?.comments?.length]);
 
   // Supabase user for API calls requiring supabase_id
   const [supabaseUser, setSupabaseUser] = useState<any>(null);
@@ -137,6 +158,15 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
     }
   };
 
+  const handleSelectVersion = (version: Version) => {
+    if (version.id === selectedVersion?.id) return;
+    setIframeVisible(false);
+    setTimeout(() => {
+      setSelectedVersion(version);
+      setIframeVisible(true);
+    }, 150);
+  };
+
   const handleCopyCode = () => {
     if (selectedVersion) {
       navigator.clipboard.writeText(selectedVersion.code);
@@ -145,6 +175,10 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
 
   const handleRemix = () => {
     if (!vibe) return;
+    if (!currentUser) {
+      setShowAuthModal(true);
+      return;
+    }
     navigate('/remix', {
       state: {
         parentVibeId: vibe.id,
@@ -174,6 +208,11 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
 
   const handleRemoveCollaborator = async (userId: number) => {
     if (!vibe || !supabaseUser?.id) return;
+    if (confirmRemoveId !== userId) {
+      setConfirmRemoveId(userId);
+      return;
+    }
+    setConfirmRemoveId(null);
     try {
       await api.removeCollaborator(vibe.id, userId, supabaseUser.id);
       setVibe(prev => prev ? { ...prev, collaborators: (prev.collaborators ?? []).filter(c => c.user_id !== userId) } : prev);
@@ -284,12 +323,41 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
               <div className="group-hover:opacity-80 transition-opacity flex flex-col justify-center min-w-0">
                 <div className="flex items-center gap-2">
                   <h1 className="text-on-surface font-sans font-bold text-base tracking-tight truncate">{vibe.title}</h1>
-                  {vibe.visibility && vibe.visibility !== 'public' && (
+                  {isOwner ? (
+                    <div className="relative shrink-0">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setShowVisibilityDropdown(v => !v); }}
+                        className="flex items-center gap-0.5 text-[9px] text-on-surface/50 hover:text-on-surface font-mono uppercase tracking-widest border border-outline-variant/20 hover:border-outline-variant/50 rounded px-1 py-0.5 transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-[10px]">{visibilityIcon[vibe.visibility ?? 'public']}</span>
+                        {visibilityLabel[vibe.visibility ?? 'public']}
+                      </button>
+                      {showVisibilityDropdown && (
+                        <>
+                          <div className="fixed inset-0 z-20" onClick={() => setShowVisibilityDropdown(false)} />
+                          <div className="absolute left-0 top-full mt-1 z-30 bg-surface-container-highest border border-outline-variant/20 rounded-lg shadow-xl overflow-hidden min-w-[120px]">
+                            {(['public', 'unlisted', 'private'] as const).map(v => (
+                              <button
+                                key={v}
+                                onClick={() => { handleVisibilityChange(v); setShowVisibilityDropdown(false); }}
+                                disabled={visibilityUpdating}
+                                className={`w-full flex items-center gap-2 px-3 py-2 text-[11px] font-mono hover:bg-surface-container-high transition-colors ${vibe.visibility === v ? 'text-primary' : 'text-on-surface/60'}`}
+                              >
+                                <span className="material-symbols-outlined text-[13px]">{visibilityIcon[v]}</span>
+                                {visibilityLabel[v]}
+                                {vibe.visibility === v && <span className="ml-auto material-symbols-outlined text-[12px]">check</span>}
+                              </button>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ) : (vibe.visibility && vibe.visibility !== 'public' && (
                     <span className="flex items-center gap-0.5 text-[9px] text-on-surface/40 font-mono uppercase tracking-widest border border-outline-variant/20 rounded px-1 py-0.5 shrink-0">
                       <span className="material-symbols-outlined text-[10px]">{visibilityIcon[vibe.visibility]}</span>
                       {visibilityLabel[vibe.visibility]}
                     </span>
-                  )}
+                  ))}
                 </div>
                 <div className="flex items-center gap-1.5 text-[11px] text-on-surface/40 font-mono mt-0.5">
                   <span className="hover:text-on-surface/60 transition-colors">@{vibe.author_name}</span>
@@ -380,7 +448,8 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
           <div className={`bg-white overflow-hidden relative ${isFullscreen ? 'w-full h-full' : 'w-full h-full rounded-xl ring-1 ring-black/[0.07] shadow-xl'}`}>
             <iframe
               srcDoc={selectedVersion?.code}
-              className="w-full h-full border-none absolute inset-0 bg-white"
+              className="w-full h-full border-none absolute inset-0 bg-white transition-opacity duration-150"
+              style={{ opacity: iframeVisible ? 1 : 0 }}
               title="Stage"
               sandbox="allow-scripts allow-same-origin allow-forms"
             />
@@ -467,6 +536,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                       </div>
                     </div>
                   )}
+                  <div ref={commentsEndRef} />
                 </div>
 
                 {/* Input Area */}
@@ -513,9 +583,13 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                       </div>
                     </div>
                   ) : (
-                    <div className="py-3 px-4 bg-surface-container-lowest border border-outline-variant/10 rounded text-center">
-                      <p className="text-on-surface/40 font-mono text-[10px] uppercase tracking-widest">Sign in to participate</p>
-                    </div>
+                    <button
+                      onClick={() => setShowAuthModal(true)}
+                      className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-primary/10 hover:bg-primary/20 border border-primary/20 hover:border-primary/40 rounded-lg transition-colors group"
+                    >
+                      <span className="material-symbols-outlined text-[16px] text-primary/70 group-hover:text-primary transition-colors">login</span>
+                      <span className="text-primary/70 group-hover:text-primary font-mono text-[11px] font-bold uppercase tracking-widest transition-colors">Sign in to join the conversation</span>
+                    </button>
                   )}
                 </div>
               </div>
@@ -531,7 +605,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                     <div
                       key={version.id}
                       className={`flex gap-4 cursor-pointer group transition-all ${selectedVersion?.id === version.id ? 'opacity-100' : 'opacity-40 hover:opacity-80'}`}
-                      onClick={() => setSelectedVersion(version)}
+                      onClick={() => handleSelectVersion(version)}
                     >
                       <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center z-10 transition-colors mt-0.5 ${selectedVersion?.id === version.id ? 'bg-primary border-primary' : 'bg-surface-container-lowest border-outline-variant/20 group-hover:border-outline-variant/40'}`}>
                         {selectedVersion?.id === version.id && <div className="w-1.5 h-1.5 bg-on-primary rounded-full" />}
@@ -571,33 +645,6 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
             {activeTab === 'manage' && isOwner && (
               <div className="flex-1 overflow-y-auto p-4 space-y-6 hide-scrollbar absolute inset-0">
 
-                {/* Visibility */}
-                <div>
-                  <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-on-surface/40 mb-3">可見性</p>
-                  <div className="flex gap-2">
-                    {(['public', 'unlisted', 'private'] as const).map((v) => (
-                      <button
-                        key={v}
-                        onClick={() => handleVisibilityChange(v)}
-                        disabled={visibilityUpdating}
-                        className={`flex-1 flex flex-col items-center gap-1 py-2 px-1 rounded-lg border transition-colors text-[10px] font-bold uppercase tracking-wide ${
-                          vibe.visibility === v
-                            ? 'bg-primary/10 border-primary text-primary'
-                            : 'border-outline-variant/20 text-on-surface/50 hover:border-outline-variant/40 hover:text-on-surface/80'
-                        }`}
-                      >
-                        <span className="material-symbols-outlined text-[16px]">{visibilityIcon[v]}</span>
-                        {visibilityLabel[v]}
-                      </button>
-                    ))}
-                  </div>
-                  <p className="text-[10px] text-on-surface/30 mt-2 font-mono">
-                    {vibe.visibility === 'public' && '在探索頁顯示，所有人可見'}
-                    {vibe.visibility === 'unlisted' && '僅能透過直接連結存取，不出現在探索頁'}
-                    {vibe.visibility === 'private' && '僅限您和協作者存取'}
-                  </p>
-                </div>
-
                 {/* Collaborators */}
                 <div>
                   <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-on-surface/40 mb-3">協作者</p>
@@ -627,12 +674,29 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                       <div key={c.user_id} className="flex items-center gap-3 p-2 bg-surface-container-lowest rounded border border-outline-variant/10">
                         <img src={c.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${c.username}`} className="w-7 h-7 rounded" alt="avatar" />
                         <span className="flex-1 text-sm text-on-surface font-sans">{c.username}</span>
-                        <button
-                          onClick={() => handleRemoveCollaborator(c.user_id)}
-                          className="text-[10px] text-error/60 hover:text-error font-mono uppercase tracking-wide transition-colors"
-                        >
-                          移除
-                        </button>
+                        {confirmRemoveId === c.user_id ? (
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => handleRemoveCollaborator(c.user_id)}
+                              className="text-[10px] text-error font-mono font-bold uppercase tracking-wide transition-colors"
+                            >
+                              確認移除
+                            </button>
+                            <button
+                              onClick={() => setConfirmRemoveId(null)}
+                              className="text-[10px] text-on-surface/30 hover:text-on-surface/60 font-mono uppercase tracking-wide transition-colors ml-1"
+                            >
+                              取消
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => handleRemoveCollaborator(c.user_id)}
+                            className="text-[10px] text-error/40 hover:text-error font-mono uppercase tracking-wide transition-colors"
+                          >
+                            移除
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -683,6 +747,8 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
           </div>
         </div>
       </div>
+
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </div>
   );
 }
