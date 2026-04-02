@@ -26,6 +26,8 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
   const [activeTab, setActiveTab] = useState<ActiveTab>('chat');
   const [mobilePanel, setMobilePanel] = useState<'preview' | 'panel'>('preview');
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [chatSortOrder, setChatSortOrder] = useState<'newest' | 'oldest'>('oldest');
+  const [showChatSortDropdown, setShowChatSortDropdown] = useState(false);
 
   // iframe fade animation
   const [iframeVisible, setIframeVisible] = useState(true);
@@ -442,8 +444,8 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
 
       <div className="flex-1 flex overflow-hidden relative md:flex-row flex-col">
         {/* Left: Stage (Preview) */}
-        <div className={`${mobilePanel === 'preview' ? 'flex' : 'hidden'} md:flex flex-1 bg-surface-container-lowest relative items-center justify-center p-3 lg:p-8 ${isFullscreen ? 'fixed inset-0 z-50 bg-black p-0' : ''}`}>
-          <div className={`bg-white overflow-hidden relative ${isFullscreen ? 'w-full h-full' : 'w-full h-full rounded-xl ring-1 ring-black/[0.07] shadow-xl'}`}>
+        <div className={`${mobilePanel === 'preview' ? 'flex' : 'hidden'} md:flex flex-1 bg-surface-container-lowest relative items-center justify-center ${isFullscreen ? 'fixed inset-0 z-[200] bg-black p-0' : 'p-0'}`}>
+          <div className={`overflow-hidden relative ${isFullscreen ? 'w-full h-full' : 'w-full h-full'}`}>
             <iframe
               srcDoc={selectedVersion?.code}
               className="w-full h-full border-none absolute inset-0 bg-white transition-opacity duration-150"
@@ -493,8 +495,39 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
             {/* Chat Window */}
             {activeTab === 'chat' && (
               <div className="flex-1 flex flex-col overflow-hidden absolute inset-0">
+                {/* Sort toolbar */}
+                <div className="flex items-center justify-end px-4 py-2 border-b border-outline-variant/10 shrink-0 bg-surface-container-low">
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowChatSortDropdown(v => !v)}
+                      className="flex items-center gap-1 text-[10px] font-mono text-on-surface/40 hover:text-on-surface/70 transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[13px]">sort</span>
+                      {chatSortOrder === 'oldest' ? 'Oldest first' : 'Newest first'}
+                      <span className="material-symbols-outlined text-[11px]">expand_more</span>
+                    </button>
+                    {showChatSortDropdown && (
+                      <>
+                        <div className="fixed inset-0 z-20" onClick={() => setShowChatSortDropdown(false)} />
+                        <div className="absolute right-0 top-full mt-1 z-30 bg-surface-container-highest border border-outline-variant/20 rounded-lg shadow-xl overflow-hidden min-w-[130px]">
+                          {(['oldest', 'newest'] as const).map(order => (
+                            <button
+                              key={order}
+                              onClick={() => { setChatSortOrder(order); setShowChatSortDropdown(false); }}
+                              className={`w-full flex items-center gap-2 px-3 py-2 text-[11px] font-mono hover:bg-surface-container-high transition-colors ${chatSortOrder === order ? 'text-primary' : 'text-on-surface/60'}`}
+                            >
+                              <span className="material-symbols-outlined text-[13px]">{order === 'oldest' ? 'arrow_downward' : 'arrow_upward'}</span>
+                              {order === 'oldest' ? 'Oldest first' : 'Newest first'}
+                              {chatSortOrder === order && <span className="ml-auto material-symbols-outlined text-[12px]">check</span>}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
                 <div className="flex-1 overflow-y-auto p-4 space-y-6 hide-scrollbar">
-                  {vibe.comments?.map(comment => (
+                  {[...(vibe.comments ?? [])].sort((a, b) => chatSortOrder === 'newest' ? new Date(b.created_at).getTime() - new Date(a.created_at).getTime() : new Date(a.created_at).getTime() - new Date(b.created_at).getTime()).map(comment => (
                     <div key={comment.id} className={`flex gap-3 group ${comment.optimistic ? 'opacity-60' : ''}`}>
                       <img src={comment.author_avatar} className="w-8 h-8 rounded shrink-0 border border-outline-variant/10" alt="avatar" />
                       <div className="flex-1 space-y-1">
