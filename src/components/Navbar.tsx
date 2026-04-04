@@ -96,18 +96,7 @@ export default function Navbar({}: NavbarProps) {
             </div>
           )}
 
-          {isWorkspace && (
-            <nav className="hidden md:flex items-center bg-surface-container-low p-1 rounded-lg">
-              <button className="px-3 py-1.5 rounded-md text-primary font-semibold bg-surface-container-high transition-all text-sm flex items-center gap-2">
-                <span className="material-symbols-outlined text-sm">desktop_windows</span>
-                {t('nav_desktop')}
-              </button>
-              <button className="px-3 py-1.5 rounded-md text-on-surface/60 hover:bg-surface-container-high transition-colors text-sm flex items-center gap-2">
-                <span className="material-symbols-outlined text-sm">smartphone</span>
-                {t('nav_mobile')}
-              </button>
-            </nav>
-          )}
+
         </div>
 
         <div className="flex items-center gap-4">
