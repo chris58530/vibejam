@@ -92,10 +92,10 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
   // API 說明面板
   const [showApiGuide, setShowApiGuide] = useState(false);
   const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(true);
-  const [isDesktopChatOpen, setIsDesktopChatOpen] = useState(false);
+  const [chatFontScale, setChatFontScale] = useState(100);
   const [isManualEditMode, setIsManualEditMode] = useState(false);
   const [highlightEditBtn, setHighlightEditBtn] = useState(false);
-
+  
   const handleEditorClick = () => {
     if (!isManualEditMode) {
       setHighlightEditBtn(true);
@@ -150,7 +150,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
         setPublishedVibes(own.filter(v => !v.parent_vibe_id));
         setRemixVibes(own.filter(v => !!v.parent_vibe_id));
       })
-      .catch(() => { })
+      .catch(() => {})
       .finally(() => setVibesLoading(false));
   }, [savePanelOpen, supabaseUserId, currentUser?.username]);
 
@@ -532,7 +532,7 @@ ${currentCode || '（尚無程式碼）'}
   };
 
   const hasActiveProvider = !!selectedProvider;
-
+  
   const PRESET_PROMPTS = [
     { icon: 'palette', text: '把顏色改成藍色' },
     { icon: 'person', text: '加上我的名字' },
@@ -548,7 +548,7 @@ ${currentCode || '（尚無程式碼）'}
       {/* ── Header ── */}
       <div className="bg-surface px-4 py-1.5 flex items-center gap-3 border-b border-outline-variant/10 shrink-0">
         {/* Left: Title + Tags */}
-        <div className="flex items-center gap-3 bg-surface-container-low px-3 py-1.5 rounded-lg border-b-2 border-primary-container focus-within:border-primary transition-colors">
+        <div className="flex items-center gap-3 bg-surface-container-low px-3 py-1 rounded-lg border-b-2 border-primary-container focus-within:border-primary transition-colors">
           <span className="material-symbols-outlined text-primary-container text-sm">edit_note</span>
           <input
             className="bg-transparent border-none focus:ring-0 text-base font-medium text-on-surface p-0 w-72 outline-none"
@@ -571,7 +571,7 @@ ${currentCode || '（尚無程式碼）'}
 
         {/* Spacer - tabs moved to floating pill on canvas */}
 
-
+        
 
         {/* Right controls */}
         <div className="ml-auto flex items-center gap-1.5">
@@ -665,6 +665,8 @@ ${currentCode || '（尚無程式碼）'}
             </div>
           )}
 
+          {/* API Guide info button */}
+
           {/* Publish */}
           <button
             onClick={handlePublish}
@@ -688,7 +690,7 @@ ${currentCode || '（尚無程式碼）'}
           onClick={() => setMobileTab('chat')}
           className={`flex-1 py-3 text-center text-[10px] font-mono font-bold uppercase tracking-widest transition-colors ${mobileTab === 'chat' ? 'border-b-2 border-primary text-primary bg-surface-container-high' : 'text-on-surface/40'}`}
         >
-          <span className="material-symbols-outlined text-[14px] mr-1 align-middle">auto_awesome</span>
+          <span className="material-symbols-outlined text-[14px] mr-1 align-middle">smart_toy</span>
           AI Chat
         </button>
         <button
@@ -710,11 +712,25 @@ ${currentCode || '（尚無程式碼）'}
       {/* ── Split Pane ── */}
       <div ref={splitContainerRef} className="flex-1 flex overflow-hidden flex-col md:flex-row relative md:p-3 md:gap-3">
 
-        {/* ── Mobile AI Chat Panel (hidden on desktop) ── */}
-        <div className={`${mobileTab !== 'chat' ? 'hidden' : 'flex'} md:hidden flex-col bg-surface-container-low flex-1 overflow-hidden`}>
+        {/* ── Left Column: AI Chat (full height) ── */}
+        <div
+          className={`${mobileTab !== 'chat' ? 'hidden' : 'flex'} md:flex w-full flex-col bg-surface-container-low shrink-0 relative group transition-all duration-300 md:rounded-xl md:shadow-lg ${!isAiSidebarOpen ? 'md:hidden' : ''}`}
+          style={{ width: `${splitPercent}%`, minWidth: '280px' }}
+        >
+
+          {/* Close Sidebar Button */}
+          <button onClick={() => setIsAiSidebarOpen(false)} className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-12 bg-surface-container border border-white/10 rounded-r-lg hidden md:flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-variant z-20 transition-all shadow-md opacity-0 group-hover:opacity-100" title="收合側邊欄">
+            <span className="material-symbols-outlined text-[14px]">chevron_left</span>
+          </button>
+          {/* AI Assistant Header */}
+          <div className="px-4 py-3 border-b border-outline-variant/5 text-on-surface/80 font-semibold text-sm flex items-center gap-2 shrink-0">
+            <span className="text-base">✨</span>
+            <span className="flex-1">AI 助手</span>
+          </div>
           {/* Provider + Model Selector */}
           {activeChatProviders.length > 0 ? (
             <div className="px-3 py-2 border-b border-outline-variant/5 flex items-center gap-2 shrink-0 bg-surface-container-lowest/50">
+              {/* Provider select */}
               {activeChatProviders.length > 1 ? (
                 <select
                   value={selectedProvider}
@@ -730,6 +746,7 @@ ${currentCode || '（尚無程式碼）'}
                   {CHAT_PROVIDER_LABEL[activeChatProviders[0]]}
                 </span>
               )}
+              {/* Model select */}
               {selectedProvider && AI_PROVIDER_MODELS[selectedProvider as ChatProvider] && (
                 <select
                   value={selectedModel}
@@ -742,11 +759,13 @@ ${currentCode || '（尚無程式碼）'}
                 </select>
               )}
               {selectedProvider && limit > 0 && (
-                <span className="text-[10px] font-mono text-on-surface/30 shrink-0">{todayUsage}/{limit}</span>
+                <span className="text-[10px] font-mono text-on-surface/30 shrink-0">
+                  {todayUsage}/{limit}
+                </span>
               )}
             </div>
           ) : (
-            <div className="px-4 py-2 border-b border-outline-variant/5 shrink-0">
+            <div className="px-4 py-2 border-b border-outline-variant/5 shrink-0 bg-surface-container-lowest/50">
               <p className="text-[10px] font-mono text-on-surface/30 uppercase tracking-widest">
                 <span className="material-symbols-outlined text-[11px] mr-1 align-middle">key</span>
                 請先設定 AI API Key
@@ -776,6 +795,7 @@ ${currentCode || '（尚無程式碼）'}
                 </button>
               </div>
             )}
+
             {hasActiveProvider && messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full text-center px-4">
                 <span className="material-symbols-outlined text-4xl text-primary/20 mb-3">auto_awesome</span>
@@ -783,16 +803,21 @@ ${currentCode || '（尚無程式碼）'}
                 <p className="text-[10px] text-on-surface/25">例如：「幫我做一個計時器」、「加入動畫效果」</p>
               </div>
             )}
+
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[88%] rounded-2xl px-3 py-2.5 whitespace-pre-wrap leading-relaxed border text-sm ${msg.role === 'user'
-                    ? 'bg-primary text-on-primary rounded-br-none border-primary/30 shadow-sm'
-                    : 'bg-surface-container-high text-on-surface rounded-tl-none border-outline-variant/5 shadow-sm'
-                  }`}>
+                <div
+                  className={`max-w-[88%] rounded-2xl px-3 py-2.5 whitespace-pre-wrap leading-relaxed border ${msg.role === 'user'
+                  ? 'bg-primary text-on-primary rounded-br-none border-primary/30 shadow-sm'
+                  : 'bg-surface-container-high text-on-surface rounded-tl-none border-outline-variant/5 shadow-sm'
+                  }`}
+                  style={{ fontSize: `${(chatFontScale / 100) * 24}px` }}
+                >
                   {msg.role === 'assistant' ? formatAssistantMessage(msg.content) : msg.content}
                 </div>
               </div>
             ))}
+
             {aiLoading && (
               <div className="flex justify-start">
                 <div className="bg-surface-container-high rounded-2xl rounded-tl-none px-3 py-2.5 border border-outline-variant/5 shadow-sm">
@@ -807,9 +832,13 @@ ${currentCode || '（尚無程式碼）'}
                 </div>
               </div>
             )}
+
             {aiError && (
-              <div className="bg-error-container text-on-error-container text-[10px] rounded-lg px-3 py-2">{aiError}</div>
+              <div className="bg-error-container text-on-error-container text-[10px] rounded-lg px-3 py-2">
+                {aiError}
+              </div>
             )}
+
             <div ref={messagesEndRef} />
           </div>
 
@@ -828,7 +857,6 @@ ${currentCode || '（尚無程式碼）'}
               ))}
             </div>
           )}
-
           {/* Input Area */}
           {hasActiveProvider && (
             <div className="p-3 border-t border-outline-variant/5 shrink-0">
@@ -840,8 +868,8 @@ ${currentCode || '（尚無程式碼）'}
                   onKeyDown={handleAiKeyDown}
                   rows={1}
                   placeholder="輸入需求..."
-                  className="flex-1 bg-transparent text-on-surface text-sm px-3 py-2.5 resize-none outline-none placeholder:text-on-surface/30"
-                  style={{ maxHeight: '80px', overflowY: 'auto' }}
+                  className="flex-1 bg-transparent text-on-surface px-3 py-2.5 resize-none outline-none placeholder:text-on-surface/30"
+                  style={{ fontSize: `${(chatFontScale / 100) * 24}px`, maxHeight: '80px', overflowY: 'auto' }}
                   onInput={(e) => {
                     const target = e.target as HTMLTextAreaElement;
                     target.style.height = 'auto';
@@ -860,196 +888,58 @@ ${currentCode || '（尚無程式碼）'}
           )}
         </div>
 
-        {/* ── Desktop AI Chat Panel (right side) ── */}
-        {isDesktopChatOpen && (
-          <div className="hidden md:flex flex-col bg-surface-container-low w-80 shrink-0 md:rounded-xl md:shadow-lg overflow-hidden">
-            {/* Header */}
-            <div className="px-4 py-3 border-b border-outline-variant/5 flex items-center gap-2 shrink-0">
-              <span className="text-base">✨</span>
-              <span className="flex-1 text-on-surface/80 font-semibold text-sm">AI 助手</span>
-              <button onClick={() => setIsDesktopChatOpen(false)} className="text-on-surface/30 hover:text-on-surface transition-colors">
-                <span className="material-symbols-outlined text-[16px]">close</span>
-              </button>
-            </div>
-            {/* Provider + Model Selector */}
-            {activeChatProviders.length > 0 ? (
-              <div className="px-3 py-2 border-b border-outline-variant/5 flex items-center gap-2 shrink-0 bg-surface-container-lowest/50">
-                {activeChatProviders.length > 1 ? (
-                  <select
-                    value={selectedProvider}
-                    onChange={(e) => setSelectedProvider(e.target.value)}
-                    className="bg-surface-container-high text-on-surface text-[11px] font-medium rounded-lg px-2 py-1 border border-outline-variant/10 focus:outline-none focus:ring-1 focus:ring-primary/40 cursor-pointer"
-                  >
-                    {activeChatProviders.map(p => (
-                      <option key={p} value={p}>{CHAT_PROVIDER_LABEL[p]}</option>
-                    ))}
-                  </select>
-                ) : (
-                  <span className="px-2 py-1 bg-primary/10 text-primary text-[11px] font-semibold rounded-lg border border-primary/15">
-                    {CHAT_PROVIDER_LABEL[activeChatProviders[0]]}
-                  </span>
-                )}
-                {selectedProvider && AI_PROVIDER_MODELS[selectedProvider as ChatProvider] && (
-                  <select
-                    value={selectedModel}
-                    onChange={(e) => setSelectedModel(e.target.value)}
-                    className="flex-1 bg-surface-container-high text-on-surface/70 text-[11px] rounded-lg px-2 py-1 border border-outline-variant/10 focus:outline-none focus:ring-1 focus:ring-primary/40 cursor-pointer truncate"
-                  >
-                    {AI_PROVIDER_MODELS[selectedProvider as ChatProvider]!.map(m => (
-                      <option key={m.id} value={m.id}>{m.label}</option>
-                    ))}
-                  </select>
-                )}
-                {selectedProvider && limit > 0 && (
-                  <span className="text-[10px] font-mono text-on-surface/30 shrink-0">{todayUsage}/{limit}</span>
-                )}
-              </div>
-            ) : (
-              <div className="px-4 py-2 border-b border-outline-variant/5 shrink-0">
-                <p className="text-[10px] font-mono text-on-surface/30 uppercase tracking-widest">
-                  <span className="material-symbols-outlined text-[11px] mr-1 align-middle">key</span>
-                  請先設定 AI API Key
-                </p>
-              </div>
-            )}
-            {/* Chat Messages */}
-            <div
-              ref={chatScrollRef}
-              className="flex-1 overflow-y-auto p-3 space-y-3 hide-scrollbar"
-              style={{ minHeight: 0 }}
-              onScroll={e => {
-                const el = e.currentTarget;
-                autoScrollEnabledRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
-              }}
-            >
-              {!hasActiveProvider && (
-                <div className="flex flex-col items-center justify-center h-full text-center px-4">
-                  <span className="material-symbols-outlined text-3xl text-on-surface/15 mb-2">key</span>
-                  <p className="text-xs text-on-surface/30 mb-3">尚未設定 AI API Key</p>
-                  <button onClick={() => navigate('/settings')} className="px-3 py-1.5 bg-primary text-on-primary text-xs font-bold rounded-lg hover:bg-primary-fixed transition-colors">前往設定</button>
-                </div>
-              )}
-              {hasActiveProvider && messages.length === 0 && (
-                <div className="flex flex-col items-center justify-center h-full text-center px-4">
-                  <span className="material-symbols-outlined text-4xl text-primary/20 mb-3">auto_awesome</span>
-                  <p className="text-xs text-on-surface/50 font-medium mb-1">告訴 AI 你想要什麼</p>
-                  <p className="text-[10px] text-on-surface/25">例如：「幫我做一個計時器」</p>
-                </div>
-              )}
-              {messages.map((msg, i) => (
-                <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[90%] rounded-2xl px-3 py-2.5 whitespace-pre-wrap leading-relaxed border text-sm ${
-                    msg.role === 'user'
-                      ? 'bg-primary text-on-primary rounded-br-none border-primary/30 shadow-sm'
-                      : 'bg-surface-container-high text-on-surface rounded-tl-none border-outline-variant/5 shadow-sm'
-                  }`}>
-                    {msg.role === 'assistant' ? formatAssistantMessage(msg.content) : msg.content}
-                  </div>
-                </div>
-              ))}
-              {aiLoading && (
-                <div className="flex justify-start">
-                  <div className="bg-surface-container-high rounded-2xl rounded-tl-none px-3 py-2.5 border border-outline-variant/5 shadow-sm">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-mono thinking-shimmer-text">thinking</span>
-                      <span className="flex items-end gap-[3px]">
-                        <span className="thinking-dot w-1 h-1 rounded-full bg-primary/70" />
-                        <span className="thinking-dot w-1 h-1 rounded-full bg-primary/70" />
-                        <span className="thinking-dot w-1 h-1 rounded-full bg-primary/70" />
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-              {aiError && <div className="bg-error-container text-on-error-container text-[10px] rounded-lg px-3 py-2">{aiError}</div>}
-              <div ref={messagesEndRef} />
-            </div>
-            {/* Preset Prompts */}
-            {hasActiveProvider && messages.length === 0 && (
-              <div className="px-3 pb-2 flex items-center gap-2 overflow-x-auto hide-scrollbar shrink-0">
-                {PRESET_PROMPTS.map((p, i) => (
-                  <button key={i} onClick={() => handleAiSend(p.text)} className="whitespace-nowrap px-3 py-1.5 bg-surface-container rounded-full border border-outline-variant/10 text-on-surface/60 text-[11px] hover:text-on-surface hover:border-primary/30 transition-colors flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[12px]">{p.icon}</span>
-                    {p.text}
-                  </button>
-                ))}
-              </div>
-            )}
-            {/* Input */}
-            {hasActiveProvider && (
-              <div className="p-3 border-t border-outline-variant/5 shrink-0">
-                <div className="flex items-end bg-background rounded-xl shadow-inner overflow-hidden">
-                  <textarea
-                    value={aiInput}
-                    onChange={e => setAiInput(e.target.value)}
-                    onKeyDown={handleAiKeyDown}
-                    rows={1}
-                    placeholder="輸入需求..."
-                    className="flex-1 bg-transparent text-on-surface text-sm px-3 py-2.5 resize-none outline-none placeholder:text-on-surface/30"
-                    style={{ maxHeight: '80px', overflowY: 'auto' }}
-                    onInput={(e) => {
-                      const target = e.target as HTMLTextAreaElement;
-                      target.style.height = 'auto';
-                      target.style.height = Math.min(target.scrollHeight, 80) + 'px';
-                    }}
-                  />
-                  <button
-                    onClick={handleAiSend}
-                    disabled={!aiInput.trim() || aiLoading}
-                    className="w-9 h-9 m-1 bg-primary text-on-primary rounded-lg flex items-center justify-center hover:bg-primary-fixed transition-colors disabled:opacity-30 disabled:cursor-not-allowed shrink-0 shadow-md"
-                  >
-                    <span className="material-symbols-outlined text-[15px]">arrow_upward</span>
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+        {/* ── Draggable Splitter ── */}
+        <div
+          className="hidden md:flex w-1.5 cursor-col-resize items-center justify-center hover:bg-primary/10 active:bg-primary/20 transition-colors group shrink-0 select-none"
+          onMouseDown={() => { isDraggingRef.current = true; document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none'; }}
+        >
+          <div className="w-0.5 h-8 bg-outline-variant/20 rounded-full group-hover:bg-primary/40 group-active:bg-primary/60 transition-colors"></div>
+        </div>
+
+        {/* ── AI Sidebar Reopen Button (when collapsed) ── */}
+        {!isAiSidebarOpen && (
+          <button
+            onClick={() => setIsAiSidebarOpen(true)}
+            className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-20 w-6 h-12 bg-surface-container border border-white/10 rounded-r-lg items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-variant transition-all shadow-md ml-0"
+            title="展開 AI 助手"
+          >
+            <span className="material-symbols-outlined text-[14px]">chevron_right</span>
+          </button>
         )}
 
         {/* ── Right Column: Code + Preview ── */}
         <section className={`${mobileTab === 'chat' ? 'hidden' : 'flex'} md:flex flex-1 flex-col bg-background overflow-hidden relative md:rounded-xl md:shadow-lg`}>
 
           {/* ── Floating Tab Toggle (Canvas Style) ── */}
-          <div className="hidden md:flex absolute top-4 left-1/2 -translate-x-1/2 z-20 items-center gap-1.5">
-            <div className="flex bg-surface-container p-1 rounded-lg shadow-lg">
-              <button
-                onClick={() => setRightTab('code')}
-                className={`px-6 py-1.5 rounded-md font-medium text-sm flex items-center gap-2 transition-colors ${rightTab === 'code'
-                    ? 'bg-white/10 text-on-surface shadow-sm'
-                    : 'text-on-surface/40 hover:text-on-surface/70'
-                  }`}
-              >
-                <span className="material-symbols-outlined text-[16px]">code</span>
-                Code
-              </button>
-              <button
-                onClick={() => setRightTab('preview')}
-                className={`px-6 py-1.5 rounded-md font-medium text-sm flex items-center gap-2 transition-colors ${rightTab === 'preview'
-                    ? 'bg-white/10 text-on-surface shadow-sm'
-                    : 'text-on-surface/40 hover:text-on-surface/70'
-                  }`}
-              >
-                <span className="material-symbols-outlined text-[16px]">visibility</span>
-                Preview
-              </button>
-            </div>
+          <div className="hidden md:flex absolute top-4 left-1/2 -translate-x-1/2 z-20 items-center gap-1.5 bg-surface-container p-1 rounded-lg shadow-lg">
+            <button
+              onClick={() => setRightTab('code')}
+              className={`px-6 py-1.5 rounded-md font-medium text-sm flex items-center gap-2 transition-colors ${
+                rightTab === 'code'
+                  ? 'bg-white/10 text-on-surface shadow-sm'
+                  : 'text-on-surface/40 hover:text-on-surface/70'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">code</span>
+              Code
+            </button>
+            <button
+              onClick={() => setRightTab('preview')}
+              className={`px-6 py-1.5 rounded-md font-medium text-sm flex items-center gap-2 transition-colors ${
+                rightTab === 'preview'
+                  ? 'bg-white/10 text-on-surface shadow-sm'
+                  : 'text-on-surface/40 hover:text-on-surface/70'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">visibility</span>
+              Preview
+            </button>
             <button
               onClick={() => setShowApiGuidePopup(!showApiGuidePopup)}
               title="BeaverKit API 說明"
-              className="flex items-center justify-center w-8 h-8 bg-surface-container rounded-lg shadow-lg text-on-surface/30 hover:text-on-surface transition-colors"
+              className="flex items-center justify-center w-7 h-7 rounded-md text-on-surface/30 hover:text-on-surface hover:bg-white/10 transition-colors"
             >
               <span className="material-symbols-outlined text-[16px]">info</span>
-            </button>
-            <button
-              onClick={() => setIsDesktopChatOpen(!isDesktopChatOpen)}
-              title="AI 助手"
-              className={`flex items-center justify-center w-8 h-8 rounded-lg shadow-lg transition-colors ${
-                isDesktopChatOpen
-                  ? 'bg-primary text-on-primary'
-                  : 'bg-surface-container text-on-surface/40 hover:text-on-surface'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[16px]">auto_awesome</span>
             </button>
           </div>
 
@@ -1072,7 +962,7 @@ ${currentCode || '（尚無程式碼）'}
                 </div>
               </div>
               {/* Filename label (non-split mode only) */}
-
+              
 
               {/* Textarea */}
               <div className="flex-1 font-mono text-sm leading-relaxed editor-well overflow-hidden flex relative group cursor-text mb-4 mx-4 md:mx-6 rounded-b-xl border border-outline-variant/10 bg-[#1e1e1e] shadow-lg" onClick={handleEditorClick}>
