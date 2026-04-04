@@ -79,7 +79,7 @@ export async function chatWithAIStream(
   provider: AIProvider,
   messages: ChatMessage[],
   onChunk: (chunk: string, accumulated: string) => void,
-  options?: { model?: string; temperature?: number; maxTokens?: number }
+  options?: { model?: string; temperature?: number; maxTokens?: number; signal?: AbortSignal }
 ): Promise<void> {
   const store = useAIKeyStore.getState();
   const apiKey = store.getKey(provider);
@@ -98,6 +98,7 @@ export async function chatWithAIStream(
       temperature: options?.temperature ?? 0.7,
       maxTokens: options?.maxTokens ?? 8192,
     }),
+    signal: options?.signal,
   });
 
   if (!res.ok || !res.body) {
@@ -110,7 +111,15 @@ export async function chatWithAIStream(
   let buf = '';
   let accumulated = '';
 
+  // 當外部 signal 觸發 abort 時，取消 reader
+  if (options?.signal) {
+    options.signal.addEventListener('abort', () => {
+      reader.cancel().catch(() => {});
+    }, { once: true });
+  }
+
   while (true) {
+    if (options?.signal?.aborted) break;
     const { done, value } = await reader.read();
     if (done) break;
     buf += decoder.decode(value, { stream: true });

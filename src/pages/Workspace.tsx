@@ -7,6 +7,7 @@ import { useAIKeyStore, AI_PROVIDER_MODELS } from '../lib/aiKeyStore';
 import { useWorkspaceStore } from '../lib/workspaceStore';
 import { chatWithAIStream, ChatMessage, AIServiceError } from '../lib/aiService';
 import BeaverKitAPIGuide from '../components/BeaverKitAPIGuide';
+import ThinkBlock from '../components/ThinkBlock';
 
 // ── 存檔 ─────────────────────────────────────────────────────────────
 interface SaveSlot {
@@ -438,6 +439,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const autoScrollEnabledRef = useRef(true);
   const aiInputRef = useRef<HTMLTextAreaElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const activeChatProviders = (['gemini', 'openai', 'minimax'] as const).filter(
     p => !!keys[p] && !!validated[p]
@@ -484,6 +486,10 @@ ${currentCode || '（尚無程式碼）'}
 使用繁體中文回答。`,
   });
 
+  const handleStopAI = () => {
+    abortControllerRef.current?.abort();
+  };
+
   const handleAiSend = async (overrideText?: string | React.MouseEvent) => {
     const text = (typeof overrideText === "string" ? overrideText : aiInput).trim();
     if (!text || aiLoading || !selectedProvider) return;
@@ -495,6 +501,9 @@ ${currentCode || '（尚無程式碼）'}
     setAiInput('');
     setAiLoading(true);
     setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     try {
       const recentMessages = newMessages.slice(-10);
@@ -523,7 +532,7 @@ ${currentCode || '（尚無程式碼）'}
             }
           }
         },
-        { maxTokens: 8192, model: selectedModel || undefined }
+        { maxTokens: 8192, model: selectedModel || undefined, signal: controller.signal }
       );
 
       const finalCode = extractCodeFromAIResponse(accumulated);
@@ -533,14 +542,21 @@ ${currentCode || '（尚無程式碼）'}
         setActiveTab('html');
       }
     } catch (err) {
-      setMessages(prev => prev[prev.length - 1]?.content === '' ? prev.slice(0, -1) : prev);
-      if (err instanceof AIServiceError) {
-        setAiError(err.message);
+      // 使用者主動叫停 — 保留已串流的內容，不顯示錯誤
+      if (err instanceof Error && err.name === 'AbortError') {
+        // 若空白訊息（還沒任何 chunk），移除佔位
+        setMessages(prev => prev[prev.length - 1]?.content === '' ? prev.slice(0, -1) : prev);
       } else {
-        setAiError('發生未知錯誤，請稍後再試。');
+        setMessages(prev => prev[prev.length - 1]?.content === '' ? prev.slice(0, -1) : prev);
+        if (err instanceof AIServiceError) {
+          setAiError(err.message);
+        } else {
+          setAiError('發生未知錯誤，請稍後再試。');
+        }
       }
     } finally {
       setAiLoading(false);
+      abortControllerRef.current = null;
     }
   };
 
@@ -830,15 +846,17 @@ ${currentCode || '（尚無程式碼）'}
                   }`}
                   style={{ fontSize: `${(chatFontScale / 100) * 24}px` }}
                 >
-                  {msg.role === 'assistant' ? formatAssistantMessage(msg.content) : msg.content}
+                  {msg.role === 'assistant' ? formatAssistantMessage(msg.content, aiLoading && i === messages.length - 1) : msg.content}
                 </div>
               </div>
             ))}
 
-            {aiLoading && (
+            {/* 初始載入泡泡：僅在 AI 回應尚無任何內容時顯示 */}
+            {aiLoading && messages[messages.length - 1]?.role === 'assistant' && messages[messages.length - 1]?.content === '' && (
               <div className="flex justify-start">
                 <div className="bg-surface-container-high rounded-2xl rounded-tl-none px-3 py-2.5 border border-outline-variant/5 shadow-sm">
                   <div className="flex items-center gap-1.5">
+                    <img src="/Icon.png" alt="" className="w-3.5 h-3.5 rounded-full opacity-50" />
                     <span className="text-xs font-mono thinking-shimmer-text">thinking</span>
                     <span className="flex items-end gap-[3px]">
                       <span className="thinking-dot w-1 h-1 rounded-full bg-primary/70" />
@@ -893,13 +911,23 @@ ${currentCode || '（尚無程式碼）'}
                     target.style.height = Math.min(target.scrollHeight, 80) + 'px';
                   }}
                 />
-                <button
-                  onClick={handleAiSend}
-                  disabled={!aiInput.trim() || aiLoading}
-                  className="w-9 h-9 m-1 bg-primary text-on-primary rounded-lg flex items-center justify-center hover:bg-primary-fixed transition-colors disabled:opacity-30 disabled:cursor-not-allowed shrink-0 shadow-md"
-                >
-                  <span className="material-symbols-outlined text-[15px]">arrow_upward</span>
-                </button>
+                {aiLoading ? (
+                  <button
+                    onClick={handleStopAI}
+                    title="停止生成"
+                    className="w-9 h-9 m-1 bg-error/80 text-white rounded-lg flex items-center justify-center hover:bg-error transition-colors shrink-0 shadow-md"
+                  >
+                    <span className="material-symbols-outlined text-[15px]">stop</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleAiSend}
+                    disabled={!aiInput.trim()}
+                    className="w-9 h-9 m-1 bg-primary text-on-primary rounded-lg flex items-center justify-center hover:bg-primary-fixed transition-colors disabled:opacity-30 disabled:cursor-not-allowed shrink-0 shadow-md"
+                  >
+                    <span className="material-symbols-outlined text-[15px]">arrow_upward</span>
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -1296,8 +1324,34 @@ ${currentCode || '（尚無程式碼）'}
 }
 
 // ── Helper: Format assistant messages ─────────────────────────────────
-function formatAssistantMessage(content: string): React.ReactNode {
-  const parts = content.split(/(```[\s\S]*?```)/g);
+function formatAssistantMessage(content: string, isStreaming = false): React.ReactNode {
+  // 解析 <think>...</think> 標籤
+  let thinkContent: string | null = null;
+  let responseContent = content;
+  let thinkIsStreaming = false;
+
+  const thinkStart = content.indexOf('<think>');
+  if (thinkStart !== -1) {
+    const thinkEnd = content.indexOf('</think>', thinkStart);
+    if (thinkEnd !== -1) {
+      // 完整 think 區塊
+      thinkContent = content.slice(thinkStart + 7, thinkEnd);
+      responseContent = content.slice(thinkEnd + 8).trimStart();
+      thinkIsStreaming = false;
+    } else {
+      // 串流中，</think> 尚未到達
+      thinkContent = content.slice(thinkStart + 7);
+      responseContent = '';
+      thinkIsStreaming = isStreaming;
+    }
+
+    // 若 think 開頭之前有文字也納入回應
+    const beforeThink = content.slice(0, thinkStart).trimEnd();
+    if (beforeThink) responseContent = beforeThink + '\n' + responseContent;
+  }
+
+  // 格式化回應內容（程式碼區塊）
+  const parts = responseContent.split(/(```[\s\S]*?```)/g);
   const nodes: React.ReactNode[] = [];
 
   for (let i = 0; i < parts.length; i++) {
@@ -1316,5 +1370,13 @@ function formatAssistantMessage(content: string): React.ReactNode {
       if (stripped) nodes.push(<span key={i}>{stripped}</span>);
     }
   }
-  return <>{nodes}</>;
+
+  return (
+    <>
+      {thinkContent !== null && (
+        <ThinkBlock content={thinkContent} isStreaming={thinkIsStreaming} />
+      )}
+      {nodes.length > 0 && <>{nodes}</>}
+    </>
+  );
 }
