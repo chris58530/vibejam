@@ -551,7 +551,7 @@ ${currentCode || '（尚無程式碼）'}
         <div className="flex items-center gap-3 bg-surface-container-low px-3 py-1 rounded-lg border-b-2 border-primary-container focus-within:border-primary transition-colors">
           <span className="material-symbols-outlined text-primary-container text-sm">edit_note</span>
           <input
-            className="bg-transparent border-none focus:ring-0 text-base font-medium text-on-surface p-0 w-72 outline-none"
+            className="bg-transparent border-none focus:ring-0 text-lg font-semibold text-on-surface p-0 w-80 outline-none"
             placeholder="Untitled Project"
             type="text"
             value={title}
@@ -723,10 +723,6 @@ ${currentCode || '（尚無程式碼）'}
             <span className="material-symbols-outlined text-[14px]">chevron_left</span>
           </button>
           {/* AI Assistant Header */}
-          <div className="px-4 py-3 border-b border-outline-variant/5 text-on-surface/80 font-semibold text-sm flex items-center gap-2 shrink-0">
-            <span className="text-base">✨</span>
-            <span className="flex-1">AI 助手</span>
-          </div>
           {/* Provider + Model Selector */}
           {activeChatProviders.length > 0 ? (
             <div className="px-3 py-2 border-b border-outline-variant/5 flex items-center gap-2 shrink-0 bg-surface-container-lowest/50">
