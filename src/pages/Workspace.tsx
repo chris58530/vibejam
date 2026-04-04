@@ -1358,16 +1358,39 @@ function formatAssistantMessage(content: string, isStreaming = false): React.Rea
     const part = parts[i];
     if (/^```[\s\S]*```$/.test(part)) {
       nodes.push(
-        <div key={i} className="my-1.5 bg-surface-container-lowest rounded px-2.5 py-1.5 border border-outline-variant/10">
-          <div className="flex items-center gap-1.5 text-[9px] font-mono text-primary/60">
-            <span className="material-symbols-outlined text-[11px]">check_circle</span>
+        <div key={i} className="my-1.5 bg-surface-container-lowest rounded px-2.5 py-1.5 border border-outline-variant/10 flex items-center justify-between">
+          <div className="flex items-center gap-1.5 text-[9px] font-mono text-primary/80">
+            <span className="material-symbols-outlined text-[11px] text-green-500">check_circle</span>
             程式碼已自動套用至編輯器
           </div>
         </div>
       );
     } else {
-      const stripped = part.replace(/```[\w]*\n?[\s\S]*$/, '').trimEnd();
-      if (stripped) nodes.push(<span key={i}>{stripped}</span>);
+      // 檢查是否有尚未閉合的程式碼區塊（即串流中的程式碼）
+      const unclosedMatch = part.match(/```(?:\w+)?\n?([\s\S]*)$/);
+      if (unclosedMatch) {
+        // 先顯示區塊之前的文字
+        const beforeCode = part.slice(0, unclosedMatch.index).trimEnd();
+        if (beforeCode) nodes.push(<span key={i + 'before'}>{beforeCode}</span>);
+        
+        // 顯示一個「正在生成程式碼...」的佔位 UI
+        nodes.push(
+          <div key={i + 'streaming'} className="my-1.5 bg-surface-container-lowest rounded px-2.5 py-1.5 border border-primary/30 shadow-sm flex items-center justify-between animate-pulse">
+            <div className="flex items-center gap-1.5 text-[9px] font-mono text-primary animate-pulse">
+              <span className="material-symbols-outlined text-[11px] animate-spin text-primary">data_object</span>
+              正在寫入右側編輯器...
+            </div>
+            <span className="flex items-end gap-[2px]">
+              <span className="thinking-dot w-1 h-1 rounded-full bg-primary border-primary" />
+              <span className="thinking-dot w-1 h-1 rounded-full bg-primary border-primary" />
+              <span className="thinking-dot w-1 h-1 rounded-full bg-primary border-primary" />
+            </span>
+          </div>
+        );
+      } else {
+        const stripped = part.trimEnd();
+        if (stripped) nodes.push(<span key={i}>{stripped}</span>);
+      }
     }
   }
 
@@ -1376,7 +1399,7 @@ function formatAssistantMessage(content: string, isStreaming = false): React.Rea
       {thinkContent !== null && (
         <ThinkBlock content={thinkContent} isStreaming={thinkIsStreaming} />
       )}
-      {nodes.length > 0 && <>{nodes}</>}
+      {nodes.length > 0 && <div className="mt-1 flex flex-col gap-2">{nodes}</div>}
     </>
   );
 }

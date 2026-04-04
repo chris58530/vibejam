@@ -232,9 +232,21 @@ ${destructures}${code}
 
 // ── 從 AI 回覆中提取程式碼區塊 ──────────────────────────────────────
 export function extractCodeFromAIResponse(text: string): string | null {
+  // 移除 <think> 標籤（包括未閉合的情況，避免擷取到思考過程中的程式碼）
+  let cleanText = text;
+  const thinkStart = cleanText.indexOf('<think>');
+  if (thinkStart !== -1) {
+    const thinkEnd = cleanText.indexOf('</think>', thinkStart);
+    if (thinkEnd !== -1) {
+      cleanText = cleanText.slice(0, thinkStart) + cleanText.slice(thinkEnd + 8);
+    } else {
+      cleanText = cleanText.slice(0, thinkStart);
+    }
+  }
+
   // Match ```html, ```tsx, ```jsx, ```vue, or plain ``` code blocks
   const codeBlockRegex = /```(?:html|tsx|jsx|vue|javascript|js|css)?\s*\n([\s\S]*?)```/;
-  const match = text.match(codeBlockRegex);
+  const match = cleanText.match(codeBlockRegex);
   return match ? match[1].trim() : null;
 }
 
@@ -243,10 +255,22 @@ export function extractCodeFromAIResponse(text: string): string | null {
  * fence hasn't arrived yet. Returns null if no meaningful partial code found.
  */
 export function extractPartialCode(text: string): string | null {
+  // 移除 <think> 標籤（包括未閉合的情況）
+  let cleanText = text;
+  const thinkStart = cleanText.indexOf('<think>');
+  if (thinkStart !== -1) {
+    const thinkEnd = cleanText.indexOf('</think>', thinkStart);
+    if (thinkEnd !== -1) {
+      cleanText = cleanText.slice(0, thinkStart) + cleanText.slice(thinkEnd + 8);
+    } else {
+      cleanText = cleanText.slice(0, thinkStart);
+    }
+  }
+
   // Look for opening fence that has no closing fence yet
-  const fenceStart = text.search(/```(?:html|tsx|jsx|vue|javascript|js|css)?\s*\n/);
+  const fenceStart = cleanText.search(/```(?:html|tsx|jsx|vue|javascript|js|css)?\s*\n/);
   if (fenceStart === -1) return null;
-  const afterFence = text.slice(fenceStart).replace(/^```(?:html|tsx|jsx|vue|javascript|js|css)?\s*\n/, '');
+  const afterFence = cleanText.slice(fenceStart).replace(/^```(?:html|tsx|jsx|vue|javascript|js|css)?\s*\n/, '');
   // If there's already a closing fence, extractCodeFromAIResponse handles it
   if (afterFence.includes('```')) return null;
   const partial = afterFence.trimEnd();
