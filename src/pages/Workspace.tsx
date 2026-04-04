@@ -83,7 +83,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
   const isVueMode = editorMode === 'vue';
   const isSplitMode = editorMode === 'split';
 
-  const [title, setTitle] = useState(randomVibeName);
+  const [title, setTitle] = useState('');
   const [tags, setTags] = useState('');
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile' | 'round'>('desktop');
   const [isPublishing, setIsPublishing] = useState(false);
@@ -98,6 +98,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
   const splitPercentRef = useRef(40);
   const isDraggingRef = useRef(false);
   const splitContainerRef = useRef<HTMLDivElement>(null);
+  const leftPanelRef = useRef<HTMLDivElement>(null);
 
   // API Guide popup
   const [showApiGuidePopup, setShowApiGuidePopup] = useState(false);
@@ -216,14 +217,14 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Splitter drag handler — 直接操作 CSS custom property，繞過 React 重渲染
+  // Splitter drag handler — 直接操作左側面板 DOM style，完全繞過 React 渲染
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isDraggingRef.current || !splitContainerRef.current) return;
+      if (!isDraggingRef.current || !splitContainerRef.current || !leftPanelRef.current) return;
       const rect = splitContainerRef.current.getBoundingClientRect();
       const percent = Math.max(20, Math.min(80, ((e.clientX - rect.left) / rect.width) * 100));
       splitPercentRef.current = percent;
-      splitContainerRef.current.style.setProperty('--split-left', `${percent}%`);
+      leftPanelRef.current.style.width = `${percent}%`;
     };
     const handleMouseUp = () => {
       if (!isDraggingRef.current) return;
@@ -565,22 +566,12 @@ ${currentCode || '（尚無程式碼）'}
   return (
     <main className={`${savePanelOpen ? 'md:ml-72' : 'md:ml-16'} flex-1 flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-background transition-[margin] duration-300`}>
       {/* ── Header ── */}
-      <div className="bg-surface px-4 py-1.5 flex items-center gap-3 border-b border-outline-variant/10 shrink-0">
-        {/* Left: Title + Tags */}
-        <div className="flex items-center gap-3 bg-surface-container-low px-3 py-1 rounded-lg border-b-2 border-primary-container focus-within:border-primary transition-colors">
-          <span className="material-symbols-outlined text-primary-container text-sm">edit_note</span>
-          <input
-            className="bg-transparent border-none focus:ring-0 text-lg font-semibold text-on-surface p-0 w-80 outline-none"
-            placeholder="為你的 Vibe 命名..."
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-        </div>
-        <div className="flex items-center gap-2 bg-surface-container-low px-3 py-1 rounded-lg focus-within:border-primary/50 transition-colors border-b-2 border-transparent">
+      <div className="bg-surface px-4 py-1.5 flex items-center gap-3 border-b border-outline-variant/10 shrink-0 relative">
+        {/* Left: Tags */}
+        <div className="flex items-center gap-2 bg-surface-container-low px-3 py-1 rounded-lg focus-within:border-primary/50 transition-colors border-b-2 border-transparent shrink-0">
           <span className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Tags</span>
           <input
-            className="bg-transparent border-none focus:ring-0 text-xs text-on-surface/80 p-0 w-32 outline-none"
+            className="bg-transparent border-none focus:ring-0 text-xs text-on-surface/80 p-0 w-28 outline-none"
             placeholder="#tag"
             type="text"
             value={tags}
@@ -588,9 +579,19 @@ ${currentCode || '（尚無程式碼）'}
           />
         </div>
 
-        {/* Spacer - tabs moved to floating pill on canvas */}
-
-        
+        {/* Center: Title (absolute centered) */}
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-surface-container-low px-3 py-1 rounded-lg border-b-2 border-primary-container focus-within:border-primary transition-colors">
+          <span className="material-symbols-outlined text-primary-container text-sm shrink-0">edit_note</span>
+          <input
+            className="bg-transparent border-none focus:ring-0 text-base font-semibold text-on-surface p-0 w-52 outline-none text-center"
+            placeholder="專案名稱（必填）"
+            required
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+          <span className="text-error text-sm font-bold shrink-0">*</span>
+        </div>
 
         {/* Right controls */}
         <div className="ml-auto flex items-center gap-1.5">
@@ -729,12 +730,13 @@ ${currentCode || '（尚無程式碼）'}
       </div>
 
       {/* ── Split Pane ── */}
-      <div ref={splitContainerRef} className="flex-1 flex overflow-hidden flex-col md:flex-row relative md:p-3 md:gap-3" style={{ '--split-left': `${splitPercentRef.current}%` } as React.CSSProperties}>
+      <div ref={splitContainerRef} className="flex-1 flex overflow-hidden flex-col md:flex-row relative md:p-3 md:gap-3">
 
         {/* ── Left Column: AI Chat (full height) ── */}
         <div
+          ref={leftPanelRef}
           className={`${mobileTab !== 'chat' ? 'hidden' : 'flex'} md:flex w-full flex-col bg-surface-container-low shrink-0 relative group transition-all duration-300 md:rounded-xl md:shadow-lg ${!isAiSidebarOpen ? 'md:hidden' : ''}`}
-          style={{ width: 'var(--split-left)', minWidth: '280px' }}
+          style={{ width: `${splitPercentRef.current}%`, minWidth: '280px' }}
         >
 
           {/* Close Sidebar Button */}
@@ -1115,14 +1117,6 @@ ${currentCode || '（尚無程式碼）'}
           <div className="text-[10px] text-on-surface/40 font-mono">
             {currentCode ? `Ln ${currentCode.split('\n').length}` : ''}
           </div>
-        </div>
-        <div className="flex items-center gap-4 text-[10px] font-mono text-on-surface/40">
-          <span className="flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
-            BeaverKit Cloud
-          </span>
-          <span>UTF-8</span>
-          <span className="text-primary">{isReactMode ? 'React JSX' : isVueMode ? 'Vue 3' : isSplitMode ? 'HTML / CSS / JS' : 'HTML (All-in-One)'}</span>
         </div>
       </footer>
 
