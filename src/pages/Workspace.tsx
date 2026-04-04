@@ -1168,21 +1168,16 @@ ${currentCode || '（尚無程式碼）'}
                     </div>
                   ) : (
                     saves.map(slot => (
-                      <div key={slot.id} className="group flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-white/[0.05] transition-colors">
+                      <div key={slot.id} className="group flex items-center gap-2 px-3 py-2 rounded-md hover:bg-white/[0.05] transition-colors">
                         <div className="flex-1 min-w-0 cursor-pointer" onClick={() => handleLoadSave(slot)}>
-                          <p className="text-[11px] text-[#dae2fd]/70 truncate group-hover:text-[#dae2fd]/90 transition-colors leading-tight">{slot.title}</p>
-                          <p className="text-[9px] text-[#dae2fd]/20 font-mono mt-0.5">
+                          <p className="text-[13px] text-[#dae2fd]/80 truncate group-hover:text-[#dae2fd] transition-colors leading-tight">{slot.title}</p>
+                          <p className="text-[10px] text-[#dae2fd]/25 font-mono mt-0.5">
                             {new Date(slot.savedAt).toLocaleString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
                           </p>
                         </div>
-                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                          <button onClick={() => handleLoadSave(slot)} title="載入" className="p-0.5 rounded text-[#dae2fd]/30 hover:text-[#2665fd] transition-colors">
-                            <span className="material-symbols-outlined text-[14px]">open_in_new</span>
-                          </button>
-                          <button onClick={() => handleDeleteSave(slot.id)} title="刪除" className="p-0.5 rounded text-[#dae2fd]/30 hover:text-red-400/70 transition-colors">
-                            <span className="material-symbols-outlined text-[14px]">close</span>
-                          </button>
-                        </div>
+                        <button onClick={() => handleDeleteSave(slot.id)} title="刪除" className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded text-[#dae2fd]/30 hover:text-red-400/70 transition-colors shrink-0">
+                          <span className="material-symbols-outlined text-[14px]">close</span>
+                        </button>
                       </div>
                     ))
                   )}
@@ -1220,9 +1215,8 @@ ${currentCode || '（尚無程式碼）'}
                     </div>
                   ) : (
                     publishedVibes.map(vibe => (
-                      <div key={vibe.id} onClick={() => setConfirmLoad(vibe)} className="group flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-white/[0.05] cursor-pointer transition-colors">
-                        <p className="flex-1 text-[11px] text-[#dae2fd]/70 truncate group-hover:text-[#dae2fd]/90 transition-colors leading-tight">{vibe.title}</p>
-                        <span className="material-symbols-outlined text-[14px] text-[#dae2fd]/20 group-hover:text-[#2665fd] opacity-0 group-hover:opacity-100 transition-all shrink-0">open_in_new</span>
+                      <div key={vibe.id} onClick={() => setConfirmLoad(vibe)} className="group px-3 py-2 rounded-md hover:bg-white/[0.05] cursor-pointer transition-colors">
+                        <p className="text-[13px] text-[#dae2fd]/80 truncate group-hover:text-[#dae2fd] transition-colors leading-tight">{vibe.title}</p>
                       </div>
                     ))
                   )}
@@ -1260,14 +1254,11 @@ ${currentCode || '（尚無程式碼）'}
                     </div>
                   ) : (
                     remixVibes.map(vibe => (
-                      <div key={vibe.id} onClick={() => setConfirmLoad(vibe)} className="group flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-white/[0.05] cursor-pointer transition-colors">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[11px] text-[#dae2fd]/70 truncate group-hover:text-[#dae2fd]/90 transition-colors leading-tight">{vibe.title}</p>
-                          {vibe.parent_vibe_title && (
-                            <p className="text-[9px] text-[#dae2fd]/20 truncate mt-0.5">↳ {vibe.parent_vibe_title}</p>
-                          )}
-                        </div>
-                        <span className="material-symbols-outlined text-[14px] text-[#dae2fd]/20 group-hover:text-[#2665fd] opacity-0 group-hover:opacity-100 transition-all shrink-0">open_in_new</span>
+                      <div key={vibe.id} onClick={() => setConfirmLoad(vibe)} className="group px-3 py-2 rounded-md hover:bg-white/[0.05] cursor-pointer transition-colors">
+                        <p className="text-[13px] text-[#dae2fd]/80 truncate group-hover:text-[#dae2fd] transition-colors leading-tight">{vibe.title}</p>
+                        {vibe.parent_vibe_title && (
+                          <p className="text-[10px] text-[#dae2fd]/25 truncate mt-0.5">↳ {vibe.parent_vibe_title}</p>
+                        )}
                       </div>
                     ))
                   )}
