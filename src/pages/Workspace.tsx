@@ -85,11 +85,6 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
   // API Guide popup
   const [showApiGuidePopup, setShowApiGuidePopup] = useState(false);
 
-  // My Projects panel
-  const [savePanelTab, setSavePanelTab] = useState<'saves' | 'projects'>('saves');
-  const [myVibes, setMyVibes] = useState<Vibe[]>([]);
-  const [myVibesLoading, setMyVibesLoading] = useState(false);
-
   // Visibility dropdown
   const [visibilityDropdownOpen, setVisibilityDropdownOpen] = useState(false);
   const visibilityDropdownRef = useRef<HTMLDivElement>(null);
@@ -110,6 +105,14 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
 
   // ── 存檔 ───────────────────────────────────────────────────────────
   const [saves, setSaves] = useState<SaveSlot[]>([]);
+  const [publishedVibes, setPublishedVibes] = useState<Vibe[]>([]);
+  const [remixVibes, setRemixVibes] = useState<Vibe[]>([]);
+  const [vibesLoading, setVibesLoading] = useState(false);
+  const [savesOpen, setSavesOpen] = useState(true);
+  const [publishedOpen, setPublishedOpen] = useState(true);
+  const [remixOpen, setRemixOpen] = useState(true);
+  const [supabaseUserId, setSupabaseUserId] = useState<string | null>(null);
+  const [confirmLoad, setConfirmLoad] = useState<Vibe | null>(null);
 
   const saveKey = `beaverkit_saves_${currentUser?.id ?? 'guest'}`;
 
@@ -124,6 +127,45 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
       if (stored) setSaves(JSON.parse(stored));
     } catch { }
   }, [saveKey]);
+
+  // 取得 Supabase 用戶 ID
+  useEffect(() => {
+    if (!supabase) return;
+    supabase.auth.getSession().then(({ data }) => {
+      setSupabaseUserId(data.session?.user?.id ?? null);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
+      setSupabaseUserId(session?.user?.id ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // 面板開啟時 fetch 使用者已發布 / Remix 的 Vibes
+  useEffect(() => {
+    if (!savePanelOpen || !supabaseUserId) return;
+    setVibesLoading(true);
+    api.getVibes(supabaseUserId)
+      .then(all => {
+        const own = all.filter(v => v.author_name === currentUser?.username);
+        setPublishedVibes(own.filter(v => !v.parent_vibe_id));
+        setRemixVibes(own.filter(v => !!v.parent_vibe_id));
+      })
+      .catch(() => {})
+      .finally(() => setVibesLoading(false));
+  }, [savePanelOpen, supabaseUserId, currentUser?.username]);
+
+  // 從已發布 / Remix 載入 Vibe 到編輯器
+  const handleLoadFromVibe = (vibe: Vibe) => {
+    setHtmlCode(vibe.latest_code ?? '');
+    setCssCode('');
+    setJsCode('');
+    setEditorMode('single');
+    setTitle(vibe.title);
+    setTags(vibe.tags ?? '');
+    setActiveTab('html');
+    setConfirmLoad(null);
+    showToast(`已載入「${vibe.title}」`, 'download');
+  };
 
   // 從 Profile 頁的存檔「前往 Workspace 載入」傳遞進來
   useEffect(() => {
@@ -193,19 +235,6 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
     setToast({ show: true, message, icon });
     setTimeout(() => setToast({ show: false, message: '', icon: 'auto_awesome' }), 3000);
   };
-
-  // ── Fetch user's published vibes for "My Projects" tab ───────────────
-  useEffect(() => {
-    if (!savePanelOpen || savePanelTab !== 'projects' || !currentUser) return;
-    setMyVibesLoading(true);
-    supabase.auth.getSession().then(({ data }) => {
-      const supabaseId = data.session?.user?.id;
-      return api.getVibes(supabaseId);
-    }).then(vibes => {
-      setMyVibes(Array.isArray(vibes) ? vibes.filter(v => v.author_name === currentUser.username) : []);
-      setMyVibesLoading(false);
-    }).catch(() => setMyVibesLoading(false));
-  }, [savePanelOpen, savePanelTab, currentUser]);
 
   // ── iframe ref + BeaverKit API postMessage bridge ────────────────────
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -1095,153 +1124,181 @@ ${currentCode || '（尚無程式碼）'}
         </div>
       </footer>
 
-      {/* ── 存檔面板 ── */}
+      {/* ── 我的專案面板 ── */}
       {savePanelOpen && (
-        <aside className="fixed left-16 top-16 h-[calc(100vh-64px)] w-56 bg-[#1C1B1B] border-r border-outline-variant/10 z-30 flex-col hidden md:flex">
-          {/* Tab switcher */}
-          <div className="flex border-b border-outline-variant/10 shrink-0">
-            <button
-              onClick={() => setSavePanelTab('saves')}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[10px] font-mono font-bold uppercase tracking-widest transition-colors ${savePanelTab === 'saves' ? 'text-[#FFB3B6] border-b-2 border-[#FFB3B6]' : 'text-[#E5E2E1]/40 hover:text-[#E5E2E1]/70'}`}
-            >
-              <span className="material-symbols-outlined text-[13px]" style={savePanelTab === 'saves' ? { fontVariationSettings: "'FILL' 1" } : {}}>folder</span>
-              存檔區
-            </button>
-            <button
-              onClick={() => setSavePanelTab('projects')}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[10px] font-mono font-bold uppercase tracking-widest transition-colors ${savePanelTab === 'projects' ? 'text-[#FFB3B6] border-b-2 border-[#FFB3B6]' : 'text-[#E5E2E1]/40 hover:text-[#E5E2E1]/70'}`}
-            >
-              <span className="material-symbols-outlined text-[13px]" style={savePanelTab === 'projects' ? { fontVariationSettings: "'FILL' 1" } : {}}>grid_view</span>
-              我的專案
-            </button>
+        <aside className="fixed left-16 top-16 h-[calc(100vh-64px)] w-56 bg-[#1C1B1B] border-r border-outline-variant/10 z-30 flex-col hidden md:flex overflow-hidden">
+          {/* Header */}
+          <div className="px-4 py-3 border-b border-outline-variant/10 flex items-center gap-2 shrink-0">
+            <span className="material-symbols-outlined text-[#FFB3B6] text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>folder</span>
+            <span className="text-[11px] uppercase tracking-widest font-bold text-[#E5E2E1]">我的專案</span>
           </div>
 
-          {/* ── 存檔區 tab ── */}
-          {savePanelTab === 'saves' && (
-            <>
-              {/* Save button */}
-              <div className="px-3 py-2.5 border-b border-outline-variant/10 shrink-0">
-                <button
-                  onClick={handleSave}
-                  disabled={saves.length >= MAX_SAVES && !saves.find(s => s.title === title)}
-                  className="w-full flex items-center justify-center gap-2 bg-[#2A2A2A] hover:bg-[#333] disabled:opacity-40 disabled:cursor-not-allowed text-[#E5E2E1] text-xs font-bold py-2 rounded-lg border border-outline-variant/10 transition-colors active:scale-95"
-                >
-                  <span className="material-symbols-outlined text-[14px] text-[#FFB3B6]">save</span>
-                  儲存目前專案
-                </button>
-                <div className="flex items-center justify-between mt-1.5">
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
+
+            {/* ── 儲存區 ── */}
+            <div className="border-b border-outline-variant/10">
+              <button
+                onClick={() => setSavesOpen(o => !o)}
+                className="w-full flex items-center justify-between px-3 py-2 hover:bg-[#222] transition-colors"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[#FFB3B6] text-[13px]">save</span>
+                  <span className="text-[10px] uppercase tracking-widest font-bold text-[#E5E2E1]/70">儲存區</span>
+                  <span className={`text-[9px] font-mono ${saves.length >= MAX_SAVES ? 'text-red-400' : 'text-[#E5E2E1]/30'}`}>{saves.length}/{MAX_SAVES}</span>
+                </div>
+                <span className="material-symbols-outlined text-[14px] text-[#E5E2E1]/30 transition-transform" style={{ transform: savesOpen ? 'rotate(0deg)' : 'rotate(-90deg)' }}>expand_more</span>
+              </button>
+
+              {savesOpen && (
+                <div className="px-2 pb-2 space-y-1.5">
+                  <button
+                    onClick={handleSave}
+                    disabled={saves.length >= MAX_SAVES && !saves.find(s => s.title === title)}
+                    className="w-full flex items-center justify-center gap-1.5 bg-[#2A2A2A] hover:bg-[#333] disabled:opacity-40 disabled:cursor-not-allowed text-[#E5E2E1] text-[10px] font-bold py-1.5 rounded-lg border border-outline-variant/10 transition-colors active:scale-95 mt-1"
+                  >
+                    <span className="material-symbols-outlined text-[12px] text-[#FFB3B6]">save</span>
+                    儲存目前專案
+                  </button>
                   {!currentUser && (
-                    <p className="text-[9px] text-yellow-400/60">⚠ 僅限本機儲存</p>
+                    <p className="text-[9px] text-yellow-400/60 text-center">⚠ 僅限本機儲存</p>
                   )}
-                  <span className={`text-[10px] font-mono tabular-nums ml-auto ${saves.length >= MAX_SAVES ? 'text-red-400' : 'text-[#E5E2E1]/40'}`}>
-                    {saves.length}/{MAX_SAVES}
-                  </span>
-                </div>
-              </div>
-
-              {/* Save list */}
-              <div className="flex-1 overflow-y-auto custom-scrollbar py-2 space-y-1.5 px-2">
-                {saves.length === 0 ? (
-                  <div className="text-center py-8 px-4">
-                    <span className="material-symbols-outlined text-[#E5E2E1]/10 text-4xl block mb-2">folder_open</span>
-                    <p className="text-[10px] text-[#E5E2E1]/30 leading-relaxed">尚無存檔<br />點擊上方按鈕開始</p>
-                  </div>
-                ) : (
-                  saves.map(slot => (
-                    <div key={slot.id} className="bg-[#2A2A2A] rounded-lg p-2.5 border border-outline-variant/10 hover:border-outline-variant/25 transition-colors group">
-                      <div className="flex items-start justify-between gap-1 mb-1">
-                        <p className="text-[11px] font-bold text-[#E5E2E1] truncate leading-tight flex-1">{slot.title}</p>
-                        <button
-                          onClick={() => handleDeleteSave(slot.id)}
-                          className="text-[#E5E2E1]/20 hover:text-red-400 transition-colors shrink-0 opacity-0 group-hover:opacity-100"
-                          title="刪除存檔"
-                        >
-                          <span className="material-symbols-outlined text-[14px]">close</span>
-                        </button>
-                      </div>
-                      {slot.tags && (
-                        <p className="text-[9px] text-[#E5E2E1]/30 truncate mb-1">{slot.tags}</p>
-                      )}
-                      <p className="text-[9px] text-[#E5E2E1]/25 font-mono mb-2">
-                        {new Date(slot.savedAt).toLocaleString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                      <button
-                        onClick={() => handleLoadSave(slot)}
-                        className="w-full text-[10px] font-bold text-[#FFB3B6] bg-[#FFB3B6]/5 hover:bg-[#FFB3B6]/10 py-1 rounded border border-[#FFB3B6]/10 hover:border-[#FFB3B6]/20 transition-colors active:scale-95"
-                      >
-                        載入
-                      </button>
+                  {saves.length === 0 ? (
+                    <div className="text-center py-5">
+                      <span className="material-symbols-outlined text-[#E5E2E1]/10 text-3xl block mb-1">folder_open</span>
+                      <p className="text-[9px] text-[#E5E2E1]/25 leading-relaxed">尚無存檔<br />點擊上方按鈕開始</p>
                     </div>
-                  ))
-                )}
-              </div>
-            </>
-          )}
-
-          {/* ── 我的專案 tab ── */}
-          {savePanelTab === 'projects' && (
-            <div className="flex-1 overflow-y-auto custom-scrollbar py-2 space-y-1.5 px-2">
-              {!currentUser ? (
-                <div className="text-center py-8 px-4">
-                  <span className="material-symbols-outlined text-[#E5E2E1]/10 text-4xl block mb-2">lock</span>
-                  <p className="text-[10px] text-[#E5E2E1]/30 leading-relaxed">請先登入<br />才能查看你的專案</p>
-                </div>
-              ) : myVibesLoading ? (
-                <div className="text-center py-8">
-                  <p className="text-[10px] text-[#E5E2E1]/30 font-mono animate-pulse">載入中…</p>
-                </div>
-              ) : myVibes.length === 0 ? (
-                <div className="text-center py-8 px-4">
-                  <span className="material-symbols-outlined text-[#E5E2E1]/10 text-4xl block mb-2">grid_view</span>
-                  <p className="text-[10px] text-[#E5E2E1]/30 leading-relaxed">尚無已發布的專案</p>
-                </div>
-              ) : (
-                myVibes.map(vibe => {
-                  const visIcon = { public: 'public', unlisted: 'link', private: 'lock' }[vibe.visibility ?? 'public'];
-                  const visLabel = { public: 'Public', unlisted: 'Unlisted', private: 'Private' }[vibe.visibility ?? 'public'];
-                  return (
-                    <div key={vibe.id} className="bg-[#2A2A2A] rounded-lg p-2.5 border border-outline-variant/10 hover:border-outline-variant/25 transition-colors group">
-                      <div className="flex items-start justify-between gap-1 mb-1.5">
-                        <p className="text-[11px] font-bold text-[#E5E2E1] truncate leading-tight flex-1">{vibe.title}</p>
-                        <span className="flex items-center gap-0.5 text-[8px] text-[#E5E2E1]/30 font-mono uppercase shrink-0">
-                          <span className="material-symbols-outlined text-[10px]">{visIcon}</span>
-                          {visLabel}
-                        </span>
-                      </div>
-                      {vibe.tags && (
-                        <p className="text-[9px] text-[#E5E2E1]/30 truncate mb-1.5">{vibe.tags}</p>
-                      )}
-                      <div className="flex gap-1.5">
-                        <button
-                          onClick={() => {
-                            setTitle(vibe.title);
-                            setTags(vibe.tags || '');
-                            setEditorMode('single');
-                            setHtmlCode(vibe.latest_code || '');
-                            setCssCode('');
-                            setJsCode('');
-                            setActiveTab('html');
-                            showToast(`已載入「${vibe.title}」`, 'download');
-                          }}
-                          className="flex-1 text-[10px] font-bold text-[#FFB3B6] bg-[#FFB3B6]/5 hover:bg-[#FFB3B6]/10 py-1 rounded border border-[#FFB3B6]/10 hover:border-[#FFB3B6]/20 transition-colors active:scale-95"
-                        >
-                          載入編輯
-                        </button>
-                        <button
-                          onClick={() => navigate(`/p/${vibe.id}`)}
-                          title="查看專案頁面"
-                          className="text-[10px] text-[#E5E2E1]/30 hover:text-[#E5E2E1]/70 bg-[#E5E2E1]/5 hover:bg-[#E5E2E1]/10 px-2 py-1 rounded border border-outline-variant/10 transition-colors"
-                        >
-                          <span className="material-symbols-outlined text-[12px]">open_in_new</span>
+                  ) : (
+                    saves.map(slot => (
+                      <div key={slot.id} className="bg-[#2A2A2A] rounded-lg p-2 border border-outline-variant/10 hover:border-outline-variant/25 transition-colors group">
+                        <div className="flex items-start justify-between gap-1 mb-0.5">
+                          <p className="text-[11px] font-bold text-[#E5E2E1] truncate leading-tight flex-1">{slot.title}</p>
+                          <button onClick={() => handleDeleteSave(slot.id)} className="text-[#E5E2E1]/20 hover:text-red-400 transition-colors shrink-0 opacity-0 group-hover:opacity-100" title="刪除">
+                            <span className="material-symbols-outlined text-[13px]">close</span>
+                          </button>
+                        </div>
+                        {slot.tags && <p className="text-[9px] text-[#E5E2E1]/30 truncate mb-0.5">{slot.tags}</p>}
+                        <p className="text-[9px] text-[#E5E2E1]/20 font-mono mb-1.5">
+                          {new Date(slot.savedAt).toLocaleString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                        <button onClick={() => handleLoadSave(slot)} className="w-full text-[10px] font-bold text-[#FFB3B6] bg-[#FFB3B6]/5 hover:bg-[#FFB3B6]/10 py-1 rounded border border-[#FFB3B6]/10 hover:border-[#FFB3B6]/20 transition-colors active:scale-95">
+                          載入
                         </button>
                       </div>
-                    </div>
-                  );
-                })
+                    ))
+                  )}
+                </div>
               )}
             </div>
-          )}
+
+            {/* ── 已發布 ── */}
+            <div className="border-b border-outline-variant/10">
+              <button
+                onClick={() => setPublishedOpen(o => !o)}
+                className="w-full flex items-center justify-between px-3 py-2 hover:bg-[#222] transition-colors"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[#B3D9FF] text-[13px]">public</span>
+                  <span className="text-[10px] uppercase tracking-widest font-bold text-[#E5E2E1]/70">已發布</span>
+                  {currentUser && <span className="text-[9px] font-mono text-[#E5E2E1]/30">{publishedVibes.length}</span>}
+                </div>
+                <span className="material-symbols-outlined text-[14px] text-[#E5E2E1]/30 transition-transform" style={{ transform: publishedOpen ? 'rotate(0deg)' : 'rotate(-90deg)' }}>expand_more</span>
+              </button>
+
+              {publishedOpen && (
+                <div className="px-2 pb-2 space-y-1.5">
+                  {!currentUser ? (
+                    <div className="text-center py-5 px-2">
+                      <span className="material-symbols-outlined text-[#E5E2E1]/10 text-3xl block mb-1">lock</span>
+                      <p className="text-[9px] text-[#E5E2E1]/30 leading-relaxed">登入後查看<br />已發布作品</p>
+                    </div>
+                  ) : vibesLoading ? (
+                    <div className="text-center py-4">
+                      <p className="text-[9px] text-[#E5E2E1]/30 animate-pulse">載入中…</p>
+                    </div>
+                  ) : publishedVibes.length === 0 ? (
+                    <div className="text-center py-5">
+                      <span className="material-symbols-outlined text-[#E5E2E1]/10 text-3xl block mb-1">travel_explore</span>
+                      <p className="text-[9px] text-[#E5E2E1]/25 leading-relaxed">尚無已發布作品</p>
+                    </div>
+                  ) : (
+                    publishedVibes.map(vibe => (
+                      <div key={vibe.id} className="bg-[#2A2A2A] rounded-lg p-2 border border-outline-variant/10 hover:border-outline-variant/25 transition-colors">
+                        <p className="text-[11px] font-bold text-[#E5E2E1] truncate leading-tight mb-0.5">{vibe.title}</p>
+                        {vibe.tags && <p className="text-[9px] text-[#E5E2E1]/30 truncate mb-1">{vibe.tags}</p>}
+                        <button onClick={() => setConfirmLoad(vibe)} className="w-full text-[10px] font-bold text-[#B3D9FF] bg-[#B3D9FF]/5 hover:bg-[#B3D9FF]/10 py-1 rounded border border-[#B3D9FF]/10 hover:border-[#B3D9FF]/20 transition-colors active:scale-95">
+                          載入
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* ── Remix ── */}
+            <div>
+              <button
+                onClick={() => setRemixOpen(o => !o)}
+                className="w-full flex items-center justify-between px-3 py-2 hover:bg-[#222] transition-colors"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[#FFE4B3] text-[13px]">fork_right</span>
+                  <span className="text-[10px] uppercase tracking-widest font-bold text-[#E5E2E1]/70">Remix</span>
+                  {currentUser && <span className="text-[9px] font-mono text-[#E5E2E1]/30">{remixVibes.length}</span>}
+                </div>
+                <span className="material-symbols-outlined text-[14px] text-[#E5E2E1]/30 transition-transform" style={{ transform: remixOpen ? 'rotate(0deg)' : 'rotate(-90deg)' }}>expand_more</span>
+              </button>
+
+              {remixOpen && (
+                <div className="px-2 pb-2 space-y-1.5">
+                  {!currentUser ? (
+                    <div className="text-center py-5 px-2">
+                      <span className="material-symbols-outlined text-[#E5E2E1]/10 text-3xl block mb-1">lock</span>
+                      <p className="text-[9px] text-[#E5E2E1]/30 leading-relaxed">登入後查看<br />Remix 作品</p>
+                    </div>
+                  ) : vibesLoading ? (
+                    <div className="text-center py-4">
+                      <p className="text-[9px] text-[#E5E2E1]/30 animate-pulse">載入中…</p>
+                    </div>
+                  ) : remixVibes.length === 0 ? (
+                    <div className="text-center py-5">
+                      <span className="material-symbols-outlined text-[#E5E2E1]/10 text-3xl block mb-1">fork_right</span>
+                      <p className="text-[9px] text-[#E5E2E1]/25 leading-relaxed">尚無 Remix 作品</p>
+                    </div>
+                  ) : (
+                    remixVibes.map(vibe => (
+                      <div key={vibe.id} className="bg-[#2A2A2A] rounded-lg p-2 border border-outline-variant/10 hover:border-outline-variant/25 transition-colors">
+                        <p className="text-[11px] font-bold text-[#E5E2E1] truncate leading-tight mb-0.5">{vibe.title}</p>
+                        {vibe.parent_vibe_title && (
+                          <p className="text-[9px] text-[#E5E2E1]/30 truncate mb-1">↳ {vibe.parent_vibe_title}</p>
+                        )}
+                        <button onClick={() => setConfirmLoad(vibe)} className="w-full text-[10px] font-bold text-[#FFE4B3] bg-[#FFE4B3]/5 hover:bg-[#FFE4B3]/10 py-1 rounded border border-[#FFE4B3]/10 hover:border-[#FFE4B3]/20 transition-colors active:scale-95">
+                          載入
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+
+          </div>
         </aside>
+      )}
+
+      {/* ── 覆蓋確認 dialog ── */}
+      {confirmLoad && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4" onClick={() => setConfirmLoad(null)}>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div className="relative bg-[#1C1B1B] border border-outline-variant/20 rounded-2xl shadow-2xl p-5 w-72" onClick={e => e.stopPropagation()}>
+            <p className="text-[13px] font-bold text-[#E5E2E1] mb-1">載入此專案？</p>
+            <p className="text-[11px] text-[#E5E2E1]/50 mb-4 leading-relaxed">「{confirmLoad.title}」將覆蓋目前編輯器的內容。</p>
+            <div className="flex gap-2">
+              <button onClick={() => setConfirmLoad(null)} className="flex-1 py-2 rounded-xl text-[11px] font-bold text-[#E5E2E1]/60 bg-[#2A2A2A] hover:bg-[#333] transition-colors">取消</button>
+              <button onClick={() => handleLoadFromVibe(confirmLoad)} className="flex-1 py-2 rounded-xl text-[11px] font-bold text-[#FFB3B6] bg-[#FFB3B6]/10 hover:bg-[#FFB3B6]/20 transition-colors">確認載入</button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ── Toast 通知 ── */}

@@ -221,15 +221,9 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
           <button
             onClick={onToggleSavePanel}
             className={`p-2.5 rounded-xl transition-all duration-300 ${savePanelOpen ? 'text-[#FFB3B6] bg-[#2A2A2A]' : 'text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1]'}`}
-            title="存檔區"
+            title="我的專案"
           >
             <span className="material-symbols-outlined" style={savePanelOpen ? { fontVariationSettings: "'FILL' 1" } : {}}>folder</span>
-          </button>
-          <button className="text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1] p-2.5 rounded-xl transition-all duration-300" title="Search">
-            <span className="material-symbols-outlined">search</span>
-          </button>
-          <button className="text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1] p-2.5 rounded-xl transition-all duration-300" title="History">
-            <span className="material-symbols-outlined">history</span>
           </button>
 
           <div className="mt-auto flex flex-col gap-6 items-center">
