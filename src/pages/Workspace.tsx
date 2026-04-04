@@ -45,6 +45,23 @@ const MODE_OPTIONS: { id: EditorMode; emoji: string; label: string; desc: string
   { id: 'vue', emoji: '💚', label: 'Vue 元件', desc: '支援 Vue 3 SFC 單檔元件' },
 ];
 
+// ── 隨機預設專案名稱 ─────────────────────────────────────────────────
+const VIBE_ADJECTIVES = [
+  'Cosmic', 'Neon', 'Fuzzy', 'Electric', 'Silent', 'Wild', 'Crystal',
+  'Glowing', 'Turbo', 'Pastel', 'Frozen', 'Solar', 'Lunar', 'Hyper',
+  'Velvet', 'Molten', 'Echoed', 'Vivid', 'Chill', 'Blazing',
+];
+const VIBE_NOUNS = [
+  'Mango', 'Vortex', 'Penguin', 'Cactus', 'Comet', 'Biscuit', 'Lagoon',
+  'Panda', 'Sprocket', 'Lantern', 'Nebula', 'Waffle', 'Otter', 'Spark',
+  'Tornado', 'Lemon', 'Pixel', 'Gecko', 'Aurora', 'Tofu',
+];
+function randomVibeName(): string {
+  const adj = VIBE_ADJECTIVES[Math.floor(Math.random() * VIBE_ADJECTIVES.length)];
+  const noun = VIBE_NOUNS[Math.floor(Math.random() * VIBE_NOUNS.length)];
+  return `${adj} ${noun}`;
+}
+
 // ─────────────────────────────────────────────────────────────────────
 export default function Workspace({ currentUser, savePanelOpen = false }: WorkspaceProps) {
   const navigate = useNavigate();
@@ -66,7 +83,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
   const isVueMode = editorMode === 'vue';
   const isSplitMode = editorMode === 'split';
 
-  const [title, setTitle] = useState('Untitled Project');
+  const [title, setTitle] = useState(randomVibeName);
   const [tags, setTags] = useState('');
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile' | 'round'>('desktop');
   const [isPublishing, setIsPublishing] = useState(false);
@@ -552,11 +569,10 @@ ${currentCode || '（尚無程式碼）'}
           <span className="material-symbols-outlined text-primary-container text-sm">edit_note</span>
           <input
             className="bg-transparent border-none focus:ring-0 text-lg font-semibold text-on-surface p-0 w-80 outline-none"
-            placeholder="Untitled Project"
+            placeholder="為你的 Vibe 命名..."
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-          />
         </div>
         <div className="flex items-center gap-2 bg-surface-container-low px-3 py-1 rounded-lg focus-within:border-primary/50 transition-colors border-b-2 border-transparent">
           <span className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Tags</span>
