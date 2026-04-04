@@ -94,7 +94,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
   const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(true);
   const [isManualEditMode, setIsManualEditMode] = useState(false);
   const [highlightEditBtn, setHighlightEditBtn] = useState(false);
-  
+
   const handleEditorClick = () => {
     if (!isManualEditMode) {
       setHighlightEditBtn(true);
@@ -149,7 +149,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
         setPublishedVibes(own.filter(v => !v.parent_vibe_id));
         setRemixVibes(own.filter(v => !!v.parent_vibe_id));
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setVibesLoading(false));
   }, [savePanelOpen, supabaseUserId, currentUser?.username]);
 
@@ -531,7 +531,7 @@ ${currentCode || '（尚無程式碼）'}
   };
 
   const hasActiveProvider = !!selectedProvider;
-  
+
   const PRESET_PROMPTS = [
     { icon: 'palette', text: '把顏色改成藍色' },
     { icon: 'person', text: '加上我的名字' },
@@ -570,7 +570,7 @@ ${currentCode || '（尚無程式碼）'}
 
         {/* Spacer - tabs moved to floating pill on canvas */}
 
-        
+
 
         {/* Right controls */}
         <div className="ml-auto flex items-center gap-1.5">
@@ -784,11 +784,10 @@ ${currentCode || '（尚無程式碼）'}
             )}
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[88%] rounded-2xl px-3 py-2.5 whitespace-pre-wrap leading-relaxed border text-sm ${
-                  msg.role === 'user'
+                <div className={`max-w-[88%] rounded-2xl px-3 py-2.5 whitespace-pre-wrap leading-relaxed border text-sm ${msg.role === 'user'
                     ? 'bg-primary text-on-primary rounded-br-none border-primary/30 shadow-sm'
                     : 'bg-surface-container-high text-on-surface rounded-tl-none border-outline-variant/5 shadow-sm'
-                }`}>
+                  }`}>
                   {msg.role === 'assistant' ? formatAssistantMessage(msg.content) : msg.content}
                 </div>
               </div>
@@ -868,22 +867,20 @@ ${currentCode || '（尚無程式碼）'}
             <div className="flex bg-surface-container p-1 rounded-lg shadow-lg">
               <button
                 onClick={() => setRightTab('code')}
-                className={`px-6 py-1.5 rounded-md font-medium text-sm flex items-center gap-2 transition-colors ${
-                  rightTab === 'code'
+                className={`px-6 py-1.5 rounded-md font-medium text-sm flex items-center gap-2 transition-colors ${rightTab === 'code'
                     ? 'bg-white/10 text-on-surface shadow-sm'
                     : 'text-on-surface/40 hover:text-on-surface/70'
-                }`}
+                  }`}
               >
                 <span className="material-symbols-outlined text-[16px]">code</span>
                 Code
               </button>
               <button
                 onClick={() => setRightTab('preview')}
-                className={`px-6 py-1.5 rounded-md font-medium text-sm flex items-center gap-2 transition-colors ${
-                  rightTab === 'preview'
+                className={`px-6 py-1.5 rounded-md font-medium text-sm flex items-center gap-2 transition-colors ${rightTab === 'preview'
                     ? 'bg-white/10 text-on-surface shadow-sm'
                     : 'text-on-surface/40 hover:text-on-surface/70'
-                }`}
+                  }`}
               >
                 <span className="material-symbols-outlined text-[16px]">visibility</span>
                 Preview
@@ -917,7 +914,7 @@ ${currentCode || '（尚無程式碼）'}
                 </div>
               </div>
               {/* Filename label (non-split mode only) */}
-              
+
 
               {/* Textarea */}
               <div className="flex-1 font-mono text-sm leading-relaxed editor-well overflow-hidden flex relative group cursor-text mb-4 mx-4 md:mx-6 rounded-b-xl border border-outline-variant/10 bg-[#1e1e1e] shadow-lg" onClick={handleEditorClick}>
