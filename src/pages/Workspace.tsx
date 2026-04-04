@@ -1126,61 +1126,58 @@ ${currentCode || '（尚無程式碼）'}
 
       {/* ── 我的專案面板 ── */}
       {savePanelOpen && (
-        <aside className="fixed left-16 top-16 h-[calc(100vh-64px)] w-56 bg-[#1C1B1B] border-r border-outline-variant/10 z-30 flex-col hidden md:flex overflow-hidden">
+        <aside className="fixed left-16 top-16 h-[calc(100vh-64px)] w-56 bg-[#0b1326] border-r border-white/5 z-30 flex-col hidden md:flex overflow-hidden">
           {/* Header */}
-          <div className="px-4 py-3 border-b border-outline-variant/10 flex items-center gap-2 shrink-0">
-            <span className="material-symbols-outlined text-[#FFB3B6] text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>folder</span>
-            <span className="text-[11px] uppercase tracking-widest font-bold text-[#E5E2E1]">我的專案</span>
+          <div className="px-4 py-3 border-b border-white/5 shrink-0">
+            <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-[#dae2fd]/40">我的專案</span>
           </div>
 
           <div className="flex-1 overflow-y-auto custom-scrollbar">
 
             {/* ── 儲存區 ── */}
-            <div className="border-b border-outline-variant/10">
+            <div className="border-b border-white/5">
               <button
                 onClick={() => setSavesOpen(o => !o)}
-                className="w-full flex items-center justify-between px-3 py-2 hover:bg-[#222] transition-colors"
+                className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-white/[0.03] transition-colors"
               >
-                <div className="flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[#FFB3B6] text-[13px]">save</span>
-                  <span className="text-[10px] uppercase tracking-widest font-bold text-[#E5E2E1]/70">儲存區</span>
-                  <span className={`text-[9px] font-mono ${saves.length >= MAX_SAVES ? 'text-red-400' : 'text-[#E5E2E1]/30'}`}>{saves.length}/{MAX_SAVES}</span>
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[#dae2fd]/30 text-[13px]">save</span>
+                  <span className="text-[10px] font-medium uppercase tracking-widest text-[#dae2fd]/40">儲存區</span>
+                  <span className={`text-[9px] font-mono tabular-nums ${saves.length >= MAX_SAVES ? 'text-red-400/70' : 'text-[#dae2fd]/20'}`}>{saves.length}/{MAX_SAVES}</span>
                 </div>
-                <span className="material-symbols-outlined text-[14px] text-[#E5E2E1]/30 transition-transform" style={{ transform: savesOpen ? 'rotate(0deg)' : 'rotate(-90deg)' }}>expand_more</span>
+                <span className="material-symbols-outlined text-[13px] text-[#dae2fd]/20 transition-transform duration-200" style={{ transform: savesOpen ? 'rotate(0deg)' : 'rotate(-90deg)' }}>expand_more</span>
               </button>
 
               {savesOpen && (
-                <div className="px-2 pb-2 space-y-1.5">
+                <div className="px-2.5 pb-2.5 space-y-1">
                   <button
                     onClick={handleSave}
                     disabled={saves.length >= MAX_SAVES && !saves.find(s => s.title === title)}
-                    className="w-full flex items-center justify-center gap-1.5 bg-[#2A2A2A] hover:bg-[#333] disabled:opacity-40 disabled:cursor-not-allowed text-[#E5E2E1] text-[10px] font-bold py-1.5 rounded-lg border border-outline-variant/10 transition-colors active:scale-95 mt-1"
+                    className="w-full flex items-center justify-center gap-1.5 bg-[#2665fd] hover:bg-[#2665fd]/90 disabled:opacity-30 disabled:cursor-not-allowed text-white text-[11px] font-semibold py-2 rounded-lg transition-colors active:scale-[0.98] mt-0.5"
                   >
-                    <span className="material-symbols-outlined text-[12px] text-[#FFB3B6]">save</span>
+                    <span className="material-symbols-outlined text-[13px]">save</span>
                     儲存目前專案
                   </button>
                   {!currentUser && (
-                    <p className="text-[9px] text-yellow-400/60 text-center">⚠ 僅限本機儲存</p>
+                    <p className="text-[9px] text-[#dae2fd]/25 text-center pt-0.5">僅限本機儲存</p>
                   )}
                   {saves.length === 0 ? (
-                    <div className="text-center py-5">
-                      <span className="material-symbols-outlined text-[#E5E2E1]/10 text-3xl block mb-1">folder_open</span>
-                      <p className="text-[9px] text-[#E5E2E1]/25 leading-relaxed">尚無存檔<br />點擊上方按鈕開始</p>
+                    <div className="text-center py-6">
+                      <p className="text-[9px] text-[#dae2fd]/20 leading-relaxed">尚無存檔</p>
                     </div>
                   ) : (
                     saves.map(slot => (
-                      <div key={slot.id} className="bg-[#2A2A2A] rounded-lg p-2 border border-outline-variant/10 hover:border-outline-variant/25 transition-colors group">
-                        <div className="flex items-start justify-between gap-1 mb-0.5">
-                          <p className="text-[11px] font-bold text-[#E5E2E1] truncate leading-tight flex-1">{slot.title}</p>
-                          <button onClick={() => handleDeleteSave(slot.id)} className="text-[#E5E2E1]/20 hover:text-red-400 transition-colors shrink-0 opacity-0 group-hover:opacity-100" title="刪除">
-                            <span className="material-symbols-outlined text-[13px]">close</span>
+                      <div key={slot.id} className="rounded-lg p-2.5 border border-white/[0.06] hover:bg-white/[0.03] transition-colors group">
+                        <div className="flex items-start justify-between gap-1 mb-1">
+                          <p className="text-[11px] font-semibold text-[#dae2fd]/80 truncate leading-tight flex-1">{slot.title}</p>
+                          <button onClick={() => handleDeleteSave(slot.id)} className="text-[#dae2fd]/15 hover:text-red-400/70 transition-colors shrink-0 opacity-0 group-hover:opacity-100" title="刪除">
+                            <span className="material-symbols-outlined text-[12px]">close</span>
                           </button>
                         </div>
-                        {slot.tags && <p className="text-[9px] text-[#E5E2E1]/30 truncate mb-0.5">{slot.tags}</p>}
-                        <p className="text-[9px] text-[#E5E2E1]/20 font-mono mb-1.5">
+                        <p className="text-[9px] text-[#dae2fd]/20 font-mono mb-2">
                           {new Date(slot.savedAt).toLocaleString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
                         </p>
-                        <button onClick={() => handleLoadSave(slot)} className="w-full text-[10px] font-bold text-[#FFB3B6] bg-[#FFB3B6]/5 hover:bg-[#FFB3B6]/10 py-1 rounded border border-[#FFB3B6]/10 hover:border-[#FFB3B6]/20 transition-colors active:scale-95">
+                        <button onClick={() => handleLoadSave(slot)} className="w-full text-[10px] font-medium text-[#dae2fd]/50 hover:text-[#dae2fd]/90 py-1 rounded border border-white/[0.06] hover:border-white/[0.12] transition-colors">
                           載入
                         </button>
                       </div>
@@ -1191,41 +1188,38 @@ ${currentCode || '（尚無程式碼）'}
             </div>
 
             {/* ── 已發布 ── */}
-            <div className="border-b border-outline-variant/10">
+            <div className="border-b border-white/5">
               <button
                 onClick={() => setPublishedOpen(o => !o)}
-                className="w-full flex items-center justify-between px-3 py-2 hover:bg-[#222] transition-colors"
+                className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-white/[0.03] transition-colors"
               >
-                <div className="flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[#B3D9FF] text-[13px]">public</span>
-                  <span className="text-[10px] uppercase tracking-widest font-bold text-[#E5E2E1]/70">已發布</span>
-                  {currentUser && <span className="text-[9px] font-mono text-[#E5E2E1]/30">{publishedVibes.length}</span>}
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[#dae2fd]/30 text-[13px]">public</span>
+                  <span className="text-[10px] font-medium uppercase tracking-widest text-[#dae2fd]/40">已發布</span>
+                  {currentUser && <span className="text-[9px] font-mono text-[#dae2fd]/20">{publishedVibes.length}</span>}
                 </div>
-                <span className="material-symbols-outlined text-[14px] text-[#E5E2E1]/30 transition-transform" style={{ transform: publishedOpen ? 'rotate(0deg)' : 'rotate(-90deg)' }}>expand_more</span>
+                <span className="material-symbols-outlined text-[13px] text-[#dae2fd]/20 transition-transform duration-200" style={{ transform: publishedOpen ? 'rotate(0deg)' : 'rotate(-90deg)' }}>expand_more</span>
               </button>
 
               {publishedOpen && (
-                <div className="px-2 pb-2 space-y-1.5">
+                <div className="px-2.5 pb-2.5 space-y-1">
                   {!currentUser ? (
-                    <div className="text-center py-5 px-2">
-                      <span className="material-symbols-outlined text-[#E5E2E1]/10 text-3xl block mb-1">lock</span>
-                      <p className="text-[9px] text-[#E5E2E1]/30 leading-relaxed">登入後查看<br />已發布作品</p>
+                    <div className="text-center py-6">
+                      <p className="text-[9px] text-[#dae2fd]/20 leading-relaxed">登入後查看</p>
                     </div>
                   ) : vibesLoading ? (
-                    <div className="text-center py-4">
-                      <p className="text-[9px] text-[#E5E2E1]/30 animate-pulse">載入中…</p>
+                    <div className="text-center py-6">
+                      <p className="text-[9px] text-[#dae2fd]/20 animate-pulse">載入中…</p>
                     </div>
                   ) : publishedVibes.length === 0 ? (
-                    <div className="text-center py-5">
-                      <span className="material-symbols-outlined text-[#E5E2E1]/10 text-3xl block mb-1">travel_explore</span>
-                      <p className="text-[9px] text-[#E5E2E1]/25 leading-relaxed">尚無已發布作品</p>
+                    <div className="text-center py-6">
+                      <p className="text-[9px] text-[#dae2fd]/20">尚無已發布作品</p>
                     </div>
                   ) : (
                     publishedVibes.map(vibe => (
-                      <div key={vibe.id} className="bg-[#2A2A2A] rounded-lg p-2 border border-outline-variant/10 hover:border-outline-variant/25 transition-colors">
-                        <p className="text-[11px] font-bold text-[#E5E2E1] truncate leading-tight mb-0.5">{vibe.title}</p>
-                        {vibe.tags && <p className="text-[9px] text-[#E5E2E1]/30 truncate mb-1">{vibe.tags}</p>}
-                        <button onClick={() => setConfirmLoad(vibe)} className="w-full text-[10px] font-bold text-[#B3D9FF] bg-[#B3D9FF]/5 hover:bg-[#B3D9FF]/10 py-1 rounded border border-[#B3D9FF]/10 hover:border-[#B3D9FF]/20 transition-colors active:scale-95">
+                      <div key={vibe.id} className="rounded-lg p-2.5 border border-white/[0.06] hover:bg-white/[0.03] transition-colors">
+                        <p className="text-[11px] font-semibold text-[#dae2fd]/80 truncate leading-tight mb-2">{vibe.title}</p>
+                        <button onClick={() => setConfirmLoad(vibe)} className="w-full text-[10px] font-medium text-[#dae2fd]/50 hover:text-[#dae2fd]/90 py-1 rounded border border-white/[0.06] hover:border-white/[0.12] transition-colors">
                           載入
                         </button>
                       </div>
@@ -1239,40 +1233,38 @@ ${currentCode || '（尚無程式碼）'}
             <div>
               <button
                 onClick={() => setRemixOpen(o => !o)}
-                className="w-full flex items-center justify-between px-3 py-2 hover:bg-[#222] transition-colors"
+                className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-white/[0.03] transition-colors"
               >
-                <div className="flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[#FFE4B3] text-[13px]">fork_right</span>
-                  <span className="text-[10px] uppercase tracking-widest font-bold text-[#E5E2E1]/70">Remix</span>
-                  {currentUser && <span className="text-[9px] font-mono text-[#E5E2E1]/30">{remixVibes.length}</span>}
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[#dae2fd]/30 text-[13px]">fork_right</span>
+                  <span className="text-[10px] font-medium uppercase tracking-widest text-[#dae2fd]/40">Remix</span>
+                  {currentUser && <span className="text-[9px] font-mono text-[#dae2fd]/20">{remixVibes.length}</span>}
                 </div>
-                <span className="material-symbols-outlined text-[14px] text-[#E5E2E1]/30 transition-transform" style={{ transform: remixOpen ? 'rotate(0deg)' : 'rotate(-90deg)' }}>expand_more</span>
+                <span className="material-symbols-outlined text-[13px] text-[#dae2fd]/20 transition-transform duration-200" style={{ transform: remixOpen ? 'rotate(0deg)' : 'rotate(-90deg)' }}>expand_more</span>
               </button>
 
               {remixOpen && (
-                <div className="px-2 pb-2 space-y-1.5">
+                <div className="px-2.5 pb-2.5 space-y-1">
                   {!currentUser ? (
-                    <div className="text-center py-5 px-2">
-                      <span className="material-symbols-outlined text-[#E5E2E1]/10 text-3xl block mb-1">lock</span>
-                      <p className="text-[9px] text-[#E5E2E1]/30 leading-relaxed">登入後查看<br />Remix 作品</p>
+                    <div className="text-center py-6">
+                      <p className="text-[9px] text-[#dae2fd]/20 leading-relaxed">登入後查看</p>
                     </div>
                   ) : vibesLoading ? (
-                    <div className="text-center py-4">
-                      <p className="text-[9px] text-[#E5E2E1]/30 animate-pulse">載入中…</p>
+                    <div className="text-center py-6">
+                      <p className="text-[9px] text-[#dae2fd]/20 animate-pulse">載入中…</p>
                     </div>
                   ) : remixVibes.length === 0 ? (
-                    <div className="text-center py-5">
-                      <span className="material-symbols-outlined text-[#E5E2E1]/10 text-3xl block mb-1">fork_right</span>
-                      <p className="text-[9px] text-[#E5E2E1]/25 leading-relaxed">尚無 Remix 作品</p>
+                    <div className="text-center py-6">
+                      <p className="text-[9px] text-[#dae2fd]/20">尚無 Remix 作品</p>
                     </div>
                   ) : (
                     remixVibes.map(vibe => (
-                      <div key={vibe.id} className="bg-[#2A2A2A] rounded-lg p-2 border border-outline-variant/10 hover:border-outline-variant/25 transition-colors">
-                        <p className="text-[11px] font-bold text-[#E5E2E1] truncate leading-tight mb-0.5">{vibe.title}</p>
+                      <div key={vibe.id} className="rounded-lg p-2.5 border border-white/[0.06] hover:bg-white/[0.03] transition-colors">
+                        <p className="text-[11px] font-semibold text-[#dae2fd]/80 truncate leading-tight mb-0.5">{vibe.title}</p>
                         {vibe.parent_vibe_title && (
-                          <p className="text-[9px] text-[#E5E2E1]/30 truncate mb-1">↳ {vibe.parent_vibe_title}</p>
+                          <p className="text-[9px] text-[#dae2fd]/25 truncate mb-2">↳ {vibe.parent_vibe_title}</p>
                         )}
-                        <button onClick={() => setConfirmLoad(vibe)} className="w-full text-[10px] font-bold text-[#FFE4B3] bg-[#FFE4B3]/5 hover:bg-[#FFE4B3]/10 py-1 rounded border border-[#FFE4B3]/10 hover:border-[#FFE4B3]/20 transition-colors active:scale-95">
+                        <button onClick={() => setConfirmLoad(vibe)} className="w-full text-[10px] font-medium text-[#dae2fd]/50 hover:text-[#dae2fd]/90 py-1 rounded border border-white/[0.06] hover:border-white/[0.12] transition-colors">
                           載入
                         </button>
                       </div>
@@ -1289,13 +1281,13 @@ ${currentCode || '（尚無程式碼）'}
       {/* ── 覆蓋確認 dialog ── */}
       {confirmLoad && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4" onClick={() => setConfirmLoad(null)}>
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-          <div className="relative bg-[#1C1B1B] border border-outline-variant/20 rounded-2xl shadow-2xl p-5 w-72" onClick={e => e.stopPropagation()}>
-            <p className="text-[13px] font-bold text-[#E5E2E1] mb-1">載入此專案？</p>
-            <p className="text-[11px] text-[#E5E2E1]/50 mb-4 leading-relaxed">「{confirmLoad.title}」將覆蓋目前編輯器的內容。</p>
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+          <div className="relative bg-[#0b1326] border border-white/[0.08] rounded-xl shadow-2xl p-5 w-72" onClick={e => e.stopPropagation()}>
+            <p className="text-[13px] font-semibold text-[#dae2fd]/90 mb-1">載入此專案？</p>
+            <p className="text-[11px] text-[#dae2fd]/40 mb-5 leading-relaxed">「{confirmLoad.title}」將覆蓋目前編輯器的內容。</p>
             <div className="flex gap-2">
-              <button onClick={() => setConfirmLoad(null)} className="flex-1 py-2 rounded-xl text-[11px] font-bold text-[#E5E2E1]/60 bg-[#2A2A2A] hover:bg-[#333] transition-colors">取消</button>
-              <button onClick={() => handleLoadFromVibe(confirmLoad)} className="flex-1 py-2 rounded-xl text-[11px] font-bold text-[#FFB3B6] bg-[#FFB3B6]/10 hover:bg-[#FFB3B6]/20 transition-colors">確認載入</button>
+              <button onClick={() => setConfirmLoad(null)} className="flex-1 py-2 rounded-lg text-[11px] font-medium text-[#dae2fd]/40 border border-white/[0.06] hover:border-white/[0.12] hover:text-[#dae2fd]/70 transition-colors">取消</button>
+              <button onClick={() => handleLoadFromVibe(confirmLoad)} className="flex-1 py-2 rounded-lg text-[11px] font-semibold text-white bg-[#2665fd] hover:bg-[#2665fd]/90 transition-colors">確認載入</button>
             </div>
           </div>
         </div>
