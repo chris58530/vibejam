@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase, signOut } from '../lib/supabase';
 import AuthModal, { AuthView } from './AuthModal';
 import { useI18n, Language } from '../lib/i18n';
-import { useWorkspaceStore } from '../lib/workspaceStore';
 import ThemeSwitcher from './ThemeSwitcher';
 
 interface NavbarProps {
@@ -18,7 +17,6 @@ export default function Navbar({}: NavbarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { t, language, setLanguage } = useI18n();
-  const { publishFn, isPublishing } = useWorkspaceStore();
   const [user, setUser] = useState<any>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [authView, setAuthView] = useState<AuthView>('login');
@@ -260,15 +258,6 @@ export default function Navbar({}: NavbarProps) {
             </button>
           )}
 
-          {isWorkspace && (
-            <button
-              onClick={() => publishFn?.()}
-              disabled={isPublishing || !publishFn}
-              className="bg-gradient-to-br from-primary to-primary-container text-on-primary px-5 py-1.5 rounded-lg text-sm font-bold active:scale-95 transition-transform ml-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
-            >
-              {isPublishing ? t('nav_publishing') : t('nav_publish')}
-            </button>
-          )}
         </div>
       </header>
 

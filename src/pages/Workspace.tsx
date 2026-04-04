@@ -676,8 +676,9 @@ ${currentCode || '（尚無程式碼）'}
           <button
             onClick={handlePublish}
             disabled={isPublishing || !title || !previewDoc || !currentUser?.id}
-            className="bg-gradient-to-br from-primary to-primary-container text-on-primary px-4 py-1 rounded-lg text-xs font-bold active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed group relative flex items-center gap-1.5"
+            className="bg-[#2665fd] hover:bg-[#2665fd]/90 disabled:opacity-40 disabled:cursor-not-allowed text-white px-4 py-1.5 rounded-lg text-[11px] font-semibold active:scale-[0.98] transition-all group relative flex items-center gap-1.5"
           >
+            <span className="material-symbols-outlined text-[13px]">{isPublishing ? 'hourglass_empty' : 'rocket_launch'}</span>
             {isPublishing ? 'Publishing...' : 'Publish'}
             {!currentUser?.id && (
               <div className="absolute top-full mt-2 right-0 px-3 py-1.5 bg-black/90 border border-white/10 text-white/80 text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
@@ -1167,19 +1168,21 @@ ${currentCode || '（尚無程式碼）'}
                     </div>
                   ) : (
                     saves.map(slot => (
-                      <div key={slot.id} className="rounded-lg p-2.5 border border-white/[0.06] hover:bg-white/[0.03] transition-colors group">
-                        <div className="flex items-start justify-between gap-1 mb-1">
-                          <p className="text-[11px] font-semibold text-[#dae2fd]/80 truncate leading-tight flex-1">{slot.title}</p>
-                          <button onClick={() => handleDeleteSave(slot.id)} className="text-[#dae2fd]/15 hover:text-red-400/70 transition-colors shrink-0 opacity-0 group-hover:opacity-100" title="刪除">
-                            <span className="material-symbols-outlined text-[12px]">close</span>
+                      <div key={slot.id} className="group flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-white/[0.05] transition-colors">
+                        <div className="flex-1 min-w-0 cursor-pointer" onClick={() => handleLoadSave(slot)}>
+                          <p className="text-[11px] text-[#dae2fd]/70 truncate group-hover:text-[#dae2fd]/90 transition-colors leading-tight">{slot.title}</p>
+                          <p className="text-[9px] text-[#dae2fd]/20 font-mono mt-0.5">
+                            {new Date(slot.savedAt).toLocaleString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                          <button onClick={() => handleLoadSave(slot)} title="載入" className="p-0.5 rounded text-[#dae2fd]/30 hover:text-[#2665fd] transition-colors">
+                            <span className="material-symbols-outlined text-[14px]">download</span>
+                          </button>
+                          <button onClick={() => handleDeleteSave(slot.id)} title="刪除" className="p-0.5 rounded text-[#dae2fd]/30 hover:text-red-400/70 transition-colors">
+                            <span className="material-symbols-outlined text-[14px]">close</span>
                           </button>
                         </div>
-                        <p className="text-[9px] text-[#dae2fd]/20 font-mono mb-2">
-                          {new Date(slot.savedAt).toLocaleString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                        <button onClick={() => handleLoadSave(slot)} className="w-full text-[10px] font-medium text-[#dae2fd]/50 hover:text-[#dae2fd]/90 py-1 rounded border border-white/[0.06] hover:border-white/[0.12] transition-colors">
-                          載入
-                        </button>
                       </div>
                     ))
                   )}
@@ -1217,11 +1220,9 @@ ${currentCode || '（尚無程式碼）'}
                     </div>
                   ) : (
                     publishedVibes.map(vibe => (
-                      <div key={vibe.id} className="rounded-lg p-2.5 border border-white/[0.06] hover:bg-white/[0.03] transition-colors">
-                        <p className="text-[11px] font-semibold text-[#dae2fd]/80 truncate leading-tight mb-2">{vibe.title}</p>
-                        <button onClick={() => setConfirmLoad(vibe)} className="w-full text-[10px] font-medium text-[#dae2fd]/50 hover:text-[#dae2fd]/90 py-1 rounded border border-white/[0.06] hover:border-white/[0.12] transition-colors">
-                          載入
-                        </button>
+                      <div key={vibe.id} onClick={() => setConfirmLoad(vibe)} className="group flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-white/[0.05] cursor-pointer transition-colors">
+                        <p className="flex-1 text-[11px] text-[#dae2fd]/70 truncate group-hover:text-[#dae2fd]/90 transition-colors leading-tight">{vibe.title}</p>
+                        <span className="material-symbols-outlined text-[14px] text-[#dae2fd]/20 group-hover:text-[#2665fd] opacity-0 group-hover:opacity-100 transition-all shrink-0">download</span>
                       </div>
                     ))
                   )}
@@ -1259,14 +1260,14 @@ ${currentCode || '（尚無程式碼）'}
                     </div>
                   ) : (
                     remixVibes.map(vibe => (
-                      <div key={vibe.id} className="rounded-lg p-2.5 border border-white/[0.06] hover:bg-white/[0.03] transition-colors">
-                        <p className="text-[11px] font-semibold text-[#dae2fd]/80 truncate leading-tight mb-0.5">{vibe.title}</p>
-                        {vibe.parent_vibe_title && (
-                          <p className="text-[9px] text-[#dae2fd]/25 truncate mb-2">↳ {vibe.parent_vibe_title}</p>
-                        )}
-                        <button onClick={() => setConfirmLoad(vibe)} className="w-full text-[10px] font-medium text-[#dae2fd]/50 hover:text-[#dae2fd]/90 py-1 rounded border border-white/[0.06] hover:border-white/[0.12] transition-colors">
-                          載入
-                        </button>
+                      <div key={vibe.id} onClick={() => setConfirmLoad(vibe)} className="group flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-white/[0.05] cursor-pointer transition-colors">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[11px] text-[#dae2fd]/70 truncate group-hover:text-[#dae2fd]/90 transition-colors leading-tight">{vibe.title}</p>
+                          {vibe.parent_vibe_title && (
+                            <p className="text-[9px] text-[#dae2fd]/20 truncate mt-0.5">↳ {vibe.parent_vibe_title}</p>
+                          )}
+                        </div>
+                        <span className="material-symbols-outlined text-[14px] text-[#dae2fd]/20 group-hover:text-[#2665fd] opacity-0 group-hover:opacity-100 transition-all shrink-0">download</span>
                       </div>
                     ))
                   )}
