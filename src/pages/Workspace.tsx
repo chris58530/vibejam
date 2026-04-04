@@ -1127,7 +1127,7 @@ ${currentCode || '（尚無程式碼）'}
 
       {/* ── 我的專案面板 ── */}
       {savePanelOpen && (
-        <aside className="fixed left-16 top-16 h-[calc(100vh-64px)] w-56 bg-[#0b1326] border-r border-white/5 z-30 flex-col hidden md:flex overflow-hidden">
+        <aside className="fixed left-16 top-16 h-[calc(100vh-64px)] w-56 bg-[#1a1a1c] border-r border-white/[0.06] z-30 flex-col hidden md:flex overflow-hidden">
           {/* Header */}
           <div className="px-4 py-3 border-b border-white/5 shrink-0">
             <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-[#dae2fd]/40">我的專案</span>
@@ -1177,7 +1177,7 @@ ${currentCode || '（尚無程式碼）'}
                         </div>
                         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                           <button onClick={() => handleLoadSave(slot)} title="載入" className="p-0.5 rounded text-[#dae2fd]/30 hover:text-[#2665fd] transition-colors">
-                            <span className="material-symbols-outlined text-[14px]">download</span>
+                            <span className="material-symbols-outlined text-[14px]">open_in_new</span>
                           </button>
                           <button onClick={() => handleDeleteSave(slot.id)} title="刪除" className="p-0.5 rounded text-[#dae2fd]/30 hover:text-red-400/70 transition-colors">
                             <span className="material-symbols-outlined text-[14px]">close</span>
@@ -1222,7 +1222,7 @@ ${currentCode || '（尚無程式碼）'}
                     publishedVibes.map(vibe => (
                       <div key={vibe.id} onClick={() => setConfirmLoad(vibe)} className="group flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-white/[0.05] cursor-pointer transition-colors">
                         <p className="flex-1 text-[11px] text-[#dae2fd]/70 truncate group-hover:text-[#dae2fd]/90 transition-colors leading-tight">{vibe.title}</p>
-                        <span className="material-symbols-outlined text-[14px] text-[#dae2fd]/20 group-hover:text-[#2665fd] opacity-0 group-hover:opacity-100 transition-all shrink-0">download</span>
+                        <span className="material-symbols-outlined text-[14px] text-[#dae2fd]/20 group-hover:text-[#2665fd] opacity-0 group-hover:opacity-100 transition-all shrink-0">open_in_new</span>
                       </div>
                     ))
                   )}
@@ -1267,7 +1267,7 @@ ${currentCode || '（尚無程式碼）'}
                             <p className="text-[9px] text-[#dae2fd]/20 truncate mt-0.5">↳ {vibe.parent_vibe_title}</p>
                           )}
                         </div>
-                        <span className="material-symbols-outlined text-[14px] text-[#dae2fd]/20 group-hover:text-[#2665fd] opacity-0 group-hover:opacity-100 transition-all shrink-0">download</span>
+                        <span className="material-symbols-outlined text-[14px] text-[#dae2fd]/20 group-hover:text-[#2665fd] opacity-0 group-hover:opacity-100 transition-all shrink-0">open_in_new</span>
                       </div>
                     ))
                   )}
@@ -1283,7 +1283,7 @@ ${currentCode || '（尚無程式碼）'}
       {confirmLoad && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4" onClick={() => setConfirmLoad(null)}>
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
-          <div className="relative bg-[#0b1326] border border-white/[0.08] rounded-xl shadow-2xl p-5 w-72" onClick={e => e.stopPropagation()}>
+          <div className="relative bg-[#1a1a1c] border border-white/[0.08] rounded-xl shadow-2xl p-5 w-72" onClick={e => e.stopPropagation()}>
             <p className="text-[13px] font-semibold text-[#dae2fd]/90 mb-1">載入此專案？</p>
             <p className="text-[11px] text-[#dae2fd]/40 mb-5 leading-relaxed">「{confirmLoad.title}」將覆蓋目前編輯器的內容。</p>
             <div className="flex gap-2">
