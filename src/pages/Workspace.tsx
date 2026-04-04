@@ -95,7 +95,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
   const [rightTab, setRightTab] = useState<RightTab>('code');
 
   // Draggable splitter
-  const [splitPercent, setSplitPercent] = useState(40);
+  const splitPercentRef = useRef(40);
   const isDraggingRef = useRef(false);
   const splitContainerRef = useRef<HTMLDivElement>(null);
 
@@ -216,20 +216,22 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Splitter drag handler
+  // Splitter drag handler — 直接操作 CSS custom property，繞過 React 重渲染
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDraggingRef.current || !splitContainerRef.current) return;
       const rect = splitContainerRef.current.getBoundingClientRect();
-      const percent = ((e.clientX - rect.left) / rect.width) * 100;
-      setSplitPercent(Math.max(20, Math.min(80, percent)));
+      const percent = Math.max(20, Math.min(80, ((e.clientX - rect.left) / rect.width) * 100));
+      splitPercentRef.current = percent;
+      splitContainerRef.current.style.setProperty('--split-left', `${percent}%`);
     };
     const handleMouseUp = () => {
+      if (!isDraggingRef.current) return;
       isDraggingRef.current = false;
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
     };
-    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mousemove', handleMouseMove, { passive: true });
     document.addEventListener('mouseup', handleMouseUp);
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
@@ -573,6 +575,7 @@ ${currentCode || '（尚無程式碼）'}
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+          />
         </div>
         <div className="flex items-center gap-2 bg-surface-container-low px-3 py-1 rounded-lg focus-within:border-primary/50 transition-colors border-b-2 border-transparent">
           <span className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Tags</span>
@@ -726,12 +729,12 @@ ${currentCode || '（尚無程式碼）'}
       </div>
 
       {/* ── Split Pane ── */}
-      <div ref={splitContainerRef} className="flex-1 flex overflow-hidden flex-col md:flex-row relative md:p-3 md:gap-3">
+      <div ref={splitContainerRef} className="flex-1 flex overflow-hidden flex-col md:flex-row relative md:p-3 md:gap-3" style={{ '--split-left': `${splitPercentRef.current}%` } as React.CSSProperties}>
 
         {/* ── Left Column: AI Chat (full height) ── */}
         <div
           className={`${mobileTab !== 'chat' ? 'hidden' : 'flex'} md:flex w-full flex-col bg-surface-container-low shrink-0 relative group transition-all duration-300 md:rounded-xl md:shadow-lg ${!isAiSidebarOpen ? 'md:hidden' : ''}`}
-          style={{ width: `${splitPercent}%`, minWidth: '280px' }}
+          style={{ width: 'var(--split-left)', minWidth: '280px' }}
         >
 
           {/* Close Sidebar Button */}
