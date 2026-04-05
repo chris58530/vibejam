@@ -69,7 +69,7 @@ function randomVibeName(): string {
 // ─────────────────────────────────────────────────────────────────────
 export default function Workspace({ currentUser, savePanelOpen = false }: WorkspaceProps) {
   const navigate = useNavigate();
-  const { setPublishFn, setIsPublishing: setStoreIsPublishing } = useWorkspaceStore();
+  const { setPublishFn, setIsPublishing: setStoreIsPublishing, setSaveStatus } = useWorkspaceStore();
 
   const [htmlCode, setHtmlCode] = useState('');
   const [cssCode, setCssCode] = useState('');
@@ -120,6 +120,8 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
   const [isManualEditMode, setIsManualEditMode] = useState(false);
   const [highlightEditBtn, setHighlightEditBtn] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [saveStatus, setSaveStatusLocal] = useState<'saved' | 'unsaved' | 'saving'>('saved');
+  const lastSavedSnapshotRef = useRef<string>('');
   
   const handleEditorClick = () => {
     if (!isManualEditMode) {
@@ -127,6 +129,16 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
       setTimeout(() => setHighlightEditBtn(false), 1000);
     }
   };
+
+  // 追蹤未儲存狀態
+  useEffect(() => {
+    const snapshot = JSON.stringify({ htmlCode, cssCode, jsCode, title, tags });
+    if (snapshot !== lastSavedSnapshotRef.current && lastSavedSnapshotRef.current !== '') {
+      setSaveStatusLocal('unsaved');
+      setSaveStatus('unsaved');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [htmlCode, cssCode, jsCode, title, tags]);
 
   // ── 存檔 ───────────────────────────────────────────────────────────
   const [saves, setSaves] = useState<SaveSlot[]>([]);
@@ -348,16 +360,18 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
   };
 
   // ── 發布 ───────────────────────────────────────────────────────────
-  const handlePublish = async (modalData?: { title: string; description: string; visibility: 'public' | 'unlisted' | 'private' }) => {
+  const handlePublish = async (modalData?: { title: string; description: string; tags: string; visibility: 'public' | 'unlisted' | 'private' }) => {
     const pTitle = modalData?.title || title;
     const pDesc = modalData?.description || description;
     const pVis = modalData?.visibility || visibility;
+    const pTags = modalData?.tags ?? tags;
 
     if (!pTitle || !previewDoc) return;
     if (modalData) {
       setTitle(pTitle);
       setDescription(pDesc);
       setVisibility(pVis);
+      setTags(pTags);
       setIsSettingsOpen(false);
     }
     setIsPublishing(true);
@@ -365,7 +379,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
     try {
       const result = await api.createVibe({
         title: pTitle,
-        tags,
+        tags: pTags,
         description: pDesc,
         code: previewDoc,
         author_id: currentUser?.id,
@@ -421,6 +435,9 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
 
     setSaves(newSaves);
     localStorage.setItem(saveKey, JSON.stringify(newSaves));
+    lastSavedSnapshotRef.current = JSON.stringify({ htmlCode, cssCode, jsCode, title, tags });
+    setSaveStatusLocal('saved');
+    setSaveStatus('saved');
   };
 
   const handleLoadSave = (slot: SaveSlot) => {
@@ -602,23 +619,12 @@ ${currentCode || '（尚無程式碼）'}
     <main className={`${savePanelOpen ? 'md:ml-72' : 'md:ml-16'} flex-1 flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-background transition-[margin] duration-300`}>
       {/* ── Header ── */}
       <div className="bg-surface px-4 py-1.5 flex items-center gap-3 border-b border-outline-variant/10 shrink-0 relative">
-        {/* Left: Tags */}
-        <div className="flex items-center gap-2 bg-surface-container-low px-3 py-1 rounded-lg focus-within:border-primary/50 transition-colors border-b-2 border-transparent shrink-0">
-          <span className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Tags</span>
-          <input
-            className="bg-transparent border-none focus:ring-0 text-xs text-on-surface/80 p-0 w-28 outline-none"
-            placeholder="#tag"
-            type="text"
-            value={tags}
-            onChange={(e) => setTags(e.target.value)}
-          />
-        </div>
-
-        {/* Center: Title */}
+        {/* Center: Title — clickable to open settings */}
         <div 
           className="absolute left-1/2 -translate-x-1/2 cursor-pointer group flex items-center px-3 py-1.5 rounded-lg hover:bg-surface-container-high transition-colors"
           onClick={() => setIsSettingsOpen(true)}
         >
+          <span className="material-symbols-outlined text-[14px] text-on-surface/30 group-hover:text-primary/60 mr-1.5 transition-colors">edit</span>
           <span className="text-base font-semibold text-on-surface group-hover:text-primary mb-[1px] transition-colors">
             {title || '未命名專案'}
           </span>
@@ -679,7 +685,23 @@ ${currentCode || '（尚無程式碼）'}
             </div>
           )}
 
-          {/* API Guide info button */}
+          {/* Save button */}
+          <button
+            onClick={handleSave}
+            title="儲存專案 (本機)"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all border ${
+              saveStatus === 'unsaved'
+                ? 'border-amber-500/50 text-amber-400 bg-amber-500/10 hover:bg-amber-500/20'
+                : 'border-outline-variant/20 text-on-surface/50 bg-surface-container-low hover:bg-surface-container-high hover:text-on-surface'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[13px]">
+              {saveStatus === 'unsaved' ? 'save' : 'check_circle'}
+            </span>
+            <span className="hidden sm:inline">
+              {saveStatus === 'unsaved' ? '未儲存' : '已儲存'}
+            </span>
+          </button>
 
           {/* Publish */}
           <button
@@ -1316,6 +1338,7 @@ ${currentCode || '（尚無程式碼）'}
         onClose={() => setIsSettingsOpen(false)}
         title={title}
         description={description}
+        tags={tags}
         visibility={visibility}
         onSave={handlePublish}
         isPublishing={isPublishing}

@@ -5,8 +5,9 @@ interface ProjectSettingsModalProps {
   onClose: () => void;
   title: string;
   description: string;
+  tags: string;
   visibility: 'public' | 'unlisted' | 'private';
-  onSave: (data: { title: string; description: string; visibility: 'public' | 'unlisted' | 'private' }) => void;
+  onSave: (data: { title: string; description: string; tags: string; visibility: 'public' | 'unlisted' | 'private' }) => void;
   isPublishing?: boolean;
   hasPublished?: boolean;
 }
@@ -16,6 +17,7 @@ export default function ProjectSettingsModal({
   onClose,
   title: initialTitle,
   description: initialDescription,
+  tags: initialTags,
   visibility: initialVisibility,
   onSave,
   isPublishing,
@@ -23,15 +25,17 @@ export default function ProjectSettingsModal({
 }: ProjectSettingsModalProps) {
   const [title, setTitle] = useState(initialTitle);
   const [description, setDescription] = useState(initialDescription);
+  const [tags, setTags] = useState(initialTags);
   const [visibility, setVisibility] = useState(initialVisibility);
 
   useEffect(() => {
     if (isOpen) {
       setTitle(initialTitle || '未命名專案');
       setDescription(initialDescription || '');
+      setTags(initialTags || '');
       setVisibility(initialVisibility || 'public');
     }
-  }, [isOpen, initialTitle, initialDescription, initialVisibility]);
+  }, [isOpen, initialTitle, initialDescription, initialTags, initialVisibility]);
 
   if (!isOpen) return null;
 
@@ -71,6 +75,18 @@ export default function ProjectSettingsModal({
             <span className="text-xs text-on-surface/50 mt-0.5">好的描述可以幫助其他人更快了解你的作品。</span>
           </label>
 
+          <label className="flex flex-col gap-2.5">
+            <span className="text-sm text-on-surface">標籤</span>
+            <input
+              type="text"
+              value={tags}
+              onChange={e => setTags(e.target.value)}
+              className="bg-transparent border border-white/20 rounded-xl px-4 py-3.5 text-sm text-on-surface focus:border-[#2665fd] focus:outline-none transition-colors"
+              placeholder="#react #tailwind #landing-page"
+            />
+            <span className="text-xs text-on-surface/50 mt-0.5">用空格或逗號分隔標籤，方便分類搜尋。</span>
+          </label>
+
           <div className="flex flex-col gap-3.5">
             <span className="text-sm text-on-surface">可見度</span>
             <div className="grid grid-cols-2 gap-4">
@@ -103,7 +119,7 @@ export default function ProjectSettingsModal({
             取消
           </button>
           <button
-            onClick={() => onSave({ title, description, visibility })}
+            onClick={() => onSave({ title, description, tags, visibility })}
             disabled={!title.trim() || isPublishing}
             className="px-6 py-2.5 text-sm font-semibold bg-[#2665fd] hover:bg-[#2665fd]/90 disabled:opacity-50 text-white rounded-lg transition-colors flex items-center justify-center min-w-[110px]"
           >

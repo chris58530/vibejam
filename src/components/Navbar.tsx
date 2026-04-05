@@ -4,6 +4,7 @@ import { supabase, signOut } from '../lib/supabase';
 import AuthModal, { AuthView } from './AuthModal';
 import { useI18n, Language } from '../lib/i18n';
 import ThemeSwitcher from './ThemeSwitcher';
+import { useWorkspaceStore } from '../lib/workspaceStore';
 
 interface NavbarProps {
 }
@@ -24,6 +25,7 @@ export default function Navbar({}: NavbarProps) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const langMenuRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const { saveStatus } = useWorkspaceStore();
 
   const isWorkspace = location.pathname.includes('/workspace');
 
@@ -102,9 +104,21 @@ export default function Navbar({}: NavbarProps) {
         <div className="flex items-center gap-4">
           {isWorkspace ? (
             <>
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-surface-container-low rounded-lg text-xs font-mono text-tertiary">
-                <span className="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span>
-                {t('nav_live_sync')}
+              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-mono transition-colors ${
+                saveStatus === 'unsaved'
+                  ? 'bg-amber-500/10 text-amber-400'
+                  : saveStatus === 'saving'
+                  ? 'bg-surface-container-low text-on-surface/50'
+                  : 'bg-surface-container-low text-tertiary'
+              }`}>
+                {saveStatus === 'unsaved' ? (
+                  <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+                ) : saveStatus === 'saving' ? (
+                  <span className="w-2 h-2 rounded-full bg-on-surface/30 animate-pulse"></span>
+                ) : (
+                  <span className="w-2 h-2 rounded-full bg-tertiary"></span>
+                )}
+                {saveStatus === 'unsaved' ? '未儲存' : saveStatus === 'saving' ? '儲存中...' : '已儲存'}
               </div>
               <div className="h-6 w-px bg-outline-variant/20 mx-2"></div>
               <button className="material-symbols-outlined text-on-surface/30 p-2 rounded-lg cursor-not-allowed" title={t('nav_coming_soon')}>notifications</button>
