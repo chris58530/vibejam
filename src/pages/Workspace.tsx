@@ -1,6 +1,6 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'motion/react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useBlocker } from 'react-router-dom';
 import { api, User, Vibe } from '../lib/api';
 import { supabase } from '../lib/supabase';
 import { EditorMode, detectFramework, wrapReactForPreview, wrapVueForPreview, mergeCode, extractCodeFromAIResponse, extractPartialCode } from '../lib/codeUtils';
@@ -657,6 +657,51 @@ ${currentCode || '（尚無程式碼）'}
   ];
   const todayUsage = selectedProvider ? getUsage(selectedProvider as ChatProvider) : 0;
   const limit = selectedProvider ? (dailyLimits[selectedProvider] || 0) : 0;
+
+  // ── 緊急自動備份 ───────────────────────────────────────────────────
+  const emergencySave = useCallback(() => {
+    const hasContent = !!(htmlCode || cssCode || jsCode);
+    if (!hasContent) return;
+    const emergencySlot: SaveSlot = {
+      id: `emergency_${Date.now()}`,
+      title: title || '未命名備份',
+      tags,
+      description: description || '',
+      editorMode,
+      code: { html: htmlCode, css: cssCode, js: jsCode },
+      savedAt: new Date().toISOString(),
+    };
+    const key = `beaverkit_saves_${currentUser?.id ?? 'guest'}`;
+    try {
+      const stored = localStorage.getItem(key);
+      const existing: SaveSlot[] = stored ? JSON.parse(stored) : [];
+      // 移除舊的緊急備份，最多保留 5 份
+      const filtered = existing.filter(s => !s.id.startsWith('emergency_')).slice(0, 4);
+      localStorage.setItem(key, JSON.stringify([emergencySlot, ...filtered]));
+    } catch { /* storage full */ }
+  }, [htmlCode, cssCode, jsCode, title, tags, description, editorMode, currentUser?.id]);
+
+  // 瀏覽器關閉 / 重新整理時：自動緊急備份 + 顯示原生警告
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (saveStatus === 'unsaved' && (htmlCode || cssCode || jsCode)) {
+        emergencySave();
+        e.preventDefault();
+        // 現代瀏覽器忽略自訂訊息，但 returnValue 仍會觸發原生對話框
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [saveStatus, htmlCode, cssCode, jsCode, emergencySave]);
+
+  // SPA 內部導航攔截（React Router useBlocker）
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      saveStatus === 'unsaved' &&
+      !!(htmlCode || cssCode || jsCode) &&
+      currentLocation.pathname !== nextLocation.pathname
+  );
 
   // ── Render ────────────────────────────────────────────────────────
   return (
@@ -1401,6 +1446,47 @@ ${currentCode || '（尚無程式碼）'}
         onSaveLocal={handleSaveFromModal}
         isPublishing={isPublishing}
       />
+
+      {/* ── 離開確認 Dialog ── */}
+      {blocker.state === 'blocked' && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#121212] w-full max-w-sm rounded-2xl border border-white/10 shadow-2xl p-6 flex flex-col gap-5 animate-[fadeIn_0.15s_ease-out]">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-amber-500/15 flex items-center justify-center shrink-0 mt-0.5">
+                <span className="material-symbols-outlined text-amber-400 text-xl">warning</span>
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-on-surface">尚有未儲存的變更</h2>
+                <p className="text-sm text-on-surface/60 mt-1 leading-relaxed">離開後將遺失本次編輯內容。建議先儲存草稿再離開。</p>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => {
+                  emergencySave();
+                  blocker.proceed?.();
+                }}
+                className="w-full py-2.5 text-sm font-semibold border border-white/15 hover:border-white/30 text-on-surface/80 hover:text-white rounded-lg transition-colors flex items-center justify-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-[15px]">save</span>
+                儲存草稿並離開
+              </button>
+              <button
+                onClick={() => blocker.proceed?.()}
+                className="w-full py-2.5 text-sm text-on-surface/50 hover:text-error rounded-lg transition-colors"
+              >
+                不儲存，直接離開
+              </button>
+              <button
+                onClick={() => blocker.reset?.()}
+                className="w-full py-2.5 text-sm font-semibold bg-[#2665fd] hover:bg-[#1e50cf] text-white rounded-lg transition-colors"
+              >
+                留在這裡繼續編輯
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
