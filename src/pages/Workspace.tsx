@@ -120,6 +120,8 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
   const [isManualEditMode, setIsManualEditMode] = useState(false);
   const [highlightEditBtn, setHighlightEditBtn] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isTitleEditing, setIsTitleEditing] = useState(false);
+  const titleInputRef = useRef<HTMLInputElement>(null);
   const [saveStatus, setSaveStatusLocal] = useState<'saved' | 'unsaved' | 'saving'>('saved');
   const lastSavedSnapshotRef = useRef<string>('');
   
@@ -661,15 +663,32 @@ ${currentCode || '（尚無程式碼）'}
     <main className={`${savePanelOpen ? 'md:ml-72' : 'md:ml-16'} flex-1 flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-background transition-[margin] duration-300`}>
       {/* ── Header ── */}
       <div className="bg-surface px-4 py-1.5 flex items-center gap-3 border-b border-outline-variant/10 shrink-0 relative">
-        {/* Center: Title — clickable to open settings */}
-        <div 
-          className="absolute left-1/2 -translate-x-1/2 cursor-pointer group flex items-center px-3 py-1.5 rounded-lg hover:bg-surface-container-high transition-colors"
-          onClick={() => setIsSettingsOpen(true)}
-        >
-          <span className="material-symbols-outlined text-[14px] text-on-surface/30 group-hover:text-primary/60 mr-1.5 transition-colors">edit</span>
-          <span className={`text-base font-semibold mb-[1px] transition-colors ${title ? 'text-on-surface group-hover:text-primary' : 'text-on-surface/30 group-hover:text-primary/50 italic font-normal'}`}>
-            {title || '點此命名專案...'}
-          </span>
+        {/* Center: Title — inline edit on click */}
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center">
+          {isTitleEditing ? (
+            <input
+              ref={titleInputRef}
+              type="text"
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              onBlur={() => setIsTitleEditing(false)}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === 'Escape') { e.preventDefault(); setIsTitleEditing(false); } }}
+              className="bg-transparent border-b border-primary text-base font-semibold text-on-surface outline-none text-center w-48 pb-0.5 placeholder:text-on-surface/30 placeholder:font-normal placeholder:italic"
+              placeholder="未命名專案"
+              autoFocus
+            />
+          ) : (
+            <button
+              className="cursor-text group flex items-center px-3 py-1.5 rounded-lg hover:bg-surface-container-high transition-colors"
+              onClick={() => { setIsTitleEditing(true); setTimeout(() => titleInputRef.current?.select(), 0); }}
+              title="點擊編輯專案名稱"
+            >
+              <span className="material-symbols-outlined text-[14px] text-on-surface/30 group-hover:text-primary/60 mr-1.5 transition-colors">edit</span>
+              <span className={`text-base font-semibold mb-[1px] transition-colors ${title ? 'text-on-surface group-hover:text-primary' : 'text-on-surface/30 group-hover:text-primary/50 italic font-normal'}`}>
+                {title || '點此命名專案...'}
+              </span>
+            </button>
+          )}
         </div>
 
         {/* Right controls */}
