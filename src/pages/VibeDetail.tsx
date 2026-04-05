@@ -176,7 +176,6 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
   const [showChatSortDropdown, setShowChatSortDropdown] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [sidebarTab, setSidebarTab] = useState<'remix' | 'versions'>('remix');
-  const [leftTab, setLeftTab] = useState<'info' | 'comments'>('info');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const [iframeVisible, setIframeVisible] = useState(true);
@@ -365,8 +364,8 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
       {/* ── Left panel ─────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
-        {/* Left header */}
-        <div className={panelHeaderCls}>
+        {/* Sticky header */}
+        <div className={`${panelHeaderCls} sticky top-0 z-10`}>
           <button
             onClick={() => navigate(-1)}
             className="w-7 h-7 rounded-lg hover:bg-surface-container-highest transition-colors text-on-surface/50 hover:text-on-surface flex items-center justify-center shrink-0 cursor-pointer"
@@ -432,157 +431,146 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
           </div>
         </div>
 
-        {/* Player — fills remaining height */}
-        <div className="flex-1 min-h-0 bg-black relative group">
-          <iframe
-            srcDoc={selectedVersion?.code}
-            className="absolute inset-0 w-full h-full border-none transition-opacity duration-150"
-            style={{ opacity: iframeVisible ? 1 : 0 }}
-            title="Stage"
-            sandbox="allow-scripts allow-same-origin allow-forms"
-          />
-          <button
-            onClick={() => setIsFullscreen(true)}
-            className="absolute bottom-3 right-3 w-8 h-8 bg-black/60 backdrop-blur text-white rounded-lg flex items-center justify-center hover:bg-black/80 transition-all ring-1 ring-white/10 cursor-pointer opacity-0 group-hover:opacity-100 z-10"
-          >
-            <span className="material-symbols-outlined text-[16px]">fullscreen</span>
-          </button>
-        </div>
-
-        {/* Bottom strip: info/comments tabs */}
-        <div className="h-[200px] flex flex-col shrink-0 border-t border-outline-variant/10">
-          {/* Tab bar */}
-          <div className="flex border-b border-outline-variant/10 shrink-0 bg-surface-container-low/60 h-9">
-            <button onClick={() => setLeftTab('info')} className={`${tabBaseCls} ${leftTab === 'info' ? tabActiveCls : tabInactiveCls}`}>
-              <span className="material-symbols-outlined text-[12px]">info</span>
-              Info
-            </button>
-            <button onClick={() => setLeftTab('comments')} className={`${tabBaseCls} ${leftTab === 'comments' ? tabActiveCls : tabInactiveCls}`}>
-              <span className="material-symbols-outlined text-[12px]">chat_bubble</span>
-              Comments {commentCount > 0 && <span className="ml-1 opacity-60">({commentCount})</span>}
+        {/* Scrollable body: player + info + comments (YouTube-style stack) */}
+        <div className="flex-1 overflow-y-auto">
+          {/* Player — 16:9 aspect, capped to viewport */}
+          <div className="bg-black relative group w-full aspect-video max-h-[calc(100vh-44px-340px)] min-h-[280px]">
+            <iframe
+              srcDoc={selectedVersion?.code}
+              className="absolute inset-0 w-full h-full border-none transition-opacity duration-150"
+              style={{ opacity: iframeVisible ? 1 : 0 }}
+              title="Stage"
+              sandbox="allow-scripts allow-same-origin allow-forms"
+            />
+            <button
+              onClick={() => setIsFullscreen(true)}
+              className="absolute bottom-3 right-3 w-8 h-8 bg-black/60 backdrop-blur text-white rounded-lg flex items-center justify-center hover:bg-black/80 transition-all ring-1 ring-white/10 cursor-pointer opacity-0 group-hover:opacity-100 z-10"
+            >
+              <span className="material-symbols-outlined text-[16px]">fullscreen</span>
             </button>
           </div>
 
-          {/* Info tab */}
-          {leftTab === 'info' && (
-            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
-              {/* Stats row */}
-              <div className="flex items-center gap-4 flex-wrap">
-                <span className="flex items-center gap-1 text-xs text-on-surface/35">
-                  <span className="material-symbols-outlined text-[12px]">visibility</span>{vibe.views}
+          {/* Info card (YT-style description block) */}
+          <div className="px-5 pt-4 pb-3 border-b border-outline-variant/10">
+            {/* Stats row */}
+            <div className="flex items-center gap-4 flex-wrap mb-2.5">
+              <span className="flex items-center gap-1 text-xs text-on-surface/45">
+                <span className="material-symbols-outlined text-[13px]">visibility</span>{vibe.views} views
+              </span>
+              <span className="flex items-center gap-1 text-xs text-on-surface/45">
+                <span className="material-symbols-outlined text-[13px]">schedule</span>{timeAgo(vibe.created_at)}
+              </span>
+              {remixCount > 0 && (
+                <span className="flex items-center gap-1 text-xs text-on-surface/45">
+                  <span className="material-symbols-outlined text-[13px]">repeat</span>{remixCount} remixes
                 </span>
-                <span className="flex items-center gap-1 text-xs text-on-surface/35">
-                  <span className="material-symbols-outlined text-[12px]">chat_bubble</span>{commentCount}
-                </span>
-                {remixCount > 0 && (
-                  <span className="flex items-center gap-1 text-xs text-on-surface/35">
-                    <span className="material-symbols-outlined text-[12px]">repeat</span>{remixCount}
-                  </span>
-                )}
-                <span className="flex items-center gap-1 text-xs text-on-surface/35">
-                  <span className="material-symbols-outlined text-[12px]">schedule</span>{timeAgo(vibe.created_at)}
-                </span>
-                <span className="flex items-center gap-1 text-xs text-on-surface/35">
-                  <span className="material-symbols-outlined text-[12px]">layers</span>V{selectedVersion?.version_number}
-                </span>
-              </div>
-              {/* Tags */}
-              {parsedTags.length > 0 && (
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  {parsedTags.map((tag, i) => (
-                    <span key={i} className="px-2 py-0.5 rounded-md bg-surface-container-high text-[11px] text-on-surface/45 ring-1 ring-black/[0.05]">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
               )}
-              {/* Description */}
-              {vibe.description && (
-                <p className="text-xs text-on-surface/55 leading-relaxed">{vibe.description}</p>
-              )}
+              <span className="flex items-center gap-1 text-xs text-on-surface/45">
+                <span className="material-symbols-outlined text-[13px]">layers</span>V{selectedVersion?.version_number}
+              </span>
             </div>
-          )}
-
-          {/* Comments tab */}
-          {leftTab === 'comments' && (
-            <div className="flex-1 flex flex-col overflow-hidden">
-              {/* Sort + input row */}
-              <div className="px-3 py-2 border-b border-outline-variant/8 shrink-0 flex items-center gap-2">
-                {/* Sort */}
-                <div className="relative">
-                  <button onClick={() => setShowChatSortDropdown(v => !v)} className="flex items-center gap-1 text-[10px] text-on-surface/30 hover:text-on-surface/55 transition-colors cursor-pointer">
-                    <span className="material-symbols-outlined text-[11px]">sort</span>
-                    {chatSortOrder === 'oldest' ? 'Oldest' : 'Newest'}
-                    <span className="material-symbols-outlined text-[10px]">expand_more</span>
-                  </button>
-                  {showChatSortDropdown && (
-                    <>
-                      <div className="fixed inset-0 z-20" onClick={() => setShowChatSortDropdown(false)} />
-                      <div className="absolute left-0 top-full mt-1 z-30 bg-surface-container-highest border border-outline-variant/20 rounded-lg shadow-xl overflow-hidden min-w-[130px]">
-                        {(['oldest', 'newest'] as const).map(order => (
-                          <button key={order} onClick={() => { setChatSortOrder(order); setShowChatSortDropdown(false); }} className={`w-full flex items-center gap-2 px-3 py-2 text-[11px] hover:bg-surface-container-high transition-colors cursor-pointer ${chatSortOrder === order ? 'text-primary' : 'text-on-surface/55'}`}>
-                            <span className="material-symbols-outlined text-[12px]">{order === 'oldest' ? 'arrow_downward' : 'arrow_upward'}</span>
-                            {order === 'oldest' ? 'Oldest first' : 'Newest first'}
-                            {chatSortOrder === order && <span className="ml-auto material-symbols-outlined text-[11px]">check</span>}
-                          </button>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </div>
-                <div className="flex-1" />
-                {/* Compact input */}
-                {currentUser ? (
-                  <div className="flex items-center gap-1.5 flex-1">
-                    <input
-                      type="text"
-                      value={commentText}
-                      onChange={e => setCommentText(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddComment(); } }}
-                      placeholder="Add a comment…"
-                      className="flex-1 bg-surface-container-high/60 border border-outline-variant/15 rounded-lg px-2.5 py-1.5 text-xs text-on-surface placeholder:text-on-surface/25 focus:border-primary/40 outline-none transition-colors"
-                    />
-                    {commentText.trim() && (
-                      <button onClick={handleAddComment} className="px-2.5 py-1.5 bg-primary text-on-primary text-xs font-semibold rounded-lg cursor-pointer hover:bg-primary/90 transition-colors shrink-0">
-                        Post
-                      </button>
-                    )}
-                  </div>
-                ) : (
-                  <button onClick={() => setShowAuthModal(true)} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-primary/8 border border-primary/15 rounded-lg text-primary/60 text-xs cursor-pointer hover:bg-primary/12 transition-colors">
-                    <span className="material-symbols-outlined text-[13px]">login</span>
-                    Sign in to comment
-                  </button>
-                )}
-              </div>
-              {/* Comment list */}
-              <div className="flex-1 overflow-y-auto px-3 py-2 space-y-4">
-                {sortedComments.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full gap-2 py-4">
-                    <span className="material-symbols-outlined text-[28px] text-on-surface/10">forum</span>
-                    <p className="text-xs text-on-surface/20">No comments yet</p>
-                  </div>
-                ) : sortedComments.map(comment => (
-                  <div key={comment.id} className={`flex gap-2 ${comment.optimistic ? 'opacity-50' : ''}`}>
-                    <img src={comment.author_avatar} className="w-6 h-6 rounded-full shrink-0 border border-outline-variant/10" alt="" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
-                        <span className="text-xs font-semibold text-on-surface">{comment.author_name}</span>
-                        {comment.author_id === vibe.author_id && (
-                          <span className="text-[9px] px-1.5 py-0.5 rounded border border-primary/25 text-primary bg-primary/8 uppercase tracking-widest">Creator</span>
-                        )}
-                        {comment.optimistic
-                          ? <span className="text-[10px] text-on-surface/25 italic">Sending…</span>
-                          : <span className="text-[10px] text-on-surface/20">{new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                        }
-                      </div>
-                      <p className="text-xs text-on-surface/70 leading-relaxed">{comment.content}</p>
-                    </div>
-                  </div>
+            {/* Tags */}
+            {parsedTags.length > 0 && (
+              <div className="flex items-center gap-1.5 flex-wrap mb-2.5">
+                {parsedTags.map((tag, i) => (
+                  <span key={i} className="px-2 py-0.5 rounded-md bg-surface-container-high text-[11px] text-on-surface/55 ring-1 ring-black/[0.05]">
+                    #{tag}
+                  </span>
                 ))}
               </div>
+            )}
+            {/* Description */}
+            {vibe.description ? (
+              <p className="text-[13px] text-on-surface/70 leading-relaxed whitespace-pre-wrap">{vibe.description}</p>
+            ) : (
+              <p className="text-[13px] text-on-surface/25 italic">No description provided.</p>
+            )}
+          </div>
+
+          {/* Comments section */}
+          <div className="px-5 py-4">
+            {/* Section header */}
+            <div className="flex items-center gap-3 mb-4">
+              <h3 className="text-sm font-semibold text-on-surface">
+                {commentCount} Comment{commentCount !== 1 ? 's' : ''}
+              </h3>
+              <div className="relative">
+                <button onClick={() => setShowChatSortDropdown(v => !v)} className="flex items-center gap-1 text-xs text-on-surface/45 hover:text-on-surface/75 transition-colors cursor-pointer">
+                  <span className="material-symbols-outlined text-[14px]">sort</span>
+                  Sort by {chatSortOrder === 'oldest' ? 'Oldest' : 'Newest'}
+                  <span className="material-symbols-outlined text-[13px]">expand_more</span>
+                </button>
+                {showChatSortDropdown && (
+                  <>
+                    <div className="fixed inset-0 z-20" onClick={() => setShowChatSortDropdown(false)} />
+                    <div className="absolute left-0 top-full mt-1 z-30 bg-surface-container-highest border border-outline-variant/20 rounded-lg shadow-xl overflow-hidden min-w-[150px]">
+                      {(['oldest', 'newest'] as const).map(order => (
+                        <button key={order} onClick={() => { setChatSortOrder(order); setShowChatSortDropdown(false); }} className={`w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-surface-container-high transition-colors cursor-pointer ${chatSortOrder === order ? 'text-primary' : 'text-on-surface/65'}`}>
+                          <span className="material-symbols-outlined text-[13px]">{order === 'oldest' ? 'arrow_downward' : 'arrow_upward'}</span>
+                          {order === 'oldest' ? 'Oldest first' : 'Newest first'}
+                          {chatSortOrder === order && <span className="ml-auto material-symbols-outlined text-[12px]">check</span>}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
-          )}
+
+            {/* Comment input (YT-style: avatar + underline input) */}
+            {currentUser ? (
+              <div className="flex items-start gap-3 mb-6 pb-3 border-b border-outline-variant/10">
+                <img src={currentUser.avatar} className="w-8 h-8 rounded-full shrink-0 border border-outline-variant/10" alt="" />
+                <div className="flex-1 flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={commentText}
+                    onChange={e => setCommentText(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddComment(); } }}
+                    placeholder="Add a comment…"
+                    className="flex-1 bg-transparent border-b border-outline-variant/20 focus:border-primary/60 px-0 py-1.5 text-sm text-on-surface placeholder:text-on-surface/30 outline-none transition-colors"
+                  />
+                  {commentText.trim() && (
+                    <button onClick={handleAddComment} className="px-3 py-1.5 bg-primary text-on-primary text-xs font-semibold rounded-full cursor-pointer hover:bg-primary/90 transition-colors shrink-0">
+                      Comment
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <button onClick={() => setShowAuthModal(true)} className="w-full flex items-center justify-center gap-2 px-3 py-3 mb-6 bg-surface-container-high/60 border border-outline-variant/15 rounded-xl text-on-surface/55 text-sm cursor-pointer hover:bg-surface-container-high transition-colors">
+                <span className="material-symbols-outlined text-[15px]">login</span>
+                Sign in to comment
+              </button>
+            )}
+
+            {/* Comment list */}
+            <div className="space-y-5">
+              {sortedComments.length === 0 ? (
+                <div className="flex flex-col items-center justify-center gap-2 py-8">
+                  <span className="material-symbols-outlined text-[32px] text-on-surface/10">forum</span>
+                  <p className="text-xs text-on-surface/25">Be the first to comment</p>
+                </div>
+              ) : sortedComments.map(comment => (
+                <div key={comment.id} className={`flex gap-3 ${comment.optimistic ? 'opacity-50' : ''}`}>
+                  <img src={comment.author_avatar} className="w-8 h-8 rounded-full shrink-0 border border-outline-variant/10" alt="" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                      <span className="text-xs font-semibold text-on-surface">@{comment.author_name}</span>
+                      {comment.author_id === vibe.author_id && (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded border border-primary/25 text-primary bg-primary/8 uppercase tracking-widest">Creator</span>
+                      )}
+                      {comment.optimistic
+                        ? <span className="text-[10px] text-on-surface/25 italic">Sending…</span>
+                        : <span className="text-[10px] text-on-surface/25">{timeAgo(comment.created_at)}</span>
+                      }
+                    </div>
+                    <p className="text-[13px] text-on-surface/75 leading-relaxed whitespace-pre-wrap">{comment.content}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
