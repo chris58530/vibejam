@@ -77,7 +77,7 @@ export default function ProjectSettingsModal({
               <button
                 type="button"
                 onClick={() => setVisibility('public')}
-                className={"p-4 rounded-xl border text-left flex flex-col gap-2 transition-all }
+                className={`p-4 rounded-xl border text-left flex flex-col gap-2 transition-all ${visibility === 'public' ? 'border-[#2665fd] bg-[#2665fd]/10' : 'border-white/10 hover:border-white/20'}`}
               >
                 <div className="font-semibold text-on-surface text-[15px]">公開</div>
                 <span className="text-xs text-on-surface/50 leading-tight">所有人都可以檢視並複製此專案。</span>
@@ -86,7 +86,7 @@ export default function ProjectSettingsModal({
               <button
                 type="button"
                 onClick={() => setVisibility('private')}
-                className={"p-4 rounded-xl border text-left flex flex-col gap-2 transition-all }
+                className={`p-4 rounded-xl border text-left flex flex-col gap-2 transition-all ${visibility === 'private' ? 'border-[#2665fd] bg-[#2665fd]/10' : 'border-white/10 hover:border-white/20'}`}
               >
                 <div className="font-semibold text-on-surface text-[15px]">私人</div>
                 <span className="text-xs text-on-surface/50 leading-tight">只有你自己可以檢視此專案。</span>
