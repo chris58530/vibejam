@@ -1136,17 +1136,6 @@ ${currentCode || '（尚無程式碼）'}
         </div>
       )}
 
-      <footer className="bg-[#131313] border-t border-[#584142]/20 flex justify-between items-center px-6 h-8 w-full z-50 shrink-0">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-[#FFB3B6]">
-            <span className="material-symbols-outlined text-[12px]">rebase</span>
-            main*
-          </div>
-          <div className="text-[10px] text-on-surface/40 font-mono">
-            {currentCode ? `Ln ${currentCode.split('\n').length}` : ''}
-          </div>
-        </div>
-      </footer>
 
       {/* ── 我的專案面板 ── */}
       {savePanelOpen && (
