@@ -215,7 +215,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
   const isOwner = vibe.user_role === 'owner';
 
   return (
-    <div className="md:ml-16 pt-[64px] h-screen flex flex-col bg-surface overflow-hidden">
+    <div className="md:ml-16 h-screen flex flex-col bg-surface overflow-hidden">
       {/* Platform Header */}
       <div className="border-b border-outline-variant/10 bg-surface-container-low shrink-0 z-10">
         {/* Main header row */}
