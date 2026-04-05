@@ -8,6 +8,7 @@ interface ProjectSettingsModalProps {
   tags: string;
   visibility: 'public' | 'unlisted' | 'private';
   onSave: (data: { title: string; description: string; tags: string; visibility: 'public' | 'unlisted' | 'private' }) => void;
+  onSaveLocal?: (data: { title: string; description: string; tags: string; visibility: 'public' | 'unlisted' | 'private' }) => void;
   isPublishing?: boolean;
   hasPublished?: boolean;
 }
@@ -20,6 +21,7 @@ export default function ProjectSettingsModal({
   tags: initialTags,
   visibility: initialVisibility,
   onSave,
+  onSaveLocal,
   isPublishing,
   hasPublished
 }: ProjectSettingsModalProps) {
@@ -111,20 +113,33 @@ export default function ProjectSettingsModal({
           </div>
         </div>
 
-        <div className="p-6 flex justify-end gap-3">
+        <div className="p-6 flex justify-between items-center gap-3">
           <button
             onClick={onClose}
             className="px-5 py-2.5 text-sm text-on-surface/70 hover:text-white transition-colors"
           >
             取消
           </button>
-          <button
-            onClick={() => onSave({ title, description, tags, visibility })}
-            disabled={!title.trim() || isPublishing}
-            className="px-6 py-2.5 text-sm font-semibold bg-[#2665fd] hover:bg-[#2665fd]/90 disabled:opacity-50 text-white rounded-lg transition-colors flex items-center justify-center min-w-[110px]"
-          >
-            {isPublishing ? '發布中...' : hasPublished ? '儲存變更' : '確認發布'}
-          </button>
+          <div className="flex items-center gap-2">
+            {onSaveLocal && (
+              <button
+                onClick={() => onSaveLocal({ title, description, tags, visibility })}
+                disabled={!title.trim()}
+                className="px-5 py-2.5 text-sm font-semibold border border-white/20 hover:border-white/40 text-on-surface/80 hover:text-white disabled:opacity-50 rounded-lg transition-colors flex items-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-[14px]">save</span>
+                儲存草稿
+              </button>
+            )}
+            <button
+              onClick={() => onSave({ title, description, tags, visibility })}
+              disabled={!title.trim() || isPublishing}
+              className="px-6 py-2.5 text-sm font-semibold bg-[#2665fd] hover:bg-[#1e50cf] disabled:opacity-50 text-white rounded-lg transition-colors flex items-center gap-1.5 min-w-[110px] justify-center"
+            >
+              <span className="material-symbols-outlined text-[14px]">{isPublishing ? 'hourglass_empty' : 'rocket_launch'}</span>
+              {isPublishing ? '發布中...' : hasPublished ? '更新發布' : '確認發布'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

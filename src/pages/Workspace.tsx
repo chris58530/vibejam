@@ -440,6 +440,48 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
     setSaveStatus('saved');
   };
 
+  // 從設定 Modal 儲存草稿（套用 modal 資料再存本機）
+  const handleSaveFromModal = (modalData: { title: string; description: string; tags: string; visibility: 'public' | 'unlisted' | 'private' }) => {
+    setTitle(modalData.title);
+    setDescription(modalData.description);
+    setTags(modalData.tags);
+    setVisibility(modalData.visibility);
+    setIsSettingsOpen(false);
+    // 延一幀讓 state 更新後再存
+    setTimeout(() => {
+      const snap = JSON.stringify({ htmlCode, cssCode, jsCode, title: modalData.title, tags: modalData.tags });
+      const existing = saves.findIndex(s => s.title === modalData.title);
+      let newSaves: SaveSlot[];
+      if (existing !== -1) {
+        newSaves = saves.map((s, i) =>
+          i === existing
+            ? { ...s, tags: modalData.tags, description: modalData.description, editorMode, code: { html: htmlCode, css: cssCode, js: jsCode }, savedAt: new Date().toISOString() }
+            : s
+        );
+      } else if (saves.length >= MAX_SAVES) {
+        showToast(`存檔已滿 (5/5)，請先刪除一個`, 'folder_off');
+        return;
+      } else {
+        const slot: SaveSlot = {
+          id: Date.now().toString(),
+          title: modalData.title,
+          tags: modalData.tags,
+          description: modalData.description,
+          editorMode,
+          code: { html: htmlCode, css: cssCode, js: jsCode },
+          savedAt: new Date().toISOString(),
+        };
+        newSaves = [slot, ...saves];
+      }
+      setSaves(newSaves);
+      localStorage.setItem(saveKey, JSON.stringify(newSaves));
+      lastSavedSnapshotRef.current = snap;
+      setSaveStatusLocal('saved');
+      setSaveStatus('saved');
+      showToast(`草稿「${modalData.title}」已儲存`, 'save');
+    }, 0);
+  };
+
   const handleLoadSave = (slot: SaveSlot) => {
     setTitle(slot.title);
     setTags(slot.tags);
@@ -625,8 +667,8 @@ ${currentCode || '（尚無程式碼）'}
           onClick={() => setIsSettingsOpen(true)}
         >
           <span className="material-symbols-outlined text-[14px] text-on-surface/30 group-hover:text-primary/60 mr-1.5 transition-colors">edit</span>
-          <span className="text-base font-semibold text-on-surface group-hover:text-primary mb-[1px] transition-colors">
-            {title || '未命名專案'}
+          <span className={`text-base font-semibold mb-[1px] transition-colors ${title ? 'text-on-surface group-hover:text-primary' : 'text-on-surface/30 group-hover:text-primary/50 italic font-normal'}`}>
+            {title || '點此命名專案...'}
           </span>
         </div>
 
@@ -703,19 +745,14 @@ ${currentCode || '（尚無程式碼）'}
             </span>
           </button>
 
-          {/* Publish */}
+          {/* Settings & Publish */}
           <button
-            onClick={() => handlePublish()}
-            disabled={isPublishing || !title || !previewDoc || !currentUser?.id}
-            className="bg-[#2665fd] hover:bg-[#2665fd]/90 disabled:opacity-40 disabled:cursor-not-allowed text-white px-4 py-1.5 rounded-lg text-[11px] font-semibold active:scale-[0.98] transition-all group relative flex items-center gap-1.5"
+            onClick={() => setIsSettingsOpen(true)}
+            disabled={isPublishing}
+            className="flex items-center justify-center gap-1.5 h-8 px-4 bg-[#2665fd] hover:bg-[#1e50cf] disabled:opacity-40 disabled:cursor-not-allowed text-white text-[11px] font-semibold rounded-lg shadow-sm hover:shadow transition-all duration-200 active:scale-95"
           >
-            <span className="material-symbols-outlined text-[13px]">{isPublishing ? 'hourglass_empty' : 'rocket_launch'}</span>
-            {isPublishing ? 'Publishing...' : 'Publish'}
-            {!currentUser?.id && (
-              <div className="absolute top-full mt-2 right-0 px-3 py-1.5 bg-black/90 border border-white/10 text-white/80 text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
-                Please login first
-              </div>
-            )}
+            <span className="material-symbols-outlined text-[14px]">{isPublishing ? 'hourglass_empty' : 'rocket_launch'}</span>
+            <span>{isPublishing ? '發布中...' : '設定與發布'}</span>
           </button>
         </div>
       </div>
@@ -1041,6 +1078,7 @@ ${currentCode || '（尚無程式碼）'}
                 </div>
                 <textarea
                   value={currentCode}
+                  readOnly={!isManualEditMode}
                   onChange={handleEditorChange}
                   onPaste={handlePaste}
                   placeholder={
@@ -1341,6 +1379,7 @@ ${currentCode || '（尚無程式碼）'}
         tags={tags}
         visibility={visibility}
         onSave={handlePublish}
+        onSaveLocal={handleSaveFromModal}
         isPublishing={isPublishing}
       />
     </main>
