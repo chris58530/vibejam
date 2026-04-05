@@ -432,9 +432,9 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
         </div>
 
         {/* Scrollable body: player + info + comments (YouTube-style stack) */}
-        <div className="flex-1 overflow-y-auto">
-          {/* Player — 16:9 aspect, capped to viewport */}
-          <div className="bg-black relative group w-full aspect-video max-h-[calc(100vh-44px-340px)] min-h-[280px]">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden">
+          {/* Player — height capped so info/comments are visible without scrolling */}
+          <div className="bg-black relative group w-full" style={{ height: 'min(56.25vw, calc(100vh - 44px - 300px))' }}>
             <iframe
               srcDoc={selectedVersion?.code}
               className="absolute inset-0 w-full h-full border-none transition-opacity duration-150"
