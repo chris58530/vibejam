@@ -69,6 +69,8 @@ export interface Vibe {
   latest_version?: number;
   comment_count?: number;
   remix_count?: number;
+  like_count?: number;
+  user_liked?: boolean;
   parent_vibe_id?: number;
   parent_vibe_title?: string;
   parent_author_name?: string;
@@ -255,6 +257,15 @@ export const api = {
       body: JSON.stringify({ supabase_id: supabaseId }),
     });
     if (!res.ok) throw new Error('Failed to delete vibe');
+    return res.json();
+  },
+  async toggleLike(vibeId: number, supabaseId: string): Promise<{ liked: boolean; like_count: number }> {
+    const res = await fetch(`${API_BASE}/vibes/${vibeId}/like`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ supabase_id: supabaseId }),
+    });
+    if (!res.ok) throw new Error('Failed to toggle like');
     return res.json();
   },
 };

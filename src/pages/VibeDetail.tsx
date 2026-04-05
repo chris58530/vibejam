@@ -10,6 +10,11 @@ interface VibeDetailProps {
 
 type ActiveTab = 'chat' | 'versions';
 
+function formatBytes(n: number): string {
+  if (n < 1024) return `${n} B`;
+  return `${(n / 1024).toFixed(1)} KB`;
+}
+
 export default function VibeDetail({ currentUser }: VibeDetailProps) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -37,6 +42,11 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
 
   // auth modal
   const [showAuthModal, setShowAuthModal] = useState(false);
+
+  // like state
+  const [likeCount, setLikeCount] = useState(0);
+  const [liked, setLiked] = useState(false);
+  const [isLiking, setIsLiking] = useState(false);
 
   // ESC key to exit fullscreen
   useEffect(() => {
@@ -69,6 +79,8 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
     try {
       const data = await api.getVibe(id, supabaseUser?.id);
       setVibe(data);
+      setLikeCount(data.like_count ?? 0);
+      setLiked(data.user_liked ?? false);
       if (data.versions && data.versions.length > 0) {
         setSelectedVersion(data.versions[0]);
       }
@@ -132,6 +144,26 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
       );
     } finally {
       isSending.current = false;
+    }
+  };
+
+  const handleToggleLike = async () => {
+    if (!supabaseUser) { setShowAuthModal(true); return; }
+    if (isLiking || !vibe) return;
+    setIsLiking(true);
+    // optimistic
+    setLiked((prev: boolean) => !prev);
+    setLikeCount((prev: number) => liked ? prev - 1 : prev + 1);
+    try {
+      const result = await api.toggleLike(vibe.id, supabaseUser.id);
+      setLiked(result.liked);
+      setLikeCount(result.like_count);
+    } catch {
+      // revert
+      setLiked((prev: boolean) => !prev);
+      setLikeCount((prev: number) => liked ? prev + 1 : prev - 1);
+    } finally {
+      setIsLiking(false);
     }
   };
 
@@ -204,7 +236,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
         <h1 className="text-on-surface font-bold text-xl mb-2">存取被拒</h1>
         <p className="text-on-surface/50 text-sm">此作品為私人作品。僅擁有者和協作者可以查看。</p>
       </div>
-      <button onClick={() => navigate('/')} className="px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-bold">
+      <button onClick={() => navigate('/')} className="px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-bold cursor-pointer">
         返回首頁
       </button>
     </div>
@@ -221,7 +253,10 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
         {/* Main header row */}
         <div className="h-14 flex items-center justify-between px-4 md:px-6">
           <div className="flex items-center gap-3 min-w-0 flex-1">
-            <button onClick={() => navigate(-1)} className="w-8 h-8 rounded-full hover:bg-surface-container-high transition-colors text-on-surface/60 hover:text-on-surface flex items-center justify-center shrink-0">
+            <button
+              onClick={() => navigate(-1)}
+              className="w-8 h-8 rounded-full hover:bg-surface-container-high transition-colors text-on-surface/60 hover:text-on-surface flex items-center justify-center shrink-0 cursor-pointer"
+            >
               <span className="material-symbols-outlined text-[18px]">arrow_back</span>
             </button>
             <div
@@ -247,9 +282,6 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                     </span>
                   )}
                 </div>
-                {vibe.description && (
-                  <p className="text-[11px] text-on-surface/40 font-sans mt-0.5 line-clamp-2 max-w-sm">{vibe.description}</p>
-                )}
                 <div className="flex items-center gap-1.5 text-[11px] text-on-surface/40 font-mono mt-0.5">
                   <span className="hover:text-on-surface/60 transition-colors">@{vibe.author_name}</span>
                   <span className="text-on-surface/20">•</span>
@@ -257,7 +289,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                   {vibe.parent_vibe_title && (
                     <>
                       <span className="text-on-surface/20">•</span>
-                      <span className="text-tertiary/60 truncate">remix of {vibe.parent_author_name}/{vibe.parent_vibe_title}</span>
+                      <span className="text-tertiary/60 truncate hidden sm:inline">remix of {vibe.parent_author_name}/{vibe.parent_vibe_title}</span>
                     </>
                   )}
                 </div>
@@ -266,23 +298,6 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
           </div>
 
           <div className="flex items-center gap-2 shrink-0 ml-4">
-            {/* Stats */}
-            <div className="hidden lg:flex items-center gap-3 mr-3 text-on-surface/35">
-              <span className="flex items-center gap-1 text-[11px] font-mono" title="Views">
-                <span className="material-symbols-outlined text-[14px]">visibility</span>
-                {vibe.views}
-              </span>
-              <span className="flex items-center gap-1 text-[11px] font-mono" title="Comments">
-                <span className="material-symbols-outlined text-[14px]">chat_bubble</span>
-                {commentCount}
-              </span>
-              {remixCount > 0 && (
-                <span className="flex items-center gap-1 text-[11px] font-mono" title="Remixes">
-                  <span className="material-symbols-outlined text-[14px]">repeat</span>
-                  {remixCount}
-                </span>
-              )}
-            </div>
             {isOwner && (
               <button
                 onClick={() => {
@@ -297,7 +312,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                   sessionStorage.setItem('beaverkit_pending_load', JSON.stringify(slot));
                   navigate('/workspace');
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-xs font-mono font-bold rounded-lg ring-1 ring-black/[0.07] transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-xs font-mono font-bold rounded-lg ring-1 ring-black/[0.07] transition-colors cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[14px]">edit</span>
                 <span className="hidden sm:inline">Edit</span>
@@ -305,14 +320,29 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
             )}
             <button
               onClick={handleCopyCode}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-xs font-mono font-bold rounded-lg ring-1 ring-black/[0.07] transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-xs font-mono font-bold rounded-lg ring-1 ring-black/[0.07] transition-colors cursor-pointer"
             >
               <span className="material-symbols-outlined text-[14px]">content_copy</span>
               <span className="hidden sm:inline">Copy</span>
             </button>
+            {/* Like button */}
+            <button
+              onClick={handleToggleLike}
+              disabled={isLiking}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono font-bold rounded-lg transition-all cursor-pointer ${
+                liked
+                  ? 'bg-pink-500/15 text-pink-400 ring-1 ring-pink-500/30 hover:bg-pink-500/20'
+                  : 'bg-surface-container-high hover:bg-surface-container-highest text-on-surface/60 hover:text-on-surface ring-1 ring-black/[0.07]'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: liked ? "'FILL' 1" : "'FILL' 0" }}>
+                favorite
+              </span>
+              {likeCount > 0 && <span>{likeCount}</span>}
+            </button>
             <button
               onClick={handleRemix}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-primary hover:bg-primary/90 text-on-primary text-xs font-mono font-bold rounded-lg shadow-lg shadow-primary/10 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-primary hover:bg-primary/90 text-on-primary text-xs font-mono font-bold rounded-lg shadow-lg shadow-primary/20 ring-1 ring-primary/30 hover:shadow-primary/30 hover:scale-[1.02] transition-all cursor-pointer"
             >
               <span className="material-symbols-outlined text-[14px]">repeat</span>
               Remix
@@ -320,33 +350,50 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
           </div>
         </div>
 
-        {/* Tags & metadata row */}
-        {(parsedTags.length > 0 || vibe.created_at) && (
-          <div className="px-4 md:px-6 pb-2.5 flex items-center gap-2 overflow-x-auto hide-scrollbar">
-            {parsedTags.map((tag, i) => (
-              <span key={i} className="inline-flex items-center px-2 py-0.5 rounded-md bg-surface-container-high text-[10px] font-mono text-on-surface/50 whitespace-nowrap ring-1 ring-black/[0.05]">
-                {tag}
+        {/* Tags, stats & metadata row */}
+        <div className="px-4 md:px-6 pb-2.5 flex items-center gap-2 overflow-x-auto hide-scrollbar">
+          {parsedTags.map((tag, i) => (
+            <span key={i} className="inline-flex items-center px-2 py-0.5 rounded-md bg-surface-container-high text-[10px] font-mono text-on-surface/50 whitespace-nowrap ring-1 ring-black/[0.05]">
+              {tag}
+            </span>
+          ))}
+          {/* Stats — always visible */}
+          <div className="flex items-center gap-3 ml-1 text-on-surface/35">
+            <span className="flex items-center gap-1 text-[11px] font-mono whitespace-nowrap" title="Views">
+              <span className="material-symbols-outlined text-[13px]">visibility</span>
+              {vibe.views}
+            </span>
+            <span className="flex items-center gap-1 text-[11px] font-mono whitespace-nowrap" title="Comments">
+              <span className="material-symbols-outlined text-[13px]">chat_bubble</span>
+              {commentCount}
+            </span>
+            {remixCount > 0 && (
+              <span className="flex items-center gap-1 text-[11px] font-mono whitespace-nowrap" title="Remixes">
+                <span className="material-symbols-outlined text-[13px]">repeat</span>
+                {remixCount}
               </span>
-            ))}
+            )}
+          </div>
+          {vibe.created_at && (
             <span className="text-[10px] text-on-surface/25 font-mono ml-auto whitespace-nowrap">
               {timeAgo(vibe.created_at)}
             </span>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Mobile Panel Switcher */}
       <div className="flex md:hidden border-b border-outline-variant/10 bg-surface-container-lowest shrink-0">
         <button
           onClick={() => setMobilePanel('preview')}
-          className={`flex-1 py-3 text-center text-[10px] font-mono font-bold uppercase tracking-widest transition-colors ${mobilePanel === 'preview' ? 'border-b-2 border-primary text-primary bg-surface-container-high' : 'text-on-surface/40'}`}
+          className={`flex-1 py-3 text-center text-[10px] font-mono font-bold uppercase tracking-widest transition-colors cursor-pointer ${mobilePanel === 'preview' ? 'border-b-2 border-primary text-primary bg-surface-container-high' : 'text-on-surface/40'}`}
         >
           <span className="material-symbols-outlined text-[14px] mr-1 align-middle">preview</span>
           Preview
         </button>
         <button
           onClick={() => setMobilePanel('panel')}
-          className={`flex-1 py-3 text-center text-[10px] font-mono font-bold uppercase tracking-widest transition-colors ${mobilePanel === 'panel' ? 'border-b-2 border-primary text-primary bg-surface-container-high' : 'text-on-surface/40'}`}
+          className={`flex-1 py-3 text-center text-[10px] font-mono font-bold uppercase tracking-widest transition-colors cursor-pointer ${mobilePanel === 'panel' ? 'border-b-2 border-primary text-primary bg-surface-container-high' : 'text-on-surface/40'}`}
         >
           <span className="material-symbols-outlined text-[14px] mr-1 align-middle">chat_bubble</span>
           Chat / Versions
@@ -367,7 +414,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
           </div>
           <button
             onClick={() => setIsFullscreen(!isFullscreen)}
-            className={`absolute w-9 h-9 backdrop-blur-md text-on-surface rounded-lg flex items-center justify-center hover:bg-surface transition-colors z-10 shadow-lg ring-1 ring-black/[0.07] ${isFullscreen ? 'bottom-4 right-4 bg-surface/90' : 'bottom-5 right-5 lg:bottom-10 lg:right-10 bg-surface/80'}`}
+            className={`absolute w-9 h-9 backdrop-blur-md text-on-surface rounded-lg flex items-center justify-center hover:bg-surface transition-colors z-10 shadow-lg ring-1 ring-black/[0.07] cursor-pointer ${isFullscreen ? 'bottom-4 right-4 bg-surface/90' : 'bottom-5 right-5 lg:bottom-10 lg:right-10 bg-surface/80'}`}
           >
             <span className="material-symbols-outlined text-[18px]">{isFullscreen ? 'fullscreen_exit' : 'fullscreen'}</span>
           </button>
@@ -377,16 +424,16 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
         <div className={`${mobilePanel === 'panel' ? 'flex' : 'hidden'} md:flex w-full md:w-[35%] md:min-w-[320px] md:max-w-[440px] flex-col border-l border-outline-variant/10 bg-surface-container-low overflow-hidden shrink-0`}>
 
           {/* Tabs header */}
-          <div className="flex w-full items-center border-b border-outline-variant/10 bg-surface-container-lowest cursor-pointer shrink-0 h-12">
+          <div className="flex w-full items-center border-b border-outline-variant/10 bg-surface-container-lowest shrink-0 h-12">
             <div
               onClick={() => setActiveTab('chat')}
-              className={`flex-1 h-full flex items-center justify-center gap-2 text-[10px] font-mono font-bold uppercase tracking-widest transition-colors ${activeTab === 'chat' ? 'border-b-2 border-primary text-primary bg-surface-container-high' : 'text-on-surface/40 hover:text-on-surface hover:bg-surface-container-low'}`}>
+              className={`flex-1 h-full flex items-center justify-center gap-2 text-[10px] font-mono font-bold uppercase tracking-widest transition-colors cursor-pointer ${activeTab === 'chat' ? 'border-b-2 border-primary text-primary bg-surface-container-high' : 'text-on-surface/40 hover:text-on-surface hover:bg-surface-container-low'}`}>
               <span className="material-symbols-outlined text-[14px]">chat_bubble</span>
               Chat
             </div>
             <div
               onClick={() => setActiveTab('versions')}
-              className={`flex-1 h-full flex items-center justify-center gap-2 text-[10px] font-mono font-bold uppercase tracking-widest transition-colors ${activeTab === 'versions' ? 'border-b-2 border-primary text-primary bg-surface-container-high' : 'text-on-surface/40 hover:text-on-surface hover:bg-surface-container-low'}`}>
+              className={`flex-1 h-full flex items-center justify-center gap-2 text-[10px] font-mono font-bold uppercase tracking-widest transition-colors cursor-pointer ${activeTab === 'versions' ? 'border-b-2 border-primary text-primary bg-surface-container-high' : 'text-on-surface/40 hover:text-on-surface hover:bg-surface-container-low'}`}>
               <span className="material-symbols-outlined text-[14px]">history</span>
               Versions
             </div>
@@ -403,7 +450,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                   <div className="relative">
                     <button
                       onClick={() => setShowChatSortDropdown(v => !v)}
-                      className="flex items-center gap-1 text-[10px] font-mono text-on-surface/40 hover:text-on-surface/70 transition-colors"
+                      className="flex items-center gap-1 text-[10px] font-mono text-on-surface/40 hover:text-on-surface/70 transition-colors cursor-pointer"
                     >
                       <span className="material-symbols-outlined text-[13px]">sort</span>
                       {chatSortOrder === 'oldest' ? 'Oldest first' : 'Newest first'}
@@ -417,7 +464,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                             <button
                               key={order}
                               onClick={() => { setChatSortOrder(order); setShowChatSortDropdown(false); }}
-                              className={`w-full flex items-center gap-2 px-3 py-2 text-[11px] font-mono hover:bg-surface-container-high transition-colors ${chatSortOrder === order ? 'text-primary' : 'text-on-surface/60'}`}
+                              className={`w-full flex items-center gap-2 px-3 py-2 text-[11px] font-mono hover:bg-surface-container-high transition-colors cursor-pointer ${chatSortOrder === order ? 'text-primary' : 'text-on-surface/60'}`}
                             >
                               <span className="material-symbols-outlined text-[13px]">{order === 'oldest' ? 'arrow_downward' : 'arrow_upward'}</span>
                               {order === 'oldest' ? 'Oldest first' : 'Newest first'}
@@ -435,8 +482,14 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                       <img src={comment.author_avatar} className="w-8 h-8 rounded shrink-0 border border-outline-variant/10" alt="avatar" />
                       <div className="flex-1 space-y-1">
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-on-surface font-sans font-bold text-sm tracking-tight">{comment.author_name}</span>
+                            {/* Creator badge */}
+                            {comment.author_id === vibe.author_id && (
+                              <span className="text-[9px] px-1.5 py-0.5 rounded border border-primary/30 text-primary bg-primary/10 font-mono uppercase tracking-widest">
+                                Creator
+                              </span>
+                            )}
                             {comment.is_adopted === 1 && (
                               <span className="flex items-center gap-1 text-[9px] text-tertiary font-mono uppercase tracking-widest">
                                 <span className="material-symbols-outlined text-[10px]">check_circle</span>
@@ -502,14 +555,14 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                           />
                           <button
                             onClick={() => setShowCodeInput(!showCodeInput)}
-                            className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded transition-colors flex items-center justify-center ${showCodeInput ? 'text-primary bg-primary/10' : 'text-on-surface/40 hover:text-on-surface hover:bg-surface-container-high'}`}
+                            className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded transition-colors flex items-center justify-center cursor-pointer ${showCodeInput ? 'text-primary bg-primary/10' : 'text-on-surface/40 hover:text-on-surface hover:bg-surface-container-high'}`}
                           >
                             <span className="material-symbols-outlined text-[16px]">code</span>
                           </button>
                         </div>
                         <button
                           onClick={handleAddComment}
-                          className="w-10 h-10 bg-primary text-on-primary rounded hover:bg-primary-fixed transition-colors shrink-0 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="w-10 h-10 bg-primary text-on-primary rounded hover:bg-primary-fixed transition-colors shrink-0 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                           disabled={!commentText.trim()}
                         >
                           <span className="material-symbols-outlined text-[16px] ml-0.5">send</span>
@@ -519,7 +572,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                   ) : (
                     <button
                       onClick={() => setShowAuthModal(true)}
-                      className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-primary/10 hover:bg-primary/20 border border-primary/20 hover:border-primary/40 rounded-lg transition-colors group"
+                      className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-primary/10 hover:bg-primary/20 border border-primary/20 hover:border-primary/40 rounded-lg transition-colors group cursor-pointer"
                     >
                       <span className="material-symbols-outlined text-[16px] text-primary/70 group-hover:text-primary transition-colors">login</span>
                       <span className="text-primary/70 group-hover:text-primary font-mono text-[11px] font-bold uppercase tracking-widest transition-colors">Sign in to join the conversation</span>
@@ -535,39 +588,55 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                 <div className="absolute left-[34px] top-8 bottom-8 w-px bg-outline-variant/10" />
 
                 <div className="space-y-8 relative">
-                  {vibe.versions?.map((version, index) => (
-                    <div
-                      key={version.id}
-                      className={`flex gap-4 cursor-pointer group transition-all ${selectedVersion?.id === version.id ? 'opacity-100' : 'opacity-40 hover:opacity-80'}`}
-                      onClick={() => handleSelectVersion(version)}
-                    >
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center z-10 transition-colors mt-0.5 ${selectedVersion?.id === version.id ? 'bg-primary border-primary' : 'bg-surface-container-lowest border-outline-variant/20 group-hover:border-outline-variant/40'}`}>
-                        {selectedVersion?.id === version.id && <div className="w-1.5 h-1.5 bg-on-primary rounded-full" />}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-on-surface font-mono font-bold text-sm">V{version.version_number}</span>
-                          <span className="text-[10px] text-on-surface/30 font-mono">{new Date(version.created_at).toLocaleDateString()}</span>
+                  {vibe.versions?.map((version) => {
+                    const isSelected = selectedVersion?.id === version.id;
+                    const sizeLabel = version.code ? formatBytes(version.code.length) : null;
+                    return (
+                      <div
+                        key={version.id}
+                        className={`flex gap-4 cursor-pointer group transition-all ${isSelected ? 'opacity-100' : 'opacity-40 hover:opacity-80'}`}
+                        onClick={() => handleSelectVersion(version)}
+                      >
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center z-10 transition-colors mt-0.5 shrink-0 ${isSelected ? 'bg-primary border-primary' : 'bg-surface-container-lowest border-outline-variant/20 group-hover:border-outline-variant/40'}`}>
+                          {isSelected && <div className="w-1.5 h-1.5 bg-on-primary rounded-full" />}
                         </div>
-                        <div className="flex items-center gap-2 mb-2">
-                          {version.author_avatar ? (
-                            <img src={version.author_avatar} className="w-4 h-4 rounded" alt="author" />
-                          ) : (
-                            <div className="w-4 h-4 rounded bg-tertiary-container flex items-center justify-center text-[8px] text-on-tertiary-container font-bold">
-                              {(version.author_name || vibe.author_name || '?')[0]}
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-on-surface font-mono font-bold text-sm">V{version.version_number}</span>
+                              {isSelected && (
+                                <span className="text-[9px] px-1.5 py-0.5 rounded border border-primary/30 text-primary bg-primary/10 font-mono uppercase tracking-widest">
+                                  Current
+                                </span>
+                              )}
                             </div>
-                          )}
-                          <span className="text-xs text-on-surface/60 font-sans font-medium">{version.author_name || vibe.author_name}</span>
-                          {(version.author_id && version.author_id !== vibe.author_id) && (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded border border-tertiary/20 text-tertiary font-mono uppercase bg-tertiary/5 tracking-widest">Remix</span>
-                          )}
+                            <div className="flex items-center gap-2">
+                              {sizeLabel && (
+                                <span className="text-[10px] text-on-surface/20 font-mono">{sizeLabel}</span>
+                              )}
+                              <span className="text-[10px] text-on-surface/30 font-mono">{new Date(version.created_at).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 mb-2">
+                            {version.author_avatar ? (
+                              <img src={version.author_avatar} className="w-4 h-4 rounded" alt="author" />
+                            ) : (
+                              <div className="w-4 h-4 rounded bg-tertiary-container flex items-center justify-center text-[8px] text-on-tertiary-container font-bold">
+                                {(version.author_name || vibe.author_name || '?')[0]}
+                              </div>
+                            )}
+                            <span className="text-xs text-on-surface/60 font-sans font-medium">{version.author_name || vibe.author_name}</span>
+                            {(version.author_id && version.author_id !== vibe.author_id) && (
+                              <span className="text-[9px] px-1.5 py-0.5 rounded border border-tertiary/20 text-tertiary font-mono uppercase bg-tertiary/5 tracking-widest">Remix</span>
+                            )}
+                          </div>
+                          <p className="text-on-surface/40 text-[11px] leading-relaxed font-sans">
+                            {version.update_log || 'System update registered.'}
+                          </p>
                         </div>
-                        <p className="text-on-surface/40 text-[11px] leading-relaxed font-sans">
-                          {version.update_log || 'System update registered.'}
-                        </p>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                   {(!vibe.versions || vibe.versions.length === 0) && (
                     <div className="w-full text-center text-on-surface/20 font-mono text-xs pt-4">No version history</div>
                   )}

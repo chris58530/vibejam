@@ -197,8 +197,18 @@ app.get('/api/vibes/:id', async (req, res) => {
       SELECT c.id, c.user_id, u.username, u.avatar, c.created_at
       FROM collaborators c JOIN users u ON c.user_id = u.id WHERE c.vibe_id = $1
     `, [req.params.id]) : [];
+    const likeCountRow = await db.get(`SELECT COUNT(*) as count FROM reactions WHERE vibe_id = $1 AND type = 'like'`, [req.params.id]);
+    let userLiked = false;
+    if (supabaseId) {
+      const u = await db.get('SELECT id FROM users WHERE supabase_id = $1', [supabaseId]);
+      if (u) {
+        const liked = await db.get(`SELECT id FROM reactions WHERE vibe_id = $1 AND user_id = $2 AND type = 'like'`, [req.params.id, u.id]);
+        userLiked = !!liked;
+      }
+    }
     res.json({
       ...vibe, versions, comments, user_role: role, collaborators,
+      like_count: Number(likeCountRow?.count || 0), user_liked: userLiked,
       ...(remixInfo ? {
         parent_vibe_id: remixInfo.parent_vibe_id,
         parent_vibe_title: remixInfo.parent_vibe_title,
@@ -255,6 +265,25 @@ app.post('/api/vibes/:id/comments', async (req, res) => {
     await ensureDb();
     await db.run('INSERT INTO comments (vibe_id, version_id, author_id, content, code_snippet) VALUES ($1, $2, $3, $4, $5)', [req.params.id, version_id, author_id, content, code_snippet]);
     res.json({ success: true });
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+// Toggle like (authenticated)
+app.post('/api/vibes/:id/like', async (req, res) => {
+  const { supabase_id } = req.body;
+  if (!supabase_id) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    await ensureDb();
+    const user = await db.get('SELECT id FROM users WHERE supabase_id = $1', [supabase_id]);
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+    const existing = await db.get(`SELECT id FROM reactions WHERE vibe_id = $1 AND user_id = $2 AND type = 'like'`, [req.params.id, user.id]);
+    if (existing) {
+      await db.run(`DELETE FROM reactions WHERE vibe_id = $1 AND user_id = $2 AND type = 'like'`, [req.params.id, user.id]);
+    } else {
+      await db.run(`INSERT INTO reactions (vibe_id, user_id, type) VALUES ($1, $2, 'like')`, [req.params.id, user.id]);
+    }
+    const countRow = await db.get(`SELECT COUNT(*) as count FROM reactions WHERE vibe_id = $1 AND type = 'like'`, [req.params.id]);
+    res.json({ liked: !existing, like_count: Number(countRow?.count || 0) });
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
 
