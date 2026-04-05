@@ -268,6 +268,52 @@ app.post('/api/vibes/:id/comments', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
 
+// Get direct remix children of a vibe (public/unlisted only)
+app.get('/api/vibes/:id/children', async (req, res) => {
+  try {
+    await ensureDb();
+    const children = await db.query(`
+      SELECT v.id, v.title, u.username as author_name, u.avatar as author_avatar,
+             v.created_at,
+             (SELECT COUNT(*) FROM remixes WHERE parent_vibe_id = v.id) as remix_count
+      FROM remixes r
+      JOIN vibes v ON r.child_vibe_id = v.id
+      JOIN users u ON v.author_id = u.id
+      WHERE r.parent_vibe_id = $1 AND (v.visibility = 'public' OR v.visibility = 'unlisted')
+      ORDER BY v.created_at ASC
+      LIMIT 50
+    `, [req.params.id]);
+    res.json(children);
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+// Get ancestry chain from root to current vibe
+app.get('/api/vibes/:id/ancestry', async (req, res) => {
+  try {
+    await ensureDb();
+    const chain = await db.query(`
+      WITH RECURSIVE chain AS (
+        SELECT v.id, v.title, u.username as author_name, u.avatar as author_avatar,
+               r.parent_vibe_id, 0 as depth
+        FROM vibes v
+        JOIN users u ON v.author_id = u.id
+        LEFT JOIN remixes r ON r.child_vibe_id = v.id
+        WHERE v.id = $1
+        UNION ALL
+        SELECT v.id, v.title, u.username as author_name, u.avatar as author_avatar,
+               rr.parent_vibe_id, chain.depth + 1
+        FROM vibes v
+        JOIN users u ON v.author_id = u.id
+        LEFT JOIN remixes rr ON rr.child_vibe_id = v.id
+        JOIN chain ON v.id = chain.parent_vibe_id
+        WHERE chain.depth < 20
+      )
+      SELECT id, title, author_name, author_avatar FROM chain ORDER BY depth DESC
+    `, [req.params.id]);
+    res.json(chain);
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
 // Toggle like (authenticated)
 app.post('/api/vibes/:id/like', async (req, res) => {
   const { supabase_id } = req.body;

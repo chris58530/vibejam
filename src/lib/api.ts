@@ -79,6 +79,22 @@ export interface Vibe {
   comments?: Comment[];
 }
 
+export interface VibeChild {
+  id: number;
+  title: string;
+  author_name: string;
+  author_avatar: string;
+  created_at: string;
+  remix_count?: number;
+}
+
+export interface VibeAncestor {
+  id: number;
+  title: string;
+  author_name: string;
+  author_avatar: string;
+}
+
 export class AccessDeniedError extends Error {
   code: string;
   constructor(code = 'PRIVATE_VIBE') {
@@ -257,6 +273,14 @@ export const api = {
       body: JSON.stringify({ supabase_id: supabaseId }),
     });
     if (!res.ok) throw new Error('Failed to delete vibe');
+    return res.json();
+  },
+  async getVibeChildren(vibeId: number): Promise<VibeChild[]> {
+    const res = await fetch(`${API_BASE}/vibes/${vibeId}/children`);
+    return res.json();
+  },
+  async getVibeAncestry(vibeId: number): Promise<VibeAncestor[]> {
+    const res = await fetch(`${API_BASE}/vibes/${vibeId}/ancestry`);
     return res.json();
   },
   async toggleLike(vibeId: number, supabaseId: string): Promise<{ liked: boolean; like_count: number }> {
