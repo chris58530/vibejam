@@ -156,7 +156,7 @@ async function startServer() {
 
   // Create new vibe
   app.post('/api/vibes', async (req, res) => {
-    const { title, tags, code, author_id = 1, parent_vibe_id, parent_version_number } = req.body;
+    const { title, tags, code, author_id = 1, parent_vibe_id, parent_version_number, description = '' } = req.body;
     let { visibility = 'public' } = req.body;
     if (!['public', 'unlisted', 'private'].includes(visibility)) visibility = 'public';
     try {
@@ -167,8 +167,8 @@ async function startServer() {
         else if (parent?.visibility === 'unlisted' && visibility === 'public') visibility = 'unlisted';
       }
       const vibe = await db.get(
-        'INSERT INTO vibes (title, author_id, tags, visibility) VALUES ($1, $2, $3, $4) RETURNING id',
-        [title, author_id, tags, visibility]
+        'INSERT INTO vibes (title, author_id, tags, visibility, description) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+        [title, author_id, tags, visibility, description]
       );
       const vibeId = vibe.id;
       await db.run(
@@ -234,6 +234,21 @@ async function startServer() {
       if (!vibe) return res.status(404).json({ error: 'Vibe not found' });
       if (vibe.author_id !== user.id) return res.status(403).json({ error: 'Forbidden' });
       await db.run('UPDATE vibes SET visibility = $1 WHERE id = $2', [visibility, req.params.id]);
+      res.json({ success: true });
+    } catch (err: any) { res.status(500).json({ error: err.message }); }
+  });
+
+  // Update vibe description (owner only)
+  app.patch('/api/vibes/:id/description', async (req, res) => {
+    const { supabase_id, description } = req.body;
+    if (!supabase_id) return res.status(401).json({ error: 'Unauthorized' });
+    try {
+      const user = await db.get('SELECT id FROM users WHERE supabase_id = $1', [supabase_id]);
+      if (!user) return res.status(401).json({ error: 'Unauthorized' });
+      const vibe = await db.get('SELECT author_id FROM vibes WHERE id = $1', [req.params.id]);
+      if (!vibe) return res.status(404).json({ error: 'Vibe not found' });
+      if (vibe.author_id !== user.id) return res.status(403).json({ error: 'Forbidden' });
+      await db.run('UPDATE vibes SET description = $1 WHERE id = $2', [description || '', req.params.id]);
       res.json({ success: true });
     } catch (err: any) { res.status(500).json({ error: err.message }); }
   });

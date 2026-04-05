@@ -82,6 +82,7 @@ export async function initializeDatabase() {
       ALTER TABLE remixes ADD COLUMN IF NOT EXISTS parent_version_number INTEGER;
 
       ALTER TABLE vibes ADD COLUMN IF NOT EXISTS visibility TEXT DEFAULT 'public';
+      ALTER TABLE vibes ADD COLUMN IF NOT EXISTS description TEXT DEFAULT '';
 
       CREATE TABLE IF NOT EXISTS collaborators (
         id SERIAL PRIMARY KEY,

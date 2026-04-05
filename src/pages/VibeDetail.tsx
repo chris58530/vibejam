@@ -247,6 +247,9 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                     </span>
                   )}
                 </div>
+                {vibe.description && (
+                  <p className="text-[11px] text-on-surface/40 font-sans mt-0.5 line-clamp-2 max-w-sm">{vibe.description}</p>
+                )}
                 <div className="flex items-center gap-1.5 text-[11px] text-on-surface/40 font-mono mt-0.5">
                   <span className="hover:text-on-surface/60 transition-colors">@{vibe.author_name}</span>
                   <span className="text-on-surface/20">•</span>

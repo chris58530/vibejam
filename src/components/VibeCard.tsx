@@ -110,7 +110,10 @@ export default function VibeCard({ vibe, onClick }: VibeCardProps) {
           <h3 className="font-mono font-bold text-sm text-[#E5E2E1] leading-tight group-hover:text-primary transition-colors line-clamp-2">
             {vibe.title}
           </h3>
-          <span 
+          {vibe.description && (
+            <p className="text-[11px] text-[#E5E2E1]/35 mt-0.5 line-clamp-1">{vibe.description}</p>
+          )}
+          <span
             className="text-xs text-[#E5E2E1]/60 mt-1 hover:text-[#E5E2E1] transition-colors truncate"
             onClick={(e) => {
               e.stopPropagation();

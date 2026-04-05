@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import { api, User, Vibe } from '../lib/api';
 import { supabase } from '../lib/supabase';
@@ -14,6 +15,7 @@ interface SaveSlot {
   id: string;
   title: string;
   tags: string;
+  description: string;
   editorMode: EditorMode;
   code: { html: string; css: string; js: string };
   savedAt: string;
@@ -86,6 +88,8 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
 
   const [title, setTitle] = useState('');
   const [tags, setTags] = useState('');
+  const [description, setDescription] = useState('');
+  const [descRowOpen, setDescRowOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile' | 'round'>('desktop');
   const [isPublishing, setIsPublishing] = useState(false);
   const [visibility, setVisibility] = useState<'public' | 'unlisted' | 'private'>('public');
@@ -350,6 +354,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
       const result = await api.createVibe({
         title,
         tags,
+        description,
         code: previewDoc,
         author_id: currentUser?.id,
         visibility,
@@ -381,7 +386,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
     if (existing !== -1) {
       newSaves = saves.map((s, i) =>
         i === existing
-          ? { ...s, tags, editorMode, code: { html: htmlCode, css: cssCode, js: jsCode }, savedAt: new Date().toISOString() }
+          ? { ...s, tags, description, editorMode, code: { html: htmlCode, css: cssCode, js: jsCode }, savedAt: new Date().toISOString() }
           : s
       );
       showToast(`已更新存檔「${title}」`, 'save');
@@ -393,6 +398,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
         id: Date.now().toString(),
         title,
         tags,
+        description,
         editorMode,
         code: { html: htmlCode, css: cssCode, js: jsCode },
         savedAt: new Date().toISOString(),
@@ -408,6 +414,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
   const handleLoadSave = (slot: SaveSlot) => {
     setTitle(slot.title);
     setTags(slot.tags);
+    setDescription(slot.description ?? '');
     setEditorMode(slot.editorMode);
     setHtmlCode(slot.code.html);
     setCssCode(slot.code.css);
@@ -611,6 +618,12 @@ ${currentCode || '（尚無程式碼）'}
 
         {/* Right controls */}
         <div className="ml-auto flex items-center gap-1.5">
+          {/* Description toggle */}
+          <button
+            onClick={() => setDescRowOpen(o => !o)}
+            title="專案描述"
+            className={`material-symbols-outlined text-[16px] p-1 rounded transition-colors ${descRowOpen || description ? 'text-primary' : 'text-on-surface/40 hover:text-primary'}`}
+          >notes</button>
           {/* Visibility dropdown */}
           <div className="relative hidden md:block" ref={visibilityDropdownRef}>
             <button
@@ -719,6 +732,29 @@ ${currentCode || '（尚無程式碼）'}
           </button>
         </div>
       </div>
+
+      {/* ── Description Row (collapsible) ── */}
+      <motion.div
+        initial={false}
+        animate={{ height: descRowOpen ? 'auto' : 0 }}
+        transition={{ duration: 0.18, ease: 'easeInOut' }}
+        className="overflow-hidden shrink-0"
+      >
+        <div className="bg-surface px-4 py-1 flex items-center gap-2 border-b border-outline-variant/10">
+          <span className="text-[10px] uppercase tracking-widest text-on-surface-variant/50 font-bold shrink-0">Desc</span>
+          <input
+            className="bg-transparent border-none focus:ring-0 text-xs text-on-surface/50 p-0 flex-1 outline-none placeholder:text-on-surface/20"
+            placeholder="新增簡短專案描述..."
+            type="text"
+            maxLength={200}
+            value={description}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDescription(e.target.value)}
+          />
+          {description.length > 0 && (
+            <span className="text-[10px] text-on-surface/20 shrink-0">{description.length}/200</span>
+          )}
+        </div>
+      </motion.div>
 
       {/* ── Mobile Tab Switcher ── */}
       <div className="flex md:hidden border-b border-outline-variant/10 bg-surface-container-lowest shrink-0">

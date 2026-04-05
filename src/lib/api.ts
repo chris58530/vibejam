@@ -62,6 +62,7 @@ export interface Vibe {
   views: number;
   created_at: string;
   visibility?: 'public' | 'unlisted' | 'private';
+  description?: string;
   user_role?: 'owner' | 'collaborator' | 'viewer' | 'none';
   collaborators?: Collaborator[];
   latest_code?: string;
@@ -136,7 +137,7 @@ export const api = {
     if (res.status === 403) throw new AccessDeniedError();
     return res.json();
   },
-  async createVibe(data: { title: string; tags: string; code: string; author_id?: number; parent_vibe_id?: number; parent_version_number?: number; visibility?: 'public' | 'unlisted' | 'private' }): Promise<{ id: number }> {
+  async createVibe(data: { title: string; tags: string; code: string; description?: string; author_id?: number; parent_vibe_id?: number; parent_version_number?: number; visibility?: 'public' | 'unlisted' | 'private' }): Promise<{ id: number }> {
     const res = await fetch(`${API_BASE}/vibes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -160,6 +161,15 @@ export const api = {
       body: JSON.stringify({ supabase_id: supabaseId, visibility }),
     });
     if (!res.ok) throw new Error('Failed to update visibility');
+    return res.json();
+  },
+  async updateDescription(vibeId: number, supabaseId: string, description: string): Promise<{ success: boolean }> {
+    const res = await fetch(`${API_BASE}/vibes/${vibeId}/description`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ supabase_id: supabaseId, description }),
+    });
+    if (!res.ok) throw new Error('Failed to update description');
     return res.json();
   },
   async addCollaborator(vibeId: number, supabaseId: string, username: string): Promise<Collaborator> {
