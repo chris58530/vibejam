@@ -9,6 +9,7 @@ import { useWorkspaceStore } from '../lib/workspaceStore';
 import { chatWithAIStream, ChatMessage, AIServiceError } from '../lib/aiService';
 import BeaverKitAPIGuide from '../components/BeaverKitAPIGuide';
 import ThinkBlock from '../components/ThinkBlock';
+import ProjectSettingsModal from '../components/ProjectSettingsModal';
 
 // ── 存檔 ─────────────────────────────────────────────────────────────
 interface SaveSlot {
@@ -118,6 +119,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
   const [chatFontScale, setChatFontScale] = useState(100);
   const [isManualEditMode, setIsManualEditMode] = useState(false);
   const [highlightEditBtn, setHighlightEditBtn] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
   const handleEditorClick = () => {
     if (!isManualEditMode) {
@@ -346,18 +348,28 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
   };
 
   // ── 發布 ───────────────────────────────────────────────────────────
-  const handlePublish = async () => {
-    if (!title || !previewDoc) return;
+  const handlePublish = async (modalData?: { title: string; description: string; visibility: 'public' | 'unlisted' | 'private' }) => {
+    const pTitle = modalData?.title || title;
+    const pDesc = modalData?.description || description;
+    const pVis = modalData?.visibility || visibility;
+
+    if (!pTitle || !previewDoc) return;
+    if (modalData) {
+      setTitle(pTitle);
+      setDescription(pDesc);
+      setVisibility(pVis);
+      setIsSettingsOpen(false);
+    }
     setIsPublishing(true);
     setStoreIsPublishing(true);
     try {
       const result = await api.createVibe({
-        title,
+        title: pTitle,
         tags,
-        description,
+        description: pDesc,
         code: previewDoc,
         author_id: currentUser?.id,
-        visibility,
+        visibility: pVis,
       });
       if (currentUser) {
         navigate(`/p/${result.id}`);
@@ -373,10 +385,10 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
   };
 
   useEffect(() => {
-    setPublishFn(handlePublish);
+    setPublishFn(() => handlePublish());
     return () => setPublishFn(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, previewDoc, currentUser]);
+  }, [title, description, visibility, tags, previewDoc, currentUser]);
 
   // ── 存檔操作 ─────────────────────────────────────────────────────
   const handleSave = () => {
@@ -602,65 +614,18 @@ ${currentCode || '（尚無程式碼）'}
           />
         </div>
 
-        {/* Center: Title (absolute centered) */}
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-surface-container-low px-3 py-1 rounded-lg border-b-2 border-primary-container focus-within:border-primary transition-colors">
-          <span className="material-symbols-outlined text-primary-container text-sm shrink-0">edit_note</span>
-          <input
-            className="bg-transparent border-none focus:ring-0 text-base font-semibold text-on-surface p-0 w-52 outline-none text-center"
-            placeholder="專案名稱（必填）"
-            required
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-          <span className="text-error text-sm font-bold shrink-0">*</span>
+        {/* Center: Title */}
+        <div 
+          className="absolute left-1/2 -translate-x-1/2 cursor-pointer group flex items-center px-3 py-1.5 rounded-lg hover:bg-surface-container-high transition-colors"
+          onClick={() => setIsSettingsOpen(true)}
+        >
+          <span className="text-base font-semibold text-on-surface group-hover:text-primary mb-[1px] transition-colors">
+            {title || '未命名專案'}
+          </span>
         </div>
 
         {/* Right controls */}
         <div className="ml-auto flex items-center gap-1.5">
-          {/* Description toggle */}
-          <button
-            onClick={() => setDescRowOpen(o => !o)}
-            title="專案描述"
-            className={`material-symbols-outlined text-[16px] p-1 rounded transition-colors ${descRowOpen || description ? 'text-primary' : 'text-on-surface/40 hover:text-primary'}`}
-          >notes</button>
-          {/* Visibility dropdown */}
-          <div className="relative hidden md:block" ref={visibilityDropdownRef}>
-            <button
-              onClick={() => setVisibilityDropdownOpen(!visibilityDropdownOpen)}
-              className="flex items-center gap-1 bg-surface-container-low text-on-surface text-[11px] font-bold uppercase tracking-wider rounded px-2 py-1 border border-outline-variant/20 hover:border-outline-variant/40 transition-colors"
-            >
-              <span className="material-symbols-outlined text-[12px]">
-                {{ public: 'public', unlisted: 'link', private: 'lock' }[visibility]}
-              </span>
-              {{ public: 'Public', unlisted: 'Unlisted', private: 'Private' }[visibility]}
-              <span className="material-symbols-outlined text-[10px] text-on-surface/40">expand_more</span>
-            </button>
-            {visibilityDropdownOpen && (
-              <div className="absolute top-full right-0 mt-1 w-40 bg-surface border border-white/5 rounded-xl shadow-2xl overflow-hidden z-50">
-                {(['public', 'unlisted', 'private'] as const).map(v => {
-                  const icons = { public: 'public', unlisted: 'link', private: 'lock' };
-                  const labels = { public: 'Public', unlisted: 'Unlisted', private: 'Private' };
-                  const descs = { public: '所有人可見', unlisted: '僅透過連結', private: '僅自己可見' };
-                  return (
-                    <button
-                      key={v}
-                      onClick={() => { setVisibility(v); setVisibilityDropdownOpen(false); }}
-                      className={`w-full text-left px-3 py-2.5 hover:bg-surface-container transition-colors flex items-center gap-2.5 ${visibility === v ? 'bg-primary/5' : ''}`}
-                    >
-                      <span className={`material-symbols-outlined text-[14px] ${visibility === v ? 'text-primary' : 'text-on-surface/50'}`}>{icons[v]}</span>
-                      <div>
-                        <div className={`text-xs font-bold ${visibility === v ? 'text-primary' : 'text-on-surface'}`}>{labels[v]}</div>
-                        <div className="text-[10px] text-on-surface-variant leading-tight">{descs[v]}</div>
-                      </div>
-                      {visibility === v && <span className="material-symbols-outlined text-primary text-[14px] ml-auto">check</span>}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
           {/* Mode dropdown (code tab) */}
           {rightTab === 'code' && (
             <div className="relative hidden md:flex items-center" ref={dropdownRef}>
@@ -718,7 +683,7 @@ ${currentCode || '（尚無程式碼）'}
 
           {/* Publish */}
           <button
-            onClick={handlePublish}
+            onClick={() => handlePublish()}
             disabled={isPublishing || !title || !previewDoc || !currentUser?.id}
             className="bg-[#2665fd] hover:bg-[#2665fd]/90 disabled:opacity-40 disabled:cursor-not-allowed text-white px-4 py-1.5 rounded-lg text-[11px] font-semibold active:scale-[0.98] transition-all group relative flex items-center gap-1.5"
           >
@@ -1344,6 +1309,17 @@ ${currentCode || '（尚無程式碼）'}
           </div>
         </div>
       )}
+
+      {/* ── Project Settings Modal ── */}
+      <ProjectSettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        title={title}
+        description={description}
+        visibility={visibility}
+        onSave={handlePublish}
+        isPublishing={isPublishing}
+      />
     </main>
   );
 }
