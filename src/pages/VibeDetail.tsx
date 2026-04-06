@@ -472,9 +472,8 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
               <button
                 key={key}
                 onClick={() => navigate(path)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors duration-200 font-body font-medium text-sm cursor-pointer ${
-                  isActive ? 'text-[#FFB3B6] bg-[#2A2A2A]' : 'text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1]'
-                }`}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors duration-200 font-body font-medium text-sm cursor-pointer ${isActive ? 'text-[#FFB3B6] bg-[#2A2A2A]' : 'text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1]'
+                  }`}
                 title={label}
               >
                 <span className="material-symbols-outlined shrink-0 text-[22px]" style={isActive ? { fontVariationSettings: "'FILL' 1" } : {}}>{icon}</span>
@@ -498,294 +497,295 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
 
       {/* ── CENTER + RIGHT + FOOTER WRAPPER ── */}
       <div className="flex-1 flex flex-col min-w-0 min-h-0">
-      {/* ── COLUMNS ROW ── */}
-      <div className="flex-1 flex min-h-0 gap-[10px]">
+        {/* ── COLUMNS ROW ── */}
+        <div className="flex-1 flex min-h-0 gap-[10px]">
 
-      {/* ── CENTER CONTENT (70%) ── */}
-      <div className="flex-1 flex flex-col min-w-0 bg-surface rounded-xl overflow-y-auto overflow-x-hidden">
-          {/* Player */}
-          <div className="bg-black relative group w-full rounded-t-xl overflow-hidden" style={{ height: 'min(56.25vw, calc(100vh - 64px - 300px))' }}>
-            <iframe
-              srcDoc={selectedVersion?.code}
-              className="absolute inset-0 w-full h-full border-none transition-opacity duration-150"
-              style={{ opacity: iframeVisible ? 1 : 0 }}
-              title="Stage"
-              sandbox="allow-scripts allow-same-origin allow-forms"
-            />
-            <button
-              onClick={() => setIsFullscreen(true)}
-              className="absolute bottom-3 right-3 w-8 h-8 bg-black/60 backdrop-blur text-white rounded-lg flex items-center justify-center hover:bg-black/80 transition-all ring-1 ring-white/10 cursor-pointer opacity-0 group-hover:opacity-100 z-10"
-            >
-              <span className="material-symbols-outlined text-[16px]">fullscreen</span>
-            </button>
-            {/* Mobile: tree toggle + back */}
-            <div className="absolute top-3 left-3 flex gap-2 z-10 lg:hidden">
-              <button onClick={() => navigate(-1)} className="w-8 h-8 bg-black/60 backdrop-blur text-white rounded-lg flex items-center justify-center hover:bg-black/80 transition-all ring-1 ring-white/10 cursor-pointer">
-                <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+          {/* ── CENTER CONTENT (70%) ── */}
+          <div className="flex-1 flex flex-col min-w-0 bg-surface rounded-xl overflow-hidden">
+            {/* Player */}
+            <div className="shrink-0 bg-black relative group w-full rounded-t-xl overflow-hidden" style={{ height: 'min(56.25vw, calc(100vh - 64px - 300px))' }}>
+              <iframe
+                srcDoc={selectedVersion?.code}
+                className="absolute inset-0 w-full h-full border-none transition-opacity duration-150"
+                style={{ opacity: iframeVisible ? 1 : 0 }}
+                title="Stage"
+                sandbox="allow-scripts allow-same-origin allow-forms"
+              />
+              <button
+                onClick={() => setIsFullscreen(true)}
+                className="absolute bottom-3 right-3 w-8 h-8 bg-black/60 backdrop-blur text-white rounded-lg flex items-center justify-center hover:bg-black/80 transition-all ring-1 ring-white/10 cursor-pointer opacity-0 group-hover:opacity-100 z-10"
+              >
+                <span className="material-symbols-outlined text-[16px]">fullscreen</span>
               </button>
-              <button onClick={() => setMobileSidebarOpen(true)} className="w-8 h-8 bg-black/60 backdrop-blur text-white rounded-lg flex items-center justify-center hover:bg-black/80 transition-all ring-1 ring-white/10 cursor-pointer">
-                <span className="material-symbols-outlined text-[16px]">account_tree</span>
-              </button>
+              {/* Mobile: tree toggle + back */}
+              <div className="absolute top-3 left-3 flex gap-2 z-10 lg:hidden">
+                <button onClick={() => navigate(-1)} className="w-8 h-8 bg-black/60 backdrop-blur text-white rounded-lg flex items-center justify-center hover:bg-black/80 transition-all ring-1 ring-white/10 cursor-pointer">
+                  <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+                </button>
+                <button onClick={() => setMobileSidebarOpen(true)} className="w-8 h-8 bg-black/60 backdrop-blur text-white rounded-lg flex items-center justify-center hover:bg-black/80 transition-all ring-1 ring-white/10 cursor-pointer">
+                  <span className="material-symbols-outlined text-[16px]">account_tree</span>
+                </button>
+              </div>
             </div>
-          </div>
 
-          {/* Version selector strip — below player */}
-          {(vibe.versions?.length ?? 0) > 1 && (
-            <div className="flex items-center gap-1 px-3 py-2 bg-surface-container-low border-b border-outline-variant/8 overflow-x-auto no-scrollbar">
-              <span className="material-symbols-outlined text-[14px] text-on-surface/30 shrink-0 mr-1">history</span>
-              {vibe.versions?.map((version, idx) => {
-                const isSel = selectedVersion?.id === version.id;
-                const isLatest = idx === 0;
-                return (
-                  <button
-                    key={version.id}
-                    onClick={() => handleSelectVersion(version)}
-                    className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-                      isSel
-                        ? 'bg-primary/15 text-primary ring-1 ring-primary/25'
-                        : 'text-on-surface/45 hover:bg-surface-container-high hover:text-on-surface/70'
-                    }`}
-                  >
-                    <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${isSel ? 'bg-primary' : 'bg-on-surface/20'}`} />
-                    V{version.version_number}
-                    {isLatest && !isSel && <span className="text-[8px] text-emerald-400 uppercase">new</span>}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Info card */}
-          <div className="px-5 pt-4 pb-3">
-            <h1 className="text-lg font-bold text-on-surface mb-2 leading-snug">{vibe.title}</h1>
-            <div className="flex items-center gap-4 flex-wrap mb-2.5">
-              <span className="flex items-center gap-1 text-xs text-on-surface/45">
-                <span className="material-symbols-outlined text-[13px]">visibility</span>{vibe.views} views
-              </span>
-              <span className="flex items-center gap-1 text-xs text-on-surface/45">
-                <span className="material-symbols-outlined text-[13px]">schedule</span>{timeAgo(vibe.created_at)}
-              </span>
-              {remixCount > 0 && (
-                <span className="flex items-center gap-1 text-xs text-on-surface/45">
-                  <span className="material-symbols-outlined text-[13px]">repeat</span>{remixCount} remixes
-                </span>
-              )}
-              <span className="flex items-center gap-1 text-xs text-on-surface/45">
-                <span className="material-symbols-outlined text-[13px]">layers</span>V{selectedVersion?.version_number}
-              </span>
-            </div>
-            {parsedTags.length > 0 && (
-              <div className="flex items-center gap-1.5 flex-wrap mb-2.5">
-                {parsedTags.map((tag, i) => (
-                  <span key={i} className="px-2 py-0.5 rounded-md bg-surface-container-high text-[11px] text-on-surface/55 ring-1 ring-black/[0.05]">#{tag}</span>
-                ))}
+            {/* Version selector strip — below player */}
+            {(vibe.versions?.length ?? 0) > 1 && (
+              <div className="shrink-0 flex items-center gap-1 px-3 py-2 bg-surface-container-low border-b border-outline-variant/8 overflow-x-auto no-scrollbar">
+                <span className="material-symbols-outlined text-[14px] text-on-surface/30 shrink-0 mr-1">history</span>
+                {vibe.versions?.map((version, idx) => {
+                  const isSel = selectedVersion?.id === version.id;
+                  const isLatest = idx === 0;
+                  return (
+                    <button
+                      key={version.id}
+                      onClick={() => handleSelectVersion(version)}
+                      className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${isSel
+                          ? 'bg-primary/15 text-primary ring-1 ring-primary/25'
+                          : 'text-on-surface/45 hover:bg-surface-container-high hover:text-on-surface/70'
+                        }`}
+                    >
+                      <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${isSel ? 'bg-primary' : 'bg-on-surface/20'}`} />
+                      V{version.version_number}
+                      {isLatest && !isSel && <span className="text-[8px] text-emerald-400 uppercase">new</span>}
+                    </button>
+                  );
+                })}
               </div>
             )}
-            {vibe.description ? (
-              <p className="text-[13px] text-on-surface/70 leading-relaxed whitespace-pre-wrap">{vibe.description}</p>
-            ) : (
-              <p className="text-[13px] text-on-surface/25 italic">No description provided.</p>
-            )}
+
+            {/* Scrollable: info + comments */}
+            <div className="flex-1 min-h-0 overflow-y-auto">
+            {/* Info card */}
+            <div className="px-5 pt-4 pb-3">
+              <h1 className="text-lg font-bold text-on-surface mb-2 leading-snug">{vibe.title}</h1>
+              <div className="flex items-center gap-4 flex-wrap mb-2.5">
+                <span className="flex items-center gap-1 text-xs text-on-surface/45">
+                  <span className="material-symbols-outlined text-[13px]">visibility</span>{vibe.views} views
+                </span>
+                <span className="flex items-center gap-1 text-xs text-on-surface/45">
+                  <span className="material-symbols-outlined text-[13px]">schedule</span>{timeAgo(vibe.created_at)}
+                </span>
+                {remixCount > 0 && (
+                  <span className="flex items-center gap-1 text-xs text-on-surface/45">
+                    <span className="material-symbols-outlined text-[13px]">repeat</span>{remixCount} remixes
+                  </span>
+                )}
+                <span className="flex items-center gap-1 text-xs text-on-surface/45">
+                  <span className="material-symbols-outlined text-[13px]">layers</span>V{selectedVersion?.version_number}
+                </span>
+              </div>
+              {parsedTags.length > 0 && (
+                <div className="flex items-center gap-1.5 flex-wrap mb-2.5">
+                  {parsedTags.map((tag, i) => (
+                    <span key={i} className="px-2 py-0.5 rounded-md bg-surface-container-high text-[11px] text-on-surface/55 ring-1 ring-black/[0.05]">#{tag}</span>
+                  ))}
+                </div>
+              )}
+              {vibe.description ? (
+                <p className="text-[13px] text-on-surface/70 leading-relaxed whitespace-pre-wrap">{vibe.description}</p>
+              ) : (
+                <p className="text-[13px] text-on-surface/25 italic">No description provided.</p>
+              )}
+            </div>
+
+            {/* ── Comments section ── */}
+            <div className="px-5 py-4">
+              <div className="flex items-center gap-3 mb-4">
+                <h3 className="text-sm font-semibold text-on-surface">
+                  {commentCount} Comment{commentCount !== 1 ? 's' : ''}
+                </h3>
+                <div className="relative">
+                  <button onClick={() => setShowChatSortDropdown(v => !v)} className="flex items-center gap-1 text-xs text-on-surface/45 hover:text-on-surface/75 transition-colors cursor-pointer">
+                    <span className="material-symbols-outlined text-[14px]">sort</span>
+                    Sort by {chatSortOrder === 'oldest' ? 'Oldest' : 'Newest'}
+                    <span className="material-symbols-outlined text-[13px]">expand_more</span>
+                  </button>
+                  {showChatSortDropdown && (
+                    <>
+                      <div className="fixed inset-0 z-20" onClick={() => setShowChatSortDropdown(false)} />
+                      <div className="absolute left-0 top-full mt-1 z-30 bg-surface-container-highest border border-outline-variant/20 rounded-lg shadow-xl overflow-hidden min-w-[150px]">
+                        {(['oldest', 'newest'] as const).map(order => (
+                          <button key={order} onClick={() => { setChatSortOrder(order); setShowChatSortDropdown(false); }} className={`w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-surface-container-high transition-colors cursor-pointer ${chatSortOrder === order ? 'text-primary' : 'text-on-surface/65'}`}>
+                            <span className="material-symbols-outlined text-[13px]">{order === 'oldest' ? 'arrow_downward' : 'arrow_upward'}</span>
+                            {order === 'oldest' ? 'Oldest first' : 'Newest first'}
+                            {chatSortOrder === order && <span className="ml-auto material-symbols-outlined text-[12px]">check</span>}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {currentUser ? (
+                <div className="flex gap-2 items-center pb-3 mb-3 border-b border-outline-variant/10">
+                  <img src={currentUser.avatar} className="w-7 h-7 rounded-full shrink-0" alt="" />
+                  <div className="flex-1 bg-surface-container-high rounded-xl px-3 py-1.5 flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={commentText}
+                      onChange={e => setCommentText(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddComment(); } }}
+                      placeholder="留言這個 Vibe…"
+                      className="flex-1 bg-transparent text-sm text-on-surface placeholder:text-on-surface/30 outline-none"
+                    />
+                    {commentText.trim() && (
+                      <button onClick={handleAddComment} className="px-2.5 py-1 bg-primary text-on-primary text-xs font-semibold rounded-lg cursor-pointer hover:bg-primary/90 transition-colors shrink-0">送出</button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <button onClick={() => setShowAuthModal(true)} className="w-full flex items-center justify-center gap-2 px-3 py-3 mb-4 bg-surface-container-high/60 border border-outline-variant/15 rounded-xl text-on-surface/55 text-sm cursor-pointer hover:bg-surface-container-high transition-colors">
+                  <span className="material-symbols-outlined text-[15px]">login</span>
+                  登入後留言
+                </button>
+              )}
+
+              <div className="space-y-5 min-h-[420px]">
+                {sortedComments.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center gap-2 py-8">
+                    <span className="material-symbols-outlined text-[32px] text-on-surface/10">forum</span>
+                    <p className="text-xs text-on-surface/25">Be the first to comment</p>
+                  </div>
+                ) : sortedComments.map(comment => (
+                  <div key={comment.id} className={`flex gap-3 ${comment.optimistic ? 'opacity-50' : ''}`}>
+                    <img src={comment.author_avatar} className="w-8 h-8 rounded-full shrink-0 border border-outline-variant/10" alt="" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                        <span className="text-xs font-semibold text-on-surface">@{comment.author_name}</span>
+                        {comment.author_id === vibe.author_id && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded border border-primary/25 text-primary bg-primary/8 uppercase tracking-widest">Creator</span>
+                        )}
+                        {comment.optimistic
+                          ? <span className="text-[10px] text-on-surface/25 italic">Sending…</span>
+                          : <span className="text-[10px] text-on-surface/25">{timeAgo(comment.created_at)}</span>}
+                      </div>
+                      <p className="text-[13px] text-on-surface/75 leading-relaxed whitespace-pre-wrap">{comment.content}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            </div>{/* end scrollable content area */}
+
           </div>
 
-          {/* ── Comments section ── */}
-          <div className="px-5 py-4">
-            <div className="flex items-center gap-3 mb-4">
-              <h3 className="text-sm font-semibold text-on-surface">
-                {commentCount} Comment{commentCount !== 1 ? 's' : ''}
-              </h3>
-              <div className="relative">
-                <button onClick={() => setShowChatSortDropdown(v => !v)} className="flex items-center gap-1 text-xs text-on-surface/45 hover:text-on-surface/75 transition-colors cursor-pointer">
-                  <span className="material-symbols-outlined text-[14px]">sort</span>
-                  Sort by {chatSortOrder === 'oldest' ? 'Oldest' : 'Newest'}
-                  <span className="material-symbols-outlined text-[13px]">expand_more</span>
+          {/* ── RIGHT SIDEBAR (20%) ── pump.fun-style separated cards ── */}
+          <div className="hidden lg:flex flex-col w-[20%] min-w-[240px] max-w-[320px] shrink-0 overflow-y-auto gap-[10px] bg-black">
+
+            {/* Card 1: Author + Actions */}
+            <div className="bg-surface rounded-xl border border-outline-variant/20">
+              {/* Author */}
+              <div
+                className="flex items-center gap-3 px-4 pt-4 pb-3 cursor-pointer hover:bg-surface-container-high/30 transition-colors"
+                onClick={() => navigate(`/@${encodeURIComponent(vibe.author_name)}`)}
+              >
+                <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center overflow-hidden ring-2 ring-primary/20 shrink-0">
+                  {vibe.author_avatar
+                    ? <img src={vibe.author_avatar} alt="" className="w-full h-full object-cover" />
+                    : <span className="text-sm font-bold text-on-primary-container">{vibe.title[0]}</span>}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-on-surface truncate">@{vibe.author_name}</p>
+                  <p className="text-[11px] text-on-surface/40">{timeAgo(vibe.created_at)}</p>
+                </div>
+                <span className="material-symbols-outlined text-[16px] text-on-surface/25 shrink-0">chevron_right</span>
+              </div>
+              {/* Action buttons */}
+              <div className="px-4 pb-4 flex gap-2">
+                <button
+                  onClick={handleRemix}
+                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-primary hover:bg-primary/90 text-on-primary text-xs font-bold rounded-lg shadow-sm shadow-primary/20 transition-all cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[14px]">repeat</span>
+                  Remix
                 </button>
-                {showChatSortDropdown && (
-                  <>
-                    <div className="fixed inset-0 z-20" onClick={() => setShowChatSortDropdown(false)} />
-                    <div className="absolute left-0 top-full mt-1 z-30 bg-surface-container-highest border border-outline-variant/20 rounded-lg shadow-xl overflow-hidden min-w-[150px]">
-                      {(['oldest', 'newest'] as const).map(order => (
-                        <button key={order} onClick={() => { setChatSortOrder(order); setShowChatSortDropdown(false); }} className={`w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-surface-container-high transition-colors cursor-pointer ${chatSortOrder === order ? 'text-primary' : 'text-on-surface/65'}`}>
-                          <span className="material-symbols-outlined text-[13px]">{order === 'oldest' ? 'arrow_downward' : 'arrow_upward'}</span>
-                          {order === 'oldest' ? 'Oldest first' : 'Newest first'}
-                          {chatSortOrder === order && <span className="ml-auto material-symbols-outlined text-[12px]">check</span>}
-                        </button>
-                      ))}
-                    </div>
-                  </>
+                <button
+                  onClick={handleToggleLike}
+                  disabled={isLiking}
+                  className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${liked ? 'bg-pink-500/15 text-pink-400 ring-1 ring-pink-500/30 hover:bg-pink-500/20' : 'bg-surface-container-high hover:bg-surface-container-highest text-on-surface/55 ring-1 ring-outline-variant/15'
+                    }`}
+                >
+                  <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: liked ? "'FILL' 1" : "'FILL' 0" }}>favorite</span>
+                  {likeCount > 0 ? likeCount : 'Like'}
+                </button>
+                {isOwner && (
+                  <button
+                    onClick={() => {
+                      const slot = { id: `vibe-${vibe.id}`, title: vibe.title, tags: vibe.tags || '', editorMode: 'single', code: { html: selectedVersion?.code || '', css: '', js: '' }, savedAt: new Date().toISOString() };
+                      sessionStorage.setItem('beaverkit_pending_load', JSON.stringify(slot));
+                      navigate('/workspace');
+                    }}
+                    className="flex items-center gap-1 px-3 py-2.5 bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-xs font-bold rounded-lg ring-1 ring-outline-variant/15 transition-colors cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[14px]">edit</span>
+                  </button>
                 )}
               </div>
             </div>
 
-            {currentUser ? (
-              <div className="flex gap-2 items-center pb-3 mb-3 border-b border-outline-variant/10">
-                <img src={currentUser.avatar} className="w-7 h-7 rounded-full shrink-0" alt="" />
-                <div className="flex-1 bg-surface-container-high rounded-xl px-3 py-1.5 flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={commentText}
-                    onChange={e => setCommentText(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddComment(); } }}
-                    placeholder="留言這個 Vibe…"
-                    className="flex-1 bg-transparent text-sm text-on-surface placeholder:text-on-surface/30 outline-none"
-                  />
-                  {commentText.trim() && (
-                    <button onClick={handleAddComment} className="px-2.5 py-1 bg-primary text-on-primary text-xs font-semibold rounded-lg cursor-pointer hover:bg-primary/90 transition-colors shrink-0">送出</button>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <button onClick={() => setShowAuthModal(true)} className="w-full flex items-center justify-center gap-2 px-3 py-3 mb-4 bg-surface-container-high/60 border border-outline-variant/15 rounded-xl text-on-surface/55 text-sm cursor-pointer hover:bg-surface-container-high transition-colors">
-                <span className="material-symbols-outlined text-[15px]">login</span>
-                登入後留言
-              </button>
-            )}
-
-            <div className="space-y-5">
-              {sortedComments.length === 0 ? (
-                <div className="flex flex-col items-center justify-center gap-2 py-8">
-                  <span className="material-symbols-outlined text-[32px] text-on-surface/10">forum</span>
-                  <p className="text-xs text-on-surface/25">Be the first to comment</p>
-                </div>
-              ) : sortedComments.map(comment => (
-                <div key={comment.id} className={`flex gap-3 ${comment.optimistic ? 'opacity-50' : ''}`}>
-                  <img src={comment.author_avatar} className="w-8 h-8 rounded-full shrink-0 border border-outline-variant/10" alt="" />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                      <span className="text-xs font-semibold text-on-surface">@{comment.author_name}</span>
-                      {comment.author_id === vibe.author_id && (
-                        <span className="text-[9px] px-1.5 py-0.5 rounded border border-primary/25 text-primary bg-primary/8 uppercase tracking-widest">Creator</span>
-                      )}
-                      {comment.optimistic
-                        ? <span className="text-[10px] text-on-surface/25 italic">Sending…</span>
-                        : <span className="text-[10px] text-on-surface/25">{timeAgo(comment.created_at)}</span>}
-                    </div>
-                    <p className="text-[13px] text-on-surface/75 leading-relaxed whitespace-pre-wrap">{comment.content}</p>
+            {/* Card 2: Stats */}
+            <div className="bg-surface rounded-xl border border-outline-variant/20 px-4 py-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[15px] text-on-surface/40">visibility</span>
+                    <span className="text-sm font-bold text-on-surface">{vibe.views ?? 0}</span>
+                  </div>
+                  <div className="w-px h-4 bg-outline-variant/15" />
+                  <div className="flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[15px] text-pink-400" style={{ fontVariationSettings: liked ? "'FILL' 1" : "'FILL' 0" }}>favorite</span>
+                    <span className="text-sm font-bold text-pink-400">{likeCount}</span>
+                  </div>
+                  <div className="w-px h-4 bg-outline-variant/15" />
+                  <div className="flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[15px] text-tertiary">repeat</span>
+                    <span className="text-sm font-bold text-tertiary">{remixCount}</span>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-
-      </div>
-
-      {/* ── RIGHT SIDEBAR (20%) ── pump.fun-style separated cards ── */}
-      <div className="hidden lg:flex flex-col w-[20%] min-w-[240px] max-w-[320px] shrink-0 overflow-y-auto gap-[10px] bg-black">
-
-        {/* Card 1: Author + Actions */}
-        <div className="bg-surface rounded-xl border border-outline-variant/20">
-          {/* Author */}
-          <div
-            className="flex items-center gap-3 px-4 pt-4 pb-3 cursor-pointer hover:bg-surface-container-high/30 transition-colors"
-            onClick={() => navigate(`/@${encodeURIComponent(vibe.author_name)}`)}
-          >
-            <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center overflow-hidden ring-2 ring-primary/20 shrink-0">
-              {vibe.author_avatar
-                ? <img src={vibe.author_avatar} alt="" className="w-full h-full object-cover" />
-                : <span className="text-sm font-bold text-on-primary-container">{vibe.title[0]}</span>}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-on-surface truncate">@{vibe.author_name}</p>
-              <p className="text-[11px] text-on-surface/40">{timeAgo(vibe.created_at)}</p>
-            </div>
-            <span className="material-symbols-outlined text-[16px] text-on-surface/25 shrink-0">chevron_right</span>
-          </div>
-          {/* Action buttons */}
-          <div className="px-4 pb-4 flex gap-2">
-            <button
-              onClick={handleRemix}
-              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-primary hover:bg-primary/90 text-on-primary text-xs font-bold rounded-lg shadow-sm shadow-primary/20 transition-all cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-[14px]">repeat</span>
-              Remix
-            </button>
-            <button
-              onClick={handleToggleLike}
-              disabled={isLiking}
-              className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                liked ? 'bg-pink-500/15 text-pink-400 ring-1 ring-pink-500/30 hover:bg-pink-500/20' : 'bg-surface-container-high hover:bg-surface-container-highest text-on-surface/55 ring-1 ring-outline-variant/15'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: liked ? "'FILL' 1" : "'FILL' 0" }}>favorite</span>
-              {likeCount > 0 ? likeCount : 'Like'}
-            </button>
-            {isOwner && (
-              <button
-                onClick={() => {
-                  const slot = { id: `vibe-${vibe.id}`, title: vibe.title, tags: vibe.tags || '', editorMode: 'single', code: { html: selectedVersion?.code || '', css: '', js: '' }, savedAt: new Date().toISOString() };
-                  sessionStorage.setItem('beaverkit_pending_load', JSON.stringify(slot));
-                  navigate('/workspace');
-                }}
-                className="flex items-center gap-1 px-3 py-2.5 bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-xs font-bold rounded-lg ring-1 ring-outline-variant/15 transition-colors cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-[14px]">edit</span>
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Card 2: Stats */}
-        <div className="bg-surface rounded-xl border border-outline-variant/20 px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[15px] text-on-surface/40">visibility</span>
-                <span className="text-sm font-bold text-on-surface">{vibe.views ?? 0}</span>
-              </div>
-              <div className="w-px h-4 bg-outline-variant/15" />
-              <div className="flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[15px] text-pink-400" style={{ fontVariationSettings: liked ? "'FILL' 1" : "'FILL' 0" }}>favorite</span>
-                <span className="text-sm font-bold text-pink-400">{likeCount}</span>
-              </div>
-              <div className="w-px h-4 bg-outline-variant/15" />
-              <div className="flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[15px] text-tertiary">repeat</span>
-                <span className="text-sm font-bold text-tertiary">{remixCount}</span>
+                <span className="text-[10px] text-on-surface/25 bg-surface-container-high px-2 py-0.5 rounded-full">V{selectedVersion?.version_number ?? 1}</span>
               </div>
             </div>
-            <span className="text-[10px] text-on-surface/25 bg-surface-container-high px-2 py-0.5 rounded-full">V{selectedVersion?.version_number ?? 1}</span>
+
+            {/* Card 3: Remix 路徑 */}
+            <div className="bg-surface rounded-xl border border-outline-variant/20">
+              <div className="flex items-center justify-between px-4 pt-3 pb-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-on-surface/50">Remix 路徑</span>
+              </div>
+              <div className="px-4 pb-3">
+                {lineageLoading
+                  ? <div className="flex justify-center py-6"><div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" /></div>
+                  : <EditorialLineage ancestorChain={ancestorChain} currentTitle={vibe.title} currentAuthor={vibe.author_name} onNavigate={nid => navigate(`/vibe/${nid}`)} />}
+              </div>
+            </div>
+
+            {/* Card 4: All Remixes */}
+            <div className="bg-surface rounded-xl border border-outline-variant/20">
+              <div className="flex items-center justify-between px-4 pt-3 pb-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-on-surface/50">所有 Remixes</span>
+                {vibeChildren.length > 0 && <span className="text-[10px] text-on-surface/30 bg-surface-container-high px-2 py-0.5 rounded-full">{vibeChildren.length}</span>}
+              </div>
+              <div className="px-3 pb-3">
+                {lineageLoading
+                  ? <div className="flex justify-center py-6"><div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" /></div>
+                  : <RemixList children={vibeChildren} onNavigate={nid => navigate(`/vibe/${nid}`)} />}
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Card 3: Remix 路徑 */}
-        <div className="bg-surface rounded-xl border border-outline-variant/20">
-          <div className="flex items-center justify-between px-4 pt-3 pb-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-on-surface/50">Remix 路徑</span>
+        {/* Platform footer — spans center + right */}
+        <footer className="shrink-0 flex flex-row justify-between items-center px-6 py-3 gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-[#E5E2E1]/60 font-sans">BeaverKit</span>
+            <span className="font-mono text-[9px] uppercase tracking-widest text-[#E5E2E1]/25">© 2024</span>
           </div>
-          <div className="px-4 pb-3">
-            {lineageLoading
-              ? <div className="flex justify-center py-6"><div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" /></div>
-              : <EditorialLineage ancestorChain={ancestorChain} currentTitle={vibe.title} currentAuthor={vibe.author_name} onNavigate={nid => navigate(`/vibe/${nid}`)} />}
+          <div className="flex gap-5">
+            <a href="#" className="font-mono text-[9px] uppercase tracking-widest text-[#E5E2E1]/30 hover:text-[#FFB3B6] transition-colors">Terms</a>
+            <a href="#" className="font-mono text-[9px] uppercase tracking-widest text-[#E5E2E1]/30 hover:text-[#FFB3B6] transition-colors">Privacy</a>
+            <a href="#" className="font-mono text-[9px] uppercase tracking-widest text-[#E5E2E1]/30 hover:text-[#FFB3B6] transition-colors">About</a>
           </div>
-        </div>
-
-        {/* Card 4: All Remixes */}
-        <div className="bg-surface rounded-xl border border-outline-variant/20">
-          <div className="flex items-center justify-between px-4 pt-3 pb-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-on-surface/50">所有 Remixes</span>
-            {vibeChildren.length > 0 && <span className="text-[10px] text-on-surface/30 bg-surface-container-high px-2 py-0.5 rounded-full">{vibeChildren.length}</span>}
-          </div>
-          <div className="px-3 pb-3">
-            {lineageLoading
-              ? <div className="flex justify-center py-6"><div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" /></div>
-              : <RemixList children={vibeChildren} onNavigate={nid => navigate(`/vibe/${nid}`)} />}
-          </div>
-        </div>
-      </div>
-      </div>
-
-      {/* Platform footer — spans center + right */}
-      <footer className="shrink-0 flex flex-row justify-between items-center px-6 py-3 bg-[#131313] border-t border-outline-variant/10 gap-3">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-[#E5E2E1]/60 font-sans">BeaverKit</span>
-          <span className="font-mono text-[9px] uppercase tracking-widest text-[#E5E2E1]/25">© 2024</span>
-        </div>
-        <div className="flex gap-5">
-          <a href="#" className="font-mono text-[9px] uppercase tracking-widest text-[#E5E2E1]/30 hover:text-[#FFB3B6] transition-colors">Terms</a>
-          <a href="#" className="font-mono text-[9px] uppercase tracking-widest text-[#E5E2E1]/30 hover:text-[#FFB3B6] transition-colors">Privacy</a>
-          <a href="#" className="font-mono text-[9px] uppercase tracking-widest text-[#E5E2E1]/30 hover:text-[#FFB3B6] transition-colors">About</a>
-        </div>
-      </footer>
+        </footer>
       </div>
 
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
