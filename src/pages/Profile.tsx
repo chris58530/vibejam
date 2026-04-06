@@ -319,10 +319,9 @@ export default function Profile() {
         )}
 
 
+        {/* Footer */}
+        <Footer />
       </div>
-
-      {/* Footer */}
-      <Footer />
 
       {/* 刪除確認對話框 */}
       {deleteConfirm !== null && (
