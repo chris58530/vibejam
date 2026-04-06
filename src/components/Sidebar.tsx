@@ -186,6 +186,7 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
   ];
 
   const isWorkspace = location.pathname.includes('/workspace');
+  const isVibeDetail = /^\/p\/\d+/.test(location.pathname);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setCurrentUser(data.session?.user ?? null));
@@ -206,6 +207,9 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
     }
     if (path) navigate(path);
   };
+
+  // Hide sidebar entirely on VibeDetail — it has its own left nav
+  if (isVibeDetail) return null;
 
   // If in workspace, render the minimal utility strip
   if (isWorkspace) {
