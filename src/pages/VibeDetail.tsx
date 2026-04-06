@@ -399,7 +399,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
   };
 
   return (
-    <div className="h-screen flex overflow-hidden bg-black pt-16">
+    <div className="h-[calc(100vh-64px)] flex overflow-hidden bg-black">
 
       {/* Fullscreen overlay */}
       {isFullscreen && (
@@ -460,11 +460,11 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
       )}
 
       {/* ═══════ THREE-COLUMN LAYOUT ═══════ */}
-      {/* gap-[3px] on bg-black creates the 3px black divider lines */}
+      {/* mr-[10px] on bg-black creates the 10px black divider lines */}
 
-      {/* ── LEFT NAV (10%) ── sticky, no scroll ── */}
-      <div className="hidden lg:flex flex-col w-[10%] min-w-[72px] max-w-[140px] bg-surface rounded-r-xl sticky top-0 h-[calc(100vh-64px)] shrink-0 mr-[3px]">
-        <nav className="flex-1 flex flex-col items-center pt-4 gap-1 px-1.5">
+      {/* ── LEFT NAV ── fixed w-16, matches global sidebar ── */}
+      <div className="hidden lg:flex flex-col w-16 bg-[#1C1B1B] shrink-0 mr-[10px] border-r border-outline-variant/5">
+        <nav className="space-y-1 px-2 pt-3">
           {leftNavItems.map(({ key, label, icon, path }) => {
             const isActive =
               (key === 'trending' && location.search.includes('feed=trending')) ||
@@ -476,22 +476,20 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
               <button
                 key={key}
                 onClick={() => navigate(path)}
-                className={`w-full flex flex-col items-center gap-0.5 px-1 py-2.5 rounded-xl transition-colors cursor-pointer ${
-                  isActive ? 'text-primary bg-primary/10' : 'text-on-surface/50 hover:bg-surface-container-high hover:text-on-surface/80'
+                className={`w-full flex items-center justify-center px-3 py-2.5 rounded-xl transition-colors duration-200 cursor-pointer ${
+                  isActive ? 'text-[#FFB3B6] bg-[#2A2A2A]' : 'text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1]'
                 }`}
                 title={label}
               >
-                <span className="material-symbols-outlined text-[20px]" style={isActive ? { fontVariationSettings: "'FILL' 1" } : {}}>{icon}</span>
-                <span className="text-[9px] font-medium tracking-wide leading-none truncate max-w-full">{label}</span>
+                <span className="material-symbols-outlined shrink-0 text-[22px]" style={isActive ? { fontVariationSettings: "'FILL' 1" } : {}}>{icon}</span>
               </button>
             );
           })}
         </nav>
       </div>
 
-      {/* ── CENTER CONTENT (70%) ── scrollable ── */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-surface rounded-xl mr-[3px]">
-        <div className="flex-1 overflow-y-auto overflow-x-hidden">
+      {/* ── CENTER CONTENT (70%) ── */}
+      <div className="flex-1 flex flex-col min-w-0 bg-surface rounded-xl mr-[10px] overflow-y-auto overflow-x-hidden">
           {/* Player */}
           <div className="bg-black relative group w-full rounded-t-xl overflow-hidden" style={{ height: 'min(56.25vw, calc(100vh - 64px - 300px))' }}>
             <iframe
@@ -634,7 +632,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
             {currentUser ? (
               <div className="flex gap-2 items-center pb-3 mb-3 border-b border-outline-variant/10">
                 <img src={currentUser.avatar} className="w-7 h-7 rounded-full shrink-0" alt="" />
-                <div className="flex-1 bg-surface-container-high border border-outline-variant/20 rounded-xl px-3 py-1.5 flex items-center gap-2">
+                <div className="flex-1 bg-surface-container-high rounded-xl px-3 py-1.5 flex items-center gap-2">
                   <input
                     type="text"
                     value={commentText}
@@ -680,10 +678,9 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
               ))}
             </div>
           </div>
-        </div>
       </div>
 
-      {/* ── RIGHT SIDEBAR (20%) ── scrollable ── */}
+      {/* ── RIGHT SIDEBAR (20%) ── */}
       <div className="hidden lg:flex flex-col w-[20%] min-w-[240px] max-w-[320px] bg-surface rounded-l-xl shrink-0 overflow-y-auto">
 
         {/* Author section */}
