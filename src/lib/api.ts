@@ -121,6 +121,10 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
+    if (!res.ok) {
+      const text = await res.text().catch(() => res.status.toString());
+      throw new Error(`syncUser failed (${res.status}): ${text.slice(0, 200)}`);
+    }
     return res.json();
   },
   async getUserProfile(username: string): Promise<User> {

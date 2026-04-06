@@ -12,6 +12,9 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
   family: 4,
+  connectionTimeoutMillis: 5000,
+  idleTimeoutMillis: 10000,
+  max: 5,
 });
 
 // Initialize schema
