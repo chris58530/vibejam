@@ -14,7 +14,7 @@ async function startServer() {
   app.use(cors());
   app.use(express.json());
 
-  await initializeDatabase();
+  await initializeDatabase().catch(err => console.error('DB init error (non-fatal):', err.message));
 
   // Access control helper
   async function checkVibeAccess(vibeId: number | string, supabaseId: string | null): Promise<{ allowed: boolean; role: 'owner' | 'collaborator' | 'viewer' | 'none'; vibe: any }> {

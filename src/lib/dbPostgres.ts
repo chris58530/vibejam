@@ -17,11 +17,16 @@ const pool = new Pool({
   max: 5,
 });
 
+// Prevent unhandled 'error' events from crashing the serverless function (502)
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle pg client:', err.message);
+});
+
 // Initialize schema
 export async function initializeDatabase() {
-  const client = await pool.connect();
-
+  let client;
   try {
+    client = await pool.connect();
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -104,10 +109,11 @@ export async function initializeDatabase() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
-
     console.log('Database schema initialized');
+  } catch (err: any) {
+    console.error('Database initialization error (non-fatal):', err.message);
   } finally {
-    client.release();
+    if (client) client.release();
   }
 }
 

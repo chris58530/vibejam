@@ -11,8 +11,12 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 let initialized = false;
 async function ensureDb() {
   if (!initialized) {
-    await initializeDatabase();
-    initialized = true;
+    try {
+      await initializeDatabase();
+    } catch (err: any) {
+      console.error('ensureDb init error (non-fatal):', err.message);
+    }
+    initialized = true; // mark as done even on failure to avoid retrying on every request
   }
 }
 
