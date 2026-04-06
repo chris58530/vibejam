@@ -496,14 +496,14 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
       </div>
 
       {/* ── CENTER + RIGHT + FOOTER WRAPPER ── */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-0">
+      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         {/* ── COLUMNS ROW ── */}
-        <div className="flex-1 flex min-h-0 gap-[10px]">
+        <div className="flex gap-[10px]">
 
           {/* ── CENTER CONTENT (70%) ── */}
-          <div className="flex-1 flex flex-col min-w-0 bg-surface rounded-xl overflow-hidden">
+          <div className="flex-1 flex flex-col min-w-0 bg-surface rounded-xl">
             {/* Player */}
-            <div className="shrink-0 bg-black relative group w-full rounded-t-xl overflow-hidden" style={{ height: 'min(56.25vw, calc(100vh - 64px - 300px))' }}>
+            <div className="bg-black relative group w-full rounded-t-xl overflow-hidden aspect-video">
               <iframe
                 srcDoc={selectedVersion?.code}
                 className="absolute inset-0 w-full h-full border-none transition-opacity duration-150"
@@ -530,7 +530,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
 
             {/* Version selector strip — below player */}
             {(vibe.versions?.length ?? 0) > 1 && (
-              <div className="shrink-0 flex items-center gap-1 px-3 py-2 bg-surface-container-low border-b border-outline-variant/8 overflow-x-auto no-scrollbar">
+              <div className="flex items-center gap-1 px-3 py-2 bg-surface-container-low border-b border-outline-variant/8 overflow-x-auto no-scrollbar">
                 <span className="material-symbols-outlined text-[14px] text-on-surface/30 shrink-0 mr-1">history</span>
                 {vibe.versions?.map((version, idx) => {
                   const isSel = selectedVersion?.id === version.id;
@@ -553,8 +553,6 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
               </div>
             )}
 
-            {/* Scrollable: info + comments */}
-            <div className="flex-1 min-h-0 overflow-y-auto">
             {/* Info card */}
             <div className="px-5 pt-4 pb-3">
               <h1 className="text-lg font-bold text-on-surface mb-2 leading-snug">{vibe.title}</h1>
@@ -666,12 +664,11 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                 ))}
               </div>
             </div>
-            </div>{/* end scrollable content area */}
 
           </div>
 
           {/* ── RIGHT SIDEBAR (20%) ── pump.fun-style separated cards ── */}
-          <div className="hidden lg:flex flex-col w-[20%] min-w-[240px] max-w-[320px] shrink-0 overflow-y-auto gap-[10px] bg-black">
+          <div className="hidden lg:flex flex-col w-[20%] min-w-[240px] max-w-[320px] shrink-0 gap-[10px] bg-black">
 
             {/* Card 1: Author + Actions */}
             <div className="bg-surface rounded-xl border border-outline-variant/20">
