@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workspace Header Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #0f0f0f;
+      font-family: 'Inter', sans-serif;
+      color: #e5e2e1;
+      padding: 32px;
+    }
+
+    .label {
+      font-size: 11px;
+      color: #888;
+      margin-bottom: 8px;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── Header Bar ── */
+    .header {
+      background: #1a1a1a;
+      padding: 6px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      position: relative;
+    }
+
+    /* Tags */
+    .tags-input {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #222;
+      padding: 4px 12px;
+      border-radius: 8px;
+      border-bottom: 2px solid transparent;
+      flex-shrink: 0;
+    }
+
+    .tags-input .label-tag {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #888;
+      font-weight: 700;
+    }
+
+    .tags-input input {
+      background: transparent;
+      border: none;
+      outline: none;
+      font-size: 12px;
+      color: rgba(229, 226, 225, 0.8);
+      width: 112px;
+      font-family: inherit;
+    }
+
+    .tags-input input::placeholder {
+      color: rgba(229, 226, 225, 0.3);
+    }
+
+    /* Title - centered */
+    .title-input {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #222;
+      padding: 4px 12px;
+      border-radius: 8px;
+      border-bottom: 2px solid #3b4fbd;
+    }
+
+    .title-input .material-symbols-outlined {
+      font-size: 14px;
+      color: #3b4fbd;
+    }
+
+    .title-input input {
+      background: transparent;
+      border: none;
+      outline: none;
+      font-size: 15px;
+      font-weight: 600;
+      color: #e5e2e1;
+      width: 180px;
+      text-align: center;
+      font-family: inherit;
+    }
+
+    .title-input input::placeholder {
+      color: rgba(229, 226, 225, 0.4);
+    }
+
+    .title-input .required {
+      color: #e57373;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    /* Right controls */
+    .right-controls {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-sm {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: #222;
+      color: #e5e2e1;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-radius: 4px;
+      padding: 4px 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .btn-sm .material-symbols-outlined {
+      font-size: 12px;
+    }
+
+    .btn-publish {
+      background: #2665fd;
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 6px 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: inherit;
+    }
+
+    .btn-publish .material-symbols-outlined {
+      font-size: 13px;
+    }
+
+    /* ── Description Row ── */
+    .desc-row {
+      background: #1a1a1a;
+      padding: 4px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .desc-row .label-desc {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: rgba(229, 226, 225, 0.35);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .desc-row input {
+      background: transparent;
+      border: none;
+      outline: none;
+      font-size: 12px;
+      color: rgba(229, 226, 225, 0.5);
+      flex: 1;
+      font-family: inherit;
+    }
+
+    .desc-row input::placeholder {
+      color: rgba(229, 226, 225, 0.2);
+    }
+
+    .desc-counter {
+      font-size: 10px;
+      color: rgba(229, 226, 225, 0.2);
+      flex-shrink: 0;
+    }
+
+    /* Main content placeholder */
+    .main-area {
+      background: #141414;
+      height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255, 255, 255, 0.1);
+      font-size: 13px;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── Variants section ── */
+    .section-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin: 40px 0 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #222;
+    }
+
+    .desc-row.variant-typing .desc-row-inner {
+      border-bottom: 1px solid rgba(38, 101, 253, 0.3);
+    }
+
+    /* Wrapper frame */
+    .frame {
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 32px;
+    }
+
+    .frame-title {
+      font-size: 11px;
+      color: #555;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="label">版面預覽 — 描述欄位</div>
+
+  <div class="section-title">狀態 A：空白（預設）</div>
+  <div class="frame">
+    <!-- Header -->
+    <div class="header">
+      <div class="tags-input">
+        <span class="label-tag">Tags</span>
+        <input placeholder="#tag" value="">
+      </div>
+      <div class="title-input">
+        <span class="material-symbols-outlined">edit_note</span>
+        <input placeholder="專案名稱（必填）" value="">
+        <span class="required">*</span>
+      </div>
+      <div class="right-controls">
+        <button class="btn-sm">
+          <span class="material-symbols-outlined">public</span>
+          Public
+          <span class="material-symbols-outlined" style="font-size:10px;opacity:.4">expand_more</span>
+        </button>
+        <button class="btn-sm">
+          📋 直接貼上
+          <span class="material-symbols-outlined" style="font-size:10px;opacity:.4">expand_more</span>
+        </button>
+        <button class="btn-publish">
+          <span class="material-symbols-outlined">rocket_launch</span>
+          Publish
+        </button>
+      </div>
+    </div>
+    <!-- Description Row -->
+    <div class="desc-row">
+      <span class="label-desc">Desc</span>
+      <input placeholder="新增簡短專案描述..." value="">
+    </div>
+    <!-- Main -->
+    <div class="main-area">編輯器 / 預覽區</div>
+  </div>
+
+  <div class="section-title">狀態 B：有標題 + 有描述</div>
+  <div class="frame">
+    <div class="header">
+      <div class="tags-input">
+        <span class="label-tag">Tags</span>
+        <input placeholder="#tag" value="#game #canvas">
+      </div>
+      <div class="title-input">
+        <span class="material-symbols-outlined">edit_note</span>
+        <input value="Neon Snake Game">
+        <span class="required">*</span>
+      </div>
+      <div class="right-controls">
+        <button class="btn-sm">
+          <span class="material-symbols-outlined">public</span>
+          Public
+          <span class="material-symbols-outlined" style="font-size:10px;opacity:.4">expand_more</span>
+        </button>
+        <button class="btn-sm">
+          📋 直接貼上
+          <span class="material-symbols-outlined" style="font-size:10px;opacity:.4">expand_more</span>
+        </button>
+        <button class="btn-publish">
+          <span class="material-symbols-outlined">rocket_launch</span>
+          Publish
+        </button>
+      </div>
+    </div>
+    <div class="desc-row">
+      <span class="label-desc">Desc</span>
+      <input value="用方向鍵控制蛇吃食物，每吃一顆速度加快，碰牆或碰到自己即結束。">
+      <span class="desc-counter">22/200</span>
+    </div>
+    <div class="main-area">編輯器 / 預覽區</div>
+  </div>
+
+  <div class="section-title">狀態 C：只有標題，無描述</div>
+  <div class="frame">
+    <div class="header">
+      <div class="tags-input">
+        <span class="label-tag">Tags</span>
+        <input placeholder="#tag" value="">
+      </div>
+      <div class="title-input">
+        <span class="material-symbols-outlined">edit_note</span>
+        <input value="My Cool Project">
+        <span class="required">*</span>
+      </div>
+      <div class="right-controls">
+        <button class="btn-sm">
+          <span class="material-symbols-outlined">lock</span>
+          Private
+          <span class="material-symbols-outlined" style="font-size:10px;opacity:.4">expand_more</span>
+        </button>
+        <button class="btn-sm">
+          ⚛️ React 元件
+          <span class="material-symbols-outlined" style="font-size:10px;opacity:.4">expand_more</span>
+        </button>
+        <button class="btn-publish">
+          <span class="material-symbols-outlined">rocket_launch</span>
+          Publish
+        </button>
+      </div>
+    </div>
+    <div class="desc-row">
+      <span class="label-desc">Desc</span>
+      <input placeholder="新增簡短專案描述..." value="">
+    </div>
+    <div class="main-area">編輯器 / 預覽區</div>
+  </div>
+
+</body>
+
+</html>

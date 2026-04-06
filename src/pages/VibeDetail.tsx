@@ -230,7 +230,6 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
   const [ancestors, setAncestors] = useState<VibeAncestor[]>([]);
   const [vibeChildren, setVibeChildren] = useState<VibeChild[]>([]);
   const [lineageLoading, setLineageLoading] = useState(true);
-  const [versionHistoryOpen, setVersionHistoryOpen] = useState(false);
 
   const leftNavItems = [
     { key: 'home', label: t('sidebar_home'), icon: 'home', path: '/' },
@@ -366,9 +365,6 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
       : new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
   );
 
-  // ── Panel header style tokens ──────────────────────────────────
-  const sectionHeaderCls = "bg-surface-container/60 border-b border-outline-variant/12 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-on-surface/50";
-
   if (loading) return (
     <div className="h-screen flex items-center justify-center bg-surface text-on-surface/35 text-sm">
       Loading…
@@ -462,8 +458,8 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
       {/* ═══════ THREE-COLUMN LAYOUT ═══════ */}
       {/* mr-[10px] on bg-black creates the 10px black divider lines */}
 
-      {/* ── LEFT NAV ── fixed w-16, matches global sidebar ── */}
-      <div className="hidden lg:flex flex-col w-16 bg-[#1C1B1B] shrink-0 mr-[10px] border-r border-outline-variant/5">
+      {/* ── LEFT NAV ── expanded with icon + label, matches global sidebar ── */}
+      <div className="hidden lg:flex flex-col w-48 bg-[#1C1B1B] shrink-0 mr-[10px] border-r border-outline-variant/5">
         <nav className="space-y-1 px-2 pt-3">
           {leftNavItems.map(({ key, label, icon, path }) => {
             const isActive =
@@ -476,16 +472,28 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
               <button
                 key={key}
                 onClick={() => navigate(path)}
-                className={`w-full flex items-center justify-center px-3 py-2.5 rounded-xl transition-colors duration-200 cursor-pointer ${
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors duration-200 font-body font-medium text-sm cursor-pointer ${
                   isActive ? 'text-[#FFB3B6] bg-[#2A2A2A]' : 'text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1]'
                 }`}
                 title={label}
               >
                 <span className="material-symbols-outlined shrink-0 text-[22px]" style={isActive ? { fontVariationSettings: "'FILL' 1" } : {}}>{icon}</span>
+                <span className="whitespace-nowrap">{label}</span>
               </button>
             );
           })}
         </nav>
+        <div className="mt-auto border-t border-outline-variant/10 px-2 pt-3 pb-3">
+          <div className="px-3 mb-2">
+            <span className="text-[10px] uppercase tracking-[0.2em] text-[#E5E2E1]/30 font-bold">Library</span>
+          </div>
+          {[{ icon: 'history', label: 'History' }, { icon: 'playlist_play', label: 'Saved Kits' }, { icon: 'thumb_up', label: 'Liked Code' }].map(({ icon, label }) => (
+            <button key={label} className="w-full flex items-center gap-3 px-3 py-2 text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1] rounded-lg transition-colors text-sm font-body cursor-pointer">
+              <span className="material-symbols-outlined text-[18px] shrink-0">{icon}</span>
+              <span>{label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* ── CENTER CONTENT (70%) ── */}
@@ -515,6 +523,32 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
               </button>
             </div>
           </div>
+
+          {/* Version selector strip — below player */}
+          {(vibe.versions?.length ?? 0) > 1 && (
+            <div className="flex items-center gap-1 px-3 py-2 bg-surface-container-low border-b border-outline-variant/8 overflow-x-auto no-scrollbar">
+              <span className="material-symbols-outlined text-[14px] text-on-surface/30 shrink-0 mr-1">history</span>
+              {vibe.versions?.map((version, idx) => {
+                const isSel = selectedVersion?.id === version.id;
+                const isLatest = idx === 0;
+                return (
+                  <button
+                    key={version.id}
+                    onClick={() => handleSelectVersion(version)}
+                    className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                      isSel
+                        ? 'bg-primary/15 text-primary ring-1 ring-primary/25'
+                        : 'text-on-surface/45 hover:bg-surface-container-high hover:text-on-surface/70'
+                    }`}
+                  >
+                    <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${isSel ? 'bg-primary' : 'bg-on-surface/20'}`} />
+                    V{version.version_number}
+                    {isLatest && !isSel && <span className="text-[8px] text-emerald-400 uppercase">new</span>}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {/* Info card */}
           <div className="px-5 pt-4 pb-3">
@@ -546,57 +580,6 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
               <p className="text-[13px] text-on-surface/70 leading-relaxed whitespace-pre-wrap">{vibe.description}</p>
             ) : (
               <p className="text-[13px] text-on-surface/25 italic">No description provided.</p>
-            )}
-          </div>
-
-          {/* ── Version History (collapsible) ── */}
-          <div className="mx-3 mb-1 rounded-xl bg-surface-container-low border border-outline-variant/10 overflow-hidden">
-            <button
-              onClick={() => setVersionHistoryOpen(v => !v)}
-              className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-surface-container-high/40 transition-colors cursor-pointer"
-            >
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[16px] text-on-surface/50">history</span>
-                <span className="text-xs font-semibold text-on-surface/70">版本歷史</span>
-                <span className="text-[10px] text-on-surface/30 bg-surface-container-highest px-1.5 py-0.5 rounded-full">{vibe.versions?.length ?? 0}</span>
-              </div>
-              <span className={`material-symbols-outlined text-[16px] text-on-surface/30 transition-transform ${versionHistoryOpen ? 'rotate-180' : ''}`}>expand_more</span>
-            </button>
-            {versionHistoryOpen && (
-              <div className="px-3 pb-3 pt-1 space-y-1 border-t border-outline-variant/8">
-                <p className="text-[11px] text-on-surface/30 italic mb-2 px-1">每次儲存都是一個快照，點選任意版本來預覽。</p>
-                {(!vibe.versions?.length) && <p className="text-xs text-on-surface/20 text-center py-4">No versions</p>}
-                {vibe.versions?.map((version, idx) => {
-                  const isSel = selectedVersion?.id === version.id;
-                  const sz = version.code ? formatBytes(version.code.length) : null;
-                  const isLatest = idx === 0;
-                  const isOriginal = idx === (vibe.versions!.length - 1);
-                  return (
-                    <div
-                      key={version.id}
-                      onClick={() => handleSelectVersion(version)}
-                      className={`p-3 rounded-xl cursor-pointer transition-all ${isSel ? 'bg-primary/10 ring-1 ring-primary/20' : 'hover:bg-surface-container-high/60'}`}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <div className={`w-2 h-2 rounded-full shrink-0 ${isSel ? 'bg-primary shadow-sm shadow-primary/40' : 'bg-outline-variant/35'}`} />
-                          <span className="text-xs font-semibold text-on-surface">V{version.version_number}</span>
-                          {isSel && <span className="text-[9px] px-1.5 py-0.5 rounded border border-primary/30 text-primary bg-primary/8 uppercase tracking-widest">Now</span>}
-                          {isLatest && !isSel && <span className="text-[9px] px-1.5 py-0.5 rounded border border-emerald-500/30 text-emerald-400 bg-emerald-500/8 uppercase tracking-widest">Latest</span>}
-                          {isOriginal && vibe.versions!.length > 1 && <span className="text-[9px] px-1.5 py-0.5 rounded border border-emerald-500/25 text-emerald-400/80 bg-emerald-500/6 uppercase tracking-widest">Original</span>}
-                        </div>
-                        <span className="text-[10px] text-on-surface/25">{new Date(version.created_at).toLocaleDateString()}</span>
-                      </div>
-                      <p className="text-[11px] text-on-surface/40 line-clamp-2 leading-relaxed">{version.update_log || 'System update.'}</p>
-                      <div className="flex items-center gap-1.5 mt-1.5 text-[10px] text-on-surface/25">
-                        {version.author_avatar && <img src={version.author_avatar} className="w-3 h-3 rounded-full" alt="" />}
-                        <span>{version.author_name || vibe.author_name}</span>
-                        {sz && <span>· {sz}</span>}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
             )}
           </div>
 
@@ -680,42 +663,41 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
           </div>
       </div>
 
-      {/* ── RIGHT SIDEBAR (20%) ── */}
-      <div className="hidden lg:flex flex-col w-[20%] min-w-[240px] max-w-[320px] bg-surface rounded-l-xl shrink-0 overflow-y-auto">
+      {/* ── RIGHT SIDEBAR (20%) ── pump.fun-style separated cards ── */}
+      <div className="hidden lg:flex flex-col w-[20%] min-w-[240px] max-w-[320px] shrink-0 overflow-y-auto gap-[10px] bg-black">
 
-        {/* Author section */}
-        <div className="p-4 border-b border-outline-variant/10">
+        {/* Card 1: Author + Actions */}
+        <div className="bg-surface rounded-xl">
+          {/* Author */}
           <div
-            className="flex items-center gap-3 cursor-pointer hover:bg-surface-container-high/40 transition-colors rounded-lg p-2 -mx-2"
+            className="flex items-center gap-3 px-4 pt-4 pb-3 cursor-pointer hover:bg-surface-container-high/30 transition-colors"
             onClick={() => navigate(`/@${encodeURIComponent(vibe.author_name)}`)}
           >
-            <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center overflow-hidden ring-1 ring-black/[0.06] shrink-0">
+            <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center overflow-hidden ring-2 ring-primary/20 shrink-0">
               {vibe.author_avatar
                 ? <img src={vibe.author_avatar} alt="" className="w-full h-full object-cover" />
                 : <span className="text-sm font-bold text-on-primary-container">{vibe.title[0]}</span>}
             </div>
-            <div className="min-w-0">
+            <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-on-surface truncate">@{vibe.author_name}</p>
               <p className="text-[11px] text-on-surface/40">{timeAgo(vibe.created_at)}</p>
             </div>
+            <span className="material-symbols-outlined text-[16px] text-on-surface/25 shrink-0">chevron_right</span>
           </div>
-        </div>
-
-        {/* Action buttons */}
-        <div className="px-4 pt-3 pb-2 border-b border-outline-variant/10">
-          <div className="flex gap-2 mb-3">
+          {/* Action buttons */}
+          <div className="px-4 pb-4 flex gap-2">
             <button
               onClick={handleRemix}
-              className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-primary hover:bg-primary/90 text-on-primary text-xs font-semibold rounded-lg shadow-sm shadow-primary/20 transition-all cursor-pointer"
+              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-primary hover:bg-primary/90 text-on-primary text-xs font-bold rounded-lg shadow-sm shadow-primary/20 transition-all cursor-pointer"
             >
-              <span className="material-symbols-outlined text-[13px]">repeat</span>
+              <span className="material-symbols-outlined text-[14px]">repeat</span>
               Remix
             </button>
             <button
               onClick={handleToggleLike}
               disabled={isLiking}
-              className={`flex items-center gap-1 px-3 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                liked ? 'bg-pink-500/12 text-pink-400 ring-1 ring-pink-500/25 hover:bg-pink-500/18' : 'bg-surface-container-high hover:bg-surface-container-highest text-on-surface/55 ring-1 ring-black/[0.07]'
+              className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                liked ? 'bg-pink-500/15 text-pink-400 ring-1 ring-pink-500/30 hover:bg-pink-500/20' : 'bg-surface-container-high hover:bg-surface-container-highest text-on-surface/55 ring-1 ring-outline-variant/15'
               }`}
             >
               <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: liked ? "'FILL' 1" : "'FILL' 0" }}>favorite</span>
@@ -728,44 +710,56 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                   sessionStorage.setItem('beaverkit_pending_load', JSON.stringify(slot));
                   navigate('/workspace');
                 }}
-                className="flex items-center gap-1 px-3 py-2 bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-xs font-semibold rounded-lg ring-1 ring-black/[0.07] transition-colors cursor-pointer"
+                className="flex items-center gap-1 px-3 py-2.5 bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-xs font-bold rounded-lg ring-1 ring-outline-variant/15 transition-colors cursor-pointer"
               >
-                <span className="material-symbols-outlined text-[13px]">edit</span>
+                <span className="material-symbols-outlined text-[14px]">edit</span>
               </button>
             )}
           </div>
+        </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-2">
-            <div className="text-center py-2 bg-surface-container-high/50 rounded-lg">
-              <p className="text-sm font-bold text-on-surface">{vibe.views ?? 0}</p>
-              <p className="text-[9px] text-on-surface/35 uppercase tracking-wider">Views</p>
+        {/* Card 2: Stats */}
+        <div className="bg-surface rounded-xl px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[15px] text-on-surface/40">visibility</span>
+                <span className="text-sm font-bold text-on-surface">{vibe.views ?? 0}</span>
+              </div>
+              <div className="w-px h-4 bg-outline-variant/15" />
+              <div className="flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[15px] text-pink-400" style={{ fontVariationSettings: liked ? "'FILL' 1" : "'FILL' 0" }}>favorite</span>
+                <span className="text-sm font-bold text-pink-400">{likeCount}</span>
+              </div>
+              <div className="w-px h-4 bg-outline-variant/15" />
+              <div className="flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[15px] text-tertiary">repeat</span>
+                <span className="text-sm font-bold text-tertiary">{remixCount}</span>
+              </div>
             </div>
-            <div className="text-center py-2 bg-surface-container-high/50 rounded-lg">
-              <p className="text-sm font-bold text-pink-400">{likeCount}</p>
-              <p className="text-[9px] text-on-surface/35 uppercase tracking-wider">Likes</p>
-            </div>
-            <div className="text-center py-2 bg-surface-container-high/50 rounded-lg">
-              <p className="text-sm font-bold text-tertiary">{remixCount}</p>
-              <p className="text-[9px] text-on-surface/35 uppercase tracking-wider">Remixes</p>
-            </div>
+            <span className="text-[10px] text-on-surface/25 bg-surface-container-high px-2 py-0.5 rounded-full">V{selectedVersion?.version_number ?? 1}</span>
           </div>
         </div>
 
-        {/* Remix 路徑 */}
-        <div className="border-b border-outline-variant/10">
-          <div className={sectionHeaderCls}>Remix 路徑</div>
-          <div className="px-3 py-3">
+        {/* Card 3: Remix 路徑 */}
+        <div className="bg-surface rounded-xl">
+          <div className="flex items-center justify-between px-4 pt-3 pb-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-on-surface/50">Remix 路徑</span>
+          </div>
+          <div className="px-4 pb-3">
             {lineageLoading
               ? <div className="flex justify-center py-6"><div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" /></div>
               : <EditorialLineage ancestorChain={ancestorChain} currentTitle={vibe.title} currentAuthor={vibe.author_name} onNavigate={nid => navigate(`/vibe/${nid}`)} />}
           </div>
         </div>
 
-        {/* All Remixes */}
-        <div>
-          <div className={sectionHeaderCls}>所有 Remixes ({vibeChildren.length})</div>
-          <div className="px-3 py-2">
+        {/* Card 4: All Remixes */}
+        <div className="bg-surface rounded-xl">
+          <div className="flex items-center justify-between px-4 pt-3 pb-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-on-surface/50">所有 Remixes</span>
+            {vibeChildren.length > 0 && <span className="text-[10px] text-on-surface/30 bg-surface-container-high px-2 py-0.5 rounded-full">{vibeChildren.length}</span>}
+          </div>
+          <div className="px-3 pb-3">
             {lineageLoading
               ? <div className="flex justify-center py-6"><div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" /></div>
               : <RemixList children={vibeChildren} onNavigate={nid => navigate(`/vibe/${nid}`)} />}
