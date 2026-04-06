@@ -395,7 +395,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
   };
 
   return (
-    <div className="h-[calc(100vh-64px)] flex overflow-hidden bg-black">
+    <div className="h-[calc(100vh-64px)] flex overflow-hidden bg-black p-[10px] gap-[10px]">
 
       {/* Fullscreen overlay */}
       {isFullscreen && (
@@ -459,7 +459,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
       {/* mr-[10px] on bg-black creates the 10px black divider lines */}
 
       {/* ── LEFT NAV ── expanded with icon + label, matches global sidebar ── */}
-      <div className="hidden lg:flex flex-col w-48 bg-[#1C1B1B] shrink-0 mr-[10px] border-r border-outline-variant/5">
+      <div className="hidden lg:flex flex-col w-48 bg-[#1C1B1B] shrink-0 border-r border-outline-variant/5 rounded-xl">
         <nav className="space-y-1 px-2 pt-3">
           {leftNavItems.map(({ key, label, icon, path }) => {
             const isActive =
@@ -497,7 +497,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
       </div>
 
       {/* ── CENTER CONTENT (70%) ── */}
-      <div className="flex-1 flex flex-col min-w-0 bg-surface rounded-xl mr-[10px] overflow-y-auto overflow-x-hidden">
+      <div className="flex-1 flex flex-col min-w-0 bg-surface rounded-xl overflow-y-auto overflow-x-hidden">
           {/* Player */}
           <div className="bg-black relative group w-full rounded-t-xl overflow-hidden" style={{ height: 'min(56.25vw, calc(100vh - 64px - 300px))' }}>
             <iframe
@@ -661,10 +661,26 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
               ))}
             </div>
           </div>
+
+          {/* Spacer: ensure center col scrolls at least 1/3 viewport before footer */}
+          <div className="min-h-[33vh]" />
+
+          {/* Platform footer inside center column */}
+          <footer className="w-full flex flex-col sm:flex-row justify-between items-center px-6 py-4 bg-surface-container-low border-t border-outline-variant/10 gap-3 rounded-b-xl mt-auto">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-on-surface/60 font-sans">BeaverKit</span>
+              <span className="font-mono text-[9px] uppercase tracking-widest text-on-surface/25">© 2024</span>
+            </div>
+            <div className="flex gap-5">
+              <a href="#" className="font-mono text-[9px] uppercase tracking-widest text-on-surface/30 hover:text-primary transition-colors">Terms</a>
+              <a href="#" className="font-mono text-[9px] uppercase tracking-widest text-on-surface/30 hover:text-primary transition-colors">Privacy</a>
+              <a href="#" className="font-mono text-[9px] uppercase tracking-widest text-on-surface/30 hover:text-primary transition-colors">About</a>
+            </div>
+          </footer>
       </div>
 
       {/* ── RIGHT SIDEBAR (20%) ── pump.fun-style separated cards ── */}
-      <div className="hidden lg:flex flex-col w-[20%] min-w-[240px] max-w-[320px] shrink-0 overflow-y-auto gap-[10px] bg-black">
+      <div className="hidden lg:flex flex-col w-[20%] min-w-[240px] max-w-[320px] shrink-0 overflow-y-auto gap-[10px] bg-black rounded-xl">
 
         {/* Card 1: Author + Actions */}
         <div className="bg-surface rounded-xl border border-outline-variant/20">
