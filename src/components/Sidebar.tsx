@@ -187,6 +187,7 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
 
   const isWorkspace = location.pathname.includes('/workspace');
   const isVibeDetail = /^\/p\/\d+/.test(location.pathname);
+  const isHome = location.pathname === '/';
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setCurrentUser(data.session?.user ?? null));
@@ -241,9 +242,9 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
     );
   }
 
-  // Regular Sidebar — collapsed by default, expands on hover
+  // Regular Sidebar — collapsed by default, expands on hover (always expanded on homepage)
   return (
-    <aside className="group/sidebar fixed left-0 top-16 h-[calc(100vh-64px)] w-16 hover:w-64 bg-[#1C1B1B] flex flex-col pt-3 pb-2 hidden md:flex z-40 border-r border-outline-variant/5 transition-[width] duration-300 overflow-hidden">
+    <aside className={`group/sidebar fixed left-0 top-16 h-[calc(100vh-64px)] ${isHome ? 'w-56' : 'w-16 hover:w-64 transition-[width] duration-300'} bg-[#1C1B1B] flex flex-col pt-3 pb-2 hidden md:flex z-40 border-r border-outline-variant/5 overflow-hidden`}>
       <nav className="space-y-1 px-2">
         {navItems.map(({ key, label, icon, path }) => {
           const isActive =
@@ -266,7 +267,7 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
               <span className="material-symbols-outlined shrink-0 text-[22px]" style={isActive ? { fontVariationSettings: "'FILL' 1" } : {}}>
                 {icon}
               </span>
-              <span className="whitespace-nowrap overflow-hidden max-w-0 group-hover/sidebar:max-w-[160px] transition-[max-width] duration-300 opacity-0 group-hover/sidebar:opacity-100">
+              <span className={`whitespace-nowrap overflow-hidden transition-[max-width] duration-300 ${isHome ? 'max-w-[160px] opacity-100' : 'max-w-0 group-hover/sidebar:max-w-[160px] opacity-0 group-hover/sidebar:opacity-100'}`}>
                 {label}
               </span>
             </button>
@@ -275,7 +276,7 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
       </nav>
 
       {/* Divider + Library — only visible when expanded */}
-      <div className="overflow-hidden max-h-0 group-hover/sidebar:max-h-[320px] transition-[max-height] duration-300">
+      <div className={`overflow-hidden transition-[max-height] duration-300 ${isHome ? 'max-h-[320px]' : 'max-h-0 group-hover/sidebar:max-h-[320px]'}`}>
         <div className="my-3 h-px bg-[#584142]/10 mx-4"></div>
         <div className="px-5 mb-2">
           <span className="text-[10px] uppercase tracking-[0.2em] text-[#E5E2E1]/30 font-bold whitespace-nowrap">Your Library</span>
@@ -296,7 +297,7 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
       </div>
 
       {/* Footer — only visible when expanded */}
-      <div className="mt-auto overflow-hidden max-h-0 group-hover/sidebar:max-h-24 transition-[max-height] duration-300 border-t border-outline-variant/10">
+      <div className={`mt-auto overflow-hidden transition-[max-height] duration-300 border-t border-outline-variant/10 ${isHome ? 'max-h-24' : 'max-h-0 group-hover/sidebar:max-h-24'}`}>
         <div className="pt-3 space-y-2">
           <div className="flex flex-wrap gap-x-3 gap-y-1 px-4">
             <a href="#" className="text-[10px] text-[#E5E2E1]/40 hover:text-primary transition-colors uppercase tracking-widest font-body">Terms</a>
@@ -316,7 +317,7 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
         title="使用說明"
       >
         <span className="material-symbols-outlined shrink-0 text-[22px]">help</span>
-        <span className="whitespace-nowrap overflow-hidden max-w-0 group-hover/sidebar:max-w-[160px] transition-[max-width] duration-300 text-sm font-medium opacity-0 group-hover/sidebar:opacity-100">
+        <span className={`whitespace-nowrap overflow-hidden transition-[max-width] duration-300 text-sm font-medium ${isHome ? 'max-w-[160px] opacity-100' : 'max-w-0 group-hover/sidebar:max-w-[160px] opacity-0 group-hover/sidebar:opacity-100'}`}>
           使用說明
         </span>
       </button>

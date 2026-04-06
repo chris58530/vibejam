@@ -139,7 +139,7 @@ export default function Home() {
   const handleSelectVibe = (vibe: Vibe) => navigate(`/p/${vibe.id}`);
 
   // Trending = top 10 by views
-  const trendingVibes = [...vibes].sort((a, b) => b.views - a.views).slice(0, 10);
+  const trendingVibes = [...vibes].sort((a, b) => b.views - a.views).slice(0, 8);
 
   // Tag filter first, then feed sort
   let filteredVibes = activeTag === 'All Kits'
@@ -159,7 +159,7 @@ export default function Home() {
   const maxViews = filteredVibes.reduce((max, v) => Math.max(max, v.views), 1);
 
   return (
-    <main className="md:ml-16 pt-16 min-h-screen bg-surface flex flex-col">
+    <main className="md:ml-56 pt-16 min-h-screen bg-surface flex flex-col">
 
       {/* ── Trending Carousel ── */}
       <TrendingCarousel vibes={trendingVibes} onSelect={handleSelectVibe} />
@@ -219,27 +219,18 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ── Compact Card Grid ── */}
-      <div className="px-2 py-1 flex-1">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-0.5">
+      {/* ── Card Grid ── */}
+      <div className="px-4 py-3 flex-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {loading
-            ? Array.from({ length: 20 }).map((_, i) => (
-                <div key={i} className="flex gap-2.5 p-2 rounded-lg">
-                  <div className="w-[68px] h-[68px] bg-surface-container-highest rounded-lg animate-pulse flex-shrink-0" />
-                  <div className="flex-1 flex flex-col gap-1.5 pt-1">
-                    <div className="h-3 bg-surface-container-highest rounded animate-pulse w-3/4" />
-                    <div className="h-2.5 bg-surface-container-highest rounded animate-pulse w-1/2" />
-                    <div className="h-2 bg-surface-container-highest rounded animate-pulse w-full" />
-                  </div>
-                </div>
+            ? Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="aspect-video bg-surface-container-highest rounded-xl animate-pulse" />
               ))
             : filteredVibes.map(vibe => (
                 <VibeCard
                   key={vibe.id}
                   vibe={vibe}
                   onClick={() => handleSelectVibe(vibe)}
-                  compact
-                  maxViews={maxViews}
                 />
               ))
           }
