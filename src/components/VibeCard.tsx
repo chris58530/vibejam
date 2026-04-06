@@ -7,23 +7,32 @@ interface VibeCardProps {
   key?: string | number;
   vibe: Vibe;
   onClick: () => void;
+  compact?: boolean;
+  maxViews?: number;
 }
 
 function timeAgo(dateStr: string): string {
   if (!dateStr) return '';
   const diffMs = Date.now() - new Date(dateStr).getTime();
-  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  if (days === 0) return 'today';
-  if (days === 1) return '1 day ago';
-  if (days < 30) return `${days} days ago`;
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
   const months = Math.floor(days / 30);
-  if (months === 1) return '1 month ago';
-  if (months < 12) return `${months} months ago`;
-  const years = Math.floor(months / 12);
-  return years === 1 ? '1 year ago' : `${years} years ago`;
+  if (months < 12) return `${months}mo ago`;
+  return `${Math.floor(months / 12)}y ago`;
 }
 
-export default function VibeCard({ vibe, onClick }: VibeCardProps) {
+function formatViews(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return String(n);
+}
+
+export default function VibeCard({ vibe, onClick, compact = false, maxViews = 1 }: VibeCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
 
@@ -56,6 +65,92 @@ export default function VibeCard({ vibe, onClick }: VibeCardProps) {
       ? rawCode.replace('<head>', '<head>' + freezeScript)
       : freezeScript + rawCode);
 
+  const avatarSrc = vibe.author_avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${vibe.author_name}`;
+  const progressPct = maxViews > 0 ? Math.min(100, (vibe.views / maxViews) * 100) : 0;
+  const remixBadge = (vibe.remix_count ?? 0) > 0 ? `+${vibe.remix_count}` : null;
+
+  /* ── Compact (pump.fun) style ── */
+  if (compact) {
+    return (
+      <motion.div
+        layout
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="group cursor-pointer flex flex-row gap-2.5 p-2 rounded-lg hover:bg-white/[0.04] transition-colors duration-150"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onClick={onClick}
+      >
+        {/* Square iframe thumbnail */}
+        <div className="relative w-[68px] h-[68px] flex-shrink-0 rounded-lg overflow-hidden bg-surface-container-lowest ring-1 ring-white/[0.06] group-hover:ring-primary/30 transition-all duration-200">
+          <div className={`absolute inset-0 z-10 pointer-events-none transition-opacity duration-200 ${isHovered ? 'opacity-0' : 'opacity-100 bg-black/25'}`} />
+          <iframe
+            srcDoc={previewCode}
+            className="absolute top-0 left-0 border-none pointer-events-none"
+            style={{ width: '400%', height: '400%', transform: 'scale(0.25)', transformOrigin: 'top left' }}
+            title={vibe.title}
+            sandbox="allow-scripts allow-same-origin"
+          />
+        </div>
+
+        {/* Info */}
+        <div className="flex-1 min-w-0 flex flex-col justify-center">
+          {/* Title + ticker */}
+          <div className="flex items-baseline gap-1.5 min-w-0">
+            <span className="font-bold text-[13px] text-[#E5E2E1] truncate leading-tight group-hover:text-primary transition-colors duration-150">
+              {vibe.title}
+            </span>
+            <span className="text-[10px] text-[#E5E2E1]/35 font-mono flex-shrink-0">
+              {vibe.author_name.slice(0, 6).toUpperCase()}
+            </span>
+          </div>
+
+          {/* Author + time */}
+          <div className="flex items-center gap-1 mt-0.5">
+            <img
+              src={avatarSrc}
+              alt={vibe.author_name}
+              className="w-3.5 h-3.5 rounded-full object-cover flex-shrink-0"
+              onClick={(e) => { e.stopPropagation(); navigate(`/@${encodeURIComponent(vibe.author_name)}`); }}
+            />
+            <span
+              className="text-[10px] text-[#E5E2E1]/40 hover:text-[#E5E2E1]/70 transition-colors truncate cursor-pointer"
+              onClick={(e) => { e.stopPropagation(); navigate(`/@${encodeURIComponent(vibe.author_name)}`); }}
+            >
+              {vibe.author_name}
+            </span>
+            <span className="text-[10px] text-[#E5E2E1]/25">·</span>
+            <span className="text-[10px] text-[#E5E2E1]/35 flex-shrink-0">{timeAgo(vibe.created_at)}</span>
+          </div>
+
+          {/* Stats row */}
+          <div className="flex items-center gap-1.5 mt-1">
+            <span className="text-[11px] text-[#E5E2E1]/55 font-mono flex-shrink-0">
+              MC {formatViews(vibe.views)}
+            </span>
+            <div className="flex-1 h-[3px] bg-white/[0.07] rounded-full overflow-hidden min-w-0">
+              <div
+                className="h-full bg-[#E5E2E1]/25 rounded-full transition-all duration-500"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+            {remixBadge && (
+              <span className="text-[10px] text-green-400 font-mono flex-shrink-0">{remixBadge} remixed</span>
+            )}
+          </div>
+
+          {/* Description */}
+          {vibe.description && (
+            <p className="text-[10px] text-[#E5E2E1]/30 mt-0.5 line-clamp-1 leading-tight">
+              {vibe.description}
+            </p>
+          )}
+        </div>
+      </motion.div>
+    );
+  }
+
+  /* ── Default (full) style ── */
   return (
     <motion.div
       layout
@@ -123,8 +218,8 @@ export default function VibeCard({ vibe, onClick }: VibeCardProps) {
             @{vibe.author_name}
           </span>
           <div className="flex items-center text-[11px] text-[#E5E2E1]/40 mt-0.5">
-            <span>{vibe.views} views</span>
-            <span className="mx-1.5">•</span>
+            <span>{formatViews(vibe.views)} views</span>
+            <span className="mx-1.5">·</span>
             <span>{timeAgo(vibe.created_at)}</span>
           </div>
         </div>
