@@ -13,147 +13,186 @@ function formatBytes(n: number): string {
   return `${(n / 1024).toFixed(1)} KB`;
 }
 
-// ── Remix Tree ─────────────────────────────────────────────────────
-interface RemixTreeProps {
-  vibeId: number;
+// ── OriginCard ─────────────────────────────────────────────────────
+interface OriginCardProps {
+  ancestorChain: VibeAncestor[];
+  onNavigate: (id: number) => void;
+}
+
+function OriginCard({ ancestorChain, onNavigate }: OriginCardProps) {
+  if (ancestorChain.length === 0) return null;
+  const root = ancestorChain[0];
+  const initial = root.title?.[0]?.toUpperCase() ?? '?';
+
+  return (
+    <div className="border-l-[3px] border-tertiary/60 bg-tertiary/5 rounded-r-xl px-3 py-3 mb-0">
+      <p className="text-[10px] italic text-on-surface/35 mb-2">起源自這個作品</p>
+      <div className="flex items-center gap-2 mb-2.5">
+        <div className="w-7 h-7 rounded-full bg-tertiary/20 flex items-center justify-center overflow-hidden shrink-0 ring-1 ring-tertiary/20">
+          {root.author_avatar
+            ? <img src={root.author_avatar} alt="" className="w-full h-full object-cover" />
+            : <span className="text-[11px] font-bold text-tertiary">{initial}</span>
+          }
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[13px] font-semibold text-on-surface truncate leading-snug">{root.title}</p>
+          <p className="text-[11px] text-on-surface/40 truncate">by {root.author_name}</p>
+        </div>
+      </div>
+      <button
+        onClick={() => onNavigate(root.id)}
+        className="flex items-center gap-1 text-[11px] font-semibold text-tertiary hover:text-tertiary/80 transition-colors cursor-pointer"
+      >
+        <span className="material-symbols-outlined text-[13px]">open_in_new</span>
+        查看原作
+      </button>
+      <div className="flex items-center gap-1.5 mt-2.5 pt-2 border-t border-tertiary/15">
+        <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+        <p className="text-[10px] text-on-surface/35">這個 Remix 家族的所有作品共用同一個討論空間</p>
+      </div>
+    </div>
+  );
+}
+
+// ── EditorialLineage ───────────────────────────────────────────────
+interface EditorialLineageProps {
+  ancestorChain: VibeAncestor[];
   currentTitle: string;
   currentAuthor: string;
   onNavigate: (id: number) => void;
 }
 
-function RemixTree({ vibeId, currentTitle, currentAuthor, onNavigate }: RemixTreeProps) {
-  const [ancestors, setAncestors] = useState<VibeAncestor[]>([]);
-  const [children, setChildren] = useState<VibeChild[]>([]);
-  const [loading, setLoading] = useState(true);
+function EditorialLineage({ ancestorChain, currentTitle, currentAuthor, onNavigate }: EditorialLineageProps) {
+  const depth = ancestorChain.length;
 
-  useEffect(() => {
-    setLoading(true);
-    Promise.all([
-      api.getVibeAncestry(vibeId),
-      api.getVibeChildren(vibeId),
-    ]).then(([anc, chi]) => {
-      setAncestors(anc);
-      setChildren(chi);
-    }).finally(() => setLoading(false));
-  }, [vibeId]);
-
-  if (loading) {
+  if (depth === 0) {
+    // current IS root
     return (
-      <div className="flex items-center justify-center py-10">
-        <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+      <div>
+        <div className="bg-primary/7 border border-primary/14 rounded-xl p-3">
+          <p className="text-sm font-bold text-on-surface truncate">{currentTitle}</p>
+          <div className="flex items-center gap-1.5 mt-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+            <p className="text-[11px] text-primary truncate">@{currentAuthor} · 這是起源作品，正在觀看</p>
+          </div>
+        </div>
       </div>
     );
   }
 
-  const ancestorChain = ancestors.slice(0, -1);
-  const MAX_SHOW = 3;
-  const collapsed = ancestorChain.length > MAX_SHOW;
-  let displayedAncestors = ancestorChain;
-  let hiddenCount = 0;
-  if (collapsed) {
-    hiddenCount = ancestorChain.length - MAX_SHOW + 1;
-    displayedAncestors = [ancestorChain[0], ...ancestorChain.slice(-(MAX_SHOW - 1))];
-  }
-  const isRoot = ancestorChain.length === 0;
+  const parent = ancestorChain[depth - 1];
 
-  return (
-    <div className="select-none font-sans">
-      {/* Origin label for root vibes */}
-      {isRoot && (
-        <div className="flex items-start gap-3 mb-0">
-          <div className="flex flex-col items-center shrink-0 pt-0.5">
-            <div className="w-2.5 h-2.5 rounded-full border-2 border-outline-variant/30 bg-surface-container-highest" />
-            <div className="w-px bg-outline-variant/20 mt-1 flex-1 min-h-[20px]" />
+  if (depth === 1) {
+    // parent IS root
+    return (
+      <div>
+        <p className="text-[10px] text-on-surface/35 italic mb-2">直接 remix 自原作</p>
+        <button
+          onClick={() => onNavigate(parent.id)}
+          className="w-full flex items-start gap-2 p-2 -mx-0 rounded-lg hover:bg-surface-container-high/60 transition-colors cursor-pointer text-left mb-1"
+        >
+          <div className="w-6 h-6 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden shrink-0 ring-1 ring-outline-variant/20 mt-0.5">
+            {parent.author_avatar
+              ? <img src={parent.author_avatar} alt="" className="w-full h-full object-cover" />
+              : <span className="text-[9px] font-bold text-on-surface/50">{parent.title?.[0]?.toUpperCase()}</span>
+            }
           </div>
-          <p className="text-[11px] text-on-surface/25 uppercase tracking-widest pb-3">Origin</p>
-        </div>
-      )}
-
-      {/* Ancestors */}
-      {displayedAncestors.map((anc, i) => {
-        const showDots = collapsed && i === 0 && hiddenCount > 0;
-        return (
-          <React.Fragment key={anc.id}>
-            <button
-              onClick={() => onNavigate(anc.id)}
-              className="flex items-start gap-3 w-full text-left group cursor-pointer"
-            >
-              <div className="flex flex-col items-center shrink-0 pt-0.5">
-                <div className="w-2.5 h-2.5 rounded-full border-2 border-outline-variant/25 bg-surface-container-high group-hover:border-primary/50 transition-colors" />
-                <div className="w-px bg-outline-variant/20 mt-1 flex-1 min-h-[28px]" />
-              </div>
-              <div className="flex-1 min-w-0 pb-3">
-                <p className="text-sm text-on-surface/55 group-hover:text-on-surface/90 transition-colors truncate leading-snug">{anc.title}</p>
-                <p className="text-xs text-on-surface/30 truncate mt-0.5">by {anc.author_name}</p>
-              </div>
-              <span className="material-symbols-outlined text-[13px] text-on-surface/15 group-hover:text-primary/50 transition-colors mt-1 shrink-0">open_in_new</span>
-            </button>
-            {showDots && (
-              <div className="flex items-start gap-3 mb-0">
-                <div className="flex flex-col items-center shrink-0 w-2.5">
-                  <div className="flex flex-col gap-[3px] py-0.5">
-                    {[0,1,2].map(d => <div key={d} className="w-[3px] h-[3px] rounded-full bg-outline-variant/25" />)}
-                  </div>
-                  <div className="w-px bg-outline-variant/20 flex-1 min-h-[8px]" />
-                </div>
-                <p className="text-xs text-on-surface/20 pb-2">{hiddenCount} more levels</p>
-              </div>
-            )}
-          </React.Fragment>
-        );
-      })}
-
-      {/* Current node */}
-      <div className="flex items-start gap-3">
-        <div className="flex flex-col items-center shrink-0 pt-0.5">
-          <div className="w-3.5 h-3.5 rounded-full bg-primary shadow-md shadow-primary/40 flex items-center justify-center shrink-0">
-            <div className="w-1.5 h-1.5 bg-on-primary rounded-full" />
+          <div className="flex-1 min-w-0">
+            <p className="text-[13px] text-on-surface/60 truncate leading-snug">{parent.title}</p>
+            <p className="text-[11px] text-on-surface/35 truncate">by {parent.author_name}</p>
           </div>
-          {children.length > 0 && <div className="w-px bg-primary/25 mt-1 flex-1 min-h-[24px]" />}
-        </div>
-        <div className={`min-w-0 ${children.length > 0 ? 'pb-3' : ''}`}>
-          <p className="text-sm font-semibold text-on-surface truncate leading-snug">{currentTitle}</p>
-          <p className="text-xs text-primary/60 mt-0.5">by {currentAuthor} · viewing now</p>
+          <span className="material-symbols-outlined text-[13px] text-on-surface/20 mt-1 shrink-0">open_in_new</span>
+        </button>
+        <p className="text-[10px] text-on-surface/25 px-2 py-0.5">↓ 第 1 代</p>
+        <div className="bg-primary/7 border border-primary/14 rounded-xl p-3 mt-1">
+          <p className="text-sm font-bold text-on-surface truncate">{currentTitle}</p>
+          <div className="flex items-center gap-1.5 mt-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+            <p className="text-[11px] text-primary truncate">@{currentAuthor} · 正在觀看</p>
+          </div>
         </div>
       </div>
+    );
+  }
 
-      {/* Children */}
-      {children.length > 0 && (
-        <div className="ml-[5px] border-l border-outline-variant/15 pl-4 mt-0">
-          <p className="text-[11px] text-on-surface/25 uppercase tracking-widest py-2">
-            {children.length} fork{children.length !== 1 ? 's' : ''}
-          </p>
-          {children.map(child => (
-            <button
-              key={child.id}
-              onClick={() => onNavigate(child.id)}
-              className="flex items-center gap-2.5 w-full text-left group py-2 px-2 -mx-2 cursor-pointer hover:bg-surface-container-high/60 rounded-lg transition-colors"
-            >
-              <div className="w-2 h-2 rounded-full border border-outline-variant/30 bg-surface-container-highest group-hover:border-primary/40 transition-colors shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-on-surface/55 group-hover:text-on-surface/90 transition-colors truncate">{child.title}</p>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <p className="text-xs text-on-surface/30 truncate">by {child.author_name}</p>
-                  {Number(child.remix_count) > 0 && (
-                    <span className="flex items-center gap-0.5 text-xs text-on-surface/20">
-                      <span className="material-symbols-outlined text-[10px]">repeat</span>
-                      {child.remix_count}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <span className="material-symbols-outlined text-[14px] text-on-surface/15 group-hover:text-primary/50 transition-colors shrink-0">chevron_right</span>
-            </button>
-          ))}
+  // depth > 1
+  return (
+    <div>
+      <p className="text-[10px] text-on-surface/35 italic mb-2">remix 自</p>
+      <button
+        onClick={() => onNavigate(parent.id)}
+        className="w-full flex items-start gap-2 p-2 -mx-0 rounded-lg hover:bg-surface-container-high/60 transition-colors cursor-pointer text-left mb-1"
+      >
+        <div className="w-6 h-6 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden shrink-0 ring-1 ring-outline-variant/20 mt-0.5">
+          {parent.author_avatar
+            ? <img src={parent.author_avatar} alt="" className="w-full h-full object-cover" />
+            : <span className="text-[9px] font-bold text-on-surface/50">{parent.title?.[0]?.toUpperCase()}</span>
+          }
         </div>
-      )}
+        <div className="flex-1 min-w-0">
+          <p className="text-[13px] text-on-surface/60 truncate leading-snug">{parent.title}</p>
+          <p className="text-[11px] text-on-surface/35 truncate">by {parent.author_name}</p>
+        </div>
+        <span className="material-symbols-outlined text-[13px] text-on-surface/20 mt-1 shrink-0">open_in_new</span>
+      </button>
+      <p className="text-[10px] text-on-surface/25 px-2 py-0.5">↓ 第 {depth} 代，距起源 {depth} 層</p>
+      <div className="bg-primary/7 border border-primary/14 rounded-xl p-3 mt-1">
+        <p className="text-sm font-bold text-on-surface truncate">{currentTitle}</p>
+        <div className="flex items-center gap-1.5 mt-1">
+          <div className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+          <p className="text-[11px] text-primary truncate">@{currentAuthor} · 正在觀看</p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-      {children.length === 0 && (
-        <div className="pt-3 pl-7">
-          <p className="text-xs text-on-surface/20">No forks yet</p>
-          <p className="text-xs text-on-surface/15 mt-0.5">Be the first to remix</p>
-        </div>
-      )}
+// ── RemixList ──────────────────────────────────────────────────────
+interface RemixListProps {
+  children: VibeChild[];
+  onNavigate: (id: number) => void;
+}
+
+function RemixList({ children, onNavigate }: RemixListProps) {
+  if (children.length === 0) {
+    return (
+      <div className="py-4 text-center">
+        <p className="text-xs text-on-surface/25">還沒有 Remix</p>
+        <p className="text-[11px] text-on-surface/15 mt-0.5">成為第一個 Remix 的人</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-0.5">
+      {children.map(child => {
+        const initial = child.title?.[0]?.toUpperCase() ?? '?';
+        return (
+          <button
+            key={child.id}
+            onClick={() => onNavigate(child.id)}
+            className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-surface-container-high/60 transition-colors cursor-pointer text-left"
+          >
+            <div className="w-7 h-7 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden shrink-0 ring-1 ring-outline-variant/20">
+              {child.author_avatar
+                ? <img src={child.author_avatar} alt="" className="w-full h-full object-cover" />
+                : <span className="text-[10px] font-bold text-on-surface/50">{initial}</span>
+              }
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] text-on-surface/70 truncate leading-snug">{child.title}</p>
+              <p className="text-[11px] text-on-surface/35 truncate">by {child.author_name}</p>
+            </div>
+            {Number(child.remix_count) > 0 && (
+              <span className="flex items-center gap-0.5 text-[10px] text-on-surface/30 bg-surface-container-highest px-1.5 py-0.5 rounded-full shrink-0">
+                <span className="material-symbols-outlined text-[10px]">repeat</span>
+                {child.remix_count}
+              </span>
+            )}
+            <span className="material-symbols-outlined text-[14px] text-on-surface/20 shrink-0">chevron_right</span>
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -175,7 +214,6 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
   const [chatSortOrder, setChatSortOrder] = useState<'newest' | 'oldest'>('oldest');
   const [showChatSortDropdown, setShowChatSortDropdown] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [sidebarTab, setSidebarTab] = useState<'remix' | 'versions'>('remix');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const [iframeVisible, setIframeVisible] = useState(true);
@@ -184,6 +222,11 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
   const [likeCount, setLikeCount] = useState(0);
   const [liked, setLiked] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
+
+  // Lineage state (lifted from RemixTree)
+  const [ancestors, setAncestors] = useState<VibeAncestor[]>([]);
+  const [vibeChildren, setVibeChildren] = useState<VibeChild[]>([]);
+  const [lineageLoading, setLineageLoading] = useState(true);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -216,6 +259,20 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!vibe) return;
+    setLineageLoading(true);
+    Promise.all([
+      api.getVibeAncestry(vibe.id),
+      api.getVibeChildren(vibe.id),
+    ]).then(([anc, chi]) => {
+      setAncestors(anc);
+      setVibeChildren(chi);
+    }).finally(() => setLineageLoading(false));
+  }, [vibe?.id]);
+
+  const ancestorChain = ancestors.slice(0, -1); // remove last (current)
 
   const handleAddComment = async () => {
     if (!commentText.trim() || !selectedVersion || !currentUser || !vibe) return;
@@ -299,9 +356,8 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
 
   // ── Panel header style tokens ──────────────────────────────────
   const panelHeaderCls = "h-11 flex items-center shrink-0 border-b border-outline-variant/10 px-3 gap-2 bg-surface-container-low";
-  const tabActiveCls = "border-b-2 border-primary text-primary";
-  const tabInactiveCls = "text-on-surface/35 hover:text-on-surface/65";
-  const tabBaseCls = "flex items-center gap-1.5 h-full px-3 text-[10px] font-sans font-semibold uppercase tracking-wider transition-colors cursor-pointer";
+
+  const sectionHeaderCls = "bg-surface-container/60 border-b border-outline-variant/12 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-on-surface/50";
 
   if (loading) return (
     <div className="md:ml-16 h-screen flex items-center justify-center bg-surface text-on-surface/35 text-sm">
@@ -327,6 +383,11 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
   if (!vibe) return null;
   const isOwner = vibe.user_role === 'owner';
 
+  const handleNavigate = (nid: number) => {
+    navigate(`/vibe/${nid}`);
+    setMobileSidebarOpen(false);
+  };
+
   return (
     <div className="md:ml-16 h-screen flex overflow-hidden bg-surface">
 
@@ -347,15 +408,35 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
       {mobileSidebarOpen && (
         <>
           <div className="fixed inset-0 z-30 bg-black/50 lg:hidden" onClick={() => setMobileSidebarOpen(false)} />
-          <div className="fixed right-0 top-0 bottom-0 z-40 w-[280px] bg-surface-container-low flex flex-col lg:hidden">
-            <div className={panelHeaderCls}>
-              <span className="flex-1 text-[11px] font-sans font-semibold text-on-surface/50 uppercase tracking-wider">Remix Tree</span>
+          <div className="fixed right-0 top-0 bottom-0 z-40 w-[280px] bg-surface-container-low flex flex-col lg:hidden overflow-y-auto">
+            <div className={`${panelHeaderCls} sticky top-0 z-10`}>
+              <span className="flex-1 text-[11px] font-sans font-semibold text-on-surface/50 uppercase tracking-wider">Remix 資訊</span>
               <button onClick={() => setMobileSidebarOpen(false)} className="w-7 h-7 flex items-center justify-center text-on-surface/40 hover:text-on-surface cursor-pointer rounded">
                 <span className="material-symbols-outlined text-[17px]">close</span>
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4">
-              <RemixTree vibeId={vibe.id} currentTitle={vibe.title} currentAuthor={vibe.author_name} onNavigate={(nid) => { navigate(`/vibe/${nid}`); setMobileSidebarOpen(false); }} />
+            <div className="p-4 space-y-4">
+              {ancestorChain.length > 0 && (
+                <OriginCard ancestorChain={ancestorChain} onNavigate={handleNavigate} />
+              )}
+              <div>
+                <p className={sectionHeaderCls + ' -mx-4 px-4 mb-3'}>Remix 路徑</p>
+                <EditorialLineage
+                  ancestorChain={ancestorChain}
+                  currentTitle={vibe.title}
+                  currentAuthor={vibe.author_name}
+                  onNavigate={handleNavigate}
+                />
+              </div>
+              <div>
+                <p className={sectionHeaderCls + ' -mx-4 px-4 mb-3'}>
+                  所有 Remixes ({vibeChildren.length})
+                </p>
+                {lineageLoading
+                  ? <div className="flex justify-center py-6"><div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" /></div>
+                  : <RemixList children={vibeChildren} onNavigate={handleNavigate} />
+                }
+              </div>
             </div>
           </div>
         </>
@@ -433,7 +514,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
 
         {/* Scrollable body: player + info + comments (YouTube-style stack) */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden">
-          {/* Player — height capped so info/comments are visible without scrolling */}
+          {/* Player */}
           <div className="bg-black relative group w-full" style={{ height: 'min(56.25vw, calc(100vh - 44px - 300px))' }}>
             <iframe
               srcDoc={selectedVersion?.code}
@@ -450,9 +531,8 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
             </button>
           </div>
 
-          {/* Info card (YT-style description block) */}
+          {/* Info card */}
           <div className="px-5 pt-4 pb-3 border-b border-outline-variant/10">
-            {/* Stats row */}
             <div className="flex items-center gap-4 flex-wrap mb-2.5">
               <span className="flex items-center gap-1 text-xs text-on-surface/45">
                 <span className="material-symbols-outlined text-[13px]">visibility</span>{vibe.views} views
@@ -469,7 +549,6 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                 <span className="material-symbols-outlined text-[13px]">layers</span>V{selectedVersion?.version_number}
               </span>
             </div>
-            {/* Tags */}
             {parsedTags.length > 0 && (
               <div className="flex items-center gap-1.5 flex-wrap mb-2.5">
                 {parsedTags.map((tag, i) => (
@@ -479,7 +558,6 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                 ))}
               </div>
             )}
-            {/* Description */}
             {vibe.description ? (
               <p className="text-[13px] text-on-surface/70 leading-relaxed whitespace-pre-wrap">{vibe.description}</p>
             ) : (
@@ -517,30 +595,30 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
               </div>
             </div>
 
-            {/* Comment input (YT-style: avatar + underline input) */}
+            {/* Comment input — moved to top */}
             {currentUser ? (
-              <div className="flex items-start gap-3 mb-6 pb-3 border-b border-outline-variant/10">
-                <img src={currentUser.avatar} className="w-8 h-8 rounded-full shrink-0 border border-outline-variant/10" alt="" />
-                <div className="flex-1 flex items-center gap-2">
+              <div className="flex gap-2 items-center pb-3 mb-3 border-b border-outline-variant/10">
+                <img src={currentUser.avatar} className="w-7 h-7 rounded-full shrink-0" alt="" />
+                <div className="flex-1 bg-surface-container-high border border-outline-variant/20 rounded-xl px-3 py-1.5 flex items-center gap-2">
                   <input
                     type="text"
                     value={commentText}
                     onChange={e => setCommentText(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddComment(); } }}
-                    placeholder="Add a comment…"
-                    className="flex-1 bg-transparent border-b border-outline-variant/20 focus:border-primary/60 px-0 py-1.5 text-sm text-on-surface placeholder:text-on-surface/30 outline-none transition-colors"
+                    placeholder="留言這個 Vibe…"
+                    className="flex-1 bg-transparent text-sm text-on-surface placeholder:text-on-surface/30 outline-none"
                   />
                   {commentText.trim() && (
-                    <button onClick={handleAddComment} className="px-3 py-1.5 bg-primary text-on-primary text-xs font-semibold rounded-full cursor-pointer hover:bg-primary/90 transition-colors shrink-0">
-                      Comment
+                    <button onClick={handleAddComment} className="px-2.5 py-1 bg-primary text-on-primary text-xs font-semibold rounded-lg cursor-pointer hover:bg-primary/90 transition-colors shrink-0">
+                      送出
                     </button>
                   )}
                 </div>
               </div>
             ) : (
-              <button onClick={() => setShowAuthModal(true)} className="w-full flex items-center justify-center gap-2 px-3 py-3 mb-6 bg-surface-container-high/60 border border-outline-variant/15 rounded-xl text-on-surface/55 text-sm cursor-pointer hover:bg-surface-container-high transition-colors">
+              <button onClick={() => setShowAuthModal(true)} className="w-full flex items-center justify-center gap-2 px-3 py-3 mb-4 bg-surface-container-high/60 border border-outline-variant/15 rounded-xl text-on-surface/55 text-sm cursor-pointer hover:bg-surface-container-high transition-colors">
                 <span className="material-symbols-outlined text-[15px]">login</span>
-                Sign in to comment
+                登入後留言
               </button>
             )}
 
@@ -575,69 +653,162 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
       </div>
 
       {/* ── Right sidebar ──────────────────────────────────────── */}
-      <div className="hidden lg:flex flex-col w-[272px] xl:w-[300px] shrink-0 border-l border-outline-variant/10">
+      <div className="hidden lg:flex flex-col w-[272px] xl:w-[300px] shrink-0 border-l border-outline-variant/10 overflow-y-auto">
 
-        {/* Right header */}
-        <div className={`${panelHeaderCls} justify-between`}>
-          <button onClick={() => setSidebarTab('remix')} className={`${tabBaseCls} ${sidebarTab === 'remix' ? tabActiveCls : tabInactiveCls}`}>
-            <span className="material-symbols-outlined text-[12px]">account_tree</span>
-            Remix Tree
-          </button>
-          <button onClick={() => setSidebarTab('versions')} className={`${tabBaseCls} ${sidebarTab === 'versions' ? tabActiveCls : tabInactiveCls}`}>
-            <span className="material-symbols-outlined text-[12px]">history</span>
-            Versions
-          </button>
+        {/* OriginCard section */}
+        {ancestorChain.length > 0 && (
+          <div className="p-3 border-b border-outline-variant/15">
+            <OriginCard ancestorChain={ancestorChain} onNavigate={nid => navigate(`/vibe/${nid}`)} />
+          </div>
+        )}
+
+        {/* Author section */}
+        <div className="border-b border-outline-variant/15">
+          <div className={sectionHeaderCls}>作者</div>
+          <div
+            className="flex items-center gap-3 px-3 py-3 cursor-pointer hover:bg-surface-container-high/40 transition-colors"
+            onClick={() => navigate(`/@${encodeURIComponent(vibe.author_name)}`)}
+          >
+            <div className="w-9 h-9 rounded-full bg-primary-container flex items-center justify-center overflow-hidden ring-1 ring-black/[0.06] shrink-0">
+              {vibe.author_avatar
+                ? <img src={vibe.author_avatar} alt="" className="w-full h-full object-cover" />
+                : <span className="text-sm font-bold text-on-primary-container">{vibe.title[0]}</span>
+              }
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-on-surface truncate">@{vibe.author_name}</p>
+              <p className="text-[11px] text-on-surface/40">{timeAgo(vibe.created_at)}</p>
+            </div>
+          </div>
         </div>
 
-        {/* Right content */}
-        <div className="flex-1 overflow-y-auto">
-          {sidebarTab === 'remix' && (
-            <div className="p-4">
-              <RemixTree
-                vibeId={vibe.id}
-                currentTitle={vibe.title}
-                currentAuthor={vibe.author_name}
-                onNavigate={nid => navigate(`/vibe/${nid}`)}
-              />
+        {/* Actions + Stats section */}
+        <div className="border-b border-outline-variant/15">
+          <div className={sectionHeaderCls}>動作 &amp; 統計</div>
+          <div className="px-3 py-3 space-y-3">
+            {/* Action buttons */}
+            <div className="flex gap-2">
+              <button
+                onClick={handleRemix}
+                className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-primary hover:bg-primary/90 text-on-primary text-xs font-semibold rounded-lg shadow-sm shadow-primary/20 transition-all cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[13px]">repeat</span>
+                Remix
+              </button>
+              <button
+                onClick={handleToggleLike}
+                disabled={isLiking}
+                className={`flex items-center gap-1 px-3 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                  liked ? 'bg-pink-500/12 text-pink-400 ring-1 ring-pink-500/25 hover:bg-pink-500/18' : 'bg-surface-container-high hover:bg-surface-container-highest text-on-surface/55 ring-1 ring-black/[0.07]'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: liked ? "'FILL' 1" : "'FILL' 0" }}>favorite</span>
+                {likeCount > 0 ? likeCount : 'Like'}
+              </button>
+              {isOwner && (
+                <button
+                  onClick={() => {
+                    const slot = { id: `vibe-${vibe.id}`, title: vibe.title, tags: vibe.tags || '', editorMode: 'single', code: { html: selectedVersion?.code || '', css: '', js: '' }, savedAt: new Date().toISOString() };
+                    sessionStorage.setItem('beaverkit_pending_load', JSON.stringify(slot));
+                    navigate('/workspace');
+                  }}
+                  className="flex items-center gap-1 px-3 py-2 bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-xs font-semibold rounded-lg ring-1 ring-black/[0.07] transition-colors cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[13px]">edit</span>
+                  Edit
+                </button>
+              )}
             </div>
-          )}
+            {/* Stats grid */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-surface-container-high/60 rounded-lg px-2.5 py-2 border-l-2 border-l-on-surface/20">
+                <p className="text-[10px] text-on-surface/35 uppercase tracking-wider">Views</p>
+                <p className="text-sm font-bold text-on-surface mt-0.5">{vibe.views ?? 0}</p>
+              </div>
+              <div className="bg-surface-container-high/60 rounded-lg px-2.5 py-2 border-l-2 border-l-tertiary/60">
+                <p className="text-[10px] text-on-surface/35 uppercase tracking-wider">Remixes</p>
+                <p className="text-sm font-bold text-on-surface mt-0.5">{remixCount}</p>
+              </div>
+              <div className="bg-surface-container-high/60 rounded-lg px-2.5 py-2 border-l-2 border-l-pink-400/60">
+                <p className="text-[10px] text-on-surface/35 uppercase tracking-wider">Likes</p>
+                <p className="text-sm font-bold text-on-surface mt-0.5">{likeCount}</p>
+              </div>
+              <div className="bg-surface-container-high/60 rounded-lg px-2.5 py-2 border-l-2 border-l-primary/60">
+                <p className="text-[10px] text-on-surface/35 uppercase tracking-wider">Version</p>
+                <p className="text-sm font-bold text-on-surface mt-0.5">V{selectedVersion?.version_number ?? 1}</p>
+              </div>
+            </div>
+          </div>
+        </div>
 
-          {sidebarTab === 'versions' && (
-            <div className="p-3 space-y-1">
-              <p className="text-[10px] font-sans text-on-surface/25 uppercase tracking-widest px-2 py-2">
-                {vibe.versions?.length ?? 0} versions
-              </p>
-              {vibe.versions?.map(version => {
-                const isSel = selectedVersion?.id === version.id;
-                const sz = version.code ? formatBytes(version.code.length) : null;
-                return (
-                  <div
-                    key={version.id}
-                    onClick={() => handleSelectVersion(version)}
-                    className={`p-3 rounded-xl cursor-pointer transition-all ${isSel ? 'bg-primary/10 ring-1 ring-primary/20' : 'hover:bg-surface-container-high/60'}`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full shrink-0 ${isSel ? 'bg-primary shadow-sm shadow-primary/40' : 'bg-outline-variant/35'}`} />
-                        <span className="text-xs font-semibold text-on-surface">V{version.version_number}</span>
-                        {isSel && <span className="text-[9px] px-1.5 py-0.5 rounded border border-primary/30 text-primary bg-primary/8 uppercase tracking-widest">Now</span>}
-                      </div>
-                      <span className="text-[10px] text-on-surface/25">{new Date(version.created_at).toLocaleDateString()}</span>
+        {/* Lineage section */}
+        <div className="border-b border-outline-variant/15">
+          <div className={sectionHeaderCls}>Remix 路徑</div>
+          <div className="px-3 py-3">
+            {lineageLoading
+              ? <div className="flex justify-center py-6"><div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" /></div>
+              : <EditorialLineage
+                  ancestorChain={ancestorChain}
+                  currentTitle={vibe.title}
+                  currentAuthor={vibe.author_name}
+                  onNavigate={nid => navigate(`/vibe/${nid}`)}
+                />
+            }
+          </div>
+        </div>
+
+        {/* Remixes section */}
+        <div className="border-b border-outline-variant/15">
+          <div className={sectionHeaderCls}>所有 Remixes ({vibeChildren.length})</div>
+          <div className="px-3 py-2">
+            {lineageLoading
+              ? <div className="flex justify-center py-6"><div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" /></div>
+              : <RemixList children={vibeChildren} onNavigate={nid => navigate(`/vibe/${nid}`)} />
+            }
+          </div>
+        </div>
+
+        {/* History section */}
+        <div>
+          <div className={sectionHeaderCls}>版本歷史</div>
+          <p className="text-[11px] text-on-surface/30 px-3 pt-2 pb-0 italic">
+            每次儲存都是一個快照，點選任意版本來預覽。
+          </p>
+          <div className="p-3 space-y-1">
+            {(!vibe.versions?.length) && <p className="text-xs text-on-surface/20 text-center py-6">No versions</p>}
+            {vibe.versions?.map((version, idx) => {
+              const isSel = selectedVersion?.id === version.id;
+              const sz = version.code ? formatBytes(version.code.length) : null;
+              const isLatest = idx === 0;
+              const isOriginal = idx === (vibe.versions!.length - 1);
+              return (
+                <div
+                  key={version.id}
+                  onClick={() => handleSelectVersion(version)}
+                  className={`p-3 rounded-xl cursor-pointer transition-all ${isSel ? 'bg-primary/10 ring-1 ring-primary/20' : 'hover:bg-surface-container-high/60'}`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <div className={`w-2 h-2 rounded-full shrink-0 ${isSel ? 'bg-primary shadow-sm shadow-primary/40' : 'bg-outline-variant/35'}`} />
+                      <span className="text-xs font-semibold text-on-surface">V{version.version_number}</span>
+                      {isSel && <span className="text-[9px] px-1.5 py-0.5 rounded border border-primary/30 text-primary bg-primary/8 uppercase tracking-widest">Now</span>}
+                      {isLatest && !isSel && <span className="text-[9px] px-1.5 py-0.5 rounded border border-emerald-500/30 text-emerald-400 bg-emerald-500/8 uppercase tracking-widest">Latest</span>}
+                      {isOriginal && vibe.versions!.length > 1 && <span className="text-[9px] px-1.5 py-0.5 rounded border border-emerald-500/25 text-emerald-400/80 bg-emerald-500/6 uppercase tracking-widest">Original</span>}
                     </div>
-                    <p className="text-[11px] text-on-surface/40 line-clamp-2 leading-relaxed">
-                      {version.update_log || 'System update.'}
-                    </p>
-                    <div className="flex items-center gap-1.5 mt-1.5 text-[10px] text-on-surface/25">
-                      {version.author_avatar && <img src={version.author_avatar} className="w-3 h-3 rounded-full" alt="" />}
-                      <span>{version.author_name || vibe.author_name}</span>
-                      {sz && <span>· {sz}</span>}
-                    </div>
+                    <span className="text-[10px] text-on-surface/25">{new Date(version.created_at).toLocaleDateString()}</span>
                   </div>
-                );
-              })}
-              {(!vibe.versions?.length) && <p className="text-xs text-on-surface/20 text-center py-6">No versions</p>}
-            </div>
-          )}
+                  <p className="text-[11px] text-on-surface/40 line-clamp-2 leading-relaxed">
+                    {version.update_log || 'System update.'}
+                  </p>
+                  <div className="flex items-center gap-1.5 mt-1.5 text-[10px] text-on-surface/25">
+                    {version.author_avatar && <img src={version.author_avatar} className="w-3 h-3 rounded-full" alt="" />}
+                    <span>{version.author_name || vibe.author_name}</span>
+                    {sz && <span>· {sz}</span>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
 
