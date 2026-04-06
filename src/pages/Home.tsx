@@ -40,9 +40,9 @@ export default function Home() {
   }
 
   return (
-    <main className="md:ml-16 pt-16 min-h-screen bg-surface">
+    <main className="md:ml-16 pt-16 min-h-screen bg-surface flex flex-col">
       {/* Hero Section */}
-      <div className="px-6 pt-8 pb-4">
+      <div className="px-6 pt-8 pb-4 flex-1">
         <div className="flex flex-col sm:flex-row sm:items-end sm:gap-8">
           <div className="flex-[3]">
             <h1

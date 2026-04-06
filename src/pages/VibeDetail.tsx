@@ -667,7 +667,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
       <div className="hidden lg:flex flex-col w-[20%] min-w-[240px] max-w-[320px] shrink-0 overflow-y-auto gap-[10px] bg-black">
 
         {/* Card 1: Author + Actions */}
-        <div className="bg-surface rounded-xl">
+        <div className="bg-surface rounded-xl border border-outline-variant/20">
           {/* Author */}
           <div
             className="flex items-center gap-3 px-4 pt-4 pb-3 cursor-pointer hover:bg-surface-container-high/30 transition-colors"
@@ -719,7 +719,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
         </div>
 
         {/* Card 2: Stats */}
-        <div className="bg-surface rounded-xl px-4 py-3">
+        <div className="bg-surface rounded-xl border border-outline-variant/20 px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1.5">
@@ -742,7 +742,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
         </div>
 
         {/* Card 3: Remix 路徑 */}
-        <div className="bg-surface rounded-xl">
+        <div className="bg-surface rounded-xl border border-outline-variant/20">
           <div className="flex items-center justify-between px-4 pt-3 pb-2">
             <span className="text-[11px] font-bold uppercase tracking-wider text-on-surface/50">Remix 路徑</span>
           </div>
@@ -754,7 +754,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
         </div>
 
         {/* Card 4: All Remixes */}
-        <div className="bg-surface rounded-xl">
+        <div className="bg-surface rounded-xl border border-outline-variant/20">
           <div className="flex items-center justify-between px-4 pt-3 pb-2">
             <span className="text-[11px] font-bold uppercase tracking-wider text-on-surface/50">所有 Remixes</span>
             {vibeChildren.length > 0 && <span className="text-[10px] text-on-surface/30 bg-surface-container-high px-2 py-0.5 rounded-full">{vibeChildren.length}</span>}

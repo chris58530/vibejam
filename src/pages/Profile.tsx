@@ -118,14 +118,14 @@ export default function Profile() {
   const likesCount = userProfile?.likes_count || 0;
 
   return (
-    <main className="md:ml-16 pt-[64px] min-h-screen bg-surface">
+    <main className="md:ml-16 pt-[64px] min-h-screen bg-surface flex flex-col">
       {/* Banner */}
-      <div className="w-full h-32 md:h-56 bg-surface-container border-b border-outline-variant/10 relative overflow-hidden flex items-center justify-center editor-well">
+      <div className="w-full h-32 md:h-56 bg-surface-container border-b border-outline-variant/10 relative overflow-hidden flex items-center justify-center editor-well shrink-0">
         <div className="absolute inset-0 bg-gradient-to-t from-surface to-transparent" />
         <span className="material-symbols-outlined absolute text-[200px] text-surface-container-high/20 opacity-50 font-bold -bottom-10 right-10 z-0 select-none">terminal</span>
       </div>
 
-      <div className="max-w-[70rem] mx-auto px-6 lg:px-12 relative z-10 w-full mb-12">
+      <div className="max-w-[70rem] mx-auto px-6 lg:px-12 relative z-10 w-full mb-12 flex-1">
         {/* Profile Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -320,8 +320,9 @@ export default function Profile() {
 
 
         {/* Footer */}
-        <Footer />
       </div>
+
+      <Footer />
 
       {/* 刪除確認對話框 */}
       {deleteConfirm !== null && (
