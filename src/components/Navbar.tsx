@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase, signOut } from '../lib/supabase';
 import AuthModal, { AuthView } from './AuthModal';
 import { useI18n, Language } from '../lib/i18n';
-import ThemeSwitcher from './ThemeSwitcher';
 import { useWorkspaceStore } from '../lib/workspaceStore';
 
 interface NavbarProps {
@@ -124,9 +123,6 @@ export default function Navbar({}: NavbarProps) {
               <button onClick={() => navigate('/settings')} className="material-symbols-outlined text-on-surface/60 hover:text-on-background transition-colors p-2 rounded-lg" title={t('nav_settings')}>settings</button>
             </>
           ) : null}
-
-          {/* Light / Dark Mode Toggle */}
-          <ThemeSwitcher />
 
           {/* Language Switcher */}
           <div className="relative" ref={langMenuRef}>
