@@ -88,7 +88,7 @@ export default function Navbar({}: NavbarProps) {
           )}
 
           {!isWorkspace && (
-            <div className="hidden md:flex items-center bg-surface-container-low px-4 py-2 rounded-full gap-3 w-96 group transition-all duration-300 ring-1 ring-black/[0.06] focus-within:ring-primary/30">
+            <div className="hidden md:flex items-center bg-surface-container-low px-4 py-2 rounded-full gap-3 w-48 lg:w-72 xl:w-96 group transition-all duration-300 ring-1 ring-black/[0.06] focus-within:ring-primary/30">
               <span className="material-symbols-outlined text-on-surface-variant text-sm">search</span>
               <input
                 className="bg-transparent border-none focus:ring-0 text-sm w-full font-body placeholder:text-on-surface-variant/50 outline-none"
