@@ -72,7 +72,7 @@ function TrendingCarousel({ vibes, onSelect }: { vibes: Vibe[]; onSelect: (v: Vi
       {/* Scroll container */}
       <div
         ref={scrollRef}
-        className="flex gap-3 overflow-x-auto pb-2"
+        className="flex gap-3 overflow-x-auto pb-2 pr-4"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {vibes.map((vibe) => {
@@ -220,7 +220,7 @@ export default function Home() {
       </div>
 
       {/* ── Card Grid ── */}
-      <div className="px-4 py-3 flex-1">
+      <div className="px-4 pr-5 py-3 flex-1 overflow-x-hidden">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {loading
             ? Array.from({ length: 8 }).map((_, i) => (
