@@ -179,7 +179,6 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
   const [helpOpen, setHelpOpen] = useState(false);
   const navItems = [
     { key: 'home', label: t('sidebar_home'), icon: 'home', path: '/' },
-    { key: 'trending', label: t('sidebar_trending'), icon: 'trending_up', path: '/?feed=trending' },
     { key: 'following', label: t('sidebar_following'), icon: 'subscriptions', path: '/?feed=following' },
     { key: 'workspace', label: t('sidebar_workspace'), icon: 'terminal', path: '/workspace' },
     { key: 'settings', label: t('sidebar_settings'), icon: 'settings', path: '/settings' },

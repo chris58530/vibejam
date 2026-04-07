@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase, signOut } from '../lib/supabase';
 import AuthModal, { AuthView } from './AuthModal';
 import { useI18n, Language } from '../lib/i18n';
-import ThemeSwitcher from './ThemeSwitcher';
 import { useWorkspaceStore } from '../lib/workspaceStore';
 
 interface NavbarProps {
@@ -121,22 +120,9 @@ export default function Navbar({}: NavbarProps) {
                 {saveStatus === 'unsaved' ? '未儲存' : saveStatus === 'saving' ? '儲存中...' : '已儲存'}
               </div>
               <div className="h-6 w-px bg-outline-variant/20 mx-2"></div>
-              <button className="material-symbols-outlined text-on-surface/30 p-2 rounded-lg cursor-not-allowed" title={t('nav_coming_soon')}>notifications</button>
               <button onClick={() => navigate('/settings')} className="material-symbols-outlined text-on-surface/60 hover:text-on-background transition-colors p-2 rounded-lg" title={t('nav_settings')}>settings</button>
             </>
-          ) : (
-            <div className="flex items-center gap-1 hidden sm:flex">
-              <button className="p-2 rounded-lg text-on-surface/30 cursor-not-allowed" title={t('nav_coming_soon')}>
-                <span className="material-symbols-outlined">notifications</span>
-              </button>
-<button className="p-2 rounded-lg text-on-surface/60 hover:bg-surface-container-high transition-colors duration-200">
-                <span className="material-symbols-outlined">apps</span>
-              </button>
-            </div>
-          )}
-
-          {/* Theme Switcher */}
-          <ThemeSwitcher />
+          ) : null}
 
           {/* Language Switcher */}
           <div className="relative" ref={langMenuRef}>
