@@ -159,7 +159,7 @@ export default function Home() {
   const maxViews = filteredVibes.reduce((max, v) => Math.max(max, v.views), 1);
 
   return (
-    <main className="md:ml-56 min-h-screen bg-surface flex flex-col">
+    <main className="min-h-screen bg-surface flex flex-col">
 
       {/* ── Trending Carousel ── */}
       <TrendingCarousel vibes={trendingVibes} onSelect={handleSelectVibe} />
