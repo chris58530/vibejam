@@ -151,7 +151,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-64px)] overflow-hidden justify-center bg-background">
+    <div className="md:ml-16 flex h-[calc(100vh-64px)] overflow-hidden justify-center bg-background">
       <div className="flex w-full max-w-[1600px] gap-4 md:gap-6 p-4 md:p-6 overflow-hidden">
 
         {/* ══ 左欄：AI Chat ══════════════════════════════════════════════ */}
