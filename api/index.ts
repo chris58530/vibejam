@@ -23,7 +23,7 @@ async function ensureDb() {
 // Access control helper
 async function checkVibeAccess(vibeId: number | string, supabaseId: string | null): Promise<{ allowed: boolean; role: 'owner' | 'collaborator' | 'viewer' | 'none'; vibe: any }> {
   const vibe = await db.get(`
-    SELECT v.*, u.supabase_id as owner_supabase_id
+    SELECT v.*, u.supabase_id as owner_supabase_id, u.username as author_name, u.avatar as author_avatar
     FROM vibes v JOIN users u ON v.author_id = u.id WHERE v.id = $1
   `, [vibeId]);
   if (!vibe) return { allowed: false, role: 'none', vibe: null };

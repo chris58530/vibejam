@@ -19,7 +19,7 @@ async function startServer() {
   // Access control helper
   async function checkVibeAccess(vibeId: number | string, supabaseId: string | null): Promise<{ allowed: boolean; role: 'owner' | 'collaborator' | 'viewer' | 'none'; vibe: any }> {
     const vibe = await db.get(`
-      SELECT v.*, u.supabase_id as owner_supabase_id
+      SELECT v.*, u.supabase_id as owner_supabase_id, u.username as author_name, u.avatar as author_avatar
       FROM vibes v JOIN users u ON v.author_id = u.id WHERE v.id = $1
     `, [vibeId]);
     if (!vibe) return { allowed: false, role: 'none', vibe: null };
@@ -61,6 +61,27 @@ async function startServer() {
           );
         }
       }
+      res.json(user);
+    } catch (err: any) { res.status(500).json({ error: err.message }); }
+  });
+
+  // Get user profile
+  app.get('/api/users/:username', async (req, res) => {
+    const username = decodeURIComponent(req.params.username);
+    try {
+      const user = await db.get('SELECT * FROM users WHERE username = $1', [username]);
+      if (!user) return res.status(404).json({ error: 'User not found' });
+      res.json(user);
+    } catch (err: any) { res.status(500).json({ error: err.message }); }
+  });
+
+  // Update user profile
+  app.put('/api/users/:username', async (req, res) => {
+    const username = decodeURIComponent(req.params.username);
+    const { motto } = req.body;
+    try {
+      const user = await db.get('UPDATE users SET motto = $1 WHERE username = $2 RETURNING *', [motto, username]);
+      if (!user) return res.status(404).json({ error: 'User not found' });
       res.json(user);
     } catch (err: any) { res.status(500).json({ error: err.message }); }
   });

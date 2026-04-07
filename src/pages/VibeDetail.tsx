@@ -430,7 +430,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                 <div className="w-9 h-9 rounded-full bg-primary-container flex items-center justify-center overflow-hidden ring-1 ring-black/[0.06] shrink-0">
                   {vibe.author_avatar
                     ? <img src={vibe.author_avatar} alt="" className="w-full h-full object-cover" />
-                    : <span className="text-sm font-bold text-on-primary-container">{vibe.title[0]}</span>}
+                    : <span className="text-sm font-bold text-on-primary-container">{vibe.author_name?.[0]?.toUpperCase() ?? vibe.title[0]}</span>}
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-on-surface truncate">@{vibe.author_name}</p>
@@ -680,7 +680,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                 <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center overflow-hidden ring-2 ring-primary/20 shrink-0">
                   {vibe.author_avatar
                     ? <img src={vibe.author_avatar} alt="" className="w-full h-full object-cover" />
-                    : <span className="text-sm font-bold text-on-primary-container">{vibe.title[0]}</span>}
+                    : <span className="text-sm font-bold text-on-primary-container">{vibe.author_name?.[0]?.toUpperCase() ?? vibe.title[0]}</span>}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-on-surface truncate">@{vibe.author_name}</p>
