@@ -118,7 +118,7 @@ export default function Profile() {
   const likesCount = userProfile?.likes_count || 0;
 
   return (
-    <main className="md:ml-16 pt-[64px] min-h-screen bg-surface flex flex-col">
+    <main className="md:ml-16 min-h-screen bg-surface flex flex-col">
       {/* Banner */}
       <div className="w-full h-32 md:h-56 bg-surface-container border-b border-outline-variant/10 relative overflow-hidden flex items-center justify-center editor-well shrink-0">
         <div className="absolute inset-0 bg-gradient-to-t from-surface to-transparent" />

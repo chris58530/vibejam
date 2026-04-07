@@ -241,7 +241,7 @@ ${code}
     if (!remixFrom) return null;
 
     return (
-        <div className="md:ml-16 pt-16 flex-1 flex flex-col h-[calc(100vh)] overflow-hidden bg-[#0f0f1a]">
+        <div className="md:ml-16 flex-1 flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-[#0f0f1a]">
 
             {/* ── Topbar ── */}
             <div className="flex items-center gap-3 px-4 py-2.5 shrink-0 border-b bg-[#13131f] border-[#2a2a4a]">
@@ -264,7 +264,7 @@ ${code}
                     <input
                         value={title}
                         onChange={e => setTitle(e.target.value)}
-                        className="w-[280px] rounded-lg px-3 py-1.5 text-sm font-medium outline-none border focus:ring-2 focus:ring-[#4f46e5]/40 transition-shadow bg-[#1a1a2e] border-[#2a2a4a] text-[#e0e7ff] placeholder:text-[#6b7280]"
+                        className="w-[160px] md:w-[220px] lg:w-[280px] rounded-lg px-3 py-1.5 text-sm font-medium outline-none border focus:ring-2 focus:ring-[#4f46e5]/40 transition-shadow bg-[#1a1a2e] border-[#2a2a4a] text-[#e0e7ff] placeholder:text-[#6b7280]"
                         placeholder="Remix 標題"
                     />
                 </div>

@@ -115,7 +115,7 @@ export default function IterationLab({ vibeId, onBack, onRemix, currentUser }: I
   );
 
   return (
-    <div className="pt-16 h-screen flex flex-col bg-zinc-950 overflow-hidden">
+    <div className="h-[calc(100vh-64px)] flex flex-col bg-zinc-950 overflow-hidden">
       {/* Top Bar */}
       <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-zinc-900/50 backdrop-blur-xl">
         <div className="flex items-center gap-4">
