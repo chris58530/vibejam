@@ -323,7 +323,7 @@ ${code}
             <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
 
                 {/* ── Left Column: Code Editor (top) + AI Chat (bottom) ── */}
-                <div className={`${mobileTab === 'preview' ? 'hidden' : 'flex'} md:flex w-full md:w-[48%] md:min-w-[380px] flex-col border-r border-[#2a2a4a] bg-[#0f0f1a]`}>
+                <div className={`${mobileTab === 'preview' ? 'hidden' : 'flex'} md:flex w-full md:w-[48%] md:min-w-[280px] flex-col border-r border-[#2a2a4a] bg-[#0f0f1a]`}>
                     {/* ─ Code Editor Panel (top 3/5 on desktop) ─ */}
                     <div
                         className={`${mobileTab === 'chat' ? 'hidden md:flex' : 'flex'} flex-col overflow-hidden border-b border-[#2a2a4a]`}
