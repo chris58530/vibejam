@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { useI18n } from './lib/i18n';
+import './lib/themeStore'; // bootstrap: apply dark palette CSS vars on load
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import BottomTabBar from './components/BottomTabBar';
