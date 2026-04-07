@@ -236,27 +236,27 @@ ${code}
         }
     };
 
-    const [mobileTab, setMobileTab] = useState<'code' | 'chat' | 'preview'>('code');
+    const [mobileTab, setMobileTab] = useState<'code' | 'chat' | 'preview'>('chat');
 
     if (!remixFrom) return null;
 
     return (
-        <div className="md:ml-16 flex-1 flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-[#0f0f1a]">
+        <main className="md:ml-16 flex-1 flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-background">
 
             {/* ── Topbar ── */}
-            <div className="flex items-center gap-3 px-4 py-2.5 shrink-0 border-b bg-[#13131f] border-[#2a2a4a]">
+            <div className="bg-surface px-4 py-1.5 flex items-center gap-3 border-b border-outline-variant/10 shrink-0">
                 {/* Left: Source info */}
-                <div className="flex items-center gap-2 text-xs font-mono min-w-0 flex-1">
-                    <span className="material-symbols-outlined text-[14px] text-[#818cf8] shrink-0">repeat</span>
-                    <span className="text-[#6b7280] shrink-0">Remixing from</span>
+                <div className="flex items-center gap-2 text-xs font-mono min-w-0 flex-1 text-on-surface/55">
+                    <span className="material-symbols-outlined text-[14px] text-primary shrink-0">fork_right</span>
+                    <span className="shrink-0">來源</span>
                     <button
                         onClick={() => navigate(`/p/${remixFrom.parentVibeId}`)}
-                        className="text-[#a5b4fc] font-bold truncate max-w-[160px] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4f46e5] rounded"
+                        className="text-primary font-semibold truncate max-w-[180px] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded"
                         aria-label={`View source vibe: ${remixFrom.title}`}
                     >
                         {remixFrom.title}
                     </button>
-                    <span className="text-[#6b7280] shrink-0 truncate">by {remixFrom.authorName}</span>
+                    <span className="shrink-0 truncate">by {remixFrom.authorName}</span>
                 </div>
 
                 {/* Center: Title input */}
@@ -264,7 +264,7 @@ ${code}
                     <input
                         value={title}
                         onChange={e => setTitle(e.target.value)}
-                        className="w-[160px] md:w-[220px] lg:w-[280px] rounded-lg px-3 py-1.5 text-sm font-medium outline-none border focus:ring-2 focus:ring-[#4f46e5]/40 transition-shadow bg-[#1a1a2e] border-[#2a2a4a] text-[#e0e7ff] placeholder:text-[#6b7280]"
+                        className="w-[160px] md:w-[220px] lg:w-[280px] bg-transparent border-b border-outline-variant/30 text-sm font-semibold text-on-surface outline-none text-center placeholder:text-on-surface/30 focus:border-primary transition-colors pb-0.5"
                         placeholder="Remix 標題"
                     />
                 </div>
@@ -276,7 +276,7 @@ ${code}
                         onChange={e => !visibilityLocked && setVisibility(e.target.value as 'public' | 'unlisted' | 'private')}
                         disabled={visibilityLocked}
                         aria-label="Visibility"
-                        className="rounded-lg px-2 py-1.5 text-xs font-mono font-bold outline-none border cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-[#1a1a2e] border-[#2a2a4a] text-[#a5b4fc] focus-visible:ring-2 focus-visible:ring-[#4f46e5]"
+                        className="rounded-lg px-2 py-1.5 text-xs font-mono font-bold outline-none border cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-surface-container-low border-outline-variant/20 text-on-surface/70 focus-visible:ring-1 focus-visible:ring-primary/40"
                         title={visibilityLocked ? 'Remixes of private vibes must be private' : undefined}
                     >
                         <option value="public">🌐 Public</option>
@@ -286,33 +286,33 @@ ${code}
                     <button
                         onClick={handlePublish}
                         disabled={isPublishing || !title.trim() || !code}
-                        className="flex items-center gap-2 px-4 py-1.5 bg-[#4f46e5] text-white text-xs font-mono font-bold rounded-lg transition-opacity disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+                        className="flex items-center justify-center gap-1.5 h-8 px-4 bg-[#2665fd] hover:bg-[#1e50cf] disabled:opacity-40 disabled:cursor-not-allowed text-white text-[11px] font-semibold rounded-lg shadow-sm hover:shadow transition-all duration-200 active:scale-95"
                     >
-                        <span className="material-symbols-outlined text-[16px]">publish</span>
+                        <span className="material-symbols-outlined text-[14px]">{isPublishing ? 'hourglass_empty' : 'publish'}</span>
                         {isPublishing ? '發布中...' : '發布 Remix'}
                     </button>
                 </div>
             </div>
 
             {/* Mobile Tab Switcher — 3 tabs */}
-            <div className="flex md:hidden border-b border-[#2a2a4a] bg-[#13131f] shrink-0">
+            <div className="flex md:hidden border-b border-outline-variant/10 bg-surface-container-lowest shrink-0">
+                <button
+                    onClick={() => setMobileTab('chat')}
+                    className={`flex-1 py-3 text-center text-[10px] font-mono font-bold uppercase tracking-widest transition-colors ${mobileTab === 'chat' ? 'border-b-2 border-primary text-primary bg-surface-container-high' : 'text-on-surface/40'}`}
+                >
+                    <span className="material-symbols-outlined text-[14px] mr-1 align-middle">smart_toy</span>
+                    AI Chat
+                </button>
                 <button
                     onClick={() => setMobileTab('code')}
-                    className={`flex-1 py-3 text-center text-xs font-mono font-bold uppercase tracking-widest transition-colors ${mobileTab === 'code' ? 'border-b-2 border-[#4f46e5] text-[#818cf8] bg-[#1a1a2e]' : 'text-[#6b7280]'}`}
+                    className={`flex-1 py-3 text-center text-[10px] font-mono font-bold uppercase tracking-widest transition-colors ${mobileTab === 'code' ? 'border-b-2 border-primary text-primary bg-surface-container-high' : 'text-on-surface/40'}`}
                 >
                     <span className="material-symbols-outlined text-[14px] mr-1 align-middle">code</span>
                     Code
                 </button>
                 <button
-                    onClick={() => setMobileTab('chat')}
-                    className={`flex-1 py-3 text-center text-xs font-mono font-bold uppercase tracking-widest transition-colors ${mobileTab === 'chat' ? 'border-b-2 border-[#4f46e5] text-[#818cf8] bg-[#1a1a2e]' : 'text-[#6b7280]'}`}
-                >
-                    <span className="material-symbols-outlined text-[14px] mr-1 align-middle">chat</span>
-                    AI Chat
-                </button>
-                <button
                     onClick={() => setMobileTab('preview')}
-                    className={`flex-1 py-3 text-center text-xs font-mono font-bold uppercase tracking-widest transition-colors ${mobileTab === 'preview' ? 'border-b-2 border-[#4f46e5] text-[#818cf8] bg-[#1a1a2e]' : 'text-[#6b7280]'}`}
+                    className={`flex-1 py-3 text-center text-[10px] font-mono font-bold uppercase tracking-widest transition-colors ${mobileTab === 'preview' ? 'border-b-2 border-primary text-primary bg-surface-container-high' : 'text-on-surface/40'}`}
                 >
                     <span className="material-symbols-outlined text-[14px] mr-1 align-middle">preview</span>
                     Preview
@@ -320,26 +320,26 @@ ${code}
             </div>
 
             {/* ── Main Content Area ── */}
-            <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+            <div className="flex-1 flex overflow-hidden flex-col md:flex-row md:p-3 md:gap-3">
 
                 {/* ── Left Column: Code Editor (top) + AI Chat (bottom) ── */}
-                <div className={`${mobileTab === 'preview' ? 'hidden' : 'flex'} md:flex w-full md:w-[48%] md:min-w-[280px] flex-col border-r border-[#2a2a4a] bg-[#0f0f1a]`}>
+                <div className={`${mobileTab === 'preview' ? 'hidden' : 'flex'} md:flex w-full md:w-[48%] md:min-w-[300px] flex-col bg-surface-container-low md:rounded-xl md:shadow-lg overflow-hidden`}>
                     {/* ─ Code Editor Panel (top 3/5 on desktop) ─ */}
                     <div
-                        className={`${mobileTab === 'chat' ? 'hidden md:flex' : 'flex'} flex-col overflow-hidden border-b border-[#2a2a4a]`}
+                        className={`${mobileTab === 'chat' ? 'hidden md:flex' : 'flex'} flex-col overflow-hidden border-b border-outline-variant/5`}
                         style={{ flex: '3 3 0', minHeight: 0 }}
                     >
                         {/* Code editor header */}
-                        <div className="px-4 py-2.5 border-b border-[#2a2a4a] bg-[#13131f] flex items-center gap-2 shrink-0">
-                            <span className="material-symbols-outlined text-[14px] text-[#818cf8]">code</span>
-                            <span className="text-xs font-mono font-bold uppercase tracking-widest text-[#a5b4fc]">Code Editor</span>
-                            <span className="ml-auto text-[10px] font-mono text-[#6b7280]">{code.length} chars</span>
+                        <div className="px-4 py-2 border-b border-outline-variant/5 bg-surface-container-lowest/50 flex items-center gap-2 shrink-0">
+                            <span className="material-symbols-outlined text-[14px] text-primary">code</span>
+                            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-on-surface/50">Code Editor</span>
+                            <span className="ml-auto text-[10px] font-mono text-on-surface/30">{code.length} chars</span>
                         </div>
                         {/* Code textarea with line highlight overlay */}
-                        <div className="flex-1 relative overflow-hidden bg-[#13131f]">
+                        <div className="flex-1 relative overflow-hidden bg-[#1e1e1e]">
                             {highlightedLine !== null && (
                                 <div
-                                    className="absolute left-0 right-0 pointer-events-none z-10 border-l-2 border-[#4f46e5] bg-[#4f46e5]/[0.08]"
+                                    className="absolute left-0 right-0 pointer-events-none z-10 border-l-2 border-primary bg-primary/10"
                                     style={{
                                         top: Math.max(0, 16 + highlightedLine * 19.5 - codeEditorScrollTop),
                                         height: 20,
@@ -351,7 +351,7 @@ ${code}
                                 value={code}
                                 onChange={e => setCode(e.target.value)}
                                 onScroll={e => setCodeEditorScrollTop((e.target as HTMLTextAreaElement).scrollTop)}
-                                className="absolute inset-0 w-full h-full bg-transparent text-[#e0e7ff] font-mono text-xs p-4 resize-none outline-none leading-relaxed custom-scrollbar"
+                                className="absolute inset-0 w-full h-full bg-transparent text-[#E5E2E1] font-mono text-xs p-4 resize-none outline-none leading-relaxed hide-scrollbar"
                                 style={{ tabSize: 2, whiteSpace: 'pre', overflowWrap: 'normal', overflowX: 'auto' }}
                                 spellCheck={false}
                                 autoCapitalize="none"
@@ -368,43 +368,47 @@ ${code}
                         style={{ flex: '2 2 0', minHeight: 0 }}
                     >
                         {/* Provider + Model Selector */}
-                        {activeChatProviders.length > 0 && (
-                            <div className="px-4 py-2 border-b border-[#2a2a4a] bg-[#13131f] flex flex-wrap items-center gap-2 shrink-0">
+                        {activeChatProviders.length > 0 ? (
+                            <div className="px-3 py-2 border-b border-outline-variant/5 flex flex-wrap items-center gap-2 shrink-0 bg-surface-container-lowest/50">
                                 {activeChatProviders.map(p => (
                                     <button
                                         key={p}
                                         onClick={() => setSelectedProvider(p)}
-                                        className={`px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider transition-colors ${selectedProvider === p ? 'bg-[#4f46e5] text-white' : 'bg-[#1a1a2e] text-[#6b7280]'}`}
+                                        className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors ${selectedProvider === p ? 'bg-primary/10 text-primary border border-primary/20' : 'bg-surface-container-high text-on-surface/50 border border-outline-variant/10 hover:text-on-surface/75'}`}
                                     >
                                         {CHAT_PROVIDER_LABEL[p]}
                                     </button>
                                 ))}
                                 {selectedProvider && AI_PROVIDER_MODELS[selectedProvider] && (
-                                    <div className="flex items-center gap-1 bg-[#1a1a2e] border border-[#2a2a4a] rounded-full pl-2 pr-1 py-0.5">
-                                        <span className="material-symbols-outlined text-[12px] text-[#818cf8]">model_training</span>
-                                        <select
-                                            value={selectedModel}
-                                            onChange={(e) => setSelectedModel(e.target.value)}
-                                            className="bg-transparent text-[10px] font-mono font-bold text-[#e0e7ff] focus:outline-none max-w-[120px]"
-                                        >
-                                            {AI_PROVIDER_MODELS[selectedProvider]!.map(m => (
-                                                <option key={m.id} value={m.id}>{m.label}</option>
-                                            ))}
-                                        </select>
-                                    </div>
+                                    <select
+                                        value={selectedModel}
+                                        onChange={(e) => setSelectedModel(e.target.value)}
+                                        className="flex-1 min-w-[120px] bg-surface-container-high text-on-surface/70 text-[11px] rounded-lg px-2 py-1 border border-outline-variant/10 focus:outline-none focus:ring-1 focus:ring-primary/40 cursor-pointer truncate"
+                                    >
+                                        {AI_PROVIDER_MODELS[selectedProvider]!.map(m => (
+                                            <option key={m.id} value={m.id}>{m.label}</option>
+                                        ))}
+                                    </select>
                                 )}
                                 {selectedProvider && limit > 0 && (
-                                    <span className="ml-auto text-[10px] font-mono text-[#6b7280]">
+                                    <span className="ml-auto text-[10px] font-mono text-on-surface/30">
                                         {todayUsage}/{limit}
                                     </span>
                                 )}
+                            </div>
+                        ) : (
+                            <div className="px-4 py-2 border-b border-outline-variant/5 shrink-0 bg-surface-container-lowest/50">
+                                <p className="text-[10px] font-mono text-on-surface/30 uppercase tracking-widest">
+                                    <span className="material-symbols-outlined text-[11px] mr-1 align-middle">key</span>
+                                    請先設定 AI API Key
+                                </p>
                             </div>
                         )}
 
                         {/* Chat Messages */}
                         <div
                             ref={chatScrollRef}
-                            className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar"
+                            className="flex-1 overflow-y-auto p-3 space-y-3 hide-scrollbar"
                             style={{ minHeight: 0 }}
                             onScroll={e => {
                                 const el = e.currentTarget;
@@ -413,13 +417,12 @@ ${code}
                             }}
                         >
                             {!hasActiveProvider && (
-                                <div className="flex flex-col items-center justify-center h-full text-center px-6">
-                                    <span className="material-symbols-outlined text-4xl text-[#6b7280] mb-3">key</span>
-                                    <p className="text-sm text-[#a5b4fc] mb-2">尚未設定 AI API Key</p>
-                                    <p className="text-xs text-[#6b7280] mb-4">請先至設定頁面輸入至少一個 AI 服務的 API Key</p>
+                                <div className="flex flex-col items-center justify-center h-full text-center px-4">
+                                    <span className="material-symbols-outlined text-3xl text-on-surface/15 mb-2">key</span>
+                                    <p className="text-xs text-on-surface/30 mb-3">尚未設定 AI API Key</p>
                                     <button
                                         onClick={() => navigate('/settings')}
-                                        className="px-4 py-2 bg-[#4f46e5] text-white text-xs font-bold rounded-lg transition-opacity"
+                                        className="px-3 py-1.5 bg-primary text-on-primary text-xs font-bold rounded-lg hover:bg-primary-fixed transition-colors"
                                     >
                                         前往設定
                                     </button>
@@ -427,18 +430,18 @@ ${code}
                             )}
 
                             {hasActiveProvider && messages.length === 0 && (
-                                <div className="flex flex-col items-center justify-center h-full text-center px-6">
-                                    <span className="material-symbols-outlined text-5xl text-[#818cf8]/40 mb-4">auto_awesome</span>
-                                    <p className="text-sm font-medium text-[#a5b4fc] mb-2">告訴 AI 你想要什麼修改</p>
-                                    <p className="text-xs text-[#6b7280]">例如：「把背景改成漸層色」、「加一個按鈕」、「改成暗色主題」</p>
+                                <div className="flex flex-col items-center justify-center h-full text-center px-4">
+                                    <span className="material-symbols-outlined text-4xl text-primary/20 mb-3">auto_awesome</span>
+                                    <p className="text-xs text-on-surface/50 font-medium mb-1">告訴 AI 你想要什麼修改</p>
+                                    <p className="text-[10px] text-on-surface/25">例如：「把背景改成漸層色」、「加一個按鈕」、「改成暗色主題」</p>
                                 </div>
                             )}
 
                             {messages.map((msg, i) => (
                                 <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                    <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm whitespace-pre-wrap ${msg.role === 'user'
-                                        ? 'bg-[#4f46e5] text-white rounded-br-[4px]'
-                                        : 'bg-[#1a1a2e] text-[#e0e7ff] rounded-bl-[4px]'
+                                    <div className={`max-w-[88%] rounded-2xl px-3 py-2.5 whitespace-pre-wrap leading-relaxed border ${msg.role === 'user'
+                                        ? 'bg-primary text-on-primary rounded-br-none border-primary/30 shadow-sm'
+                                        : 'bg-surface-container-high text-on-surface rounded-tl-none border-outline-variant/5 shadow-sm'
                                     }`}>
                                         {msg.role === 'assistant' ? formatAssistantMessage(msg.content) : msg.content}
                                     </div>
@@ -447,13 +450,13 @@ ${code}
 
                             {loading && (
                                 <div className="flex justify-start">
-                                    <div className="bg-[#1a1a2e] rounded-2xl rounded-bl-[4px] px-4 py-3">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm font-mono thinking-shimmer-text text-[#818cf8]">thinking</span>
+                                    <div className="bg-surface-container-high rounded-2xl rounded-tl-none px-3 py-2.5 border border-outline-variant/5 shadow-sm">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-xs font-mono thinking-shimmer-text">thinking</span>
                                             <span className="flex items-end gap-[3px]">
-                                                <span className="thinking-dot w-1.5 h-1.5 rounded-full bg-[#818cf8]/70" />
-                                                <span className="thinking-dot w-1.5 h-1.5 rounded-full bg-[#818cf8]/70" />
-                                                <span className="thinking-dot w-1.5 h-1.5 rounded-full bg-[#818cf8]/70" />
+                                                <span className="thinking-dot w-1 h-1 rounded-full bg-primary/70" />
+                                                <span className="thinking-dot w-1 h-1 rounded-full bg-primary/70" />
+                                                <span className="thinking-dot w-1 h-1 rounded-full bg-primary/70" />
                                             </span>
                                         </div>
                                     </div>
@@ -461,7 +464,7 @@ ${code}
                             )}
 
                             {error && (
-                                <div className="bg-error-container text-on-error-container text-xs rounded-lg px-3 py-2">
+                                <div className="bg-error-container text-on-error-container text-[10px] rounded-lg px-3 py-2">
                                     {error}
                                 </div>
                             )}
@@ -471,8 +474,8 @@ ${code}
 
                         {/* Input Area */}
                         {hasActiveProvider && (
-                            <div className="p-3 border-t border-[#2a2a4a] bg-[#13131f] shrink-0">
-                                <div className="flex items-end gap-2">
+                            <div className="p-3 border-t border-outline-variant/5 shrink-0">
+                                <div className="flex items-end bg-background rounded-xl shadow-inner overflow-hidden">
                                     <textarea
                                         ref={inputRef}
                                         value={input}
@@ -480,7 +483,7 @@ ${code}
                                         onKeyDown={handleKeyDown}
                                         rows={1}
                                         placeholder="描述你想要的修改..."
-                                        className="flex-1 bg-[#1a1a2e] border border-[#2a2a4a] text-[#e0e7ff] text-sm rounded-xl px-4 py-3 resize-none outline-none transition-shadow placeholder:text-[#6b7280] focus-visible:ring-2 focus-visible:ring-[#4f46e5]"
+                                        className="flex-1 bg-transparent text-on-surface px-3 py-2.5 resize-none outline-none placeholder:text-on-surface/30"
                                         style={{ maxHeight: '100px', overflowY: 'auto' }}
                                         onInput={(e) => {
                                             const target = e.target as HTMLTextAreaElement;
@@ -491,9 +494,9 @@ ${code}
                                     <button
                                         onClick={handleSend}
                                         disabled={!input.trim() || loading}
-                                        className="w-9 h-9 bg-[#4f46e5] text-white rounded-xl flex items-center justify-center transition-opacity disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
+                                        className="w-9 h-9 m-1 bg-primary text-on-primary rounded-lg flex items-center justify-center hover:bg-primary-fixed transition-colors disabled:opacity-30 disabled:cursor-not-allowed shrink-0 shadow-md"
                                     >
-                                        <span className="material-symbols-outlined text-[16px]">send</span>
+                                        <span className="material-symbols-outlined text-[15px]">arrow_upward</span>
                                     </button>
                                 </div>
                             </div>
@@ -501,32 +504,44 @@ ${code}
                     </div>
                 </div>
 
-                {/* ── Right: Preview Panel ── */}
-                <div className={`${mobileTab === 'preview' ? 'flex' : 'hidden'} md:flex flex-1 flex-col bg-[#0f0f1a]`}>
-                    {/* Preview iframe */}
-                    <div className="flex-1 relative p-4 lg:p-8">
-                        <div className="w-full h-full bg-white rounded-xl shadow-2xl overflow-hidden border border-[#2a2a4a] relative">
-                            {previewDoc ? (
-                                <iframe
-                                    srcDoc={previewDoc}
-                                    className="w-full h-full border-none absolute inset-0 bg-white"
-                                    title="Remix Preview"
-                                    sandbox="allow-scripts allow-same-origin allow-forms"
-                                />
-                            ) : (
-                                <div className="absolute inset-0 flex items-center justify-center text-[#6b7280]">
-                                    <div className="text-center">
-                                        <span className="material-symbols-outlined text-5xl mb-3 block">preview</span>
-                                        <p className="text-sm font-mono">預覽區域</p>
-                                    </div>
+                {/* ── Right: Preview ── */}
+                <section className={`${mobileTab === 'preview' ? 'flex' : 'hidden'} md:flex flex-1 flex-col bg-background md:rounded-xl md:shadow-lg overflow-hidden`}>
+                    <div className="flex-1 px-4 pb-4 md:px-6 md:pb-6 bg-background flex items-center justify-center overflow-hidden">
+                        <div className="w-full h-full flex flex-col rounded-xl shadow-xl overflow-hidden border border-white/5 transition-all duration-500">
+                            <div className="bg-[#242424] px-4 py-2 flex items-center gap-3 shrink-0 border-b border-white/5">
+                                <div className="flex gap-1.5">
+                                    <div className="w-3 h-3 rounded-full bg-[#FF5F57]"></div>
+                                    <div className="w-3 h-3 rounded-full bg-[#FEBC2E]"></div>
+                                    <div className="w-3 h-3 rounded-full bg-[#28C840]"></div>
                                 </div>
-                            )}
+                                <div className="flex-1 bg-[#1A1A1A] rounded-md px-3 py-1 flex items-center gap-2 max-w-sm mx-auto">
+                                    <span className="material-symbols-outlined text-[12px] text-on-surface/30">lock</span>
+                                    <span className="text-[11px] text-on-surface/40 font-mono">preview</span>
+                                </div>
+                            </div>
+                            <div className="flex-1 relative bg-white overflow-hidden">
+                                {previewDoc ? (
+                                    <iframe
+                                        srcDoc={previewDoc}
+                                        className="absolute inset-0 w-full h-full border-none"
+                                        title="Remix Preview"
+                                        sandbox="allow-scripts allow-same-origin allow-forms"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full bg-[#050505] flex items-center justify-center">
+                                        <div className="text-center">
+                                            <span className="material-symbols-outlined text-on-surface/10 text-5xl">preview</span>
+                                            <p className="text-[11px] text-on-surface/20 mt-2">尚無預覽內容</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
-                </div>
+                </section>
 
             </div>
-        </div>
+        </main>
     );
 }
 
@@ -542,9 +557,9 @@ function formatAssistantMessage(content: string): React.ReactNode {
         if (/^```[\s\S]*```$/.test(part)) {
             // Complete code block — replace with pill
             nodes.push(
-                <div key={i} className="my-2 bg-[#13131f] border border-[#2a2a4a] rounded-lg px-3 py-2">
-                    <div className="flex items-center gap-2 text-[10px] font-mono text-[#818cf8]">
-                        <span className="material-symbols-outlined text-[12px]">check_circle</span>
+                <div key={i} className="my-1.5 bg-surface-container-lowest rounded px-2.5 py-1.5 border border-outline-variant/10 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-[9px] font-mono text-primary/80">
+                        <span className="material-symbols-outlined text-[11px] text-green-500">check_circle</span>
                         程式碼已自動套用至編輯區
                     </div>
                 </div>
