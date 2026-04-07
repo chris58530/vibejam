@@ -351,7 +351,7 @@ ${code}
                                 value={code}
                                 onChange={e => setCode(e.target.value)}
                                 onScroll={e => setCodeEditorScrollTop((e.target as HTMLTextAreaElement).scrollTop)}
-                                className="absolute inset-0 w-full h-full bg-transparent text-[#E5E2E1] font-mono text-xs p-4 resize-none outline-none leading-relaxed hide-scrollbar"
+                                className="absolute inset-0 w-full h-full bg-transparent text-on-surface font-mono text-xs p-4 resize-none outline-none leading-relaxed hide-scrollbar"
                                 style={{ tabSize: 2, whiteSpace: 'pre', overflowWrap: 'normal', overflowX: 'auto' }}
                                 spellCheck={false}
                                 autoCapitalize="none"

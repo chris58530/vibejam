@@ -1,13 +1,6 @@
 import { create } from 'zustand';
 
-export type ThemeId = 'rose' | 'indigo' | 'amber' | 'mint' | 'aurora' | 'ocean';
-
-export interface ThemeMeta {
-  id: ThemeId;
-  nameKey: string;
-  icon: string;
-  preview: { primary: string; container: string; tertiary: string; bg: string };
-}
+export type ColorMode = 'light' | 'dark';
 
 /* ── hex → "R G B" for Tailwind opacity support ──────────── */
 function hexToRgb(hex: string): string {
@@ -17,13 +10,38 @@ function hexToRgb(hex: string): string {
 
 type Palette = Record<string, string>;
 
-/* ── Shared neutral dark surfaces (consistent across all themes) ─
-   Only accent colors (primary / secondary / tertiary) change.    */
-const neutralSurfaces: Palette = {
-  'error': '#FFB4AB',
-  'on-error': '#690005',
-  'error-container': '#93000A',
-  'on-error-container': '#FFDAD6',
+/* ── Dark mode palette ──────────────────────────────────── */
+const darkPalette: Palette = {
+  'primary':                    '#FFB3B6',
+  'on-primary':                 '#680019',
+  'primary-container':          '#EF616F',
+  'on-primary-container':       '#5B0015',
+  'primary-fixed':              '#FFDADA',
+  'primary-fixed-dim':          '#FFB3B6',
+  'on-primary-fixed':           '#40000C',
+  'on-primary-fixed-variant':   '#8B152B',
+  'secondary':                  '#FFB3B6',
+  'on-secondary':               '#541F24',
+  'secondary-container':        '#703439',
+  'on-secondary-container':     '#F19FA3',
+  'secondary-fixed':            '#FFDADA',
+  'secondary-fixed-dim':        '#FFB3B6',
+  'on-secondary-fixed':         '#390A10',
+  'on-secondary-fixed-variant': '#703439',
+  'tertiary':                   '#6CDBA2',
+  'on-tertiary':                '#003822',
+  'tertiary-container':         '#2DA46F',
+  'on-tertiary-container':      '#00311D',
+  'tertiary-fixed':             '#89F8BD',
+  'tertiary-fixed-dim':         '#6CDBA2',
+  'on-tertiary-fixed':          '#002112',
+  'on-tertiary-fixed-variant':  '#005233',
+  'inverse-primary':            '#AC2F41',
+
+  'error':                '#FFB4AB',
+  'on-error':             '#690005',
+  'error-container':      '#93000A',
+  'on-error-container':   '#FFDAD6',
 
   'background':               '#09090b',
   'on-background':            '#fafafa',
@@ -47,227 +65,105 @@ const neutralSurfaces: Palette = {
   'inverse-on-surface':       '#18181b',
 };
 
-/* ── Per-theme accent palettes ───────────────────────────── */
-const accentPalettes: Record<ThemeId, Palette> = {
-  /* A ─ Rose Pink */
-  rose: {
-    'primary':                    '#FFB3B6',
-    'on-primary':                 '#680019',
-    'primary-container':          '#EF616F',
-    'on-primary-container':       '#5B0015',
-    'primary-fixed':              '#FFDADA',
-    'primary-fixed-dim':          '#FFB3B6',
-    'on-primary-fixed':           '#40000C',
-    'on-primary-fixed-variant':   '#8B152B',
-    'secondary':                  '#FFB3B6',
-    'on-secondary':               '#541F24',
-    'secondary-container':        '#703439',
-    'on-secondary-container':     '#F19FA3',
-    'secondary-fixed':            '#FFDADA',
-    'secondary-fixed-dim':        '#FFB3B6',
-    'on-secondary-fixed':         '#390A10',
-    'on-secondary-fixed-variant': '#703439',
-    'tertiary':                   '#6CDBA2',
-    'on-tertiary':                '#003822',
-    'tertiary-container':         '#2DA46F',
-    'on-tertiary-container':      '#00311D',
-    'tertiary-fixed':             '#89F8BD',
-    'tertiary-fixed-dim':         '#6CDBA2',
-    'on-tertiary-fixed':          '#002112',
-    'on-tertiary-fixed-variant':  '#005233',
-    'inverse-primary':            '#AC2F41',
-  },
+/* ── Light mode palette ─────────────────────────────────── */
+const lightPalette: Palette = {
+  'primary':                    '#B4202E',
+  'on-primary':                 '#FFFFFF',
+  'primary-container':          '#FFDAD7',
+  'on-primary-container':       '#410008',
+  'primary-fixed':              '#FFDADA',
+  'primary-fixed-dim':          '#FFB3B6',
+  'on-primary-fixed':           '#40000C',
+  'on-primary-fixed-variant':   '#8B152B',
+  'secondary':                  '#775658',
+  'on-secondary':               '#FFFFFF',
+  'secondary-container':        '#FFDAD9',
+  'on-secondary-container':     '#2C1517',
+  'secondary-fixed':            '#FFDADA',
+  'secondary-fixed-dim':        '#E8BDBF',
+  'on-secondary-fixed':         '#2C1517',
+  'on-secondary-fixed-variant': '#5D3F40',
+  'tertiary':                   '#006D3F',
+  'on-tertiary':                '#FFFFFF',
+  'tertiary-container':         '#89F8BD',
+  'on-tertiary-container':      '#002112',
+  'tertiary-fixed':             '#89F8BD',
+  'tertiary-fixed-dim':         '#6CDBA2',
+  'on-tertiary-fixed':          '#002112',
+  'on-tertiary-fixed-variant':  '#005233',
+  'inverse-primary':            '#FFB3B6',
 
-  /* B ─ Electric Indigo */
-  indigo: {
-    'primary':                    '#B8C3FF',
-    'on-primary':                 '#1A2578',
-    'primary-container':          '#5B6BBF',
-    'on-primary-container':       '#1A2270',
-    'primary-fixed':              '#DEE0FF',
-    'primary-fixed-dim':          '#B8C3FF',
-    'on-primary-fixed':           '#000F5C',
-    'on-primary-fixed-variant':   '#3040A0',
-    'secondary':                  '#C3C5DD',
-    'on-secondary':               '#2C2F42',
-    'secondary-container':        '#434659',
-    'on-secondary-container':     '#DFE0F9',
-    'secondary-fixed':            '#DFE0F9',
-    'secondary-fixed-dim':        '#C3C5DD',
-    'on-secondary-fixed':         '#171A2C',
-    'on-secondary-fixed-variant': '#434659',
-    'tertiary':                   '#7FDBCA',
-    'on-tertiary':                '#003731',
-    'tertiary-container':         '#1B5B52',
-    'on-tertiary-container':      '#9AF8E5',
-    'tertiary-fixed':             '#9AF8E5',
-    'tertiary-fixed-dim':         '#7FDBCA',
-    'on-tertiary-fixed':          '#00201B',
-    'on-tertiary-fixed-variant':  '#00493F',
-    'inverse-primary':            '#3F50A0',
-  },
+  'error':                '#BA1A1A',
+  'on-error':             '#FFFFFF',
+  'error-container':      '#FFDAD6',
+  'on-error-container':   '#410002',
 
-  /* C ─ Amber Gold */
-  amber: {
-    'primary':                    '#FFBF6B',
-    'on-primary':                 '#4A2800',
-    'primary-container':          '#C07A1A',
-    'on-primary-container':       '#3D2000',
-    'primary-fixed':              '#FFDDB5',
-    'primary-fixed-dim':          '#FFBF6B',
-    'on-primary-fixed':           '#2A1800',
-    'on-primary-fixed-variant':   '#6B3E00',
-    'secondary':                  '#DDC2A1',
-    'on-secondary':               '#3E2D16',
-    'secondary-container':        '#57432B',
-    'on-secondary-container':     '#FBDEBB',
-    'secondary-fixed':            '#FBDEBB',
-    'secondary-fixed-dim':        '#DDC2A1',
-    'on-secondary-fixed':         '#291904',
-    'on-secondary-fixed-variant': '#57432B',
-    'tertiary':                   '#85D8E8',
-    'on-tertiary':                '#003640',
-    'tertiary-container':         '#1A5662',
-    'on-tertiary-container':      '#A2F0FF',
-    'tertiary-fixed':             '#A2F0FF',
-    'tertiary-fixed-dim':         '#85D8E8',
-    'on-tertiary-fixed':          '#001F27',
-    'on-tertiary-fixed-variant':  '#004450',
-    'inverse-primary':            '#8A5500',
-  },
+  'background':               '#fafafa',
+  'on-background':            '#1a1a1a',
+  'surface':                  '#fafafa',
+  'on-surface':               '#1a1a1a',
+  'surface-variant':          '#e4e4e7',
+  'on-surface-variant':       '#52525b',
+  'surface-dim':              '#d4d4d8',
+  'surface-bright':           '#ffffff',
+  'surface-tint':             '#a1a1aa',
+  'surface-container-lowest': '#ffffff',
+  'surface-container-low':    '#f4f4f5',
+  'surface-container':        '#ececee',
+  'surface-container-high':   '#e4e4e7',
+  'surface-container-highest':'#d4d4d8',
 
-  /* D ─ Mint Green */
-  mint: {
-    'primary':                    '#7DFFB3',
-    'on-primary':                 '#00391E',
-    'primary-container':          '#2EAB6E',
-    'on-primary-container':       '#002E18',
-    'primary-fixed':              '#9AFCCB',
-    'primary-fixed-dim':          '#7DFFB3',
-    'on-primary-fixed':           '#00210F',
-    'on-primary-fixed-variant':   '#006D3F',
-    'secondary':                  '#B5CCBA',
-    'on-secondary':               '#213528',
-    'secondary-container':        '#374B3E',
-    'on-secondary-container':     '#D1E8D6',
-    'secondary-fixed':            '#D1E8D6',
-    'secondary-fixed-dim':        '#B5CCBA',
-    'on-secondary-fixed':         '#0C2014',
-    'on-secondary-fixed-variant': '#374B3E',
-    'tertiary':                   '#C0B3FF',
-    'on-tertiary':                '#2B0F6E',
-    'tertiary-container':         '#433386',
-    'on-tertiary-container':      '#E3DFFF',
-    'tertiary-fixed':             '#E3DFFF',
-    'tertiary-fixed-dim':         '#C0B3FF',
-    'on-tertiary-fixed':          '#170058',
-    'on-tertiary-fixed-variant':  '#3A2879',
-    'inverse-primary':            '#008B50',
-  },
+  'outline':                  '#71717a',
+  'outline-variant':          '#c8c5c5',
 
-  /* E ─ Aurora Purple */
-  aurora: {
-    'primary':                    '#D0BCFF',
-    'on-primary':                 '#381E72',
-    'primary-container':          '#7B61C4',
-    'on-primary-container':       '#33186A',
-    'primary-fixed':              '#EADDFF',
-    'primary-fixed-dim':          '#D0BCFF',
-    'on-primary-fixed':           '#21005D',
-    'on-primary-fixed-variant':   '#4F378B',
-    'secondary':                  '#CCC2DC',
-    'on-secondary':               '#332D41',
-    'secondary-container':        '#4A4458',
-    'on-secondary-container':     '#E8DEF8',
-    'secondary-fixed':            '#E8DEF8',
-    'secondary-fixed-dim':        '#CCC2DC',
-    'on-secondary-fixed':         '#1D192B',
-    'on-secondary-fixed-variant': '#4A4458',
-    'tertiary':                   '#FFB4A8',
-    'on-tertiary':                '#690100',
-    'tertiary-container':         '#8C3228',
-    'on-tertiary-container':      '#FFDAD4',
-    'tertiary-fixed':             '#FFDAD4',
-    'tertiary-fixed-dim':         '#FFB4A8',
-    'on-tertiary-fixed':          '#3B0906',
-    'on-tertiary-fixed-variant':  '#73231B',
-    'inverse-primary':            '#6750A4',
-  },
-
-  /* F ─ Ocean Cyan */
-  ocean: {
-    'primary':                    '#80D8FF',
-    'on-primary':                 '#003548',
-    'primary-container':          '#2196B8',
-    'on-primary-container':       '#002D3E',
-    'primary-fixed':              '#BDE9FF',
-    'primary-fixed-dim':          '#80D8FF',
-    'on-primary-fixed':           '#001F2D',
-    'on-primary-fixed-variant':   '#004D68',
-    'secondary':                  '#B4CAD6',
-    'on-secondary':               '#1F333C',
-    'secondary-container':        '#364954',
-    'on-secondary-container':     '#D0E6F3',
-    'secondary-fixed':            '#D0E6F3',
-    'secondary-fixed-dim':        '#B4CAD6',
-    'on-secondary-fixed':         '#0A1E27',
-    'on-secondary-fixed-variant': '#364954',
-    'tertiary':                   '#FFD180',
-    'on-tertiary':                '#4A3000',
-    'tertiary-container':         '#6B4A00',
-    'on-tertiary-container':      '#FFDFB1',
-    'tertiary-fixed':             '#FFDFB1',
-    'tertiary-fixed-dim':         '#FFD180',
-    'on-tertiary-fixed':          '#2C1A00',
-    'on-tertiary-fixed-variant':  '#5A3D00',
-    'inverse-primary':            '#006B8A',
-  },
+  'inverse-surface':          '#2f2f2f',
+  'inverse-on-surface':       '#f4f4f5',
 };
 
-/* ── Merge neutral surfaces + accent palette per theme ───── */
-const palettes: Record<ThemeId, Palette> = Object.fromEntries(
-  (Object.keys(accentPalettes) as ThemeId[]).map(id => [
-    id,
-    { ...neutralSurfaces, ...accentPalettes[id] },
-  ])
-) as Record<ThemeId, Palette>;
-
-/* ── Theme metadata for the UI picker ────────────────────── */
-export const themeMetas: ThemeMeta[] = [
-  { id: 'rose',   nameKey: 'theme_rose',   icon: '🌹', preview: { primary: '#FFB3B6', container: '#EF616F', tertiary: '#6CDBA2', bg: '#131313' } },
-  { id: 'indigo', nameKey: 'theme_indigo', icon: '⚡', preview: { primary: '#B8C3FF', container: '#5B6BBF', tertiary: '#7FDBCA', bg: '#131313' } },
-  { id: 'amber',  nameKey: 'theme_amber',  icon: '🍯', preview: { primary: '#FFBF6B', container: '#C07A1A', tertiary: '#85D8E8', bg: '#131313' } },
-  { id: 'mint',   nameKey: 'theme_mint',   icon: '🌿', preview: { primary: '#7DFFB3', container: '#2EAB6E', tertiary: '#C0B3FF', bg: '#131313' } },
-  { id: 'aurora', nameKey: 'theme_aurora', icon: '🔮', preview: { primary: '#D0BCFF', container: '#7B61C4', tertiary: '#FFB4A8', bg: '#131313' } },
-  { id: 'ocean',  nameKey: 'theme_ocean',  icon: '🌊', preview: { primary: '#80D8FF', container: '#2196B8', tertiary: '#FFD180', bg: '#131313' } },
-];
+const palettes: Record<ColorMode, Palette> = { light: lightPalette, dark: darkPalette };
 
 /* ── Apply CSS custom properties to :root ────────────────── */
-function applyTheme(id: ThemeId) {
-  const palette = palettes[id];
-  if (!palette) return;
+function applyMode(mode: ColorMode) {
+  const palette = palettes[mode];
   const root = document.documentElement;
   for (const [token, hex] of Object.entries(palette)) {
     root.style.setProperty(`--md-${token}`, hexToRgb(hex));
   }
+  // Set a data attribute for non-Tailwind selectors (scrollbars, etc.)
+  root.setAttribute('data-theme', mode);
 }
 
 /* ── Zustand store ───────────────────────────────────────── */
-const STORAGE_KEY = 'beaverkit_theme';
+const STORAGE_KEY = 'beaverkit_color_mode';
 
 interface ThemeState {
-  themeId: ThemeId;
-  setTheme: (id: ThemeId) => void;
+  mode: ColorMode;
+  toggleMode: () => void;
+  setMode: (mode: ColorMode) => void;
 }
 
-export const useThemeStore = create<ThemeState>((set) => ({
-  themeId: (localStorage.getItem(STORAGE_KEY) as ThemeId) || 'rose',
-  setTheme: (id: ThemeId) => {
-    localStorage.setItem(STORAGE_KEY, id);
-    applyTheme(id);
-    set({ themeId: id });
+function getInitialMode(): ColorMode {
+  const stored = localStorage.getItem(STORAGE_KEY) as ColorMode | null;
+  if (stored === 'light' || stored === 'dark') return stored;
+  // Respect OS preference
+  if (window.matchMedia?.('(prefers-color-scheme: light)').matches) return 'light';
+  return 'dark';
+}
+
+export const useThemeStore = create<ThemeState>((set, get) => ({
+  mode: getInitialMode(),
+  toggleMode: () => {
+    const next = get().mode === 'dark' ? 'light' : 'dark';
+    localStorage.setItem(STORAGE_KEY, next);
+    applyMode(next);
+    set({ mode: next });
+  },
+  setMode: (mode: ColorMode) => {
+    localStorage.setItem(STORAGE_KEY, mode);
+    applyMode(mode);
+    set({ mode });
   },
 }));
 
-/* ── Bootstrap: apply saved theme on load ────────────────── */
-applyTheme(useThemeStore.getState().themeId);
+/* ── Bootstrap: apply saved mode on load ─────────────────── */
+applyMode(useThemeStore.getState().mode);

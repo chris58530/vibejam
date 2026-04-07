@@ -1146,7 +1146,7 @@ ${currentCode || '（尚無程式碼）'}
                           : 'console.log("hello!");'
                       : '把 AI 生成的程式碼貼在這裡 ✨\n\n💡 小提示：\n• 跟 AI 說「請輸出成一個完整的 HTML 檔案」效果最好\n• 也支援 React 和 Vue 元件，貼上後會自動偵測'
                   }
-                  className="flex-1 w-full bg-transparent p-4 sm:pl-12 py-4 font-mono text-sm text-[#E5E2E1] outline-none resize-none hide-scrollbar placeholder:text-on-surface/20 whitespace-pre"
+                  className="flex-1 w-full bg-transparent p-4 sm:pl-12 py-4 font-mono text-sm text-on-surface outline-none resize-none hide-scrollbar placeholder:text-on-surface/20 whitespace-pre"
                   spellCheck={false}
                 />
               </div>
@@ -1176,7 +1176,7 @@ ${currentCode || '（尚無程式碼）'}
               ) : viewMode === 'mobile' ? (
                 <div className="flex items-center justify-center w-full h-full">
                   <div className="relative flex flex-col shadow-2xl" style={{ width: '375px', height: '667px' }}>
-                    <div className="absolute inset-0 rounded-[40px] overflow-hidden border-[10px] border-[#2A2A2A] bg-[#2A2A2A] flex flex-col">
+                    <div className="absolute inset-0 rounded-[40px] overflow-hidden border-[10px] border-surface-container-high bg-surface-container-high flex flex-col">
                       <div className="h-7 bg-[#1A1A1A] flex items-center justify-between px-5 shrink-0">
                         <span className="text-[10px] text-white/60 font-mono">9:41</span>
                         <div className="flex items-center gap-1">

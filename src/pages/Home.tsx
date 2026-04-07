@@ -50,18 +50,18 @@ function TrendingCarousel({ vibes, onSelect }: { vibes: Vibe[]; onSelect: (v: Vi
     <div className="relative px-4 pt-3 pb-1">
       {/* Header row */}
       <div className="flex items-center justify-between mb-2 px-2">
-        <span className="text-xs font-semibold text-[#E5E2E1]/50 tracking-widest uppercase">Trending</span>
+        <span className="text-xs font-semibold text-on-surface/50 tracking-widest uppercase">Trending</span>
         <div className="flex gap-1">
           <button
             onClick={() => scroll('left')}
-            className="p-1 rounded-md hover:bg-white/[0.07] text-[#E5E2E1]/40 hover:text-[#E5E2E1]/80 transition-colors cursor-pointer"
+            className="p-1 rounded-md hover:bg-on-surface/[0.07] text-on-surface/40 hover:text-on-surface/80 transition-colors cursor-pointer"
             aria-label="Scroll left"
           >
             <ChevronLeft size={16} />
           </button>
           <button
             onClick={() => scroll('right')}
-            className="p-1 rounded-md hover:bg-white/[0.07] text-[#E5E2E1]/40 hover:text-[#E5E2E1]/80 transition-colors cursor-pointer"
+            className="p-1 rounded-md hover:bg-on-surface/[0.07] text-on-surface/40 hover:text-on-surface/80 transition-colors cursor-pointer"
             aria-label="Scroll right"
           >
             <ChevronRight size={16} />
@@ -91,7 +91,7 @@ function TrendingCarousel({ vibes, onSelect }: { vibes: Vibe[]; onSelect: (v: Vi
               className="flex-shrink-0 w-[220px] group cursor-pointer"
             >
               {/* Preview thumbnail */}
-              <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-surface-container-lowest ring-1 ring-white/[0.06] group-hover:ring-primary/30 transition-all duration-200">
+              <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-surface-container-lowest ring-1 ring-on-surface/[0.06] group-hover:ring-primary/30 transition-all duration-200">
                 <div className={`absolute inset-0 z-10 pointer-events-none transition-opacity duration-200 ${isHovered ? 'opacity-0' : 'opacity-100 bg-black/30'}`} />
                 <iframe
                   srcDoc={code}
@@ -100,16 +100,16 @@ function TrendingCarousel({ vibes, onSelect }: { vibes: Vibe[]; onSelect: (v: Vi
                   sandbox="allow-scripts allow-same-origin"
                 />
                 {/* Views badge */}
-                <div className="absolute top-1.5 left-1.5 bg-black/75 backdrop-blur-sm px-1.5 py-0.5 rounded text-[10px] font-mono text-[#E5E2E1]/80 z-20 pointer-events-none">
+                <div className="absolute top-1.5 left-1.5 bg-black/75 backdrop-blur-sm px-1.5 py-0.5 rounded text-[10px] font-mono text-on-surface/80 z-20 pointer-events-none">
                   {formatViews(vibe.views)}
                 </div>
               </div>
               {/* Card info below */}
               <div className="mt-1.5 px-0.5">
-                <p className="text-xs font-bold text-[#E5E2E1] truncate group-hover:text-primary transition-colors duration-150 leading-tight">
+                <p className="text-xs font-bold text-on-surface truncate group-hover:text-primary transition-colors duration-150 leading-tight">
                   {vibe.title}
                 </p>
-                <p className="text-[10px] text-[#E5E2E1]/40 truncate mt-0.5">
+                <p className="text-[10px] text-on-surface/40 truncate mt-0.5">
                   {vibe.author_name.slice(0, 8).toUpperCase()} · {vibe.author_name}
                 </p>
               </div>
@@ -165,7 +165,7 @@ export default function Home() {
       <TrendingCarousel vibes={trendingVibes} onSelect={handleSelectVibe} />
 
       {/* ── Feed Tab Bar + Tag filters ── */}
-      <div className="sticky top-16 z-30 bg-surface/95 backdrop-blur-md border-b border-white/[0.05]">
+      <div className="sticky top-16 z-30 bg-surface/95 backdrop-blur-md border-b border-outline-variant/10">
         <div className="flex items-center gap-0 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
           {/* Feed tabs */}
           {FEED_TABS.map(tab => (
@@ -176,8 +176,8 @@ export default function Home() {
                 flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium whitespace-nowrap cursor-pointer
                 border-b-2 transition-all duration-150
                 ${activeFeed === tab.key
-                  ? 'border-primary text-[#E5E2E1]'
-                  : 'border-transparent text-[#E5E2E1]/45 hover:text-[#E5E2E1]/75 hover:border-white/20'}
+                  ? 'border-primary text-on-surface'
+                  : 'border-transparent text-on-surface/45 hover:text-on-surface/75 hover:border-outline-variant/30'}
               `}
             >
               {tab.dot && (
@@ -188,7 +188,7 @@ export default function Home() {
           ))}
 
           {/* Divider */}
-          <div className="w-px h-4 bg-white/[0.1] mx-1 flex-shrink-0" />
+          <div className="w-px h-4 bg-outline-variant/20 mx-1 flex-shrink-0" />
 
           {/* Category tag filters */}
           {TAG_FILTERS.map(tag => (
@@ -199,8 +199,8 @@ export default function Home() {
                 px-3 py-2.5 text-xs font-medium whitespace-nowrap cursor-pointer
                 border-b-2 transition-all duration-150
                 ${activeTag === tag && activeFeed === 'movers'
-                  ? 'border-primary/50 text-[#E5E2E1]/90'
-                  : 'border-transparent text-[#E5E2E1]/35 hover:text-[#E5E2E1]/60 hover:border-white/10'}
+                  ? 'border-primary/50 text-on-surface/90'
+                  : 'border-transparent text-on-surface/35 hover:text-on-surface/60 hover:border-outline-variant/20'}
               `}
             >
               {tag}
@@ -210,7 +210,7 @@ export default function Home() {
           {/* Filter icon */}
           <div className="ml-auto pr-3 pl-2 flex items-center flex-shrink-0">
             <button
-              className="p-1.5 rounded-md hover:bg-white/[0.07] text-[#E5E2E1]/35 hover:text-[#E5E2E1]/70 transition-colors cursor-pointer"
+              className="p-1.5 rounded-md hover:bg-on-surface/[0.07] text-on-surface/35 hover:text-on-surface/70 transition-colors cursor-pointer"
               aria-label="Filter"
             >
               <SlidersHorizontal size={14} />

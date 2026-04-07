@@ -76,13 +76,13 @@ export default function VibeCard({ vibe, onClick, compact = false, maxViews = 1 
         layout
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="group cursor-pointer flex flex-row gap-2.5 p-2 rounded-lg hover:bg-white/[0.04] transition-colors duration-150"
+        className="group cursor-pointer flex flex-row gap-2.5 p-2 rounded-lg hover:bg-on-surface/[0.04] transition-colors duration-150"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         onClick={onClick}
       >
         {/* Square iframe thumbnail */}
-        <div className="relative w-[68px] h-[68px] flex-shrink-0 rounded-lg overflow-hidden bg-surface-container-lowest ring-1 ring-white/[0.06] group-hover:ring-primary/30 transition-all duration-200">
+        <div className="relative w-[68px] h-[68px] flex-shrink-0 rounded-lg overflow-hidden bg-surface-container-lowest ring-1 ring-on-surface/[0.06] group-hover:ring-primary/30 transition-all duration-200">
           <div className={`absolute inset-0 z-10 pointer-events-none transition-opacity duration-200 ${isHovered ? 'opacity-0' : 'opacity-100 bg-black/25'}`} />
           <iframe
             srcDoc={previewCode}
@@ -97,10 +97,10 @@ export default function VibeCard({ vibe, onClick, compact = false, maxViews = 1 
         <div className="flex-1 min-w-0 flex flex-col justify-center">
           {/* Title + ticker */}
           <div className="flex items-baseline gap-1.5 min-w-0">
-            <span className="font-bold text-[13px] text-[#E5E2E1] truncate leading-tight group-hover:text-primary transition-colors duration-150">
+            <span className="font-bold text-[13px] text-on-surface truncate leading-tight group-hover:text-primary transition-colors duration-150">
               {vibe.title}
             </span>
-            <span className="text-[10px] text-[#E5E2E1]/35 font-mono flex-shrink-0">
+            <span className="text-[10px] text-on-surface/35 font-mono flex-shrink-0">
               {vibe.author_name.slice(0, 6).toUpperCase()}
             </span>
           </div>
@@ -114,23 +114,23 @@ export default function VibeCard({ vibe, onClick, compact = false, maxViews = 1 
               onClick={(e) => { e.stopPropagation(); navigate(`/@${encodeURIComponent(vibe.author_name)}`); }}
             />
             <span
-              className="text-[10px] text-[#E5E2E1]/40 hover:text-[#E5E2E1]/70 transition-colors truncate cursor-pointer"
+              className="text-[10px] text-on-surface/40 hover:text-on-surface/70 transition-colors truncate cursor-pointer"
               onClick={(e) => { e.stopPropagation(); navigate(`/@${encodeURIComponent(vibe.author_name)}`); }}
             >
               {vibe.author_name}
             </span>
-            <span className="text-[10px] text-[#E5E2E1]/25">·</span>
-            <span className="text-[10px] text-[#E5E2E1]/35 flex-shrink-0">{timeAgo(vibe.created_at)}</span>
+            <span className="text-[10px] text-on-surface/25">·</span>
+            <span className="text-[10px] text-on-surface/35 flex-shrink-0">{timeAgo(vibe.created_at)}</span>
           </div>
 
           {/* Stats row */}
           <div className="flex items-center gap-1.5 mt-1">
-            <span className="text-[11px] text-[#E5E2E1]/55 font-mono flex-shrink-0">
+            <span className="text-[11px] text-on-surface/55 font-mono flex-shrink-0">
               MC {formatViews(vibe.views)}
             </span>
-            <div className="flex-1 h-[3px] bg-white/[0.07] rounded-full overflow-hidden min-w-0">
+            <div className="flex-1 h-[3px] bg-on-surface/[0.07] rounded-full overflow-hidden min-w-0">
               <div
-                className="h-full bg-[#E5E2E1]/25 rounded-full transition-all duration-500"
+                className="h-full bg-on-surface/25 rounded-full transition-all duration-500"
                 style={{ width: `${progressPct}%` }}
               />
             </div>
@@ -141,7 +141,7 @@ export default function VibeCard({ vibe, onClick, compact = false, maxViews = 1 
 
           {/* Description */}
           {vibe.description && (
-            <p className="text-[10px] text-[#E5E2E1]/30 mt-0.5 line-clamp-1 leading-tight">
+            <p className="text-[10px] text-on-surface/30 mt-0.5 line-clamp-1 leading-tight">
               {vibe.description}
             </p>
           )}
@@ -202,14 +202,14 @@ export default function VibeCard({ vibe, onClick, compact = false, maxViews = 1 
         
         {/* Text */}
         <div className="flex flex-col flex-1 min-w-0">
-          <h3 className="font-mono font-bold text-sm text-[#E5E2E1] leading-tight group-hover:text-primary transition-colors line-clamp-2">
+          <h3 className="font-mono font-bold text-sm text-on-surface leading-tight group-hover:text-primary transition-colors line-clamp-2">
             {vibe.title}
           </h3>
           {vibe.description && (
-            <p className="text-[11px] text-[#E5E2E1]/35 mt-0.5 line-clamp-1">{vibe.description}</p>
+            <p className="text-[11px] text-on-surface/35 mt-0.5 line-clamp-1">{vibe.description}</p>
           )}
           <span
-            className="text-xs text-[#E5E2E1]/60 mt-1 hover:text-[#E5E2E1] transition-colors truncate"
+            className="text-xs text-on-surface/60 mt-1 hover:text-on-surface transition-colors truncate"
             onClick={(e) => {
               e.stopPropagation();
               navigate(`/@${encodeURIComponent(vibe.author_name)}`);
@@ -217,7 +217,7 @@ export default function VibeCard({ vibe, onClick, compact = false, maxViews = 1 
           >
             @{vibe.author_name}
           </span>
-          <div className="flex items-center text-[11px] text-[#E5E2E1]/40 mt-0.5">
+          <div className="flex items-center text-[11px] text-on-surface/40 mt-0.5">
             <span>{formatViews(vibe.views)} views</span>
             <span className="mx-1.5">·</span>
             <span>{timeAgo(vibe.created_at)}</span>

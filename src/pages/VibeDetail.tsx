@@ -459,7 +459,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
       {/* mr-[10px] on bg-black creates the 10px black divider lines */}
 
       {/* ── LEFT NAV ── expanded with icon + label, matches global sidebar ── */}
-      <div className="hidden lg:flex flex-col w-48 bg-[#1C1B1B] shrink-0 mr-[10px] rounded-xl border-r border-outline-variant/5">
+      <div className="hidden lg:flex flex-col w-48 bg-surface-container-low shrink-0 mr-[10px] rounded-xl border-r border-outline-variant/5">
         <nav className="space-y-1 px-2 pt-3">
           {leftNavItems.map(({ key, label, icon, path }) => {
             const isActive =
@@ -472,7 +472,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
               <button
                 key={key}
                 onClick={() => navigate(path)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors duration-200 font-body font-medium text-sm cursor-pointer ${isActive ? 'text-[#FFB3B6] bg-[#2A2A2A]' : 'text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1]'
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors duration-200 font-body font-medium text-sm cursor-pointer ${isActive ? 'text-primary bg-surface-container-high' : 'text-on-surface/70 hover:bg-surface-container-high hover:text-on-surface'
                   }`}
                 title={label}
               >
@@ -484,10 +484,10 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
         </nav>
         <div className="mt-auto border-t border-outline-variant/10 px-2 pt-3 pb-3">
           <div className="px-3 mb-2">
-            <span className="text-[10px] uppercase tracking-[0.2em] text-[#E5E2E1]/30 font-bold">Library</span>
+            <span className="text-[10px] uppercase tracking-[0.2em] text-on-surface/30 font-bold">Library</span>
           </div>
           {[{ icon: 'history', label: 'History' }, { icon: 'playlist_play', label: 'Saved Kits' }, { icon: 'thumb_up', label: 'Liked Code' }].map(({ icon, label }) => (
-            <button key={label} className="w-full flex items-center gap-3 px-3 py-2 text-[#E5E2E1]/70 hover:bg-[#2A2A2A] hover:text-[#E5E2E1] rounded-lg transition-colors text-sm font-body cursor-pointer">
+            <button key={label} className="w-full flex items-center gap-3 px-3 py-2 text-on-surface/70 hover:bg-surface-container-high hover:text-on-surface rounded-lg transition-colors text-sm font-body cursor-pointer">
               <span className="material-symbols-outlined text-[18px] shrink-0">{icon}</span>
               <span>{label}</span>
             </button>
@@ -774,13 +774,13 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
         {/* Platform footer — spans center + right */}
         <footer className="shrink-0 flex flex-row justify-between items-center px-6 py-3 gap-3">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-[#E5E2E1]/60 font-sans">BeaverKit</span>
-            <span className="font-mono text-[9px] uppercase tracking-widest text-[#E5E2E1]/25">© 2024</span>
+            <span className="text-xs font-bold text-on-surface/60 font-sans">BeaverKit</span>
+            <span className="font-mono text-[9px] uppercase tracking-widest text-on-surface/25">© 2024</span>
           </div>
           <div className="flex gap-5">
-            <a href="#" className="font-mono text-[9px] uppercase tracking-widest text-[#E5E2E1]/30 hover:text-[#FFB3B6] transition-colors">Terms</a>
-            <a href="#" className="font-mono text-[9px] uppercase tracking-widest text-[#E5E2E1]/30 hover:text-[#FFB3B6] transition-colors">Privacy</a>
-            <a href="#" className="font-mono text-[9px] uppercase tracking-widest text-[#E5E2E1]/30 hover:text-[#FFB3B6] transition-colors">About</a>
+            <a href="#" className="font-mono text-[9px] uppercase tracking-widest text-on-surface/30 hover:text-primary transition-colors">Terms</a>
+            <a href="#" className="font-mono text-[9px] uppercase tracking-widest text-on-surface/30 hover:text-primary transition-colors">Privacy</a>
+            <a href="#" className="font-mono text-[9px] uppercase tracking-widest text-on-surface/30 hover:text-primary transition-colors">About</a>
           </div>
         </footer>
       </div>

@@ -435,7 +435,7 @@ export default function DebugOverlay({ onClose }: Props) {
                   </button>
                 </div>
               </div>
-              <pre className="p-4 text-[11px] font-mono text-[#E5E2E1]/80 overflow-auto leading-relaxed whitespace-pre" style={{ maxHeight: 240 }}>
+              <pre className="p-4 text-[11px] font-mono text-on-surface/80 overflow-auto leading-relaxed whitespace-pre" style={{ maxHeight: 240 }}>
                 {exportText}
               </pre>
             </div>

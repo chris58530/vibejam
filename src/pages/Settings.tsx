@@ -54,7 +54,7 @@ export default function Settings() {
     if (s === 'success') return 'bg-tertiary';
     if (s === 'error') return 'bg-error';
     if (s === 'testing') return 'bg-yellow-400 animate-pulse';
-    return keys[provider] ? 'bg-[#E5E2E1]/30' : 'bg-[#E5E2E1]/10';
+    return keys[provider] ? 'bg-on-surface/30' : 'bg-on-surface/10';
   };
 
   const getStatusText = (provider: string) => {
