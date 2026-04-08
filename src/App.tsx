@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import { useI18n } from './lib/i18n';
 import './lib/themeStore'; // bootstrap: apply dark palette CSS vars on load
 import Navbar from './components/Navbar';
@@ -62,6 +62,13 @@ export default function App() {
     }
   };
 
+  const location = useLocation();
+
+  // QA Lab 獨立視窗，不套主 layout
+  if (location.pathname === '/qa-lab') {
+    return <QALab />;
+  }
+
   return (
     <div className="min-h-screen bg-surface text-on-surface font-sans selection:bg-primary/30">
       <Navbar />
@@ -74,7 +81,6 @@ export default function App() {
             <Route path="/remix" element={<RemixStudio currentUser={currentUser ?? undefined} />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/invite/:token" element={<InviteAccept />} />
-            <Route path="/qa-lab" element={<QALab />} />
             <Route path="/p/:id" element={<VibeDetail currentUser={currentUser ?? undefined} />} />
             <Route path="/:username" element={<Profile />} />
             <Route path="*" element={

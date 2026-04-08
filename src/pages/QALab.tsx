@@ -336,7 +336,7 @@ export default function QALab() {
         <span>QA Lab — Developer testing tools. Not visible to regular users.</span>
       </div>
 
-      <div className="flex h-[calc(100vh-88px)]">
+      <div className="flex h-[calc(100vh-36px)]">
         {/* ── Left: Controls ── */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
 
