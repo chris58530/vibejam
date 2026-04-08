@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  return null;
+}
 import { useI18n } from './lib/i18n';
 import './lib/themeStore'; // bootstrap: apply dark palette CSS vars on load
 import Navbar from './components/Navbar';
@@ -71,6 +77,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-surface text-on-surface font-sans selection:bg-primary/30">
+      <ScrollToTop />
       <Navbar />
       <div className="flex w-full min-h-screen pt-16">
         <Sidebar savePanelOpen={savePanelOpen} onToggleSavePanel={() => setSavePanelOpen(p => !p)} dbUser={currentUser ?? undefined} />
