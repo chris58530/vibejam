@@ -3,11 +3,15 @@ import { Routes, Route, useLocation } from 'react-router-dom';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
-  // useLayoutEffect 在瀏覽器繪製前同步執行，避免使用者看到舊 scroll 位置
   useLayoutEffect(() => {
+    // 重置所有可能的捲動容器
     window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
+    // 找到 App 內的 main content 容器也一併 reset
+    document.querySelectorAll('[data-scroll-root]').forEach(el => {
+      el.scrollTop = 0;
+    });
   }, [pathname]);
   return null;
 }
@@ -86,7 +90,7 @@ export default function App() {
       <Navbar />
       <div className="flex w-full min-h-screen pt-16">
         <Sidebar savePanelOpen={savePanelOpen} onToggleSavePanel={() => setSavePanelOpen(p => !p)} dbUser={currentUser ?? undefined} />
-        <main className="flex-1 pb-16 md:pb-0 relative">
+        <main className="flex-1 pb-16 md:pb-0 relative" data-scroll-root>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/workspace" element={<Workspace currentUser={currentUser ?? undefined} savePanelOpen={savePanelOpen} />} />
