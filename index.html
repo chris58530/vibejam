@@ -28,7 +28,25 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0..1,0&display=swap" rel="stylesheet" />
   </head>
   <body class="font-body selection:bg-primary/30 bg-surface text-on-surface overflow-x-hidden">
-    <script>if('scrollRestoration' in history)history.scrollRestoration='manual';window.scrollTo(0,0);</script>
+    <script>
+      (function () {
+        var reset = function () {
+          window.scrollTo(0, 0);
+          document.documentElement.scrollTop = 0;
+          if (document.body) document.body.scrollTop = 0;
+        };
+
+        if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+        reset();
+
+        window.addEventListener('pageshow', reset);
+        window.addEventListener('load', function () {
+          reset();
+          requestAnimationFrame(reset);
+          setTimeout(reset, 50);
+        });
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

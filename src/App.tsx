@@ -1,20 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
-
-function ScrollToTop() {
-  const { pathname } = useLocation();
-  useLayoutEffect(() => {
-    // 重置所有可能的捲動容器
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-    // 找到 App 內的 main content 容器也一併 reset
-    document.querySelectorAll('[data-scroll-root]').forEach(el => {
-      el.scrollTop = 0;
-    });
-  }, [pathname]);
-  return null;
-}
 import { useI18n } from './lib/i18n';
 import './lib/themeStore'; // bootstrap: apply dark palette CSS vars on load
 import Navbar from './components/Navbar';
@@ -32,6 +17,55 @@ import QALab from './pages/QALab';
 import { api, User } from './lib/api';
 import { supabase } from './lib/supabase';
 import { useAIKeyStore } from './lib/aiKeyStore';
+
+const SCROLL_TARGET_SELECTOR =
+  '[data-scroll-root], [class*="overflow-y-auto"], [class*="overflow-auto"], [class*="overflow-scroll"]';
+
+function resetAllScrollPositions() {
+  const targets = new Set<HTMLElement>();
+
+  if (document.scrollingElement instanceof HTMLElement) {
+    targets.add(document.scrollingElement);
+  }
+  targets.add(document.documentElement);
+  if (document.body) targets.add(document.body);
+
+  document.querySelectorAll<HTMLElement>(SCROLL_TARGET_SELECTOR).forEach((el) => {
+    targets.add(el);
+  });
+
+  targets.forEach((el) => {
+    el.scrollTop = 0;
+    el.scrollLeft = 0;
+    el.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  });
+
+  window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+}
+
+function ScrollToTop() {
+  const location = useLocation();
+
+  useLayoutEffect(() => {
+    const reset = () => resetAllScrollPositions();
+
+    // Run multiple passes to beat browser restore/layout shifts.
+    reset();
+    const raf = window.requestAnimationFrame(reset);
+    const raf2 = window.requestAnimationFrame(() => window.requestAnimationFrame(reset));
+    const t0 = window.setTimeout(reset, 0);
+    const t1 = window.setTimeout(reset, 120);
+
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.cancelAnimationFrame(raf2);
+      window.clearTimeout(t0);
+      window.clearTimeout(t1);
+    };
+  }, [location.key, location.pathname, location.search, location.hash]);
+
+  return null;
+}
 
 export default function App() {
   const { t } = useI18n();
