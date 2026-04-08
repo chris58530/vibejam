@@ -169,7 +169,7 @@ export default function QALab() {
         avatar: u.user_metadata?.avatar_url || '',
       });
       setDbUser(user);
-    } catch (e: any) { addLog('err', `Auth sync failed: ${e.message}`); }
+    } catch (e: any) { addLog('err', `驗證同步失敗：${e.message}`); }
   };
 
   // ── Load vibes ─────────────────────────────────────────────────────────────
@@ -179,7 +179,7 @@ export default function QALab() {
     try {
       const all = await api.getVibes();
       setVibes(all.slice(0, 30));
-    } catch (e: any) { addLog('err', `Load vibes: ${e.message}`); }
+    } catch (e: any) { addLog('err', `載入 Vibe 失敗：${e.message}`); }
   };
 
   // ── Log ────────────────────────────────────────────────────────────────────
@@ -202,31 +202,31 @@ export default function QALab() {
     const acc: GeneratedAccount = { email, password, username, status: 'pending' };
     setGenAccounts(prev => [acc, ...prev.slice(0, 9)]);
     setGenLoading(true);
-    addLog('info', `Creating account: ${username}`);
+    addLog('info', `正在建立帳號：${username}`);
     try {
       await signUpWithEmail(email, password, username);
-      setGenAccounts(prev => prev.map(a => a.email === email ? { ...a, status: 'created', note: 'Check email if confirmation required' } : a));
-      addLog('ok', `Account created: ${username} / ${email}`);
+      setGenAccounts(prev => prev.map(a => a.email === email ? { ...a, status: 'created', note: '若需要驗證，請檢查信箱' } : a));
+      addLog('ok', `帳號建立成功：${username} / ${email}`);
     } catch (e: any) {
       setGenAccounts(prev => prev.map(a => a.email === email ? { ...a, status: 'error', note: e.message } : a));
-      addLog('err', `Account failed: ${e.message}`);
+      addLog('err', `帳號建立失敗：${e.message}`);
     } finally { setGenLoading(false); }
   };
 
   const loginAs = async (acc: GeneratedAccount) => {
-    addLog('info', `Signing in as ${acc.username}...`);
+    addLog('info', `正在以 ${acc.username} 登入...`);
     try {
       await signInWithEmail(acc.email, acc.password);
-      addLog('ok', `Signed in as ${acc.username}`);
-    } catch (e: any) { addLog('err', `Sign-in failed: ${e.message}`); }
+      addLog('ok', `已登入：${acc.username}`);
+    } catch (e: any) { addLog('err', `登入失敗：${e.message}`); }
   };
 
   // ── Vibe Factory ───────────────────────────────────────────────────────────
   const createVibes = async () => {
-    if (!dbUser) { addLog('err', 'Must be logged in to create vibes'); return; }
+    if (!dbUser) { addLog('err', '建立 Vibe 前請先登入'); return; }
     setVibeLoading(true);
     setVibeProgress({ done: 0, total: vibeCount });
-    addLog('info', `Creating ${vibeCount} vibe(s)...`);
+    addLog('info', `正在建立 ${vibeCount} 個 Vibe...`);
     let created = 0;
     for (let i = 0; i < vibeCount; i++) {
       const tpl = randomItem(VIBE_TEMPLATES);
@@ -236,16 +236,16 @@ export default function QALab() {
           title: `${tpl.title} ${suffix}`,
           tags: tpl.tags,
           code: tpl.code,
-          description: `QA test vibe #${i + 1}`,
+          description: `QA 測試 Vibe #${i + 1}`,
           author_id: dbUser.id,
           visibility: 'public',
         });
-        addLog('ok', `Vibe created: "${tpl.title} ${suffix}" (id:${res.id})`);
+        addLog('ok', `Vibe 建立成功："${tpl.title} ${suffix}" (id:${res.id})`);
         created++;
-      } catch (e: any) { addLog('err', `Vibe #${i + 1} failed: ${e.message}`); }
+      } catch (e: any) { addLog('err', `Vibe #${i + 1} 建立失敗：${e.message}`); }
       setVibeProgress({ done: i + 1, total: vibeCount });
     }
-    addLog('ok', `Done: ${created}/${vibeCount} vibes created`);
+    addLog('ok', `完成：已建立 ${created}/${vibeCount} 個 Vibe`);
     setVibeLoading(false);
     setVibeProgress(null);
     loadVibes();
@@ -253,56 +253,56 @@ export default function QALab() {
 
   // ── Remix ──────────────────────────────────────────────────────────────────
   const remixVibe = async () => {
-    if (!dbUser) { addLog('err', 'Must be logged in to remix'); return; }
-    if (!remixTarget) { addLog('warn', 'Select a vibe to remix'); return; }
+    if (!dbUser) { addLog('err', 'Remix 前請先登入'); return; }
+    if (!remixTarget) { addLog('warn', '請選擇要 Remix 的 Vibe'); return; }
     const parent = vibes.find(v => v.id === Number(remixTarget));
     if (!parent) return;
     setRemixLoading(true);
-    addLog('info', `Remixing "${parent.title}" (id:${parent.id})...`);
+    addLog('info', `正在 Remix "${parent.title}" (id:${parent.id})...`);
     try {
       const res = await api.createVibe({
         title: `Remix of ${parent.title} [${randomId()}]`,
         tags: parent.tags || 'SaaS UI',
         code: parent.latest_code || '<div>Remixed!</div>',
-        description: `QA remix of vibe #${parent.id}`,
+        description: `QA Remix Vibe #${parent.id}`,
         author_id: dbUser.id,
         parent_vibe_id: parent.id,
         parent_version_number: parent.latest_version || 1,
         visibility: 'public',
       });
-      addLog('ok', `Remix created (id:${res.id}) from "${parent.title}"`);
+      addLog('ok', `Remix 建立成功 (id:${res.id})，來源 "${parent.title}"`);
       loadVibes();
-    } catch (e: any) { addLog('err', `Remix failed: ${e.message}`); }
+    } catch (e: any) { addLog('err', `Remix 失敗：${e.message}`); }
     setRemixLoading(false);
   };
 
   // ── Like ───────────────────────────────────────────────────────────────────
   const toggleLike = async (vibe: Vibe) => {
-    if (!supabaseId) { addLog('err', 'Must be logged in to like'); return; }
+    if (!supabaseId) { addLog('err', '按讚前請先登入'); return; }
     try {
       const res = await api.toggleLike(vibe.id, supabaseId);
       setLikeMap(prev => ({ ...prev, [vibe.id]: res.liked }));
-      addLog('ok', `${res.liked ? 'Liked' : 'Unliked'} "${vibe.title}" (${res.like_count} likes)`);
-    } catch (e: any) { addLog('err', `Like failed: ${e.message}`); }
+      addLog('ok', `${res.liked ? '已按讚' : '已取消讚'} "${vibe.title}"（${res.like_count} 讚）`);
+    } catch (e: any) { addLog('err', `按讚失敗：${e.message}`); }
   };
 
   // ── Follow ─────────────────────────────────────────────────────────────────
   const toggleFollow = async (username: string) => {
-    if (!supabaseId) { addLog('err', 'Must be logged in to follow'); return; }
-    if (!username.trim()) { addLog('warn', 'Enter a username'); return; }
+    if (!supabaseId) { addLog('err', '追蹤前請先登入'); return; }
+    if (!username.trim()) { addLog('warn', '請輸入使用者名稱'); return; }
     setFollowLoading(true);
     try {
       const res = await api.toggleFollow(username.trim(), supabaseId);
       setFollowStatus(prev => ({ ...prev, [username]: res.following }));
-      addLog('ok', `${res.following ? 'Following' : 'Unfollowed'} @${username} (${res.followers_count} followers)`);
-    } catch (e: any) { addLog('err', `Follow failed: ${e.message}`); }
+      addLog('ok', `${res.following ? '已追蹤' : '已取消追蹤'} @${username}（${res.followers_count} 位追蹤者）`);
+    } catch (e: any) { addLog('err', `追蹤失敗：${e.message}`); }
     setFollowLoading(false);
   };
 
   // ── Bulk Like All Vibes ────────────────────────────────────────────────────
   const likeAllVibes = async () => {
-    if (!supabaseId) { addLog('err', 'Must be logged in'); return; }
-    addLog('info', `Liking all ${vibes.length} loaded vibes...`);
+    if (!supabaseId) { addLog('err', '請先登入'); return; }
+    addLog('info', `正在對已載入的 ${vibes.length} 個 Vibe 全部按讚...`);
     let done = 0;
     for (const v of vibes) {
       try {
@@ -311,7 +311,7 @@ export default function QALab() {
         done++;
       } catch {}
     }
-    addLog('ok', `Liked ${done} vibes`);
+    addLog('ok', `已按讚 ${done} 個 Vibe`);
   };
 
   // ─── Render ────────────────────────────────────────────────────────────────
@@ -348,10 +348,10 @@ export default function QALab() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-white font-semibold text-sm tracking-tight">QA Lab</span>
-                <span className="px-1.5 py-0.5 bg-amber-500/15 border border-amber-500/30 rounded text-amber-400 text-[10px] font-semibold tracking-widest uppercase">Internal</span>
+                <span className="text-white font-semibold text-sm tracking-tight">QA 實驗室</span>
+                <span className="px-1.5 py-0.5 bg-amber-500/15 border border-amber-500/30 rounded text-amber-400 text-[10px] font-semibold tracking-widest uppercase">內部</span>
               </div>
-              <div className="text-white/30 text-[10px] mt-0.5">Developer testing toolkit · Not visible to users</div>
+              <div className="text-white/30 text-[10px] mt-0.5">開發測試工具組 · 使用者不可見</div>
             </div>
           </div>
           {dbUser ? (
@@ -362,16 +362,16 @@ export default function QALab() {
                 <div className="text-white/25 text-[10px]">{supabaseId?.slice(0, 12)}…</div>
               </div>
               <button
-                onClick={async () => { await signOut(); addLog('info', 'Signed out'); }}
+                onClick={async () => { await signOut(); addLog('info', '已登出'); }}
                 className="ml-1 px-2.5 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/40 rounded text-red-400 text-xs transition-all duration-200 cursor-pointer"
               >
-                Sign out
+                登出
               </button>
             </div>
           ) : (
             <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-amber-500/10 border border-amber-500/20">
               <span className="material-symbols-outlined text-[13px] text-amber-400">lock</span>
-              <span className="text-amber-400/80 text-xs">Not authenticated</span>
+              <span className="text-amber-400/80 text-xs">尚未驗證</span>
             </div>
           )}
         </div>
@@ -382,9 +382,9 @@ export default function QALab() {
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
 
           {/* Account Factory */}
-          <Section title="Account Factory" icon="person_add" accent="violet">
+          <Section title="帳號工廠" icon="person_add" accent="violet">
             <p className="text-white/35 text-xs leading-relaxed mb-3">
-              Generates random email accounts via Supabase Auth. Works immediately if auto-confirm is enabled.
+              透過 Supabase Auth 產生隨機 Email 帳號。若啟用自動驗證可立即使用。
             </p>
             <button
               onClick={generateAccount}
@@ -392,7 +392,7 @@ export default function QALab() {
               className="inline-flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-white text-xs font-semibold transition-all duration-200 cursor-pointer"
             >
               <span className="material-symbols-outlined text-[14px]">{genLoading ? 'hourglass_top' : 'add_circle'}</span>
-              {genLoading ? 'Creating…' : 'Generate Random Account'}
+              {genLoading ? '建立中…' : '產生隨機帳號'}
             </button>
 
             {genAccounts.length > 0 && (
@@ -415,7 +415,7 @@ export default function QALab() {
                             acc.status === 'created' ? 'text-emerald-400 bg-emerald-400/10' :
                             acc.status === 'error'   ? 'text-red-400 bg-red-400/10' :
                             'text-white/30 bg-white/5'
-                          }`}>{acc.status}</span>
+                          }`}>{acc.status === 'created' ? '已建立' : acc.status === 'error' ? '錯誤' : '等待中'}</span>
                         </div>
                         <div className="text-white/35 text-[11px] truncate pl-3">{acc.email}</div>
                         <div className="text-white/35 text-[11px] pl-3 font-mono tracking-tight">{acc.password}</div>
@@ -426,14 +426,14 @@ export default function QALab() {
                           onClick={() => navigator.clipboard.writeText(`${acc.email}\n${acc.password}`)}
                           className="px-2 py-1 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded text-[10px] text-white/50 hover:text-white/80 transition-all cursor-pointer"
                         >
-                          Copy
+                          複製
                         </button>
                         {acc.status === 'created' && (
                           <button
                             onClick={() => loginAs(acc)}
                             className="px-2 py-1 bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/30 rounded text-violet-300 text-[10px] transition-all cursor-pointer"
                           >
-                            Login
+                            登入
                           </button>
                         )}
                       </div>
@@ -445,11 +445,11 @@ export default function QALab() {
           </Section>
 
           {/* Vibe Factory */}
-          <Section title="Vibe Factory" icon="rocket_launch" accent="emerald">
+          <Section title="Vibe 產生器" icon="rocket_launch" accent="emerald">
             {!dbUser && <AuthWarning />}
             <div className="space-y-3">
               <div className="flex items-center gap-3 flex-wrap">
-                <span className="text-white/35 text-xs">Count</span>
+                <span className="text-white/35 text-xs">數量</span>
                 <div className="flex gap-1 flex-wrap">
                   {[1, 5, 10, 50, 100].map(n => (
                     <button
@@ -481,13 +481,13 @@ export default function QALab() {
               >
                 <span className="material-symbols-outlined text-[14px]">{vibeLoading ? 'sync' : 'rocket_launch'}</span>
                 {vibeLoading
-                  ? `Creating… (${vibeProgress?.done}/${vibeProgress?.total})`
-                  : `Create ${vibeCount} Vibe${vibeCount > 1 ? 's' : ''}`}
+                  ? `建立中… (${vibeProgress?.done}/${vibeProgress?.total})`
+                  : `建立 ${vibeCount} 個 Vibe`}
               </button>
               {vibeLoading && vibeProgress && (
                 <div className="space-y-1">
                   <div className="flex justify-between text-[10px] text-white/30">
-                    <span>Progress</span>
+                    <span>進度</span>
                     <span>{Math.round((vibeProgress.done / vibeProgress.total) * 100)}%</span>
                   </div>
                   <div className="h-1.5 bg-white/8 rounded-full overflow-hidden">
@@ -502,7 +502,7 @@ export default function QALab() {
           </Section>
 
           {/* Remix Tester */}
-          <Section title="Remix Tester" icon="fork_right" accent="cyan">
+          <Section title="Remix 測試" icon="fork_right" accent="cyan">
             {!dbUser && <AuthWarning />}
             <div className="flex gap-2">
               <select
@@ -510,7 +510,7 @@ export default function QALab() {
                 onChange={e => setRemixTarget(e.target.value ? Number(e.target.value) : '')}
                 className="flex-1 bg-white/5 border border-white/10 focus:border-cyan-500/50 rounded-lg px-3 py-2 text-xs text-white min-w-0 outline-none transition-colors cursor-pointer"
               >
-                <option value="">Select a vibe to remix…</option>
+                <option value="">選擇要 Remix 的 Vibe…</option>
                 {vibes.map(v => (
                   <option key={v.id} value={v.id}>#{v.id} — {v.title} (@{v.author_name})</option>
                 ))}
@@ -521,23 +521,23 @@ export default function QALab() {
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-white text-xs font-semibold shrink-0 transition-all duration-200 cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[14px]">fork_right</span>
-                {remixLoading ? '…' : 'Remix'}
+                {remixLoading ? '…' : '建立 Remix'}
               </button>
             </div>
           </Section>
 
           {/* Like Tester */}
-          <Section title="Like Tester" icon="favorite" accent="pink">
+          <Section title="按讚測試" icon="favorite" accent="pink">
             {!supabaseId && <AuthWarning />}
             <div className="flex justify-between items-center mb-2.5">
-              <span className="text-white/30 text-xs">{vibes.length} vibes loaded</span>
+              <span className="text-white/30 text-xs">已載入 {vibes.length} 個 Vibe</span>
               <div className="flex gap-1.5">
                 <button
                   onClick={loadVibes}
                   className="inline-flex items-center gap-1 px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-md text-xs text-white/50 hover:text-white/80 transition-all cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[12px]">refresh</span>
-                  Refresh
+                  重新整理
                 </button>
                 <button
                   onClick={likeAllVibes}
@@ -545,7 +545,7 @@ export default function QALab() {
                   className="inline-flex items-center gap-1 px-2.5 py-1 bg-pink-500/15 hover:bg-pink-500/25 border border-pink-500/25 hover:border-pink-500/40 rounded-md text-pink-300 text-xs disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[12px]">favorite</span>
-                  Like All
+                  全部按讚
                 </button>
               </div>
             </div>
@@ -567,7 +567,7 @@ export default function QALab() {
                     }`}
                   >
                     <span className="material-symbols-outlined text-[11px]">{likeMap[v.id] ? 'favorite' : 'favorite_border'}</span>
-                    {likeMap[v.id] ? 'Liked' : 'Like'}
+                    {likeMap[v.id] ? '已讚' : '按讚'}
                   </button>
                 </div>
               ))}
@@ -575,12 +575,12 @@ export default function QALab() {
           </Section>
 
           {/* Follow Tester */}
-          <Section title="Follow Tester" icon="person_add_alt" accent="blue">
+          <Section title="追蹤測試" icon="person_add_alt" accent="blue">
             {!supabaseId && <AuthWarning />}
             <div className="flex gap-2 mb-3">
               <input
                 type="text"
-                placeholder="Enter username…"
+                placeholder="輸入使用者名稱…"
                 value={followUsername}
                 onChange={e => setFollowUsername(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && toggleFollow(followUsername)}
@@ -591,7 +591,7 @@ export default function QALab() {
                 disabled={followLoading || !supabaseId || !followUsername.trim()}
                 className="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-white text-xs font-semibold shrink-0 transition-all duration-200 cursor-pointer"
               >
-                {followLoading ? '…' : followStatus[followUsername] ? 'Unfollow' : 'Follow'}
+                {followLoading ? '…' : followStatus[followUsername] ? '取消追蹤' : '追蹤'}
               </button>
             </div>
             <div className="space-y-0.5 max-h-36 overflow-y-auto">
@@ -607,7 +607,7 @@ export default function QALab() {
                         : 'border-white/10 text-white/30 hover:border-blue-500/30 hover:text-blue-400 hover:bg-blue-500/10'
                     }`}
                   >
-                    {followStatus[v.author_name] ? 'Following' : '+ Follow'}
+                    {followStatus[v.author_name] ? '追蹤中' : '+ 追蹤'}
                   </button>
                 </div>
               ))}
@@ -615,29 +615,29 @@ export default function QALab() {
           </Section>
 
           {/* Cleanup */}
-          <Section title="Cleanup" icon="delete_sweep" accent="red">
+          <Section title="清理" icon="delete_sweep" accent="red">
             {!dbUser
-              ? <AuthWarning text="Login required — only deletes YOUR vibes" />
-              : <p className="text-white/35 text-xs mb-3">Permanently deletes all vibes created by your account from the loaded list.</p>
+              ? <AuthWarning text="需要登入，且只會刪除你建立的 Vibe" />
+              : <p className="text-white/35 text-xs mb-3">會永久刪除已載入清單中由你帳號建立的所有 Vibe。</p>
             }
             <button
               onClick={async () => {
                 if (!supabaseId || !dbUser) return;
-                if (!confirm('Delete all vibes created by your account?')) return;
+                if (!confirm('要刪除你帳號建立的所有 Vibe 嗎？')) return;
                 const mine = vibes.filter(v => v.author_name === dbUser.username);
-                addLog('info', `Deleting ${mine.length} vibes…`);
+                addLog('info', `正在刪除 ${mine.length} 個 Vibe…`);
                 let n = 0;
                 for (const v of mine) {
                   try { await api.deleteVibe(v.id, supabaseId); n++; } catch {}
                 }
-                addLog('ok', `Deleted ${n} vibes`);
+                addLog('ok', `已刪除 ${n} 個 Vibe`);
                 loadVibes();
               }}
               disabled={!dbUser}
               className="inline-flex items-center gap-2 px-4 py-2 bg-red-900/30 hover:bg-red-900/50 border border-red-700/30 hover:border-red-600/50 text-red-400 hover:text-red-300 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer"
             >
               <span className="material-symbols-outlined text-[14px]">delete_sweep</span>
-              Delete My Vibes
+              刪除我的 Vibe
             </button>
           </Section>
 
@@ -648,13 +648,13 @@ export default function QALab() {
           <div className="px-4 py-3 border-b border-white/[0.06] flex justify-between items-center">
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-[13px] text-white/25">terminal</span>
-              <span className="text-white/40 text-[10px] uppercase tracking-widest font-semibold">Activity Log</span>
+              <span className="text-white/40 text-[10px] uppercase tracking-widest font-semibold">活動紀錄</span>
             </div>
             <button
               onClick={() => setLogs([])}
               className="text-white/20 hover:text-white/50 text-[10px] transition-colors cursor-pointer"
             >
-              Clear
+              清空
             </button>
           </div>
 
@@ -677,7 +677,7 @@ export default function QALab() {
             {logs.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full text-center pb-8">
                 <span className="material-symbols-outlined text-white/10 text-[32px] mb-2">terminal</span>
-                <div className="text-white/15">Awaiting events…</div>
+                <div className="text-white/15">等待事件中…</div>
               </div>
             )}
             {logs.map(l => (
@@ -695,7 +695,7 @@ export default function QALab() {
           <div className="px-4 py-2 border-t border-white/[0.06] flex items-center gap-1.5">
             <div className={`w-1.5 h-1.5 rounded-full ${dbUser ? 'bg-emerald-400' : 'bg-white/20'}`} />
             <span className="text-white/25 text-[10px]">
-              {dbUser ? `Authenticated as @${dbUser.username}` : 'No active session'}
+              {dbUser ? `已驗證身分：@${dbUser.username}` : '目前沒有有效工作階段'}
             </span>
           </div>
         </div>
@@ -735,7 +735,7 @@ function Section({
 }
 
 // ─── Auth warning ─────────────────────────────────────────────────────────────
-function AuthWarning({ text = 'Login required to use this tool' }: { text?: string }) {
+function AuthWarning({ text = '使用此工具需要登入' }: { text?: string }) {
   return (
     <div className="flex items-center gap-1.5 mb-3 px-2.5 py-1.5 rounded-md bg-amber-500/8 border border-amber-500/20">
       <span className="material-symbols-outlined text-[13px] text-amber-400">lock</span>
