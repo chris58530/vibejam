@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
-  useEffect(() => {
-    // 同時重置 window、documentElement、body，確保各瀏覽器都生效
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
+  // useLayoutEffect 在瀏覽器繪製前同步執行，避免使用者看到舊 scroll 位置
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
   }, [pathname]);
