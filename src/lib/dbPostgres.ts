@@ -13,8 +13,8 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false },
   family: 4,
   connectionTimeoutMillis: 10000,
-  idleTimeoutMillis: 30000,
-  max: 5,
+  idleTimeoutMillis: 10000,
+  max: 1,
 });
 
 // Prevent unhandled 'error' events from crashing the serverless function (502)
