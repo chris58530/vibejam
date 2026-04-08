@@ -269,7 +269,7 @@ ${code}
         visibility,
       });
       if (currentUser) {
-        navigate(`/p/${result.id}`);
+        navigate(`/p/${result.id}`, { state: { fromRemixOf: remixFrom.parentVibeId } });
       } else {
         navigate('/');
       }

@@ -283,6 +283,21 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
     }).finally(() => setLineageLoading(false));
   }, [vibe?.id]);
 
+  // 切回分頁時自動刷新最新資料（vibe 主資料 + remix 子列表）
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        loadVibe();
+        if (id) {
+          api.getVibeChildren(Number(id)).then(chi => setVibeChildren(chi)).catch(() => {});
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, supabaseUser]);
+
   const ancestorChain = ancestors.slice(0, -1); // remove last (current)
 
   const handleAddComment = async () => {
@@ -299,13 +314,28 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
       author_avatar: currentUser.avatar, content, code_snippet: codeSnippet,
       is_adopted: 0, created_at: new Date().toISOString(), optimistic: true,
     };
-    setVibe(prev => prev ? { ...prev, comments: [...(prev.comments ?? []), optimistic] } : prev);
+    setVibe(prev => prev ? {
+      ...prev,
+      comments: [...(prev.comments ?? []), optimistic],
+      comment_count: (prev.comment_count ?? (prev.comments?.length ?? 0)) + 1,
+    } : prev);
     try {
       await api.addComment(vibe.id, { content, code_snippet: codeSnippet, version_id: selectedVersion.id, author_id: currentUser.id });
+      // 標記為已確認（移除 dimmed 效果），再靜默刷新取得真實 ID
+      setVibe(prev => prev ? {
+        ...prev,
+        comments: (prev.comments ?? []).map((c: Comment) =>
+          c.id === tempId ? { ...c, optimistic: false } : c
+        ),
+      } : prev);
       loadVibe();
     } catch (e) {
       console.error(e);
-      setVibe(prev => prev ? { ...prev, comments: (prev.comments ?? []).filter((c: Comment) => c.id !== tempId) } : prev);
+      setVibe(prev => prev ? {
+        ...prev,
+        comments: (prev.comments ?? []).filter((c: Comment) => c.id !== tempId),
+        comment_count: Math.max(0, (prev.comment_count ?? 1) - 1),
+      } : prev);
     } finally {
       isSending.current = false;
     }

@@ -79,6 +79,24 @@ export default function Profile() {
     }).catch(() => setLoading(false));
   }, [decodedUsername, currentUser]);
 
+  // 切回分頁時自動刷新個人作品列表
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        const supabaseId = currentUser?.id;
+        api.getVibes(supabaseId).then(allVibes => {
+          const filtered = Array.isArray(allVibes)
+            ? allVibes.filter(v => v.author_name === decodedUsername)
+            : [];
+          setUserVibes(filtered);
+        }).catch(() => {});
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [decodedUsername, currentUser]);
+
   const handleSaveMotto = async () => {
     try {
       await api.updateUserProfile(decodedUsername, { motto: mottoDraft });

@@ -136,6 +136,17 @@ export default function Home() {
     }).catch(() => setLoading(false));
   }, []);
 
+  // 切回分頁時自動刷新列表
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        api.getVibes().then(data => setVibes(Array.isArray(data) ? data : [])).catch(() => {});
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
   const handleSelectVibe = (vibe: Vibe) => navigate(`/p/${vibe.id}`);
 
   // Trending = top 10 by views
