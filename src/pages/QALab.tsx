@@ -316,115 +316,150 @@ export default function QALab() {
 
   // ─── Render ────────────────────────────────────────────────────────────────
   const logColor: Record<LogEntry['level'], string> = {
-    info: 'text-blue-400',
-    ok: 'text-green-400',
+    info: 'text-sky-400',
+    ok: 'text-emerald-400',
     err: 'text-red-400',
-    warn: 'text-yellow-400',
+    warn: 'text-amber-400',
+  };
+  const logBg: Record<LogEntry['level'], string> = {
+    info: 'bg-sky-500/10',
+    ok: 'bg-emerald-500/10',
+    err: 'bg-red-500/10',
+    warn: 'bg-amber-500/10',
   };
   const logIcon: Record<LogEntry['level'], string> = {
-    info: '·',
-    ok: '✓',
-    err: '✗',
-    warn: '!',
+    info: 'info',
+    ok: 'check_circle',
+    err: 'error',
+    warn: 'warning',
   };
 
   return (
-    <div className="min-h-screen bg-[#0b0b0f] text-white font-mono text-sm">
-      {/* ── Banner ── */}
-      <div className="bg-yellow-500/20 border-b border-yellow-500/30 px-4 py-2 flex items-center gap-2 text-yellow-300 text-xs">
-        <span className="material-symbols-outlined text-[16px]">science</span>
-        <span>QA Lab — Developer testing tools. Not visible to regular users.</span>
+    <div className="min-h-screen bg-[#080b12] text-white font-mono text-sm">
+
+      {/* ── Header ── */}
+      <div className="sticky top-0 z-10 bg-[#080b12]/95 backdrop-blur-md border-b border-white/[0.06]">
+        <div className="flex items-center justify-between px-5 py-3">
+          <div className="flex items-center gap-3">
+            {/* Pulsing indicator */}
+            <div className="relative flex items-center justify-center w-7 h-7">
+              <div className="absolute w-7 h-7 rounded-full bg-amber-500/20 animate-ping" />
+              <div className="relative w-3.5 h-3.5 rounded-full bg-amber-400" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-white font-semibold text-sm tracking-tight">QA Lab</span>
+                <span className="px-1.5 py-0.5 bg-amber-500/15 border border-amber-500/30 rounded text-amber-400 text-[10px] font-semibold tracking-widest uppercase">Internal</span>
+              </div>
+              <div className="text-white/30 text-[10px] mt-0.5">Developer testing toolkit · Not visible to users</div>
+            </div>
+          </div>
+          {dbUser ? (
+            <div className="flex items-center gap-2.5">
+              {dbUser.avatar && <img src={dbUser.avatar} className="w-7 h-7 rounded-full ring-1 ring-white/10" alt={dbUser.username} />}
+              <div className="text-right">
+                <div className="text-white/80 text-xs font-medium">@{dbUser.username}</div>
+                <div className="text-white/25 text-[10px]">{supabaseId?.slice(0, 12)}…</div>
+              </div>
+              <button
+                onClick={async () => { await signOut(); addLog('info', 'Signed out'); }}
+                className="ml-1 px-2.5 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/40 rounded text-red-400 text-xs transition-all duration-200 cursor-pointer"
+              >
+                Sign out
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-amber-500/10 border border-amber-500/20">
+              <span className="material-symbols-outlined text-[13px] text-amber-400">lock</span>
+              <span className="text-amber-400/80 text-xs">Not authenticated</span>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="flex h-[calc(100vh-36px)]">
+      <div className="flex h-[calc(100vh-57px)]">
         {/* ── Left: Controls ── */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
 
-          {/* Auth Status */}
-          <Card title="Auth Status" icon="account_circle">
-            {dbUser ? (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  {dbUser.avatar && <img src={dbUser.avatar} className="w-8 h-8 rounded-full" />}
-                  <div>
-                    <div className="text-white font-semibold">@{dbUser.username}</div>
-                    <div className="text-white/40 text-xs">id: {dbUser.id} · {supabaseId?.slice(0, 8)}…</div>
-                  </div>
-                </div>
-                <button
-                  onClick={async () => { await signOut(); addLog('info', 'Signed out'); }}
-                  className="px-3 py-1 bg-red-500/20 text-red-400 border border-red-500/30 rounded hover:bg-red-500/30 text-xs"
-                >
-                  Sign out
-                </button>
-              </div>
-            ) : (
-              <div className="text-yellow-400 text-xs">Not logged in — account generator & actions require auth</div>
-            )}
-          </Card>
+          {/* Account Factory */}
+          <Section title="Account Factory" icon="person_add" accent="violet">
+            <p className="text-white/35 text-xs leading-relaxed mb-3">
+              Generates random email accounts via Supabase Auth. Works immediately if auto-confirm is enabled.
+            </p>
+            <button
+              onClick={generateAccount}
+              disabled={genLoading}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-white text-xs font-semibold transition-all duration-200 cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-[14px]">{genLoading ? 'hourglass_top' : 'add_circle'}</span>
+              {genLoading ? 'Creating…' : 'Generate Random Account'}
+            </button>
 
-          {/* Account Generator */}
-          <Card title="Account Factory" icon="person_add">
-            <div className="space-y-3">
-              <p className="text-white/40 text-xs">Generates random email account via Supabase. Works immediately if auto-confirm is enabled in your Supabase project.</p>
-              <button
-                onClick={generateAccount}
-                disabled={genLoading}
-                className="px-4 py-2 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 rounded text-white text-xs font-semibold"
-              >
-                {genLoading ? 'Creating…' : 'Generate Random Account'}
-              </button>
-              {genAccounts.length > 0 && (
-                <div className="space-y-2 mt-2 max-h-48 overflow-y-auto">
-                  {genAccounts.map((acc, i) => (
-                    <div key={i} className={`p-2 rounded border text-xs ${
-                      acc.status === 'created' ? 'border-green-500/30 bg-green-500/5' :
-                      acc.status === 'error' ? 'border-red-500/30 bg-red-500/5' :
-                      'border-white/10 bg-white/3'
-                    }`}>
-                      <div className="flex justify-between items-start gap-2">
-                        <div className="space-y-0.5 min-w-0">
-                          <div className="text-white/70 truncate"><span className="text-white/30">user:</span> {acc.username}</div>
-                          <div className="text-white/70 truncate"><span className="text-white/30">email:</span> {acc.email}</div>
-                          <div className="text-white/70"><span className="text-white/30">pass:</span> {acc.password}</div>
-                          {acc.note && <div className="text-yellow-400/70">{acc.note}</div>}
+            {genAccounts.length > 0 && (
+              <div className="space-y-1.5 mt-3 max-h-52 overflow-y-auto pr-0.5">
+                {genAccounts.map((acc, i) => (
+                  <div key={i} className={`rounded-lg border p-2.5 transition-colors ${
+                    acc.status === 'created' ? 'border-emerald-500/25 bg-emerald-500/5' :
+                    acc.status === 'error'   ? 'border-red-500/25 bg-red-500/5' :
+                    'border-white/8 bg-white/[0.02]'
+                  }`}>
+                    <div className="flex justify-between items-start gap-3">
+                      <div className="space-y-0.5 min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                            acc.status === 'created' ? 'bg-emerald-400' :
+                            acc.status === 'error'   ? 'bg-red-400' : 'bg-white/20'
+                          }`} />
+                          <span className="text-white/70 text-xs truncate font-medium">{acc.username}</span>
+                          <span className={`text-[10px] px-1 py-px rounded font-semibold ${
+                            acc.status === 'created' ? 'text-emerald-400 bg-emerald-400/10' :
+                            acc.status === 'error'   ? 'text-red-400 bg-red-400/10' :
+                            'text-white/30 bg-white/5'
+                          }`}>{acc.status}</span>
                         </div>
-                        <div className="flex flex-col gap-1 shrink-0">
+                        <div className="text-white/35 text-[11px] truncate pl-3">{acc.email}</div>
+                        <div className="text-white/35 text-[11px] pl-3 font-mono tracking-tight">{acc.password}</div>
+                        {acc.note && <div className="text-amber-400/60 text-[10px] pl-3 mt-0.5">{acc.note}</div>}
+                      </div>
+                      <div className="flex flex-col gap-1 shrink-0">
+                        <button
+                          onClick={() => navigator.clipboard.writeText(`${acc.email}\n${acc.password}`)}
+                          className="px-2 py-1 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded text-[10px] text-white/50 hover:text-white/80 transition-all cursor-pointer"
+                        >
+                          Copy
+                        </button>
+                        {acc.status === 'created' && (
                           <button
-                            onClick={() => navigator.clipboard.writeText(`${acc.email}\n${acc.password}`)}
-                            className="px-2 py-0.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded text-xs"
+                            onClick={() => loginAs(acc)}
+                            className="px-2 py-1 bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/30 rounded text-violet-300 text-[10px] transition-all cursor-pointer"
                           >
-                            Copy
+                            Login
                           </button>
-                          {acc.status === 'created' && (
-                            <button
-                              onClick={() => loginAs(acc)}
-                              className="px-2 py-0.5 bg-violet-500/20 hover:bg-violet-500/30 border border-violet-500/30 rounded text-violet-300 text-xs"
-                            >
-                              Login
-                            </button>
-                          )}
-                        </div>
+                        )}
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </Card>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Section>
 
           {/* Vibe Factory */}
-          <Card title="Vibe Factory" icon="rocket_launch">
-            {!dbUser && <div className="text-yellow-400 text-xs mb-2">Login required</div>}
+          <Section title="Vibe Factory" icon="rocket_launch" accent="emerald">
+            {!dbUser && <AuthWarning />}
             <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <label className="text-white/40 text-xs">Count:</label>
-                <div className="flex gap-1">
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="text-white/35 text-xs">Count</span>
+                <div className="flex gap-1 flex-wrap">
                   {[1, 5, 10, 50, 100].map(n => (
                     <button
                       key={n}
                       onClick={() => setVibeCount(n)}
-                      className={`px-2 py-0.5 rounded text-xs border ${vibeCount === n ? 'bg-violet-600 border-violet-500 text-white' : 'border-white/10 text-white/50 hover:border-white/20'}`}
+                      className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-all duration-150 cursor-pointer ${
+                        vibeCount === n
+                          ? 'bg-emerald-600 border-emerald-500 text-white shadow-[0_0_12px_rgba(16,185,129,0.25)]'
+                          : 'border-white/10 text-white/40 hover:border-white/20 hover:text-white/60'
+                      }`}
                     >
                       {n}
                     </button>
@@ -435,36 +470,45 @@ export default function QALab() {
                     min={1}
                     max={500}
                     onChange={e => setVibeCount(Math.max(1, Math.min(500, Number(e.target.value))))}
-                    className="w-16 px-2 py-0.5 bg-white/5 border border-white/10 rounded text-xs text-white"
+                    className="w-16 px-2 py-1 bg-white/5 border border-white/10 focus:border-emerald-500/50 rounded-md text-xs text-white outline-none transition-colors"
                   />
                 </div>
               </div>
               <button
                 onClick={createVibes}
                 disabled={vibeLoading || !dbUser}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 rounded text-white text-xs font-semibold"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-white text-xs font-semibold transition-all duration-200 cursor-pointer"
               >
-                {vibeLoading ? `Creating… (${vibeProgress?.done}/${vibeProgress?.total})` : `Create ${vibeCount} Vibe${vibeCount > 1 ? 's' : ''}`}
+                <span className="material-symbols-outlined text-[14px]">{vibeLoading ? 'sync' : 'rocket_launch'}</span>
+                {vibeLoading
+                  ? `Creating… (${vibeProgress?.done}/${vibeProgress?.total})`
+                  : `Create ${vibeCount} Vibe${vibeCount > 1 ? 's' : ''}`}
               </button>
               {vibeLoading && vibeProgress && (
-                <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-emerald-500 transition-all"
-                    style={{ width: `${(vibeProgress.done / vibeProgress.total) * 100}%` }}
-                  />
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[10px] text-white/30">
+                    <span>Progress</span>
+                    <span>{Math.round((vibeProgress.done / vibeProgress.total) * 100)}%</span>
+                  </div>
+                  <div className="h-1.5 bg-white/8 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 rounded-full transition-all duration-300 shadow-[0_0_8px_rgba(52,211,153,0.5)]"
+                      style={{ width: `${(vibeProgress.done / vibeProgress.total) * 100}%` }}
+                    />
+                  </div>
                 </div>
               )}
             </div>
-          </Card>
+          </Section>
 
           {/* Remix Tester */}
-          <Card title="Remix Tester" icon="fork_right">
-            {!dbUser && <div className="text-yellow-400 text-xs mb-2">Login required</div>}
+          <Section title="Remix Tester" icon="fork_right" accent="cyan">
+            {!dbUser && <AuthWarning />}
             <div className="flex gap-2">
               <select
                 value={remixTarget}
                 onChange={e => setRemixTarget(e.target.value ? Number(e.target.value) : '')}
-                className="flex-1 bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs text-white min-w-0"
+                className="flex-1 bg-white/5 border border-white/10 focus:border-cyan-500/50 rounded-lg px-3 py-2 text-xs text-white min-w-0 outline-none transition-colors cursor-pointer"
               >
                 <option value="">Select a vibe to remix…</option>
                 {vibes.map(v => (
@@ -474,61 +518,65 @@ export default function QALab() {
               <button
                 onClick={remixVibe}
                 disabled={remixLoading || !dbUser || !remixTarget}
-                className="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-40 rounded text-white text-xs font-semibold shrink-0"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-white text-xs font-semibold shrink-0 transition-all duration-200 cursor-pointer"
               >
-                {remixLoading ? 'Remixing…' : 'Remix'}
+                <span className="material-symbols-outlined text-[14px]">fork_right</span>
+                {remixLoading ? '…' : 'Remix'}
               </button>
             </div>
-          </Card>
+          </Section>
 
           {/* Like Tester */}
-          <Card title="Like Tester" icon="favorite">
-            {!supabaseId && <div className="text-yellow-400 text-xs mb-2">Login required</div>}
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-white/40 text-xs">{vibes.length} vibes loaded</span>
-              <div className="flex gap-2">
+          <Section title="Like Tester" icon="favorite" accent="pink">
+            {!supabaseId && <AuthWarning />}
+            <div className="flex justify-between items-center mb-2.5">
+              <span className="text-white/30 text-xs">{vibes.length} vibes loaded</span>
+              <div className="flex gap-1.5">
                 <button
                   onClick={loadVibes}
-                  className="px-2 py-0.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded text-xs"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-md text-xs text-white/50 hover:text-white/80 transition-all cursor-pointer"
                 >
+                  <span className="material-symbols-outlined text-[12px]">refresh</span>
                   Refresh
                 </button>
                 <button
                   onClick={likeAllVibes}
                   disabled={!supabaseId}
-                  className="px-2 py-0.5 bg-pink-500/20 hover:bg-pink-500/30 border border-pink-500/30 rounded text-pink-300 text-xs disabled:opacity-40"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-pink-500/15 hover:bg-pink-500/25 border border-pink-500/25 hover:border-pink-500/40 rounded-md text-pink-300 text-xs disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                 >
+                  <span className="material-symbols-outlined text-[12px]">favorite</span>
                   Like All
                 </button>
               </div>
             </div>
-            <div className="max-h-52 overflow-y-auto space-y-1">
+            <div className="max-h-52 overflow-y-auto space-y-0.5">
               {vibes.slice(0, 15).map(v => (
-                <div key={v.id} className="flex items-center justify-between gap-2 px-2 py-1 rounded bg-white/3 hover:bg-white/5">
-                  <div className="min-w-0">
-                    <span className="text-white/30 text-xs">#{v.id}</span>
-                    <span className="text-white/70 ml-2 truncate text-xs">{v.title}</span>
-                    <span className="text-white/30 text-xs ml-1">@{v.author_name}</span>
+                <div key={v.id} className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md bg-white/[0.02] hover:bg-white/[0.05] transition-colors group">
+                  <div className="min-w-0 flex items-center gap-1.5">
+                    <span className="text-white/20 text-[10px] tabular-nums shrink-0">#{v.id}</span>
+                    <span className="text-white/60 truncate text-xs">{v.title}</span>
+                    <span className="text-white/25 text-[10px] shrink-0">@{v.author_name}</span>
                   </div>
                   <button
                     onClick={() => toggleLike(v)}
                     disabled={!supabaseId}
-                    className={`shrink-0 px-2 py-0.5 rounded text-xs border disabled:opacity-40 ${
+                    className={`shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] border disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150 cursor-pointer ${
                       likeMap[v.id]
-                        ? 'bg-pink-500/30 border-pink-500/40 text-pink-300'
-                        : 'border-white/10 text-white/40 hover:border-pink-500/30 hover:text-pink-400'
+                        ? 'bg-pink-500/20 border-pink-500/35 text-pink-300'
+                        : 'border-white/10 text-white/30 hover:border-pink-500/30 hover:text-pink-400 hover:bg-pink-500/10'
                     }`}
                   >
-                    {likeMap[v.id] ? '♥ Liked' : '♡ Like'}
+                    <span className="material-symbols-outlined text-[11px]">{likeMap[v.id] ? 'favorite' : 'favorite_border'}</span>
+                    {likeMap[v.id] ? 'Liked' : 'Like'}
                   </button>
                 </div>
               ))}
             </div>
-          </Card>
+          </Section>
 
           {/* Follow Tester */}
-          <Card title="Follow Tester" icon="person_add_alt">
-            {!supabaseId && <div className="text-yellow-400 text-xs mb-2">Login required</div>}
+          <Section title="Follow Tester" icon="person_add_alt" accent="blue">
+            {!supabaseId && <AuthWarning />}
             <div className="flex gap-2 mb-3">
               <input
                 type="text"
@@ -536,40 +584,42 @@ export default function QALab() {
                 value={followUsername}
                 onChange={e => setFollowUsername(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && toggleFollow(followUsername)}
-                className="flex-1 bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs text-white placeholder-white/20"
+                className="flex-1 bg-white/5 border border-white/10 focus:border-blue-500/50 rounded-lg px-3 py-2 text-xs text-white placeholder-white/20 outline-none transition-colors"
               />
               <button
                 onClick={() => toggleFollow(followUsername)}
                 disabled={followLoading || !supabaseId || !followUsername.trim()}
-                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 rounded text-white text-xs font-semibold shrink-0"
+                className="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-white text-xs font-semibold shrink-0 transition-all duration-200 cursor-pointer"
               >
                 {followLoading ? '…' : followStatus[followUsername] ? 'Unfollow' : 'Follow'}
               </button>
             </div>
-            {/* Quick-follow from loaded vibes' authors */}
-            <div className="space-y-1 max-h-36 overflow-y-auto">
+            <div className="space-y-0.5 max-h-36 overflow-y-auto">
               {Array.from(new Map(vibes.map(v => [v.author_name, v])).values()).slice(0, 8).map(v => (
-                <div key={v.author_name} className="flex items-center justify-between gap-2 px-2 py-1 rounded bg-white/3">
-                  <span className="text-white/60 text-xs">@{v.author_name}</span>
+                <div key={v.author_name} className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md bg-white/[0.02] hover:bg-white/[0.04] transition-colors">
+                  <span className="text-white/50 text-xs">@{v.author_name}</span>
                   <button
                     onClick={() => { setFollowUsername(v.author_name); toggleFollow(v.author_name); }}
                     disabled={!supabaseId}
-                    className={`px-2 py-0.5 rounded text-xs border disabled:opacity-40 ${
+                    className={`px-2.5 py-1 rounded-md text-[10px] border disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer ${
                       followStatus[v.author_name]
-                        ? 'bg-blue-500/30 border-blue-500/40 text-blue-300'
-                        : 'border-white/10 text-white/40 hover:border-blue-500/30 hover:text-blue-400'
+                        ? 'bg-blue-500/20 border-blue-500/35 text-blue-300'
+                        : 'border-white/10 text-white/30 hover:border-blue-500/30 hover:text-blue-400 hover:bg-blue-500/10'
                     }`}
                   >
-                    {followStatus[v.author_name] ? 'Following' : 'Follow'}
+                    {followStatus[v.author_name] ? 'Following' : '+ Follow'}
                   </button>
                 </div>
               ))}
             </div>
-          </Card>
+          </Section>
 
           {/* Cleanup */}
-          <Card title="Cleanup" icon="delete_sweep">
-            {!dbUser && <div className="text-yellow-400 text-xs mb-2">Login required — only deletes YOUR vibes</div>}
+          <Section title="Cleanup" icon="delete_sweep" accent="red">
+            {!dbUser
+              ? <AuthWarning text="Login required — only deletes YOUR vibes" />
+              : <p className="text-white/35 text-xs mb-3">Permanently deletes all vibes created by your account from the loaded list.</p>
+            }
             <button
               onClick={async () => {
                 if (!supabaseId || !dbUser) return;
@@ -584,31 +634,69 @@ export default function QALab() {
                 loadVibes();
               }}
               disabled={!dbUser}
-              className="px-4 py-2 bg-red-900/40 hover:bg-red-900/60 border border-red-700/40 text-red-400 disabled:opacity-40 rounded text-xs font-semibold"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-red-900/30 hover:bg-red-900/50 border border-red-700/30 hover:border-red-600/50 text-red-400 hover:text-red-300 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer"
             >
+              <span className="material-symbols-outlined text-[14px]">delete_sweep</span>
               Delete My Vibes
             </button>
-          </Card>
+          </Section>
 
         </div>
 
         {/* ── Right: Activity Log ── */}
-        <div className="w-80 shrink-0 border-l border-white/5 flex flex-col">
-          <div className="px-3 py-2 border-b border-white/5 flex justify-between items-center">
-            <span className="text-white/40 text-xs uppercase tracking-widest">Activity Log</span>
-            <button onClick={() => setLogs([])} className="text-white/20 hover:text-white/50 text-xs">Clear</button>
+        <div className="w-[300px] shrink-0 border-l border-white/[0.06] flex flex-col bg-[#060810]">
+          <div className="px-4 py-3 border-b border-white/[0.06] flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[13px] text-white/25">terminal</span>
+              <span className="text-white/40 text-[10px] uppercase tracking-widest font-semibold">Activity Log</span>
+            </div>
+            <button
+              onClick={() => setLogs([])}
+              className="text-white/20 hover:text-white/50 text-[10px] transition-colors cursor-pointer"
+            >
+              Clear
+            </button>
           </div>
-          <div ref={logRef} className="flex-1 overflow-y-auto p-3 space-y-1 text-xs">
+
+          {/* Log count badge */}
+          {logs.length > 0 && (
+            <div className="px-4 py-1.5 border-b border-white/[0.04] flex gap-3">
+              {(['ok', 'err', 'warn', 'info'] as const).map(lvl => {
+                const count = logs.filter(l => l.level === lvl).length;
+                if (!count) return null;
+                return (
+                  <span key={lvl} className={`text-[10px] ${logColor[lvl]}`}>
+                    {lvl === 'ok' ? '✓' : lvl === 'err' ? '✗' : lvl === 'warn' ? '!' : '·'} {count}
+                  </span>
+                );
+              })}
+            </div>
+          )}
+
+          <div ref={logRef} className="flex-1 overflow-y-auto p-3 space-y-px text-[11px]">
             {logs.length === 0 && (
-              <div className="text-white/20 text-center mt-8">Actions will appear here</div>
+              <div className="flex flex-col items-center justify-center h-full text-center pb-8">
+                <span className="material-symbols-outlined text-white/10 text-[32px] mb-2">terminal</span>
+                <div className="text-white/15">Awaiting events…</div>
+              </div>
             )}
             {logs.map(l => (
-              <div key={l.id} className="flex gap-2">
-                <span className="text-white/20 shrink-0 w-16">{l.ts}</span>
-                <span className={`shrink-0 ${logColor[l.level]}`}>{logIcon[l.level]}</span>
-                <span className={`${logColor[l.level]} break-all`}>{l.msg}</span>
+              <div key={l.id} className={`flex gap-2 px-2 py-1 rounded ${logBg[l.level]}`}>
+                <span className="text-white/20 shrink-0 tabular-nums w-14">{l.ts}</span>
+                <span className={`material-symbols-outlined text-[12px] shrink-0 ${logColor[l.level]}`}>
+                  {logIcon[l.level]}
+                </span>
+                <span className={`${logColor[l.level]} break-all leading-relaxed`}>{l.msg}</span>
               </div>
             ))}
+          </div>
+
+          {/* Bottom status */}
+          <div className="px-4 py-2 border-t border-white/[0.06] flex items-center gap-1.5">
+            <div className={`w-1.5 h-1.5 rounded-full ${dbUser ? 'bg-emerald-400' : 'bg-white/20'}`} />
+            <span className="text-white/25 text-[10px]">
+              {dbUser ? `Authenticated as @${dbUser.username}` : 'No active session'}
+            </span>
           </div>
         </div>
       </div>
@@ -616,15 +704,42 @@ export default function QALab() {
   );
 }
 
-// ─── Card helper ──────────────────────────────────────────────────────────────
-function Card({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) {
+// ─── Section card ─────────────────────────────────────────────────────────────
+const accentConfig: Record<string, { border: string; glow: string; icon: string; label: string }> = {
+  violet: { border: 'border-violet-500/20',  glow: 'bg-violet-500',  icon: 'text-violet-400',  label: 'bg-violet-500/10 text-violet-400' },
+  emerald:{ border: 'border-emerald-500/20', glow: 'bg-emerald-500', icon: 'text-emerald-400', label: 'bg-emerald-500/10 text-emerald-400' },
+  cyan:   { border: 'border-cyan-500/20',    glow: 'bg-cyan-500',    icon: 'text-cyan-400',    label: 'bg-cyan-500/10 text-cyan-400' },
+  pink:   { border: 'border-pink-500/20',    glow: 'bg-pink-500',    icon: 'text-pink-400',    label: 'bg-pink-500/10 text-pink-400' },
+  blue:   { border: 'border-blue-500/20',    glow: 'bg-blue-500',    icon: 'text-blue-400',    label: 'bg-blue-500/10 text-blue-400' },
+  red:    { border: 'border-red-500/20',     glow: 'bg-red-500',     icon: 'text-red-400',     label: 'bg-red-500/10 text-red-400' },
+};
+
+function Section({
+  title, icon, accent = 'violet', children
+}: {
+  title: string;
+  icon: string;
+  accent?: string;
+  children: React.ReactNode;
+}) {
+  const cfg = accentConfig[accent] ?? accentConfig.violet;
   return (
-    <div className="border border-white/8 rounded-lg bg-white/2">
-      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/5">
-        <span className="material-symbols-outlined text-[16px] text-white/30">{icon}</span>
-        <span className="text-white/60 font-semibold text-xs uppercase tracking-wider">{title}</span>
+    <div className={`rounded-xl border ${cfg.border} bg-white/[0.015] overflow-hidden`}>
+      <div className="flex items-center gap-2.5 px-4 py-2.5 border-b border-white/[0.05]">
+        <span className={`material-symbols-outlined text-[15px] ${cfg.icon}`}>{icon}</span>
+        <span className="text-white/70 font-semibold text-xs tracking-wide">{title}</span>
       </div>
       <div className="p-4">{children}</div>
+    </div>
+  );
+}
+
+// ─── Auth warning ─────────────────────────────────────────────────────────────
+function AuthWarning({ text = 'Login required to use this tool' }: { text?: string }) {
+  return (
+    <div className="flex items-center gap-1.5 mb-3 px-2.5 py-1.5 rounded-md bg-amber-500/8 border border-amber-500/20">
+      <span className="material-symbols-outlined text-[13px] text-amber-400">lock</span>
+      <span className="text-amber-400/70 text-[11px]">{text}</span>
     </div>
   );
 }
