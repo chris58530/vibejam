@@ -125,18 +125,35 @@ export default function Home() {
   const [activeFeed, setActiveFeed] = useState<FeedTab>('movers');
   const navigate = useNavigate();
 
+  const fetchVibes = async (retries = 3) => {
+    for (let i = 0; i < retries; i++) {
+      try {
+        const data = await api.getVibes();
+        if (Array.isArray(data) && data.length > 0) {
+          setVibes(data);
+          setLoading(false);
+          return;
+        }
+        // 得到空陣列時，等一下再重試（可能是 cold start）
+        if (i < retries - 1) await new Promise(r => setTimeout(r, 800 * (i + 1)));
+      } catch {
+        if (i < retries - 1) await new Promise(r => setTimeout(r, 800 * (i + 1)));
+      }
+    }
+    setLoading(false);
+  };
+
   useEffect(() => {
-    api.getVibes().then(data => {
-      setVibes(Array.isArray(data) ? data : []);
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    fetchVibes();
   }, []);
 
   // 切回分頁時自動刷新列表
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        api.getVibes().then(data => setVibes(Array.isArray(data) ? data : [])).catch(() => {});
+        api.getVibes().then(data => {
+          if (Array.isArray(data) && data.length > 0) setVibes(data);
+        }).catch(() => {});
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);

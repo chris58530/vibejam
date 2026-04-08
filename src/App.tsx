@@ -3,7 +3,12 @@ import { Routes, Route, useLocation } from 'react-router-dom';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
-  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  useEffect(() => {
+    // 同時重置 window、documentElement、body，確保各瀏覽器都生效
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [pathname]);
   return null;
 }
 import { useI18n } from './lib/i18n';
