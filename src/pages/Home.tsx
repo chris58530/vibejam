@@ -95,6 +95,7 @@ function TrendingCarousel({ vibes, onSelect }: { vibes: Vibe[]; onSelect: (v: Vi
                   className="absolute top-0 left-0 w-[200%] h-[200%] scale-50 origin-top-left border-none pointer-events-none"
                   title={vibe.title}
                   sandbox="allow-scripts allow-same-origin"
+                  loading="lazy"
                 />
                 {/* Views badge */}
                 <div className="absolute top-1.5 left-1.5 bg-black/75 backdrop-blur-sm px-1.5 py-0.5 rounded text-[10px] font-mono text-on-surface/80 z-20 pointer-events-none">
@@ -122,10 +123,13 @@ function TrendingCarousel({ vibes, onSelect }: { vibes: Vibe[]; onSelect: (v: Vi
 export default function Home() {
   const [vibes, setVibes] = useState<Vibe[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [activeFeed, setActiveFeed] = useState<FeedTab>('movers');
   const navigate = useNavigate();
 
   const fetchVibes = async (retries = 3) => {
+    setLoading(true);
+    setError(false);
     for (let i = 0; i < retries; i++) {
       try {
         const data = await api.getVibes();
@@ -140,6 +144,7 @@ export default function Home() {
       }
     }
     setLoading(false);
+    setError(true);
   };
 
   useEffect(() => {
@@ -210,20 +215,38 @@ export default function Home() {
 
       {/* ── Card Grid ── */}
       <div className="px-4 pr-5 py-3 flex-1 overflow-x-hidden">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          {loading
-            ? Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="aspect-video bg-surface-container-highest rounded-xl animate-pulse" />
-              ))
-            : filteredVibes.map(vibe => (
-                <VibeCard
-                  key={vibe.id}
-                  vibe={vibe}
-                  onClick={() => handleSelectVibe(vibe)}
-                />
-              ))
-          }
-        </div>
+        {error && !loading && vibes.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <span className="material-symbols-outlined text-[48px] text-on-surface/20">cloud_off</span>
+            <p className="text-on-surface/40 text-sm">無法載入內容，請檢查網路連線</p>
+            <button
+              onClick={() => fetchVibes()}
+              className="px-4 py-2 rounded-full bg-primary/15 text-primary text-sm font-medium hover:bg-primary/25 transition-colors cursor-pointer"
+            >
+              重新載入
+            </button>
+          </div>
+        ) : !loading && filteredVibes.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-3">
+            <span className="material-symbols-outlined text-[48px] text-on-surface/20">explore</span>
+            <p className="text-on-surface/40 text-sm">還沒有任何作品，去 Workspace 建立第一個吧！</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {loading
+              ? Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="aspect-video bg-surface-container-highest rounded-xl animate-pulse" />
+                ))
+              : filteredVibes.map(vibe => (
+                  <VibeCard
+                    key={vibe.id}
+                    vibe={vibe}
+                    onClick={() => handleSelectVibe(vibe)}
+                  />
+                ))
+            }
+          </div>
+        )}
       </div>
 
       <Footer />
