@@ -296,4 +296,22 @@ export const api = {
     if (!res.ok) throw new Error('Failed to toggle like');
     return res.json();
   },
+  async toggleFollow(username: string, supabaseId: string): Promise<{ following: boolean; followers_count: number }> {
+    const res = await fetch(`${API_BASE}/users/${encodeURIComponent(username)}/follow`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ supabase_id: supabaseId }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to toggle follow');
+    }
+    return res.json();
+  },
+  async getFollowStatus(username: string, supabaseId?: string): Promise<{ following: boolean; followers_count: number }> {
+    const params = supabaseId ? `?supabase_id=${encodeURIComponent(supabaseId)}` : '';
+    const res = await fetch(`${API_BASE}/users/${encodeURIComponent(username)}/follow${params}`);
+    if (!res.ok) throw new Error('Failed to get follow status');
+    return res.json();
+  },
 };

@@ -91,6 +91,53 @@ app.put('/api/users/:username', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
 
+// Toggle follow/unfollow user
+app.post('/api/users/:username/follow', async (req, res) => {
+  const targetUsername = decodeURIComponent(req.params.username);
+  const { supabase_id } = req.body;
+  if (!supabase_id) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    await ensureDb();
+    const targetUser = await db.get('SELECT id, followers_count FROM users WHERE username = $1', [targetUsername]);
+    if (!targetUser) return res.status(404).json({ error: 'User not found' });
+    const follower = await db.get('SELECT id FROM users WHERE supabase_id = $1', [supabase_id]);
+    if (!follower) return res.status(401).json({ error: 'Unauthorized' });
+    if (follower.id === targetUser.id) return res.status(400).json({ error: 'Cannot follow yourself' });
+    const existing = await db.get('SELECT id FROM follows WHERE follower_id = $1 AND following_id = $2', [follower.id, targetUser.id]);
+    if (existing) {
+      await db.run('DELETE FROM follows WHERE follower_id = $1 AND following_id = $2', [follower.id, targetUser.id]);
+      await db.run('UPDATE users SET followers_count = GREATEST(0, followers_count - 1) WHERE id = $1', [targetUser.id]);
+      const updated = await db.get('SELECT followers_count FROM users WHERE id = $1', [targetUser.id]);
+      return res.json({ following: false, followers_count: Number(updated?.followers_count || 0) });
+    } else {
+      await db.run('INSERT INTO follows (follower_id, following_id) VALUES ($1, $2)', [follower.id, targetUser.id]);
+      await db.run('UPDATE users SET followers_count = followers_count + 1 WHERE id = $1', [targetUser.id]);
+      const updated = await db.get('SELECT followers_count FROM users WHERE id = $1', [targetUser.id]);
+      return res.json({ following: true, followers_count: Number(updated?.followers_count || 0) });
+    }
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+// Get follow status
+app.get('/api/users/:username/follow', async (req, res) => {
+  const targetUsername = decodeURIComponent(req.params.username);
+  const supabaseId = req.query.supabase_id as string | undefined;
+  try {
+    await ensureDb();
+    const targetUser = await db.get('SELECT id, followers_count FROM users WHERE username = $1', [targetUsername]);
+    if (!targetUser) return res.status(404).json({ error: 'User not found' });
+    let following = false;
+    if (supabaseId) {
+      const follower = await db.get('SELECT id FROM users WHERE supabase_id = $1', [supabaseId]);
+      if (follower) {
+        const rel = await db.get('SELECT id FROM follows WHERE follower_id = $1 AND following_id = $2', [follower.id, targetUser.id]);
+        following = !!rel;
+      }
+    }
+    res.json({ following, followers_count: Number(targetUser.followers_count || 0) });
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
 // Get all vibes (public only; or include own + collaborated if supabase_id provided)
 app.get('/api/vibes', async (req, res) => {
   const supabaseId = req.query.supabase_id as string | undefined;
