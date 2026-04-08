@@ -3,10 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api, Vibe } from '../lib/api';
 import VibeCard from '../components/VibeCard';
 import Footer from '../components/Footer';
-import { ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-react';
-
-// ─── Tag filters (keep existing categories) ───────────────────────────────────
-const TAG_FILTERS = ['All Kits', '3D Effects', 'SaaS UI', 'Micro-interactions', 'Tailwind Magic', 'Data Viz', 'Shaders', 'Typography', 'Layouts', 'Canvas Art'];
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 // ─── Feed tabs ────────────────────────────────────────────────────────────────
 type FeedTab = 'movers' | 'new' | 'market-cap' | 'oldest';
@@ -126,7 +123,6 @@ export default function Home() {
   const [vibes, setVibes] = useState<Vibe[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeFeed, setActiveFeed] = useState<FeedTab>('movers');
-  const [activeTag, setActiveTag] = useState('All Kits');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -152,10 +148,7 @@ export default function Home() {
   // Trending = top 10 by views
   const trendingVibes = [...vibes].sort((a, b) => b.views - a.views).slice(0, 8);
 
-  // Tag filter first, then feed sort
-  let filteredVibes = activeTag === 'All Kits'
-    ? [...vibes]
-    : vibes.filter(v => v.tags?.toLowerCase().includes(activeTag.replace(/\s+/g, '').toLowerCase()));
+  let filteredVibes = [...vibes];
 
   if (activeFeed === 'movers') {
     filteredVibes.sort((a, b) => (b.remix_count ?? 0) - (a.remix_count ?? 0) || b.views - a.views);
@@ -175,20 +168,19 @@ export default function Home() {
       {/* ── Trending Carousel ── */}
       <TrendingCarousel vibes={trendingVibes} onSelect={handleSelectVibe} />
 
-      {/* ── Feed Tab Bar + Tag filters ── */}
+      {/* ── Feed Tab Bar ── */}
       <div className="sticky top-16 z-30 bg-surface/95 backdrop-blur-md border-b border-outline-variant/10">
-        <div className="flex items-center gap-0 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-          {/* Feed tabs */}
+        <div className="flex items-center gap-2 px-4 py-2.5 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
           {FEED_TABS.map(tab => (
             <button
               key={tab.key}
               onClick={() => setActiveFeed(tab.key)}
               className={`
-                flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium whitespace-nowrap cursor-pointer
-                border-b-2 transition-all duration-150
+                flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium whitespace-nowrap cursor-pointer
+                rounded-full border transition-all duration-150 flex-shrink-0
                 ${activeFeed === tab.key
-                  ? 'border-primary text-on-surface'
-                  : 'border-transparent text-on-surface/45 hover:text-on-surface/75 hover:border-outline-variant/30'}
+                  ? 'bg-surface-container-high border-outline/40 text-on-surface'
+                  : 'bg-surface-container border-outline-variant/20 text-on-surface/45 hover:text-on-surface/75 hover:border-outline-variant/40 hover:bg-surface-container-high'}
               `}
             >
               {tab.dot && (
@@ -197,36 +189,6 @@ export default function Home() {
               {tab.label}
             </button>
           ))}
-
-          {/* Divider */}
-          <div className="w-px h-4 bg-outline-variant/20 mx-1 flex-shrink-0" />
-
-          {/* Category tag filters */}
-          {TAG_FILTERS.map(tag => (
-            <button
-              key={tag}
-              onClick={() => setActiveTag(tag)}
-              className={`
-                px-3 py-2.5 text-xs font-medium whitespace-nowrap cursor-pointer
-                border-b-2 transition-all duration-150
-                ${activeTag === tag && activeFeed === 'movers'
-                  ? 'border-primary/50 text-on-surface/90'
-                  : 'border-transparent text-on-surface/35 hover:text-on-surface/60 hover:border-outline-variant/20'}
-              `}
-            >
-              {tag}
-            </button>
-          ))}
-
-          {/* Filter icon */}
-          <div className="ml-auto pr-3 pl-2 flex items-center flex-shrink-0">
-            <button
-              className="p-1.5 rounded-md hover:bg-on-surface/[0.07] text-on-surface/35 hover:text-on-surface/70 transition-colors cursor-pointer"
-              aria-label="Filter"
-            >
-              <SlidersHorizontal size={14} />
-            </button>
-          </div>
         </div>
       </div>
 
