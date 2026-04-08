@@ -13,10 +13,10 @@ async function ensureDb() {
   if (!initialized) {
     try {
       await initializeDatabase();
+      initialized = true;
     } catch (err: any) {
-      console.error('ensureDb init error (non-fatal):', err.message);
+      console.error('ensureDb init error (will retry next request):', err.message);
     }
-    initialized = true; // mark as done even on failure to avoid retrying on every request
   }
 }
 

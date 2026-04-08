@@ -143,10 +143,16 @@ export const api = {
   },
   async getVibes(supabaseId?: string): Promise<Vibe[]> {
     const params = supabaseId ? `?supabase_id=${encodeURIComponent(supabaseId)}` : '';
-    const res = await fetch(`${API_BASE}/vibes${params}`);
-    if (!res.ok) throw new Error(`Failed to fetch vibes: ${res.status}`);
-    const data = await res.json();
-    return Array.isArray(data) ? data : [];
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    try {
+      const res = await fetch(`${API_BASE}/vibes${params}`, { signal: controller.signal });
+      if (!res.ok) throw new Error(`Failed to fetch vibes: ${res.status}`);
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    } finally {
+      clearTimeout(timeout);
+    }
   },
   async getVibeBySlug(username: string, slug: string, supabaseId?: string): Promise<Vibe> {
     const params = supabaseId ? `?supabase_id=${encodeURIComponent(supabaseId)}` : '';

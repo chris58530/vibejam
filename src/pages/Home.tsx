@@ -129,15 +129,14 @@ export default function Home() {
     for (let i = 0; i < retries; i++) {
       try {
         const data = await api.getVibes();
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           setVibes(data);
           setLoading(false);
           return;
         }
-        // 得到空陣列時，等一下再重試（可能是 cold start）
-        if (i < retries - 1) await new Promise(r => setTimeout(r, 800 * (i + 1)));
+        if (i < retries - 1) await new Promise(r => setTimeout(r, 1000 * (i + 1)));
       } catch {
-        if (i < retries - 1) await new Promise(r => setTimeout(r, 800 * (i + 1)));
+        if (i < retries - 1) await new Promise(r => setTimeout(r, 1000 * (i + 1)));
       }
     }
     setLoading(false);
