@@ -124,6 +124,15 @@ export default function Navbar({}: NavbarProps) {
             </>
           ) : null}
 
+          {!isWorkspace && (
+            <button
+              onClick={() => navigate('/workspace')}
+              className="px-3.5 sm:px-4 py-2 rounded-xl bg-primary text-on-primary text-sm font-bold tracking-wide shadow-lg shadow-primary/25 hover:bg-primary-fixed hover:shadow-xl hover:shadow-primary/30 active:scale-[0.98] transition-all whitespace-nowrap"
+            >
+              +Create
+            </button>
+          )}
+
           {/* Language Switcher */}
           <div className="relative" ref={langMenuRef}>
             <button
