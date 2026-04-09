@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+html,
+body,
+#root,
+[data-scroll-root] {
+  overflow-anchor: none;
+}
+
 @keyframes slideDown {
   from {
     opacity: 0;

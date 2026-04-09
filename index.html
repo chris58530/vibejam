@@ -30,6 +30,12 @@
   <body class="font-body selection:bg-primary/30 bg-surface text-on-surface overflow-x-hidden">
     <script>
       (function () {
+        var clearHash = function () {
+          if (!window.location.hash) return;
+          var cleanUrl = window.location.pathname + window.location.search;
+          window.history.replaceState(window.history.state, document.title, cleanUrl);
+        };
+
         var reset = function () {
           window.scrollTo(0, 0);
           document.documentElement.scrollTop = 0;
@@ -37,8 +43,13 @@
         };
 
         if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+        clearHash();
         reset();
 
+        window.addEventListener('hashchange', function () {
+          clearHash();
+          reset();
+        });
         window.addEventListener('pageshow', reset);
         window.addEventListener('load', function () {
           reset();
