@@ -20,6 +20,7 @@ interface SaveSlot {
   editorMode: EditorMode;
   code: { html: string; css: string; js: string };
   savedAt: string;
+  vibeId?: number; // 若存在，代表是編輯既有 Vibe 的模式
 }
 
 const MAX_SAVES = 5;
@@ -152,6 +153,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
   const [remixOpen, setRemixOpen] = useState(true);
   const [supabaseUserId, setSupabaseUserId] = useState<string | null>(null);
   const [confirmLoad, setConfirmLoad] = useState<Vibe | null>(null);
+  const [editingVibeId, setEditingVibeId] = useState<number | null>(null);
 
   const saveKey = `beaverkit_saves_${currentUser?.id ?? 'guest'}`;
 
@@ -219,8 +221,9 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
       setCssCode(slot.code.css);
       setJsCode(slot.code.js);
       setActiveTab('html');
+      if (slot.vibeId) setEditingVibeId(slot.vibeId);
       sessionStorage.removeItem('beaverkit_pending_load');
-      showToast(`已載入「${slot.title}」`, 'download');
+      showToast(slot.vibeId ? `正在編輯「${slot.title}」` : `已載入「${slot.title}」`, slot.vibeId ? 'edit' : 'download');
     } catch { }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -361,7 +364,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
     }
   };
 
-  // ── 發布 ───────────────────────────────────────────────────────────
+  // ── 發布 / 更新 ────────────────────────────────────────────────────
   const handlePublish = async (modalData?: { title: string; description: string; tags: string; visibility: 'public' | 'unlisted' | 'private' }) => {
     const pTitle = modalData?.title || title;
     const pDesc = modalData?.description || description;
@@ -379,18 +382,29 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
     setIsPublishing(true);
     setStoreIsPublishing(true);
     try {
-      const result = await api.createVibe({
-        title: pTitle,
-        tags: pTags,
-        description: pDesc,
-        code: previewDoc,
-        author_id: currentUser?.id,
-        visibility: pVis,
-      });
-      if (currentUser) {
-        navigate(`/p/${result.id}`);
+      if (editingVibeId) {
+        // 編輯模式：新增版本到既有 Vibe
+        await api.addVersion(editingVibeId, {
+          code: previewDoc,
+          update_log: '使用者編輯更新',
+          author_id: currentUser?.id,
+        });
+        navigate(`/p/${editingVibeId}`);
       } else {
-        navigate('/');
+        // 新建模式
+        const result = await api.createVibe({
+          title: pTitle,
+          tags: pTags,
+          description: pDesc,
+          code: previewDoc,
+          author_id: currentUser?.id,
+          visibility: pVis,
+        });
+        if (currentUser) {
+          navigate(`/p/${result.id}`);
+        } else {
+          navigate('/');
+        }
       }
     } catch (err) {
       console.error(err);
@@ -801,15 +815,26 @@ ${currentCode || '（尚無程式碼）'}
             </span>
           </button>
 
-          {/* Settings & Publish */}
-          <button
-            onClick={() => setIsSettingsOpen(true)}
-            disabled={isPublishing}
-            className="flex items-center justify-center gap-1.5 h-8 px-4 bg-[#2665fd] hover:bg-[#1e50cf] disabled:opacity-40 disabled:cursor-not-allowed text-white text-[11px] font-semibold rounded-lg shadow-sm hover:shadow transition-all duration-200 active:scale-95"
-          >
-            <span className="material-symbols-outlined text-[14px]">{isPublishing ? 'hourglass_empty' : 'rocket_launch'}</span>
-            <span>{isPublishing ? '發布中...' : '設定與發布'}</span>
-          </button>
+          {/* Settings & Publish / Update */}
+          {editingVibeId ? (
+            <button
+              onClick={() => handlePublish()}
+              disabled={isPublishing}
+              className="flex items-center justify-center gap-1.5 h-8 px-4 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-[11px] font-semibold rounded-lg shadow-sm hover:shadow transition-all duration-200 active:scale-95"
+            >
+              <span className="material-symbols-outlined text-[14px]">{isPublishing ? 'hourglass_empty' : 'save'}</span>
+              <span>{isPublishing ? '儲存中...' : '儲存編輯'}</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => setIsSettingsOpen(true)}
+              disabled={isPublishing}
+              className="flex items-center justify-center gap-1.5 h-8 px-4 bg-[#2665fd] hover:bg-[#1e50cf] disabled:opacity-40 disabled:cursor-not-allowed text-white text-[11px] font-semibold rounded-lg shadow-sm hover:shadow transition-all duration-200 active:scale-95"
+            >
+              <span className="material-symbols-outlined text-[14px]">{isPublishing ? 'hourglass_empty' : 'rocket_launch'}</span>
+              <span>{isPublishing ? '發布中...' : '設定與發布'}</span>
+            </button>
+          )}
         </div>
       </div>
 
