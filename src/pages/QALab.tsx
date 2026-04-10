@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { api, Vibe, User } from '../lib/api';
 import { supabase, signUpWithEmail, signInWithEmail, signOut } from '../lib/supabase';
 
@@ -116,6 +116,19 @@ const TAGS = ['3D Effects', 'SaaS UI', 'Micro-interactions', 'Tailwind Magic', '
 
 function randomItem<T>(arr: T[]): T { return arr[Math.floor(Math.random() * arr.length)]; }
 function randomId() { return Math.random().toString(36).slice(2, 8); }
+function formatRelativeTime(value?: string) {
+  if (!value) return '-';
+  const ts = new Date(value).getTime();
+  if (Number.isNaN(ts)) return '-';
+  const diff = Date.now() - ts;
+  if (diff < 60_000) return '剛剛';
+  const mins = Math.floor(diff / 60_000);
+  if (mins < 60) return `${mins} 分鐘前`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} 小時前`;
+  const days = Math.floor(hours / 24);
+  return `${days} 天前`;
+}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function QALab() {
@@ -146,6 +159,12 @@ export default function QALab() {
   const [followUsername, setFollowUsername] = useState('');
   const [followStatus, setFollowStatus] = useState<Record<string, boolean>>({});
   const [followLoading, setFollowLoading] = useState(false);
+
+  // Cleanup center state
+  const [cleanupQuery, setCleanupQuery] = useState('');
+  const [cleanupAuthor, setCleanupAuthor] = useState('all');
+  const [selectedDeleteIds, setSelectedDeleteIds] = useState<number[]>([]);
+  const [cleanupDeleting, setCleanupDeleting] = useState(false);
 
   // ── Auth sync ──────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -178,9 +197,50 @@ export default function QALab() {
   const loadVibes = async () => {
     try {
       const all = await api.getVibes();
-      setVibes(all.slice(0, 30));
+      setVibes(all.slice(0, 120));
     } catch (e: any) { addLog('err', `載入 Vibe 失敗：${e.message}`); }
   };
+
+  const authorOptions = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const vibe of vibes) {
+      map.set(vibe.author_name, (map.get(vibe.author_name) || 0) + 1);
+    }
+    return [...map.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, count]) => ({ name, count }));
+  }, [vibes]);
+
+  const filteredCleanupVibes = useMemo(() => {
+    const q = cleanupQuery.trim().toLowerCase();
+    return vibes
+      .filter(v => cleanupAuthor === 'all' || v.author_name === cleanupAuthor)
+      .filter(v =>
+        !q
+          || v.title.toLowerCase().includes(q)
+          || v.author_name.toLowerCase().includes(q)
+          || String(v.id).includes(q)
+      )
+      .sort((a, b) => (new Date(b.created_at).getTime() || 0) - (new Date(a.created_at).getTime() || 0));
+  }, [vibes, cleanupAuthor, cleanupQuery]);
+
+  const selectedVisibleCount = useMemo(
+    () => filteredCleanupVibes.filter(v => selectedDeleteIds.includes(v.id)).length,
+    [filteredCleanupVibes, selectedDeleteIds]
+  );
+
+  useEffect(() => {
+    setSelectedDeleteIds(prev => prev.filter(id => vibes.some(v => v.id === id)));
+  }, [vibes]);
+
+  useEffect(() => {
+    if (!dbUser) return;
+    if (cleanupAuthor === 'all') return;
+    if (cleanupAuthor === dbUser.username) return;
+    if (!authorOptions.find(a => a.name === cleanupAuthor)) {
+      setCleanupAuthor('all');
+    }
+  }, [dbUser, cleanupAuthor, authorOptions]);
 
   // ── Log ────────────────────────────────────────────────────────────────────
   const addLog = useCallback((level: LogEntry['level'], msg: string) => {
@@ -314,6 +374,57 @@ export default function QALab() {
     addLog('ok', `已按讚 ${done} 個 Vibe`);
   };
 
+  // ── Cleanup center actions ───────────────────────────────────────────────
+  const toggleSelect = (id: number) => {
+    setSelectedDeleteIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  const selectAllVisible = () => {
+    setSelectedDeleteIds(prev => {
+      const set = new Set(prev);
+      for (const v of filteredCleanupVibes) set.add(v.id);
+      return [...set];
+    });
+  };
+
+  const clearSelected = () => setSelectedDeleteIds([]);
+
+  const deleteSelectedVibes = async () => {
+    if (!supabaseId) { addLog('err', '刪除前請先登入'); return; }
+    if (selectedDeleteIds.length === 0) { addLog('warn', '請先選擇要刪除的專案'); return; }
+    if (!confirm(`確定要刪除 ${selectedDeleteIds.length} 個已選專案？`)) return;
+
+    setCleanupDeleting(true);
+    let ok = 0;
+    let failed = 0;
+    addLog('info', `開始刪除 ${selectedDeleteIds.length} 個專案...`);
+    for (const id of selectedDeleteIds) {
+      try {
+        await api.deleteVibe(id, supabaseId);
+        ok++;
+      } catch {
+        failed++;
+      }
+    }
+    addLog('ok', `刪除完成：成功 ${ok}，失敗 ${failed}`);
+    setCleanupDeleting(false);
+    setSelectedDeleteIds([]);
+    await loadVibes();
+  };
+
+  const deleteSingleVibe = async (v: Vibe) => {
+    if (!supabaseId) { addLog('err', '刪除前請先登入'); return; }
+    if (!confirm(`確定刪除 "${v.title}"（#${v.id}）？`)) return;
+    try {
+      await api.deleteVibe(v.id, supabaseId);
+      addLog('ok', `已刪除 "${v.title}"（#${v.id}）`);
+      setSelectedDeleteIds(prev => prev.filter(id => id !== v.id));
+      await loadVibes();
+    } catch (e: any) {
+      addLog('err', `刪除失敗 #${v.id}：${e.message || '無法刪除'}`);
+    }
+  };
+
   // ─── Render ────────────────────────────────────────────────────────────────
   const logColor: Record<LogEntry['level'], string> = {
     info: 'text-sky-400',
@@ -334,24 +445,25 @@ export default function QALab() {
     warn: 'warning',
   };
 
+  const mineCount = dbUser ? vibes.filter(v => v.author_name === dbUser.username).length : 0;
+
   return (
-    <div className="min-h-screen bg-[#080b12] text-white font-mono text-sm">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#162238_0%,_#090d18_45%,_#060810_100%)] text-white font-mono text-sm">
 
       {/* ── Header ── */}
-      <div className="sticky top-0 z-10 bg-[#080b12]/95 backdrop-blur-md border-b border-white/[0.06]">
-        <div className="flex items-center justify-between px-5 py-3">
+      <div className="sticky top-0 z-10 bg-[#070a13]/92 backdrop-blur-xl border-b border-white/[0.08]">
+        <div className="flex items-center justify-between px-5 py-3.5">
           <div className="flex items-center gap-3">
-            {/* Pulsing indicator */}
             <div className="relative flex items-center justify-center w-7 h-7">
-              <div className="absolute w-7 h-7 rounded-full bg-amber-500/20 animate-ping" />
-              <div className="relative w-3.5 h-3.5 rounded-full bg-amber-400" />
+              <div className="absolute w-7 h-7 rounded-full bg-cyan-500/20 animate-ping" />
+              <div className="relative w-3.5 h-3.5 rounded-full bg-cyan-400" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-white font-semibold text-sm tracking-tight">QA 實驗室</span>
-                <span className="px-1.5 py-0.5 bg-amber-500/15 border border-amber-500/30 rounded text-amber-400 text-[10px] font-semibold tracking-widest uppercase">內部</span>
+                <span className="text-white font-semibold text-sm tracking-tight">QA 控制台</span>
+                <span className="px-1.5 py-0.5 bg-cyan-500/15 border border-cyan-500/30 rounded text-cyan-300 text-[10px] font-semibold tracking-widest uppercase">Internal</span>
               </div>
-              <div className="text-white/30 text-[10px] mt-0.5">開發測試工具組 · 使用者不可見</div>
+              <div className="text-white/35 text-[10px] mt-0.5">壓測、資料建立、互動驗證、專案清理</div>
             </div>
           </div>
           {dbUser ? (
@@ -377,9 +489,15 @@ export default function QALab() {
         </div>
       </div>
 
-      <div className="flex h-[calc(100vh-57px)]">
+      <div className="grid h-[calc(100vh-60px)] grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px]">
         {/* ── Left: Controls ── */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        <div className="overflow-y-auto p-4 md:p-5 space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+            <StatBadge label="已載入專案" value={String(vibes.length)} tone="blue" />
+            <StatBadge label="我的專案" value={String(mineCount)} tone="violet" />
+            <StatBadge label="作者數" value={String(authorOptions.length)} tone="emerald" />
+            <StatBadge label="活動紀錄" value={String(logs.length)} tone="amber" />
+          </div>
 
           {/* Account Factory */}
           <Section title="帳號工廠" icon="person_add" accent="violet">
@@ -616,35 +734,142 @@ export default function QALab() {
 
           {/* Cleanup */}
           <Section title="清理" icon="delete_sweep" accent="red">
-            {!dbUser
-              ? <AuthWarning text="需要登入，且只會刪除你建立的 Vibe" />
-              : <p className="text-white/35 text-xs mb-3">會永久刪除已載入清單中由你帳號建立的所有 Vibe。</p>
-            }
-            <button
-              onClick={async () => {
-                if (!supabaseId || !dbUser) return;
-                if (!confirm('要刪除你帳號建立的所有 Vibe 嗎？')) return;
-                const mine = vibes.filter(v => v.author_name === dbUser.username);
-                addLog('info', `正在刪除 ${mine.length} 個 Vibe…`);
-                let n = 0;
-                for (const v of mine) {
-                  try { await api.deleteVibe(v.id, supabaseId); n++; } catch {}
-                }
-                addLog('ok', `已刪除 ${n} 個 Vibe`);
-                loadVibes();
-              }}
-              disabled={!dbUser}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-red-900/30 hover:bg-red-900/50 border border-red-700/30 hover:border-red-600/50 text-red-400 hover:text-red-300 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-[14px]">delete_sweep</span>
-              刪除我的 Vibe
-            </button>
+            {!supabaseId && <AuthWarning text="需要登入。你只能刪除目前帳號有權限的專案（通常是自己建立的）。" />}
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_220px_auto] gap-2">
+                <input
+                  type="text"
+                  value={cleanupQuery}
+                  onChange={e => setCleanupQuery(e.target.value)}
+                  placeholder="搜尋 ID / 標題 / 作者…"
+                  className="bg-white/5 border border-white/10 focus:border-red-400/50 rounded-lg px-3 py-2 text-xs text-white placeholder-white/20 outline-none transition-colors"
+                />
+                <select
+                  value={cleanupAuthor}
+                  onChange={e => setCleanupAuthor(e.target.value)}
+                  className="bg-white/5 border border-white/10 focus:border-red-400/50 rounded-lg px-3 py-2 text-xs text-white outline-none cursor-pointer"
+                >
+                  <option value="all">所有作者</option>
+                  {authorOptions.map(opt => (
+                    <option key={opt.name} value={opt.name}>
+                      @{opt.name} ({opt.count})
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={loadVibes}
+                  className="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white/70 text-xs transition-colors cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[13px]">refresh</span>
+                  更新
+                </button>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  onClick={selectAllVisible}
+                  disabled={filteredCleanupVibes.length === 0}
+                  className="px-2.5 py-1 rounded-md border border-white/12 text-white/70 hover:text-white hover:border-white/25 disabled:opacity-35 disabled:cursor-not-allowed text-[11px] transition-colors cursor-pointer"
+                >
+                  全選目前結果 ({filteredCleanupVibes.length})
+                </button>
+                <button
+                  onClick={clearSelected}
+                  disabled={selectedDeleteIds.length === 0}
+                  className="px-2.5 py-1 rounded-md border border-white/12 text-white/45 hover:text-white/80 hover:border-white/25 disabled:opacity-35 disabled:cursor-not-allowed text-[11px] transition-colors cursor-pointer"
+                >
+                  清空勾選
+                </button>
+                {dbUser && (
+                  <button
+                    onClick={() => setCleanupAuthor(dbUser.username)}
+                    className="px-2.5 py-1 rounded-md border border-violet-400/30 text-violet-300 hover:bg-violet-500/10 text-[11px] transition-colors cursor-pointer"
+                  >
+                    只看我的專案
+                  </button>
+                )}
+                <span className="text-[11px] text-white/35">
+                  已勾選 {selectedDeleteIds.length} 筆（可見範圍中 {selectedVisibleCount} 筆）
+                </span>
+              </div>
+
+              <div className="rounded-lg border border-white/[0.08] bg-black/15 overflow-hidden">
+                <div className="max-h-72 overflow-y-auto divide-y divide-white/[0.04]">
+                  {filteredCleanupVibes.length === 0 && (
+                    <div className="px-3 py-6 text-center text-white/30 text-xs">沒有符合條件的專案</div>
+                  )}
+                  {filteredCleanupVibes.map(v => {
+                    const selected = selectedDeleteIds.includes(v.id);
+                    return (
+                      <div key={v.id} className={`px-3 py-2.5 flex items-center gap-2.5 ${selected ? 'bg-red-500/8' : ''}`}>
+                        <input
+                          type="checkbox"
+                          checked={selected}
+                          onChange={() => toggleSelect(v.id)}
+                          className="w-4 h-4 cursor-pointer accent-red-500"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="text-white/25 text-[10px] shrink-0">#{v.id}</span>
+                            <span className="text-white/75 text-xs truncate">{v.title}</span>
+                          </div>
+                          <div className="text-[10px] text-white/30 mt-0.5">
+                            @{v.author_name} · {formatRelativeTime(v.created_at)}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => deleteSingleVibe(v)}
+                          disabled={!supabaseId || cleanupDeleting}
+                          className="shrink-0 px-2.5 py-1 rounded-md border border-red-500/30 text-red-300 hover:bg-red-500/20 disabled:opacity-40 disabled:cursor-not-allowed text-[10px] transition-colors cursor-pointer"
+                        >
+                          刪除
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={deleteSelectedVibes}
+                  disabled={!supabaseId || selectedDeleteIds.length === 0 || cleanupDeleting}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-red-700/35 hover:bg-red-700/50 border border-red-500/35 text-red-200 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer"
+                >
+                  <span className={`material-symbols-outlined text-[14px] ${cleanupDeleting ? 'animate-spin' : ''}`}>
+                    {cleanupDeleting ? 'sync' : 'delete_forever'}
+                  </span>
+                  {cleanupDeleting ? '刪除中…' : `刪除已勾選 (${selectedDeleteIds.length})`}
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!supabaseId || !dbUser) return;
+                    const mine = vibes.filter(v => v.author_name === dbUser.username);
+                    if (mine.length === 0) { addLog('warn', '目前沒有可刪除的我的專案'); return; }
+                    if (!confirm(`確定刪除你帳號下的 ${mine.length} 個專案？`)) return;
+                    setCleanupDeleting(true);
+                    let ok = 0;
+                    for (const v of mine) {
+                      try { await api.deleteVibe(v.id, supabaseId); ok++; } catch {}
+                    }
+                    setCleanupDeleting(false);
+                    addLog('ok', `已刪除我的專案 ${ok}/${mine.length}`);
+                    await loadVibes();
+                  }}
+                  disabled={!dbUser || cleanupDeleting}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white/6 hover:bg-white/10 border border-white/12 text-white/70 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-xs transition-colors cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[13px]">auto_delete</span>
+                  一鍵刪除我的全部
+                </button>
+              </div>
+            </div>
           </Section>
 
         </div>
 
         {/* ── Right: Activity Log ── */}
-        <div className="w-[300px] shrink-0 border-l border-white/[0.06] flex flex-col bg-[#060810]">
+        <div className="xl:w-[320px] shrink-0 border-t xl:border-t-0 xl:border-l border-white/[0.08] flex flex-col bg-[#060810]/90">
           <div className="px-4 py-3 border-b border-white/[0.06] flex justify-between items-center">
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-[13px] text-white/25">terminal</span>
@@ -706,13 +931,24 @@ export default function QALab() {
 
 // ─── Section card ─────────────────────────────────────────────────────────────
 const accentConfig: Record<string, { border: string; glow: string; icon: string; label: string }> = {
-  violet: { border: 'border-violet-500/20',  glow: 'bg-violet-500',  icon: 'text-violet-400',  label: 'bg-violet-500/10 text-violet-400' },
-  emerald:{ border: 'border-emerald-500/20', glow: 'bg-emerald-500', icon: 'text-emerald-400', label: 'bg-emerald-500/10 text-emerald-400' },
-  cyan:   { border: 'border-cyan-500/20',    glow: 'bg-cyan-500',    icon: 'text-cyan-400',    label: 'bg-cyan-500/10 text-cyan-400' },
-  pink:   { border: 'border-pink-500/20',    glow: 'bg-pink-500',    icon: 'text-pink-400',    label: 'bg-pink-500/10 text-pink-400' },
-  blue:   { border: 'border-blue-500/20',    glow: 'bg-blue-500',    icon: 'text-blue-400',    label: 'bg-blue-500/10 text-blue-400' },
-  red:    { border: 'border-red-500/20',     glow: 'bg-red-500',     icon: 'text-red-400',     label: 'bg-red-500/10 text-red-400' },
+  violet: { border: 'border-violet-500/22',  glow: 'bg-violet-500',  icon: 'text-violet-300',  label: 'bg-violet-500/10 text-violet-300' },
+  emerald:{ border: 'border-emerald-500/22', glow: 'bg-emerald-500', icon: 'text-emerald-300', label: 'bg-emerald-500/10 text-emerald-300' },
+  cyan:   { border: 'border-cyan-500/22',    glow: 'bg-cyan-500',    icon: 'text-cyan-300',    label: 'bg-cyan-500/10 text-cyan-300' },
+  pink:   { border: 'border-pink-500/22',    glow: 'bg-pink-500',    icon: 'text-pink-300',    label: 'bg-pink-500/10 text-pink-300' },
+  blue:   { border: 'border-blue-500/22',    glow: 'bg-blue-500',    icon: 'text-blue-300',    label: 'bg-blue-500/10 text-blue-300' },
+  red:    { border: 'border-red-500/22',     glow: 'bg-red-500',     icon: 'text-red-300',     label: 'bg-red-500/10 text-red-300' },
+  amber:  { border: 'border-amber-500/22',   glow: 'bg-amber-500',   icon: 'text-amber-300',   label: 'bg-amber-500/10 text-amber-300' },
 };
+
+function StatBadge({ label, value, tone }: { label: string; value: string; tone: string }) {
+  const cfg = accentConfig[tone] ?? accentConfig.blue;
+  return (
+    <div className={`rounded-xl border ${cfg.border} bg-black/20 px-3 py-2.5`}>
+      <div className="text-[10px] text-white/35 uppercase tracking-[0.16em]">{label}</div>
+      <div className={`mt-1 text-lg font-semibold leading-none ${cfg.icon}`}>{value}</div>
+    </div>
+  );
+}
 
 function Section({
   title, icon, accent = 'violet', children
@@ -724,10 +960,10 @@ function Section({
 }) {
   const cfg = accentConfig[accent] ?? accentConfig.violet;
   return (
-    <div className={`rounded-xl border ${cfg.border} bg-white/[0.015] overflow-hidden`}>
-      <div className="flex items-center gap-2.5 px-4 py-2.5 border-b border-white/[0.05]">
+    <div className={`rounded-xl border ${cfg.border} bg-black/20 shadow-[0_8px_30px_rgba(0,0,0,0.18)] overflow-hidden`}>
+      <div className="flex items-center gap-2.5 px-4 py-2.5 border-b border-white/[0.07] bg-white/[0.02]">
         <span className={`material-symbols-outlined text-[15px] ${cfg.icon}`}>{icon}</span>
-        <span className="text-white/70 font-semibold text-xs tracking-wide">{title}</span>
+        <span className="text-white/78 font-semibold text-xs tracking-wide">{title}</span>
       </div>
       <div className="p-4">{children}</div>
     </div>
