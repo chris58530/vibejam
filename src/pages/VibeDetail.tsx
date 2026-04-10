@@ -739,7 +739,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                 {isOwner && (
                   <button
                     onClick={() => {
-                      const slot = { id: `vibe-${vibe.id}`, title: vibe.title, tags: vibe.tags || '', editorMode: 'single', code: { html: selectedVersion?.code || '', css: '', js: '' }, savedAt: new Date().toISOString() };
+                      const slot = { id: `vibe-${vibe.id}`, title: vibe.title, tags: vibe.tags || '', editorMode: 'single', code: { html: selectedVersion?.code || '', css: '', js: '' }, savedAt: new Date().toISOString(), vibeId: vibe.id };
                       sessionStorage.setItem('beaverkit_pending_load', JSON.stringify(slot));
                       navigate('/workspace');
                     }}
