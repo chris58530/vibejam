@@ -89,7 +89,7 @@ export default function VibeCard({ vibe, onClick, compact = false, maxViews = 1 
             className="absolute top-0 left-0 border-none pointer-events-none"
             style={{ width: '400%', height: '400%', transform: 'scale(0.25)', transformOrigin: 'top left' }}
             title={vibe.title}
-            sandbox="allow-scripts allow-same-origin"
+            sandbox="allow-scripts allow-same-origin allow-pointer-lock"
             loading="lazy"
           />
         </div>
@@ -170,7 +170,7 @@ export default function VibeCard({ vibe, onClick, compact = false, maxViews = 1 
           srcDoc={previewCode}
           className="absolute top-0 left-0 w-[200%] h-[200%] scale-50 origin-top-left border-none pointer-events-none bg-white opacity-80 group-hover:scale-[0.52] group-hover:opacity-100 transition-all duration-500 rounded-[10px]"
           title={vibe.title}
-          sandbox="allow-scripts allow-same-origin"
+          sandbox="allow-scripts allow-same-origin allow-pointer-lock"
           loading="lazy"
         />
 

@@ -1194,7 +1194,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
                     <div className="absolute inset-0 rounded-full shadow-2xl" style={{ background: 'linear-gradient(145deg,#3a3a3a,#1a1a1a)', padding: '10px' }}>
                       <div className="w-full h-full rounded-full overflow-hidden relative bg-black">
                         {previewDoc ? (
-                          <iframe ref={iframeRef} srcDoc={previewDoc} className="absolute inset-0 w-full h-full border-none" title="Round Preview" sandbox="allow-scripts allow-same-origin" />
+                          <iframe ref={iframeRef} srcDoc={previewDoc} className="absolute inset-0 w-full h-full border-none" title="Round Preview" sandbox="allow-scripts allow-same-origin allow-pointer-lock" />
                         ) : (
                           <div className="w-full h-full bg-[#050505] flex items-center justify-center">
                             <span className="material-symbols-outlined text-on-surface/20 text-4xl">watch</span>
@@ -1220,7 +1220,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
                       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-[#1A1A1A] rounded-b-2xl z-10"></div>
                       <div className="flex-1 relative overflow-hidden bg-white">
                         {previewDoc ? (
-                          <iframe ref={iframeRef} srcDoc={previewDoc} className="absolute inset-0 w-full h-full border-none" title="Mobile Preview" sandbox="allow-scripts allow-same-origin" />
+                          <iframe ref={iframeRef} srcDoc={previewDoc} className="absolute inset-0 w-full h-full border-none" title="Mobile Preview" sandbox="allow-scripts allow-same-origin allow-pointer-lock" />
                         ) : (
                           <div className="w-full h-full bg-[#050505] flex items-center justify-center">
                             <span className="material-symbols-outlined text-on-surface/15 text-5xl">smartphone</span>
@@ -1248,7 +1248,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
                   </div>
                   <div className="flex-1 relative bg-white overflow-hidden">
                     {previewDoc ? (
-                      <iframe ref={iframeRef} srcDoc={previewDoc} className="absolute inset-0 w-full h-full border-none" title="Live Preview" sandbox="allow-scripts allow-same-origin" />
+                      <iframe ref={iframeRef} srcDoc={previewDoc} className="absolute inset-0 w-full h-full border-none" title="Live Preview" sandbox="allow-scripts allow-same-origin allow-pointer-lock" />
                     ) : (
                       <div className="w-full h-full bg-[#050505] flex items-center justify-center">
                         <div className="text-center">

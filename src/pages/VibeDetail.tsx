@@ -430,7 +430,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
       {/* Fullscreen overlay */}
       {isFullscreen && (
         <div className="fixed inset-0 z-[200] bg-black">
-          <iframe srcDoc={selectedVersion?.code} className="w-full h-full border-none" title="Fullscreen" sandbox="allow-scripts allow-same-origin allow-forms" />
+          <iframe srcDoc={selectedVersion?.code} className="w-full h-full border-none" title="Fullscreen" sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock" />
           <button
             onClick={() => setIsFullscreen(false)}
             className="absolute bottom-5 right-5 w-9 h-9 bg-black/70 backdrop-blur text-white rounded-xl flex items-center justify-center hover:bg-white/10 transition-colors ring-1 ring-white/10 cursor-pointer"
@@ -539,7 +539,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                 className="absolute inset-0 w-full h-full border-none transition-opacity duration-150"
                 style={{ opacity: iframeVisible ? 1 : 0 }}
                 title="Stage"
-                sandbox="allow-scripts allow-same-origin allow-forms"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"
               />
               <button
                 onClick={() => setIsFullscreen(true)}

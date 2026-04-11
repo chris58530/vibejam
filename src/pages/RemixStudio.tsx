@@ -688,7 +688,7 @@ ${code}
                       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-[#1A1A1A] rounded-b-2xl z-10"></div>
                       <div className="flex-1 relative overflow-hidden bg-white">
                         {previewDoc ? (
-                          <iframe srcDoc={previewDoc} className="absolute inset-0 w-full h-full border-none" title="Mobile Preview" sandbox="allow-scripts allow-same-origin" />
+                          <iframe srcDoc={previewDoc} className="absolute inset-0 w-full h-full border-none" title="Mobile Preview" sandbox="allow-scripts allow-same-origin allow-pointer-lock" />
                         ) : (
                           <div className="w-full h-full bg-[#050505] flex items-center justify-center">
                             <span className="material-symbols-outlined text-on-surface/15 text-5xl">smartphone</span>
@@ -716,7 +716,7 @@ ${code}
                   </div>
                   <div className="flex-1 relative bg-white overflow-hidden">
                     {previewDoc ? (
-                      <iframe srcDoc={previewDoc} className="absolute inset-0 w-full h-full border-none" title="Live Preview" sandbox="allow-scripts allow-same-origin" />
+                      <iframe srcDoc={previewDoc} className="absolute inset-0 w-full h-full border-none" title="Live Preview" sandbox="allow-scripts allow-same-origin allow-pointer-lock" />
                     ) : (
                       <div className="w-full h-full bg-[#050505] flex items-center justify-center">
                         <div className="text-center">
