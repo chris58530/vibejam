@@ -117,6 +117,9 @@ export function wrapReactForPreview(rawCode: string): string {
   <script src="https://unpkg.com/lucide-react/dist/umd/lucide-react.min.js"></script>
   <script>window.LucideReact = window.LucideReact || window.lucideReact || {};</script>
   <script src="https://unpkg.com/@babel/standalone@7.26.4/babel.min.js"></script>
+  <style>
+    html, body { width: 1280px; height: 720px; margin: 0; transform-origin: top left; transform: scale(calc(100vw / 1280)); }
+  </style>
 </head>
 <body>
   <div id="root"></div>
@@ -146,6 +149,7 @@ export function mergeCode(html: string, css: string, js: string): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>${BEAVERKIT_API_SCRIPT}</script>
   <style>
+    html, body { width: 1280px; height: 720px; margin: 0; transform-origin: top left; transform: scale(calc(100vw / 1280)); }
 ${css}
   </style>
 </head>
@@ -185,7 +189,8 @@ export function wrapVueForPreview(rawCode: string): string {
   <script>${BEAVERKIT_API_SCRIPT}</script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-  <style>${styleContent}</style>
+  <style>html, body { width: 1280px; height: 720px; margin: 0; transform-origin: top left; transform: scale(calc(100vw / 1280)); }
+${styleContent}</style>
 </head>
 <body>
   <div id="app">${templateContent}</div>
@@ -220,6 +225,9 @@ app.mount('#app');
   <script>${BEAVERKIT_API_SCRIPT}</script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <style>
+    html, body { width: 1280px; height: 720px; margin: 0; transform-origin: top left; transform: scale(calc(100vw / 1280)); }
+  </style>
 </head>
 <body>
   <div id="app"></div>

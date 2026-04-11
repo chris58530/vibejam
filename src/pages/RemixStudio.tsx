@@ -164,6 +164,13 @@ export default function RemixStudio({ currentUser }: RemixStudioProps) {
 3. 在程式碼區塊之前或之後，簡短說明你做了什麼修改
 4. 不要只給部分程式碼或 diff，必須給出完整可執行的程式碼
 
+【視窗尺寸規範 — 必須遵守】
+BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
+- 所有生成的程式碼，必須在 <head> 的 <style> 最開頭加入以下 CSS，確保在任何螢幕大小都能完美呈現：
+  html, body { width: 1280px; height: 720px; margin: 0; transform-origin: top left; transform: scale(calc(100vw / 1280)); }
+- 若專案使用 canvas，設定 width=1280 height=720
+- 不要使用固定的其他像素尺寸（如 800px、600px）作為根元素寬高
+
 以下是目前的完整程式碼：
 
 \`\`\`

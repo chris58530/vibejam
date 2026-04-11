@@ -120,6 +120,45 @@ export default function BeaverKitAPIGuide({ compact = false }: Props) {
         </p>
       </div>
 
+      {/* 視窗尺寸 */}
+      <Section icon="aspect_ratio" color="bg-emerald-500/15 text-emerald-400" title="預覽視窗尺寸">
+        <p className="text-[11px] text-on-surface/50 mb-3 leading-relaxed">
+          平台預覽視窗的基準解析度為 <code className="bg-surface-container px-1.5 py-0.5 rounded text-emerald-400 font-mono">1280 × 720（16:9）</code>，
+          並自動等比縮放填滿各種螢幕大小。設計時以此為基準，內容在所有裝置上都能完美呈現。
+        </p>
+        <div className="grid grid-cols-2 gap-2 mb-3">
+          <div className="bg-emerald-500/5 border border-emerald-500/15 rounded-lg p-2.5">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <span className="material-symbols-outlined text-[13px] text-emerald-400">check_circle</span>
+              <span className="text-[10px] font-bold text-emerald-400">推薦 — 相對單位</span>
+            </div>
+            <p className="text-[10px] text-on-surface/40 leading-relaxed">用 <code className="text-emerald-400 font-mono">100vw</code> / <code className="text-emerald-400 font-mono">100vh</code>，內容自動填滿視窗，不受螢幕大小影響</p>
+          </div>
+          <div className="bg-red-500/5 border border-red-500/15 rounded-lg p-2.5">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <span className="material-symbols-outlined text-[13px] text-red-400">warning</span>
+              <span className="text-[10px] font-bold text-red-400">避免 — 固定像素</span>
+            </div>
+            <p className="text-[10px] text-on-surface/40 leading-relaxed">寫死 <code className="text-red-400 font-mono">800px</code> 等固定尺寸，可能在不同視窗大小出現捲動條</p>
+          </div>
+        </div>
+        <Code>{`/* ✅ 推薦：充滿整個預覽視窗 */
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+canvas {
+  width: 100vw;
+  height: 100vh;
+}
+
+/* ✅ 固定尺寸遊戲：以 1280×720 為基準即可 */
+/* 平台會自動縮放，比例永遠維持 16:9 */`}</Code>
+      </Section>
+
       {/* Save */}
       <Section icon="save" color="bg-blue-500/15 text-blue-400" title="BeaverKit.save()" badge="async">
         <p className="text-[11px] text-on-surface/50 mb-3 leading-relaxed">
