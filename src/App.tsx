@@ -2,10 +2,12 @@ import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { useI18n } from './lib/i18n';
 import './lib/themeStore'; // bootstrap: apply dark palette CSS vars on load
+import './lib/devLog';    // intercept console + capture global errors early
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import BottomTabBar from './components/BottomTabBar';
 import DebugOverlay from './components/DebugOverlay';
+import DevLogPanel from './components/DevLogPanel';
 import Home from './pages/Home';
 import Workspace from './pages/Workspace';
 import RemixStudio from './pages/RemixStudio';
@@ -17,28 +19,29 @@ import QALab from './pages/QALab';
 import { api, User } from './lib/api';
 import { supabase } from './lib/supabase';
 import { useAIKeyStore } from './lib/aiKeyStore';
+import { devLog } from './lib/devLog';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
 
   useLayoutEffect(() => {
-    const reset = () => {
+    let pass = 0;
+    const reset = (label: string) => {
+      const before = window.scrollY;
       window.scrollTo(0, 0);
       if (document.scrollingElement) document.scrollingElement.scrollTop = 0;
+      const after = window.scrollY;
+      devLog.info(`[SCROLL_RESET #${++pass} ${label}] before=${before} after=${after} path=${pathname}`);
     };
-    // Multi-pass reset: iframes in VibeCard/TrendingCarousel embed user-generated
-    // HTML with allow-scripts+allow-same-origin. If any vibe's code auto-focuses
-    // an element (autofocus attr, canvas.focus(), pointer lock, etc.) the browser
-    // will scroll the parent viewport to bring that iframe into view. We can't
-    // stop it — but we can re-reset scroll for ~1.5s until iframes finish loading.
-    reset();
-    const raf = requestAnimationFrame(reset);
+
+    reset('sync');
+    const raf = requestAnimationFrame(() => reset('rAF'));
     const timers = [
-      window.setTimeout(reset, 0),
-      window.setTimeout(reset, 100),
-      window.setTimeout(reset, 400),
-      window.setTimeout(reset, 1000),
-      window.setTimeout(reset, 1800),
+      window.setTimeout(() => reset('t=0'),    0),
+      window.setTimeout(() => reset('t=100'), 100),
+      window.setTimeout(() => reset('t=400'), 400),
+      window.setTimeout(() => reset('t=1000'), 1000),
+      window.setTimeout(() => reset('t=1800'), 1800),
     ];
     return () => {
       cancelAnimationFrame(raf);
@@ -58,6 +61,59 @@ export default function App() {
   // Initialize AI Key Store
   useEffect(() => {
     useAIKeyStore.getState().initialize();
+  }, []);
+
+  // ── Scroll / Focus 診斷監聽（幫助找出讓頁面非預期捲動的兇手）──────────────
+  useEffect(() => {
+    devLog.info('[APP_MOUNT] App mounted, diagnostics active');
+
+    // 每次 window 捲動都記錄位置 + 呼叫堆疊
+    const onScroll = () => {
+      devLog.log(`[SCROLL] scrollY=${window.scrollY} scrollX=${window.scrollX}`);
+    };
+
+    // focusin（capture）捕捉任何元素獲得 focus，尤其是 iframe 裡的元素觸發父頁面捲動
+    const onFocusIn = (e: FocusEvent) => {
+      const target = e.target as Element | null;
+      if (!target) return;
+      const tag  = target.tagName ?? '?';
+      const id   = target.id ? `#${target.id}` : '';
+      const cls  = typeof target.className === 'string'
+        ? target.className.trim().slice(0, 40)
+        : '';
+      const isIframe = target.tagName === 'IFRAME';
+      devLog.log(`[FOCUS${isIframe ? ' ⚠IFRAME' : ''}] ${tag}${id} "${cls}" scrollY=${window.scrollY}`);
+    };
+
+    // MutationObserver：偵測新 iframe 被插入 DOM，並在它 load 完成時記錄
+    const onIframeLoad = (iframe: HTMLIFrameElement) => {
+      devLog.info(`[IFRAME_LOAD] src="${iframe.title}" scrollY=${window.scrollY}`);
+    };
+    const mo = new MutationObserver(mutations => {
+      for (const m of mutations) {
+        m.addedNodes.forEach(node => {
+          if (node instanceof HTMLIFrameElement) {
+            devLog.info(`[IFRAME_ADD] title="${node.title}" scrollY=${window.scrollY}`);
+            node.addEventListener('load', () => onIframeLoad(node), { once: true });
+          }
+        });
+      }
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+
+    // 已經存在的 iframe（首次 mount）
+    document.querySelectorAll<HTMLIFrameElement>('iframe').forEach(iframe => {
+      iframe.addEventListener('load', () => onIframeLoad(iframe), { once: true });
+    });
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    document.addEventListener('focusin', onFocusIn, true);
+
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      document.removeEventListener('focusin', onFocusIn, true);
+      mo.disconnect();
+    };
   }, []);
 
   useEffect(() => {
@@ -146,6 +202,7 @@ export default function App() {
       </button>
 
       {debugMode && <DebugOverlay onClose={() => setDebugMode(false)} />}
+      <DevLogPanel />
 
       {/* Global Styles for custom scrollbar */}
       <style dangerouslySetInnerHTML={{
