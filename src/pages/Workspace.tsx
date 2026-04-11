@@ -718,7 +718,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
 
   // ── Render ────────────────────────────────────────────────────────
   return (
-    <main className={`${savePanelOpen ? 'md:ml-72' : 'md:ml-16'} flex-1 flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-background transition-[margin] duration-300`}>
+    <div className={`${savePanelOpen ? 'md:ml-72' : 'md:ml-16'} flex-1 flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-background transition-[margin] duration-300`}>
       {/* ── Header ── */}
       <div className="bg-surface px-4 py-1.5 flex items-center gap-3 border-b border-outline-variant/10 shrink-0 relative">
         {/* Center: Title — inline edit on click */}
@@ -1470,7 +1470,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
         onSaveLocal={handleSaveFromModal}
         isPublishing={isPublishing}
       />
-    </main>
+    </div>
   );
 }
 
