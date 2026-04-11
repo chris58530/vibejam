@@ -22,10 +22,28 @@ function ScrollToTop() {
   const { pathname } = useLocation();
 
   useLayoutEffect(() => {
-    if ('scrollRestoration' in window.history) {
-      window.history.scrollRestoration = 'manual';
-    }
-    window.scrollTo(0, 0);
+    const reset = () => {
+      window.scrollTo(0, 0);
+      if (document.scrollingElement) document.scrollingElement.scrollTop = 0;
+    };
+    // Multi-pass reset: iframes in VibeCard/TrendingCarousel embed user-generated
+    // HTML with allow-scripts+allow-same-origin. If any vibe's code auto-focuses
+    // an element (autofocus attr, canvas.focus(), pointer lock, etc.) the browser
+    // will scroll the parent viewport to bring that iframe into view. We can't
+    // stop it — but we can re-reset scroll for ~1.5s until iframes finish loading.
+    reset();
+    const raf = requestAnimationFrame(reset);
+    const timers = [
+      window.setTimeout(reset, 0),
+      window.setTimeout(reset, 100),
+      window.setTimeout(reset, 400),
+      window.setTimeout(reset, 1000),
+      window.setTimeout(reset, 1800),
+    ];
+    return () => {
+      cancelAnimationFrame(raf);
+      timers.forEach(clearTimeout);
+    };
   }, [pathname]);
 
   return null;
