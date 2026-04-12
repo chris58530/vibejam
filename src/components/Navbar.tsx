@@ -64,7 +64,7 @@ export default function Navbar({}: NavbarProps) {
 
   return (
     <>
-      <header className={`fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl flex items-center justify-between pr-6 h-16 ${isHome ? 'pl-6 md:pl-56' : isWorkspace ? 'pl-6 md:pl-20' : 'pl-6 md:pl-20'} ${!isWorkspace ? 'border-b border-transparent' : 'border-b border-outline-variant/10'}`}>
+      <header className={`fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl flex items-center justify-between pr-6 h-16 ${isHome ? 'pl-6 md:pl-60' : isWorkspace ? 'pl-6 md:pl-20' : 'pl-6 md:pl-20'} ${!isWorkspace ? 'border-b border-transparent' : 'border-b border-outline-variant/10'}`}>
         <div className="flex items-center gap-8">
           {isWorkspace ? (
             <div
@@ -75,11 +75,11 @@ export default function Navbar({}: NavbarProps) {
               BeaverKit Studio
             </div>
           ) : (
-            <div className="flex items-center gap-4">
-              <span className="material-symbols-outlined text-on-surface/60 cursor-pointer hover:bg-surface-container-high p-2 rounded-lg transition-colors md:hidden">menu</span>
-              {/* Logo only shown on mobile — desktop uses Sidebar logo */}
+            /* Mobile only — hidden on desktop to avoid ghost gap-8 space */
+            <div className="flex items-center gap-4 md:hidden">
+              <span className="material-symbols-outlined text-on-surface/60 cursor-pointer hover:bg-surface-container-high p-2 rounded-lg transition-colors">menu</span>
               <h1
-                className="text-xl font-bold tracking-tighter text-on-surface font-headline cursor-pointer flex items-center gap-2 md:hidden"
+                className="text-xl font-bold tracking-tighter text-on-surface font-headline cursor-pointer flex items-center gap-2"
                 onClick={() => navigate('/')}
               >
                 <img src="/Icon.png" alt="BeaverKit" className="w-8 h-8" />
