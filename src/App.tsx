@@ -24,11 +24,19 @@ import { devLog } from './lib/devLog';
 function ScrollToTop() {
   const { pathname } = useLocation();
 
+  // 關閉瀏覽器的 Scroll Restoration，防止它在我們 reset 之後又把捲軸還原回舊位置
+  useLayoutEffect(() => {
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+      devLog.info('[SCROLL_RESTORATION] set to manual');
+    }
+  }, []);
+
   useLayoutEffect(() => {
     let pass = 0;
     const reset = (label: string) => {
       const before = window.scrollY;
-      window.scrollTo(0, 0);
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
       if (document.scrollingElement) document.scrollingElement.scrollTop = 0;
       const after = window.scrollY;
       devLog.info(`[SCROLL_RESET #${++pass} ${label}] before=${before} after=${after} path=${pathname}`);
@@ -40,8 +48,6 @@ function ScrollToTop() {
       window.setTimeout(() => reset('t=0'),    0),
       window.setTimeout(() => reset('t=100'), 100),
       window.setTimeout(() => reset('t=400'), 400),
-      window.setTimeout(() => reset('t=1000'), 1000),
-      window.setTimeout(() => reset('t=1800'), 1800),
     ];
     return () => {
       cancelAnimationFrame(raf);
