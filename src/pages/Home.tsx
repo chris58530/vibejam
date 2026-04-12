@@ -197,7 +197,7 @@ export default function Home() {
               key={tab.key}
               onClick={() => setActiveFeed(tab.key)}
               className={`
-                flex items-center gap-2 px-4 py-2 text-sm font-medium whitespace-nowrap cursor-pointer
+                flex items-center gap-2 px-4 py-2 text-sm font-medium font-body whitespace-nowrap cursor-pointer
                 rounded-lg transition-all duration-150 flex-shrink-0
                 ${activeFeed === tab.key
                   ? 'bg-on-surface text-surface'
