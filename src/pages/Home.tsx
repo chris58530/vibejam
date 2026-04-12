@@ -94,7 +94,7 @@ function TrendingCarousel({ vibes, onSelect }: { vibes: Vibe[]; onSelect: (v: Vi
                   srcDoc={code}
                   className="absolute top-0 left-0 w-[200%] h-[200%] scale-50 origin-top-left border-none pointer-events-none"
                   title={vibe.title}
-                  sandbox="allow-scripts allow-same-origin"
+                  sandbox="allow-scripts"
                   loading="lazy"
                 />
                 {/* Views badge */}
