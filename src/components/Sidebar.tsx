@@ -215,7 +215,13 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
   if (isWorkspace) {
     return (
       <>
-        <aside className="fixed left-0 top-16 h-[calc(100vh-64px)] w-16 bg-surface-container-low flex flex-col items-center py-4 gap-6 border-r border-outline-variant/10 z-40 hidden md:flex">
+        <aside className="fixed left-0 top-0 h-screen w-16 bg-surface-container-low flex flex-col items-center border-r border-outline-variant/10 z-50 hidden md:flex">
+          {/* Logo area — same height as navbar */}
+          <div className="h-16 w-full flex items-center justify-center shrink-0">
+            <img src="/Icon.png" alt="BeaverKit" className="w-8 h-8" />
+          </div>
+          <div className="w-8 h-px bg-outline-variant/15 shrink-0" />
+          <div className="flex flex-col items-center py-4 gap-6 flex-1">
           <button onClick={() => navigate('/')} className="text-on-surface/70 hover:bg-surface-container-high hover:text-on-surface p-2.5 rounded-xl transition-all duration-300" title="Home">
             <span className="material-symbols-outlined">home</span>
           </button>
@@ -230,10 +236,11 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
             <span className="material-symbols-outlined" style={savePanelOpen ? { fontVariationSettings: "'FILL' 1" } : {}}>folder</span>
           </button>
 
-          <div className="mt-auto flex flex-col gap-6 items-center">
+          <div className="mt-auto flex flex-col gap-6 items-center pb-4">
             <button onClick={() => setHelpOpen(true)} className="text-on-surface/70 hover:text-primary transition-colors" title="使用說明">
               <span className="material-symbols-outlined">help</span>
             </button>
+          </div>
           </div>
         </aside>
         {helpOpen && <HelpModal onClose={() => setHelpOpen(false)} />}
@@ -243,7 +250,15 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
 
   // Regular Sidebar — collapsed by default, expands on hover (always expanded on homepage)
   return (
-    <aside className={`group/sidebar fixed left-0 top-16 h-[calc(100vh-64px)] ${isHome ? 'w-56' : 'w-16 hover:w-64 transition-[width] duration-300'} bg-surface-container-low flex flex-col pt-3 pb-2 hidden md:flex z-40 border-r border-outline-variant/5 overflow-hidden`}>
+    <aside className={`group/sidebar fixed left-0 top-0 h-screen ${isHome ? 'w-56' : 'w-16 hover:w-64 transition-[width] duration-300'} bg-surface-container-low flex flex-col pb-2 hidden md:flex z-50 border-r border-outline-variant/5 overflow-hidden`}>
+      {/* Logo area — same height as navbar */}
+      <div className="h-16 flex items-center px-3 shrink-0 gap-3 cursor-pointer" onClick={() => navigate('/')}>
+        <img src="/Icon.png" alt="BeaverKit" className="w-8 h-8 shrink-0" />
+        <span className={`text-lg font-bold tracking-tighter text-on-surface font-headline whitespace-nowrap overflow-hidden transition-[max-width,opacity] duration-300 ${isHome ? 'max-w-[160px] opacity-100' : 'max-w-0 opacity-0 group-hover/sidebar:max-w-[160px] group-hover/sidebar:opacity-100'}`}>
+          BeaverKit
+        </span>
+      </div>
+      <div className="h-px bg-outline-variant/10 mx-3 shrink-0 mb-2" />
       <nav className="space-y-1 px-2">
         {navItems.map(({ key, label, icon, path }) => {
           const isActive =

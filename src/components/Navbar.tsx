@@ -76,8 +76,9 @@ export default function Navbar({}: NavbarProps) {
           ) : (
             <div className="flex items-center gap-4">
               <span className="material-symbols-outlined text-on-surface/60 cursor-pointer hover:bg-surface-container-high p-2 rounded-lg transition-colors md:hidden">menu</span>
+              {/* Logo only shown on mobile — desktop uses Sidebar logo */}
               <h1
-                className="text-xl font-bold tracking-tighter text-on-surface font-headline cursor-pointer flex items-center gap-2"
+                className="text-xl font-bold tracking-tighter text-on-surface font-headline cursor-pointer flex items-center gap-2 md:hidden"
                 onClick={() => navigate('/')}
               >
                 <img src="/Icon.png" alt="BeaverKit" className="w-8 h-8" />
