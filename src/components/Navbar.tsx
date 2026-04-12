@@ -64,7 +64,7 @@ export default function Navbar({}: NavbarProps) {
 
   return (
     <>
-      <header className={`fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl flex items-center justify-between pr-6 h-16 ${isHome ? 'pl-6 md:pl-60' : isWorkspace ? 'pl-6 md:pl-20' : 'pl-6 md:pl-20'} ${!isWorkspace ? 'border-b border-transparent' : 'border-b border-outline-variant/10'}`}>
+      <header className={`fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl flex items-center justify-between pr-6 h-16 ${isHome ? 'pl-6 md:pl-56' : isWorkspace ? 'pl-6 md:pl-20' : 'pl-6 md:pl-20'} ${!isWorkspace ? 'border-b border-transparent' : 'border-b border-outline-variant/10'}`}>
         <div className="flex items-center gap-8">
           {isWorkspace ? (
             <div
@@ -89,7 +89,7 @@ export default function Navbar({}: NavbarProps) {
           )}
 
           {!isWorkspace && (
-            <div className="hidden md:flex items-center bg-surface-container-low px-4 py-2 rounded-full gap-3 w-48 lg:w-72 xl:w-96 group transition-all duration-300 ring-1 ring-black/[0.06] focus-within:ring-primary/30">
+            <div className="hidden md:flex items-center bg-surface-container-low px-4 py-2 rounded-xl gap-3 w-48 lg:w-72 xl:w-96 group transition-all duration-300 ring-1 ring-black/[0.06] focus-within:ring-primary/30">
               <span className="material-symbols-outlined text-on-surface-variant text-sm">search</span>
               <input
                 className="bg-transparent border-none focus:ring-0 text-sm w-full font-body placeholder:text-on-surface-variant/50 outline-none"
