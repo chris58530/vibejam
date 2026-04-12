@@ -30,13 +30,19 @@ function getSupabase(): SupabaseClient {
 }
 
 export async function signInWithGitHub() {
-  const { error } = await getSupabase().auth.signInWithOAuth({
+  const { data, error } = await getSupabase().auth.signInWithOAuth({
     provider: 'github',
     options: {
       redirectTo: window.location.origin,
+      skipBrowserRedirect: true,
     },
   });
   if (error) throw error;
+  if (data?.url) {
+    window.location.href = data.url;
+  } else {
+    throw new Error('無法取得 GitHub 授權網址');
+  }
 }
 
 export async function signUpWithEmail(
