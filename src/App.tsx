@@ -73,9 +73,15 @@ export default function App() {
   useEffect(() => {
     devLog.info('[APP_MOUNT] App mounted, diagnostics active');
 
-    // 每次 window 捲動都記錄位置 + 呼叫堆疊
+    // 每次 window 捲動都記錄位置；scrollY > 50 時附上 call stack 找兇手
     const onScroll = () => {
-      devLog.log(`[SCROLL] scrollY=${window.scrollY} scrollX=${window.scrollX}`);
+      const y = window.scrollY;
+      if (y > 50) {
+        const stack = new Error().stack?.split('\n').slice(1, 5).join(' | ') ?? '';
+        devLog.warn(`[SCROLL ⚠] scrollY=${y} | ${stack}`);
+      } else {
+        devLog.log(`[SCROLL] scrollY=${y} scrollX=${window.scrollX}`);
+      }
     };
 
     // focusin（capture）捕捉任何元素獲得 focus，尤其是 iframe 裡的元素觸發父頁面捲動
