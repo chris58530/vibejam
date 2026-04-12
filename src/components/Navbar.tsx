@@ -27,6 +27,7 @@ export default function Navbar({}: NavbarProps) {
   const { saveStatus } = useWorkspaceStore();
 
   const isWorkspace = location.pathname.includes('/workspace');
+  const isHome = location.pathname === '/';
 
   useEffect(() => {
     if (!supabase) return;
@@ -63,7 +64,7 @@ export default function Navbar({}: NavbarProps) {
 
   return (
     <>
-      <header className={`fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl flex items-center justify-between px-6 h-16 ${!isWorkspace ? 'border-b border-transparent' : 'border-b border-outline-variant/10'}`}>
+      <header className={`fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl flex items-center justify-between pr-6 h-16 ${isHome ? 'pl-6 md:pl-60' : isWorkspace ? 'pl-6 md:pl-20' : 'pl-6 md:pl-20'} ${!isWorkspace ? 'border-b border-transparent' : 'border-b border-outline-variant/10'}`}>
         <div className="flex items-center gap-8">
           {isWorkspace ? (
             <div
