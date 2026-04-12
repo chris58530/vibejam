@@ -48,7 +48,7 @@ export default function DevLogPanel() {
       <button
         onClick={() => setOpen(o => !o)}
         title="開啟 DevLog 面板"
-        className="fixed bottom-20 right-[7.5rem] md:bottom-6 md:right-[9rem] z-[199] w-11 h-11 rounded-full shadow-2xl flex items-center justify-center transition-all duration-200 bg-surface-container-high text-on-surface/50 hover:text-green-400 hover:bg-green-500/10 hover:ring-2 hover:ring-green-500/20 relative"
+        className="fixed bottom-20 right-[7.5rem] md:bottom-6 md:right-[9rem] z-[199] w-11 h-11 rounded-full shadow-2xl flex items-center justify-center transition-all duration-200 bg-surface-container-high text-on-surface/50 hover:text-green-400 hover:bg-green-500/10 hover:ring-2 hover:ring-green-500/20"
       >
         <span className="material-symbols-outlined text-[20px]">terminal</span>
         {(errorCount > 0 || warnCount > 0) && (
