@@ -191,21 +191,21 @@ export default function Home() {
 
       {/* ── Feed Tab Bar ── */}
       <div className="sticky top-16 z-30 bg-surface/95 backdrop-blur-md border-b border-outline-variant/10">
-        <div className="flex items-center gap-2 px-4 py-2.5 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+        <div className="flex items-center gap-2.5 px-4 py-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
           {FEED_TABS.map(tab => (
             <button
               key={tab.key}
               onClick={() => setActiveFeed(tab.key)}
               className={`
-                flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium whitespace-nowrap cursor-pointer
-                rounded-full border transition-all duration-150 flex-shrink-0
+                flex items-center gap-2 px-4 py-2 text-sm font-medium whitespace-nowrap cursor-pointer
+                rounded-lg transition-all duration-150 flex-shrink-0
                 ${activeFeed === tab.key
-                  ? 'bg-surface-container-high border-outline/40 text-on-surface'
-                  : 'bg-surface-container border-outline-variant/20 text-on-surface/45 hover:text-on-surface/75 hover:border-outline-variant/40 hover:bg-surface-container-high'}
+                  ? 'bg-on-surface text-surface'
+                  : 'bg-surface-container text-on-surface/60 hover:bg-surface-container-high hover:text-on-surface'}
               `}
             >
               {tab.dot && (
-                <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: tab.dot }} />
+                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: tab.dot }} />
               )}
               {tab.label}
             </button>
