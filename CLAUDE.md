@@ -1,6 +1,17 @@
 # CLAUDE.md — AI 助手開發指南
 
-本文件為 AI 程式設計助手提供關於 BeaverKit（The Bower）程式碼庫的結構、開發工作流程和約定規範。
+本文件為 AI 程式設計助手提供關於 BeaverKit程式碼庫的結構、開發工作流程和約定規範。
+
+## 重要：讀取本文件後，必須立刻執行
+
+1. 使用 Read 工具讀取 `package.json`，取得 `name` 與 `version`
+2. 執行 `git branch --show-current` 取得當前分支
+3. 在回覆最開頭輸出以下格式（必須是真實讀取的值，不得偽造）：
+
+```
+{name} v{version} 已載入
+分支：{branch}
+```
 
 ---
 
