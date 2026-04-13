@@ -33,6 +33,9 @@ function disableScrollRestoration() {
 
 function stripHash(pathname: string, search: string) {
   if (!window.location.hash) return;
+  // Supabase OAuth callback uses hash params - don't strip them or the session won't be detected
+  const hash = window.location.hash;
+  if (hash.includes('access_token') || hash.includes('error_description') || hash.includes('refresh_token')) return;
   window.history.replaceState(window.history.state, document.title, `${pathname}${search}`);
 }
 
