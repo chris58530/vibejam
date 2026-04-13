@@ -400,13 +400,13 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
   );
 
   if (loading) return (
-    <div className="h-screen flex items-center justify-center bg-surface text-on-surface/35 text-sm">
+    <div className="md:ml-56 h-screen flex items-center justify-center bg-surface text-on-surface/35 text-sm">
       Loading…
     </div>
   );
 
   if (accessDenied) return (
-    <div className="h-screen flex flex-col items-center justify-center bg-surface gap-5">
+    <div className="md:ml-56 h-screen flex flex-col items-center justify-center bg-surface gap-5">
       <div className="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center">
         <span className="material-symbols-outlined text-[32px] text-on-surface/30">lock</span>
       </div>
@@ -424,7 +424,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
   const isOwner = vibe.user_role === 'owner';
 
   const handleNavigate = (nid: number) => {
-    navigate(`/vibe/${nid}`);
+    navigate(`/p/${nid}`);
     setMobileSidebarOpen(false);
   };
 
@@ -749,7 +749,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
               <div className="px-4 pb-3">
                 {lineageLoading
                   ? <div className="flex justify-center py-6"><div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" /></div>
-                  : <EditorialLineage ancestorChain={ancestorChain} currentTitle={vibe.title} currentAuthor={vibe.author_name} onNavigate={nid => navigate(`/vibe/${nid}`)} />}
+                  : <EditorialLineage ancestorChain={ancestorChain} currentTitle={vibe.title} currentAuthor={vibe.author_name} onNavigate={nid => navigate(`/p/${nid}`)} />}
               </div>
             </div>
 
@@ -762,7 +762,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
               <div className="px-3 pb-3">
                 {lineageLoading
                   ? <div className="flex justify-center py-6"><div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" /></div>
-                  : <RemixList children={vibeChildren} onNavigate={nid => navigate(`/vibe/${nid}`)} />}
+                  : <RemixList children={vibeChildren} onNavigate={nid => navigate(`/p/${nid}`)} />}
               </div>
             </div>
           </div>

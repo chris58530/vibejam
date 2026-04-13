@@ -37,7 +37,7 @@ export default function InviteAccept() {
       const result = await api.acceptInviteLink(token, supabaseUser.id);
       setAccepted(true);
       // Navigate to the vibe after a short delay
-      setTimeout(() => navigate(`/vibe/${result.vibe_id}`), 1500);
+      setTimeout(() => navigate(`/p/${result.vibe_id}`), 1500);
     } catch (err: any) {
       alert(err.message || '接受邀請失敗');
     } finally {
@@ -47,7 +47,7 @@ export default function InviteAccept() {
 
   if (loading || supabaseUser === undefined) {
     return (
-      <div className="md:ml-16 pt-20 flex items-center justify-center min-h-screen bg-surface text-on-surface/40 font-mono text-lg tracking-widest uppercase">
+      <div className="md:ml-56 pt-20 flex items-center justify-center min-h-screen bg-surface text-on-surface/40 font-mono text-lg tracking-widest uppercase">
         Loading...
       </div>
     );
@@ -55,7 +55,7 @@ export default function InviteAccept() {
 
   if (invalid) {
     return (
-      <div className="md:ml-16 pt-20 flex flex-col items-center justify-center min-h-screen bg-surface gap-6">
+      <div className="md:ml-56 pt-20 flex flex-col items-center justify-center min-h-screen bg-surface gap-6">
         <div className="w-20 h-20 rounded-full bg-surface-container-high flex items-center justify-center">
           <span className="material-symbols-outlined text-[40px] text-error/60">link_off</span>
         </div>
@@ -72,7 +72,7 @@ export default function InviteAccept() {
 
   if (accepted) {
     return (
-      <div className="md:ml-16 pt-20 flex flex-col items-center justify-center min-h-screen bg-surface gap-6">
+      <div className="md:ml-56 pt-20 flex flex-col items-center justify-center min-h-screen bg-surface gap-6">
         <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
           <span className="material-symbols-outlined text-[40px] text-primary">check_circle</span>
         </div>
@@ -85,7 +85,7 @@ export default function InviteAccept() {
   }
 
   return (
-    <div className="md:ml-16 pt-20 flex flex-col items-center justify-center min-h-screen bg-surface gap-6">
+    <div className="md:ml-56 pt-20 flex flex-col items-center justify-center min-h-screen bg-surface gap-6">
       <div className="w-20 h-20 rounded-full bg-surface-container-high flex items-center justify-center">
         <span className="material-symbols-outlined text-[40px] text-primary">group_add</span>
       </div>
