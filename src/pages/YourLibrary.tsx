@@ -208,7 +208,7 @@ export default function YourLibrary({ currentUser }: YourLibraryProps) {
         <div className="flex flex-col lg:flex-row min-h-screen">
           {/* Side Panel — gradient hero */}
           <div className="lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] lg:w-[340px] xl:w-[380px] shrink-0 bg-gradient-to-b from-primary/20 via-primary/8 to-surface border-b lg:border-b-0 lg:border-r border-outline-variant/10">
-            <div className="flex flex-col items-center lg:items-start justify-center h-full px-6 py-10 lg:px-8 lg:py-12">
+            <div className="flex flex-col items-center lg:items-start lg:justify-center lg:h-full px-6 py-8 lg:px-8 lg:py-12">
               <div className="w-16 h-16 rounded-xl bg-primary/15 flex items-center justify-center mb-5">
                 <span className="material-symbols-outlined text-[28px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>playlist_play</span>
               </div>
