@@ -6,6 +6,7 @@ import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import BottomTabBar from './components/BottomTabBar';
 import DebugOverlay from './components/DebugOverlay';
+import DevLogPanel from './components/DevLogPanel';
 import Home from './pages/Home';
 import Workspace from './pages/Workspace';
 import RemixStudio from './pages/RemixStudio';
@@ -253,6 +254,7 @@ export default function App() {
       </button>
 
       {debugMode && <DebugOverlay onClose={() => setDebugMode(false)} />}
+      <DevLogPanel />
 
       <style dangerouslySetInnerHTML={{
         __html: `
