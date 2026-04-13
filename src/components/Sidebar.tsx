@@ -265,7 +265,7 @@ export default function Sidebar({ dbUser }: SidebarProps = {}) {
           <div className="px-5 mb-1.5">
             <span className="text-[10px] uppercase tracking-[0.2em] text-on-surface/30 font-bold">{t('sidebar_your_library')}</span>
           </div>
-          <nav className="space-y-0.5 px-2">
+          <nav className="relative space-y-0.5 px-2">
             {([
               { icon: 'history', label: t('sidebar_history'), tab: 'history' as const },
               { icon: 'playlist_play', label: t('sidebar_saved_vibes'), tab: 'saved' as const },
@@ -276,19 +276,26 @@ export default function Sidebar({ dbUser }: SidebarProps = {}) {
                 <button
                   key={tab}
                   onClick={() => navigate(`/library?tab=${tab}`)}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-colors text-sm font-body font-medium ${
+                  className={`relative w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-colors text-sm font-body font-medium ${
                     isActive
-                      ? 'bg-surface-container-high text-primary'
+                      ? 'text-primary'
                       : 'text-on-surface/60 hover:bg-surface-container-high hover:text-on-surface'
                   }`}
                 >
+                  {isActive && (
+                    <motion.div
+                      layoutId="sidebar-library-indicator"
+                      className="absolute inset-0 bg-surface-container-high rounded-xl"
+                      transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                    />
+                  )}
                   <span
-                    className="material-symbols-outlined text-[20px] shrink-0"
+                    className="relative material-symbols-outlined text-[20px] shrink-0"
                     style={isActive ? { fontVariationSettings: "'FILL' 1" } : {}}
                   >
                     {icon}
                   </span>
-                  <span className="whitespace-nowrap">{label}</span>
+                  <span className="relative whitespace-nowrap">{label}</span>
                 </button>
               );
             })}
