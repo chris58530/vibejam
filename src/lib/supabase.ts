@@ -30,13 +30,18 @@ function getSupabase(): SupabaseClient {
 }
 
 export async function signInWithGitHub() {
-  const { error } = await getSupabase().auth.signInWithOAuth({
+  const client = getSupabase();
+  const { data, error } = await client.auth.signInWithOAuth({
     provider: 'github',
     options: {
       redirectTo: window.location.origin,
+      skipBrowserRedirect: true,
     },
   });
+  console.log('[Auth] GitHub OAuth response:', { data, error });
   if (error) throw error;
+  if (!data?.url) throw new Error('GitHub OAuth 未設定或已停用，請至 Supabase 後台啟用 GitHub 提供商並確認 Redirect URL 已加入白名單');
+  window.location.href = data.url;
 }
 
 export async function signUpWithEmail(

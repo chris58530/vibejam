@@ -397,6 +397,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }: Au
                                     try {
                                         await signInWithGitHub();
                                     } catch (err: any) {
+                                        console.error('[Auth] GitHub login error:', err);
                                         setError(err.message || 'GitHub 登入失敗');
                                     } finally {
                                         setLoading(false);
