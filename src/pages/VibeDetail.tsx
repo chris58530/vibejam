@@ -490,10 +490,10 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
       )}
 
       {/* ═══════ THREE-COLUMN LAYOUT ═══════ */}
-      {/* mr-[10px] on bg-black creates the 10px black divider lines */}
+      {/* bg-black gap via pl/pt creates consistent 10px black divider lines */}
 
       {/* ── CENTER + RIGHT + FOOTER WRAPPER ── */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto pl-[10px]">
         {/* ── COLUMNS ROW ── */}
         <div className="flex gap-[10px]">
 
