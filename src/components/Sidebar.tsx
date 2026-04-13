@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { motion } from 'motion/react';
 import { supabase } from '../lib/supabase';
 import { User } from '../lib/api';
 import { useI18n } from '../lib/i18n';
@@ -81,7 +82,7 @@ const HELP_SECTIONS = [
 ];
 
 // ── Help Modal ────────────────────────────────────────────────────────
-function HelpModal({ onClose }: { onClose: () => void }) {
+export function HelpModal({ onClose }: { onClose: () => void }) {
   const [activeSection, setActiveSection] = useState('start');
   const [openItem, setOpenItem] = useState<string | null>(null);
 
@@ -166,12 +167,10 @@ function HelpModal({ onClose }: { onClose: () => void }) {
 
 
 interface SidebarProps {
-  savePanelOpen?: boolean;
-  onToggleSavePanel?: () => void;
   dbUser?: User;
 }
 
-export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: SidebarProps = {}) {
+export default function Sidebar({ dbUser }: SidebarProps = {}) {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useI18n();
@@ -207,42 +206,8 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
     if (path) navigate(path);
   };
 
-  // If in workspace, render the minimal utility strip
-  if (isWorkspace) {
-    return (
-      <>
-        <aside className="fixed left-0 top-0 h-screen w-16 bg-surface-container-low flex flex-col items-center border-r border-outline-variant/10 z-50 hidden md:flex">
-          {/* Logo area — same height as navbar */}
-          <div className="h-16 w-full flex items-center justify-center shrink-0">
-            <img src="/Icon.png" alt="BeaverKit" className="w-8 h-8" />
-          </div>
-          <div className="w-8 h-px bg-outline-variant/15 shrink-0" />
-          <div className="flex flex-col items-center py-4 gap-6 flex-1">
-          <button onClick={() => navigate('/')} className="text-on-surface/70 hover:bg-surface-container-high hover:text-on-surface p-2.5 rounded-xl transition-all duration-300" title="Home">
-            <span className="material-symbols-outlined">home</span>
-          </button>
-          <button onClick={() => navigate('/workspace')} className="text-primary bg-surface-container-high p-2.5 rounded-xl transition-all duration-300" title="Workspace">
-            <span className="material-symbols-outlined">workspace_premium</span>
-          </button>
-          <button
-            onClick={onToggleSavePanel}
-            className={`p-2.5 rounded-xl transition-all duration-300 ${savePanelOpen ? 'text-primary bg-surface-container-high' : 'text-on-surface/70 hover:bg-surface-container-high hover:text-on-surface'}`}
-            title="我的專案"
-          >
-            <span className="material-symbols-outlined" style={savePanelOpen ? { fontVariationSettings: "'FILL' 1" } : {}}>folder</span>
-          </button>
-
-          <div className="mt-auto flex flex-col gap-6 items-center pb-4">
-            <button onClick={() => setHelpOpen(true)} className="text-on-surface/70 hover:text-primary transition-colors" title="使用說明">
-              <span className="material-symbols-outlined">help</span>
-            </button>
-          </div>
-          </div>
-        </aside>
-        {helpOpen && <HelpModal onClose={() => setHelpOpen(false)} />}
-      </>
-    );
-  }
+  // Hide sidebar entirely on Workspace — it owns its own chrome in the Navbar
+  if (isWorkspace) return null;
 
   // Regular Sidebar — collapsed by default, expands on hover (always expanded on homepage)
   return (
@@ -255,7 +220,7 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
         </span>
       </div>
       <div className="h-px bg-outline-variant/10 mx-3 shrink-0 mb-2" />
-      <nav className="space-y-1 px-2">
+      <nav className="relative space-y-1 px-2">
         {navItems.map(({ key, label, icon, path }) => {
           const isActive =
             (key === 'trending' && location.search.includes('feed=trending')) ||
@@ -268,16 +233,23 @@ export default function Sidebar({ savePanelOpen, onToggleSavePanel, dbUser }: Si
             <button
               key={key}
               onClick={() => handleNavClick(key, path)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors duration-200 font-body font-medium text-sm cursor-pointer ${isActive
-                ? 'text-primary bg-surface-container-high'
-                : 'text-on-surface/70 hover:bg-surface-container-high hover:text-on-surface'
+              className={`relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-body font-medium text-sm cursor-pointer transition-colors duration-200 ${isActive
+                ? 'text-primary'
+                : 'text-on-surface/70 hover:text-on-surface hover:bg-surface-container-high/40'
                 }`}
               title={label}
             >
-              <span className="material-symbols-outlined shrink-0 text-[22px]" style={isActive ? { fontVariationSettings: "'FILL' 1" } : {}}>
+              {isActive && (
+                <motion.div
+                  layoutId="sidebar-active-indicator"
+                  className="absolute inset-0 bg-surface-container-high rounded-xl"
+                  transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                />
+              )}
+              <span className="relative material-symbols-outlined shrink-0 text-[22px]" style={isActive ? { fontVariationSettings: "'FILL' 1" } : {}}>
                 {icon}
               </span>
-              <span className={`whitespace-nowrap overflow-hidden transition-[max-width] duration-300 ${isHome ? 'max-w-[160px] opacity-100' : 'max-w-0 group-hover/sidebar:max-w-[160px] opacity-0 group-hover/sidebar:opacity-100'}`}>
+              <span className={`relative whitespace-nowrap overflow-hidden transition-[max-width] duration-300 ${isHome ? 'max-w-[160px] opacity-100' : 'max-w-0 group-hover/sidebar:max-w-[160px] opacity-0 group-hover/sidebar:opacity-100'}`}>
                 {label}
               </span>
             </button>

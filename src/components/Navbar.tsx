@@ -4,8 +4,11 @@ import { supabase, signOut } from '../lib/supabase';
 import AuthModal, { AuthView } from './AuthModal';
 import { useI18n, Language } from '../lib/i18n';
 import { useWorkspaceStore } from '../lib/workspaceStore';
+import { HelpModal } from './Sidebar';
 
 interface NavbarProps {
+  savePanelOpen?: boolean;
+  onToggleSavePanel?: () => void;
 }
 
 const LANGUAGES: { code: Language; label: string; flag: string }[] = [
@@ -13,7 +16,8 @@ const LANGUAGES: { code: Language; label: string; flag: string }[] = [
   { code: 'zh-TW', label: '繁體中文', flag: '🇹🇼' },
 ];
 
-export default function Navbar({}: NavbarProps) {
+export default function Navbar({ savePanelOpen, onToggleSavePanel }: NavbarProps) {
+  const [helpOpen, setHelpOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { t, language, setLanguage } = useI18n();
@@ -64,7 +68,7 @@ export default function Navbar({}: NavbarProps) {
 
   return (
     <>
-      <header className={`fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl flex items-center justify-between pr-6 h-16 ${isHome ? 'pl-6 md:pl-60' : isWorkspace ? 'pl-6 md:pl-20' : 'pl-6 md:pl-20'} ${!isWorkspace ? 'border-b border-transparent' : 'border-b border-outline-variant/10'}`}>
+      <header className={`fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl flex items-center justify-between pr-6 h-16 ${isHome ? 'pl-6 md:pl-60' : isWorkspace ? 'pl-6' : 'pl-6 md:pl-20'} ${!isWorkspace ? 'border-b border-transparent' : 'border-b border-outline-variant/10'}`}>
         <div className="flex items-center gap-8">
           {isWorkspace ? (
             <div
@@ -105,6 +109,28 @@ export default function Navbar({}: NavbarProps) {
         <div className="flex items-center gap-4">
           {isWorkspace ? (
             <>
+              <button
+                onClick={() => navigate('/')}
+                className="text-on-surface/60 hover:bg-surface-container-high hover:text-on-surface p-2 rounded-lg transition-colors"
+                title="Home"
+              >
+                <span className="material-symbols-outlined text-[20px]">home</span>
+              </button>
+              <button
+                onClick={onToggleSavePanel}
+                className={`p-2 rounded-lg transition-colors ${savePanelOpen ? 'text-primary bg-surface-container-high' : 'text-on-surface/60 hover:bg-surface-container-high hover:text-on-surface'}`}
+                title="我的專案"
+              >
+                <span className="material-symbols-outlined text-[20px]" style={savePanelOpen ? { fontVariationSettings: "'FILL' 1" } : {}}>folder</span>
+              </button>
+              <button
+                onClick={() => setHelpOpen(true)}
+                className="text-on-surface/60 hover:bg-surface-container-high hover:text-on-surface p-2 rounded-lg transition-colors"
+                title="使用說明"
+              >
+                <span className="material-symbols-outlined text-[20px]">help</span>
+              </button>
+              <div className="h-6 w-px bg-outline-variant/20 mx-2"></div>
               <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-mono transition-colors ${
                 saveStatus === 'unsaved'
                   ? 'bg-amber-500/10 text-amber-400'
@@ -266,6 +292,8 @@ export default function Navbar({}: NavbarProps) {
         onClose={() => setAuthOpen(false)}
         initialView={authView}
       />
+
+      {helpOpen && <HelpModal onClose={() => setHelpOpen(false)} />}
     </>
   );
 }

@@ -125,7 +125,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
   const titleInputRef = useRef<HTMLInputElement>(null);
   const [saveStatus, setSaveStatusLocal] = useState<'saved' | 'unsaved' | 'saving'>('saved');
   const lastSavedSnapshotRef = useRef<string>('');
-  
+
   const handleEditorClick = () => {
     if (!isManualEditMode) {
       setHighlightEditBtn(true);
@@ -140,7 +140,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
       setSaveStatusLocal('unsaved');
       setSaveStatus('unsaved');
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [htmlCode, cssCode, jsCode, title, tags]);
 
   // ── 存檔 ───────────────────────────────────────────────────────────
@@ -191,7 +191,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
         setPublishedVibes(own.filter(v => !v.parent_vibe_id));
         setRemixVibes(own.filter(v => !!v.parent_vibe_id));
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setVibesLoading(false));
   }, [savePanelOpen, supabaseUserId, currentUser?.username]);
 
@@ -669,7 +669,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
   };
 
   const hasActiveProvider = !!selectedProvider;
-  
+
   const PRESET_PROMPTS = [
     { icon: 'palette', text: '把顏色改成藍色' },
     { icon: 'person', text: '加上我的名字' },
@@ -718,7 +718,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
 
   // ── Render ────────────────────────────────────────────────────────
   return (
-    <div className={`${savePanelOpen ? 'md:ml-72' : 'md:ml-16'} flex-1 flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-background transition-[margin] duration-300`}>
+    <main className={`${savePanelOpen ? 'md:ml-56' : 'md:ml-0'} flex-1 flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-background transition-[margin] duration-300`}>
       {/* ── Header ── */}
       <div className="bg-surface px-4 py-1.5 flex items-center gap-3 border-b border-outline-variant/10 shrink-0 relative">
         {/* Center: Title — inline edit on click */}
@@ -808,11 +808,10 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
           <button
             onClick={handleSave}
             title="儲存專案 (本機)"
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all border ${
-              saveStatus === 'unsaved'
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all border ${saveStatus === 'unsaved'
                 ? 'border-amber-500/50 text-amber-400 bg-amber-500/10 hover:bg-amber-500/20'
                 : 'border-outline-variant/20 text-on-surface/50 bg-surface-container-low hover:bg-surface-container-high hover:text-on-surface'
-            }`}
+              }`}
           >
             <span className="material-symbols-outlined text-[13px]">
               {saveStatus === 'unsaved' ? 'save' : 'check_circle'}
@@ -989,9 +988,9 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
               <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div
                   className={`max-w-[88%] rounded-2xl px-3 py-2.5 whitespace-pre-wrap leading-relaxed border ${msg.role === 'user'
-                  ? 'bg-primary text-on-primary rounded-br-none border-primary/30 shadow-sm'
-                  : 'bg-surface-container-high text-on-surface rounded-tl-none border-outline-variant/5 shadow-sm'
-                  }`}
+                    ? 'bg-primary text-on-primary rounded-br-none border-primary/30 shadow-sm'
+                    : 'bg-surface-container-high text-on-surface rounded-tl-none border-outline-variant/5 shadow-sm'
+                    }`}
                   style={{ fontSize: `${(chatFontScale / 100) * 24}px` }}
                 >
                   {msg.role === 'assistant' ? formatAssistantMessage(msg.content, aiLoading && i === messages.length - 1) : msg.content}
@@ -1107,22 +1106,20 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
           <div className="hidden md:flex absolute top-4 left-1/2 -translate-x-1/2 z-20 items-center gap-1.5 bg-surface-container p-1 rounded-lg shadow-lg">
             <button
               onClick={() => setRightTab('code')}
-              className={`px-6 py-1.5 rounded-md font-medium text-sm flex items-center gap-2 transition-colors ${
-                rightTab === 'code'
+              className={`px-6 py-1.5 rounded-md font-medium text-sm flex items-center gap-2 transition-colors ${rightTab === 'code'
                   ? 'bg-white/10 text-on-surface shadow-sm'
                   : 'text-on-surface/40 hover:text-on-surface/70'
-              }`}
+                }`}
             >
               <span className="material-symbols-outlined text-[16px]">code</span>
               Code
             </button>
             <button
               onClick={() => setRightTab('preview')}
-              className={`px-6 py-1.5 rounded-md font-medium text-sm flex items-center gap-2 transition-colors ${
-                rightTab === 'preview'
+              className={`px-6 py-1.5 rounded-md font-medium text-sm flex items-center gap-2 transition-colors ${rightTab === 'preview'
                   ? 'bg-white/10 text-on-surface shadow-sm'
                   : 'text-on-surface/40 hover:text-on-surface/70'
-              }`}
+                }`}
             >
               <span className="material-symbols-outlined text-[16px]">visibility</span>
               Preview
@@ -1155,7 +1152,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
                 </div>
               </div>
               {/* Filename label (non-split mode only) */}
-              
+
 
               {/* Textarea */}
               <div className="flex-1 font-mono text-sm leading-relaxed editor-well overflow-hidden flex relative group cursor-text mb-4 mx-4 md:mx-6 rounded-b-xl border border-outline-variant/10 bg-[#1e1e1e] shadow-lg" onClick={handleEditorClick}>
@@ -1288,7 +1285,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
 
       {/* ── 我的專案面板 ── */}
       {savePanelOpen && (
-        <aside className="fixed left-16 top-16 h-[calc(100vh-64px)] w-56 bg-[#1a1a1c] border-r border-white/[0.06] z-30 flex-col hidden md:flex overflow-hidden">
+        <aside className="fixed left-0 top-16 h-[calc(100vh-64px)] w-56 bg-[#1a1a1c] border-r border-white/[0.06] z-30 flex-col hidden md:flex overflow-hidden">
           {/* Header */}
           <div className="px-4 py-3 border-b border-white/5 shrink-0">
             <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-[#dae2fd]/40">我的專案</span>
@@ -1470,7 +1467,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
         onSaveLocal={handleSaveFromModal}
         isPublishing={isPublishing}
       />
-    </div>
+    </main>
   );
 }
 
@@ -1523,7 +1520,7 @@ function formatAssistantMessage(content: string, isStreaming = false): React.Rea
         // 先顯示區塊之前的文字
         const beforeCode = part.slice(0, unclosedMatch.index).trimEnd();
         if (beforeCode) nodes.push(<span key={i + 'before'}>{beforeCode}</span>);
-        
+
         // 顯示一個「正在生成程式碼...」的佔位 UI
         nodes.push(
           <div key={i + 'streaming'} className="my-1.5 bg-surface-container-lowest rounded px-2.5 py-1.5 border border-primary/30 shadow-sm flex items-center justify-between animate-pulse">
