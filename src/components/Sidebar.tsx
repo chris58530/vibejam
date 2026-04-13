@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../lib/supabase';
 import { User } from '../lib/api';
 import { useI18n } from '../lib/i18n';
@@ -165,6 +165,20 @@ export function HelpModal({ onClose }: { onClose: () => void }) {
   );
 }
 
+// ── Types ─────────────────────────────────────────────────────────────
+interface HistoryEntry {
+  id: string | number;
+  title: string;
+  timestamp: number;
+  path: string;
+}
+
+interface SaveSlot {
+  id: string;
+  title: string;
+  tags: string;
+  savedAt: string;
+}
 
 interface SidebarProps {
   dbUser?: User;
@@ -176,6 +190,11 @@ export default function Sidebar({ dbUser }: SidebarProps = {}) {
   const { t } = useI18n();
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [libraryTab, setLibraryTab] = useState<'history' | 'saved' | 'liked'>('history');
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [savedKits, setSavedKits] = useState<SaveSlot[]>([]);
+
   const navItems = [
     { key: 'home', label: t('sidebar_home'), icon: 'home', path: '/' },
     { key: 'following', label: t('sidebar_following'), icon: 'subscriptions', path: '/?feed=following' },
@@ -183,10 +202,8 @@ export default function Sidebar({ dbUser }: SidebarProps = {}) {
     { key: 'settings', label: t('sidebar_settings'), icon: 'settings', path: '/settings' },
   ];
 
-  const isWorkspace = location.pathname.includes('/workspace');
-  const isHome = location.pathname === '/';
-
   useEffect(() => {
+    if (!supabase) return;
     supabase.auth.getSession().then(({ data }) => setCurrentUser(data.session?.user ?? null));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setCurrentUser(session?.user ?? null);
@@ -194,118 +211,309 @@ export default function Sidebar({ dbUser }: SidebarProps = {}) {
     return () => subscription.unsubscribe();
   }, []);
 
+  const loadLibraryData = () => {
+    try {
+      const raw = localStorage.getItem('bk_history');
+      setHistory(raw ? JSON.parse(raw) : []);
+    } catch { setHistory([]); }
+    try {
+      const userId = currentUser?.id ?? 'guest';
+      const raw = localStorage.getItem(`beaverkit_saves_${userId}`);
+      const all: SaveSlot[] = raw ? JSON.parse(raw) : [];
+      setSavedKits(all.filter(s => !s.id.startsWith('emergency_')));
+    } catch { setSavedKits([]); }
+  };
+
+  const openLibrary = (tab: 'history' | 'saved' | 'liked') => {
+    loadLibraryData();
+    setLibraryTab(tab);
+    setLibraryOpen(true);
+  };
+
+  const removeHistoryItem = (id: string | number) => {
+    const updated = history.filter((h: HistoryEntry) => h.id !== id);
+    setHistory(updated);
+    localStorage.setItem('bk_history', JSON.stringify(updated));
+  };
 
   const handleNavClick = (key: string, path: string | null) => {
     if (key === 'profile') {
       const username = currentUser?.user_metadata?.user_name || currentUser?.user_metadata?.name;
-      if (username) {
-        navigate(`/@${username}`);
-      }
+      if (username) navigate(`/@${username}`);
       return;
     }
     if (path) navigate(path);
   };
 
-  // Hide sidebar entirely on Workspace — it owns its own chrome in the Navbar
-  if (isWorkspace) return null;
+  const formatTimeAgo = (timestamp: number) => {
+    const diff = Date.now() - timestamp;
+    const mins = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+    if (days > 0) return `${days} 天前`;
+    if (hours > 0) return `${hours} 小時前`;
+    if (mins > 0) return `${mins} 分鐘前`;
+    return '剛才';
+  };
 
-  // Regular Sidebar — collapsed by default, expands on hover (always expanded on homepage)
   return (
-    <aside className={`group/sidebar fixed left-0 top-0 h-screen ${isHome ? 'w-56' : 'w-16 hover:w-64 transition-[width] duration-300'} bg-surface-container-low flex flex-col pb-2 hidden md:flex z-50 border-r border-outline-variant/5 overflow-hidden`}>
-      {/* Logo area — same height as navbar */}
+    <aside className="fixed left-0 top-0 h-screen w-56 bg-surface-container-low flex flex-col pb-2 hidden md:flex z-50 border-r border-outline-variant/5 overflow-hidden">
+      {/* Logo area */}
       <div className="h-16 flex items-center px-3 shrink-0 gap-3 cursor-pointer" onClick={() => navigate('/')}>
         <img src="/Icon.png" alt="BeaverKit" className="w-8 h-8 shrink-0" />
-        <span className={`text-lg font-bold tracking-tighter text-on-surface font-headline whitespace-nowrap overflow-hidden transition-[max-width,opacity] duration-300 ${isHome ? 'max-w-[160px] opacity-100' : 'max-w-0 opacity-0 group-hover/sidebar:max-w-[160px] group-hover/sidebar:opacity-100'}`}>
+        <span className="text-lg font-bold tracking-tighter text-on-surface font-headline whitespace-nowrap">
           BeaverKit
         </span>
       </div>
       <div className="h-px bg-outline-variant/10 mx-3 shrink-0 mb-2" />
-      <nav className="relative space-y-1 px-2">
-        {navItems.map(({ key, label, icon, path }) => {
-          const isActive =
-            (key === 'trending' && location.search.includes('feed=trending')) ||
-            (key === 'following' && location.search.includes('feed=following')) ||
-            (key === 'home' && location.pathname === '/' && !location.search) ||
-            (key === 'workspace' && location.pathname === '/workspace') ||
-            (key === 'settings' && location.pathname === '/settings');
 
-          return (
-            <button
-              key={key}
-              onClick={() => handleNavClick(key, path)}
-              className={`relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-body font-medium text-sm cursor-pointer transition-colors duration-200 ${isActive
-                ? 'text-primary'
-                : 'text-on-surface/70 hover:text-on-surface hover:bg-surface-container-high/40'
-                }`}
-              title={label}
-            >
-              {isActive && (
-                <motion.div
-                  layoutId="sidebar-active-indicator"
-                  className="absolute inset-0 bg-surface-container-high rounded-xl"
-                  transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-                />
+      <AnimatePresence mode="wait" initial={false}>
+        {libraryOpen ? (
+          /* ── Library Panel ─────────────────────────────────────────── */
+          <motion.div
+            key="library"
+            initial={{ x: 56, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: 56, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 36 }}
+            className="flex flex-col flex-1 overflow-hidden"
+          >
+            {/* Header */}
+            <div className="flex items-center gap-2 px-3 py-2 shrink-0">
+              <button
+                onClick={() => setLibraryOpen(false)}
+                className="p-1 rounded-lg text-on-surface/40 hover:text-on-surface hover:bg-surface-container-high transition-colors"
+                title="返回"
+              >
+                <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+              </button>
+              <span className="text-[11px] uppercase tracking-[0.15em] font-bold text-on-surface/70">Your Library</span>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex px-2 gap-1 mb-2 shrink-0">
+              {([
+                { id: 'history', label: '歷史', icon: 'history' },
+                { id: 'saved', label: '收藏', icon: 'playlist_play' },
+                { id: 'liked', label: '按讚', icon: 'thumb_up' },
+              ] as const).map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setLibraryTab(tab.id)}
+                  className={`relative flex-1 py-1.5 rounded-lg text-[11px] font-semibold transition-colors ${
+                    libraryTab === tab.id
+                      ? 'bg-surface-container-high text-on-surface'
+                      : 'text-on-surface/40 hover:text-on-surface/70 hover:bg-surface-container-high/40'
+                  }`}
+                >
+                  {libraryTab === tab.id && (
+                    <motion.div
+                      layoutId="library-tab-indicator"
+                      className="absolute inset-0 bg-surface-container-high rounded-lg -z-10"
+                      transition={{ type: 'spring', stiffness: 400, damping: 36 }}
+                    />
+                  )}
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar px-2 pb-2">
+              {/* History Tab */}
+              {libraryTab === 'history' && (
+                history.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-36 gap-2 text-center">
+                    <span className="material-symbols-outlined text-[36px] text-on-surface/15">history</span>
+                    <p className="text-[11px] text-on-surface/30 leading-relaxed">瀏覽 Kit 後<br />紀錄會顯示在這裡</p>
+                  </div>
+                ) : (
+                  <div className="space-y-0.5">
+                    {history.map(item => (
+                      <div
+                        key={item.id}
+                        className="group/item flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-surface-container-high transition-colors cursor-pointer"
+                        onClick={() => navigate(item.path)}
+                      >
+                        <div className="w-7 h-7 rounded-md bg-surface-container-high flex items-center justify-center shrink-0">
+                          <span className="material-symbols-outlined text-[14px] text-on-surface/40">code_blocks</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[12px] font-medium text-on-surface truncate">{item.title || '未命名'}</p>
+                          <p className="text-[10px] text-on-surface/30">{formatTimeAgo(item.timestamp)}</p>
+                        </div>
+                        <button
+                          onClick={e => { e.stopPropagation(); removeHistoryItem(item.id); }}
+                          className="opacity-0 group-hover/item:opacity-100 p-0.5 rounded text-on-surface/20 hover:text-red-400 transition-all shrink-0"
+                          title="移除"
+                        >
+                          <span className="material-symbols-outlined text-[14px]">close</span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )
               )}
-              <span className="relative material-symbols-outlined shrink-0 text-[22px]" style={isActive ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                {icon}
-              </span>
-              <span className={`relative whitespace-nowrap overflow-hidden transition-[max-width] duration-300 ${isHome ? 'max-w-[160px] opacity-100' : 'max-w-0 group-hover/sidebar:max-w-[160px] opacity-0 group-hover/sidebar:opacity-100'}`}>
-                {label}
-              </span>
+
+              {/* Saved Kits Tab */}
+              {libraryTab === 'saved' && (
+                savedKits.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-36 gap-2.5 text-center">
+                    <span className="material-symbols-outlined text-[36px] text-on-surface/15">playlist_play</span>
+                    <p className="text-[11px] text-on-surface/30 leading-relaxed">在 Workspace 儲存<br />你的作品後顯示在這裡</p>
+                    <button
+                      onClick={() => { setLibraryOpen(false); navigate('/workspace'); }}
+                      className="text-[11px] text-primary hover:text-primary/80 transition-colors font-semibold"
+                    >
+                      去工作區創作 →
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {savedKits.map(kit => (
+                      <div
+                        key={kit.id}
+                        onClick={() => { setLibraryOpen(false); navigate('/workspace'); }}
+                        className="group/kit cursor-pointer rounded-lg overflow-hidden bg-surface-container border border-outline-variant/10 hover:border-outline-variant/30 transition-all"
+                      >
+                        <div className="aspect-video bg-gradient-to-br from-surface-container-high to-surface-container relative flex items-center justify-center overflow-hidden">
+                          <span className="material-symbols-outlined text-[22px] text-on-surface/15">code_blocks</span>
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/kit:opacity-100 transition-opacity flex items-center justify-center">
+                            <span className="material-symbols-outlined text-[20px] text-white/90">open_in_new</span>
+                          </div>
+                        </div>
+                        <div className="px-2 py-1.5">
+                          <p className="text-[11px] font-semibold text-on-surface truncate">{kit.title || '未命名'}</p>
+                          <p className="text-[10px] text-on-surface/30 truncate">
+                            {kit.savedAt ? new Date(kit.savedAt).toLocaleDateString('zh-TW', { month: 'short', day: 'numeric' }) : ''}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )
+              )}
+
+              {/* Liked Tab */}
+              {libraryTab === 'liked' && (
+                <div className="flex flex-col items-center justify-center h-44 gap-3 text-center px-2">
+                  <div className="w-14 h-14 rounded-2xl bg-surface-container-high flex items-center justify-center">
+                    <span className="material-symbols-outlined text-[28px] text-on-surface/25">thumb_up</span>
+                  </div>
+                  <div>
+                    <p className="text-[12px] font-semibold text-on-surface/50">還沒有按讚內容</p>
+                    <p className="text-[10px] text-on-surface/25 mt-1 leading-relaxed">探索作品，對喜歡的程式碼按讚</p>
+                  </div>
+                  <button
+                    onClick={() => { setLibraryOpen(false); navigate('/'); }}
+                    className="px-3.5 py-1.5 bg-primary text-on-primary text-[11px] font-bold rounded-lg hover:bg-primary/90 transition-colors"
+                  >
+                    去探索
+                  </button>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        ) : (
+          /* ── Normal Navigation ──────────────────────────────────────── */
+          <motion.div
+            key="nav"
+            initial={{ x: -56, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: -56, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 36 }}
+            className="flex flex-col flex-1 overflow-hidden"
+          >
+            {/* Main nav */}
+            <nav className="relative space-y-1 px-2">
+              {navItems.map(({ key, label, icon, path }) => {
+                const isActive =
+                  (key === 'following' && location.search.includes('feed=following')) ||
+                  (key === 'home' && location.pathname === '/' && !location.search) ||
+                  (key === 'workspace' && location.pathname.includes('/workspace')) ||
+                  (key === 'settings' && location.pathname === '/settings');
+
+                return (
+                  <button
+                    key={key}
+                    onClick={() => handleNavClick(key, path)}
+                    className={`relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-body font-medium text-sm cursor-pointer transition-colors duration-200 ${
+                      isActive
+                        ? 'text-primary'
+                        : 'text-on-surface/70 hover:text-on-surface hover:bg-surface-container-high/40'
+                    }`}
+                    title={label}
+                  >
+                    {isActive && (
+                      <motion.div
+                        layoutId="sidebar-active-indicator"
+                        className="absolute inset-0 bg-surface-container-high rounded-xl"
+                        transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                      />
+                    )}
+                    <span
+                      className="relative material-symbols-outlined shrink-0 text-[22px]"
+                      style={isActive ? { fontVariationSettings: "'FILL' 1" } : {}}
+                    >
+                      {icon}
+                    </span>
+                    <span className="relative whitespace-nowrap">{label}</span>
+                  </button>
+                );
+              })}
+            </nav>
+
+            {/* Your Library */}
+            <div className="mt-3">
+              <div className="h-px bg-outline-variant/10 mx-4 mb-3" />
+              <div className="px-5 mb-1.5">
+                <span className="text-[10px] uppercase tracking-[0.2em] text-on-surface/30 font-bold">Your Library</span>
+              </div>
+              <nav className="space-y-0.5 px-2">
+                {([
+                  { icon: 'history', label: 'History', tab: 'history' as const },
+                  { icon: 'playlist_play', label: 'Saved Kits', tab: 'saved' as const },
+                  { icon: 'thumb_up', label: 'Liked Code', tab: 'liked' as const },
+                ]).map(({ icon, label, tab }) => (
+                  <button
+                    key={label}
+                    onClick={() => openLibrary(tab)}
+                    className="w-full flex items-center gap-3 px-3 py-2 text-on-surface/60 hover:bg-surface-container-high hover:text-on-surface rounded-xl transition-colors text-sm font-body font-medium"
+                  >
+                    <span className="material-symbols-outlined text-[20px] shrink-0">{icon}</span>
+                    <span className="whitespace-nowrap">{label}</span>
+                  </button>
+                ))}
+              </nav>
+            </div>
+
+            {/* Spacer */}
+            <div className="flex-1" />
+
+            {/* Footer links */}
+            <div className="border-t border-outline-variant/10 pt-3 pb-1">
+              <div className="flex flex-wrap gap-x-3 gap-y-1 px-4 mb-1.5">
+                <a href="#" className="text-[10px] text-on-surface/30 hover:text-primary transition-colors uppercase tracking-widest font-body">Terms</a>
+                <a href="#" className="text-[10px] text-on-surface/30 hover:text-primary transition-colors uppercase tracking-widest font-body">Privacy</a>
+                <a href="#" className="text-[10px] text-on-surface/30 hover:text-primary transition-colors uppercase tracking-widest font-body">About</a>
+              </div>
+              <p className="px-4 text-[10px] text-on-surface/15 font-body">© 2024 BEAVERKIT EDITORIAL</p>
+            </div>
+
+            {/* Help button */}
+            <button
+              onClick={() => setHelpOpen(true)}
+              className="shrink-0 flex items-center gap-3 px-3 py-2.5 mx-2 mb-1 text-on-surface/40 hover:text-primary hover:bg-surface-container-high rounded-xl transition-colors"
+              title="使用說明"
+            >
+              <span className="material-symbols-outlined shrink-0 text-[22px]">help</span>
+              <span className="whitespace-nowrap text-sm font-medium font-body">使用說明</span>
             </button>
-          );
-        })}
-      </nav>
-
-      {/* Divider + Library — only visible when expanded */}
-      <div className={`overflow-hidden transition-[max-height] duration-300 ${isHome ? 'max-h-[320px]' : 'max-h-0 group-hover/sidebar:max-h-[320px]'}`}>
-        <div className="my-3 h-px bg-outline-variant/10 mx-4"></div>
-        <div className="px-5 mb-2">
-          <span className="text-[10px] uppercase tracking-[0.2em] text-on-surface/30 font-bold whitespace-nowrap">Your Library</span>
-        </div>
-        <nav className="space-y-0.5 px-2">
-          {[
-            { icon: 'history', label: 'History' },
-            { icon: 'playlist_play', label: 'Saved Kits' },
-            { icon: 'thumb_up', label: 'Liked Code' },
-          ].map(({ icon, label }) => (
-            <button key={label} onClick={() => alert('機能建構中 (WIP)')} className="w-full flex items-center gap-3 px-3 py-2 text-on-surface/70 hover:bg-surface-container-high hover:text-on-surface rounded-lg transition-colors text-sm font-body whitespace-nowrap">
-              <span className="material-symbols-outlined text-[18px] shrink-0">{icon}</span>
-              <span>{label}</span>
-            </button>
-          ))}
-        </nav>
-
-      </div>
-
-      {/* Footer — only visible when expanded */}
-      <div className={`mt-auto overflow-hidden transition-[max-height] duration-300 border-t border-outline-variant/10 ${isHome ? 'max-h-24' : 'max-h-0 group-hover/sidebar:max-h-24'}`}>
-        <div className="pt-3 space-y-2">
-          <div className="flex flex-wrap gap-x-3 gap-y-1 px-4">
-            <a href="#" className="text-[10px] text-on-surface/40 hover:text-primary transition-colors uppercase tracking-widest font-body">Terms</a>
-            <a href="#" className="text-[10px] text-on-surface/40 hover:text-primary transition-colors uppercase tracking-widest font-body">Privacy</a>
-            <a href="#" className="text-[10px] text-on-surface/40 hover:text-primary transition-colors uppercase tracking-widest font-body">About</a>
-          </div>
-          <div className="px-4 pb-2">
-            <p className="text-[10px] text-on-surface/20 font-medium font-body whitespace-nowrap">© 2024 BEAVERKIT EDITORIAL</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Help button — always visible at bottom */}
-      <button
-        onClick={() => setHelpOpen(true)}
-        className="shrink-0 flex items-center gap-3 px-3 py-2.5 text-on-surface/40 hover:text-primary hover:bg-surface-container-high rounded-xl transition-colors"
-        title="使用說明"
-      >
-        <span className="material-symbols-outlined shrink-0 text-[22px]">help</span>
-        <span className={`whitespace-nowrap overflow-hidden transition-[max-width] duration-300 text-sm font-medium ${isHome ? 'max-w-[160px] opacity-100' : 'max-w-0 group-hover/sidebar:max-w-[160px] opacity-0 group-hover/sidebar:opacity-100'}`}>
-          使用說明
-        </span>
-      </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {helpOpen && <HelpModal onClose={() => setHelpOpen(false)} />}
     </aside>
   );
 }
-

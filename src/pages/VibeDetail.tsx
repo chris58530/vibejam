@@ -275,6 +275,18 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
     }).finally(() => setLineageLoading(false));
   }, [vibe?.id]);
 
+  // 瀏覽紀錄：vibe 載入後寫入 localStorage，供 Sidebar Your Library 使用
+  useEffect(() => {
+    if (!vibe) return;
+    try {
+      const raw = localStorage.getItem('bk_history');
+      const prev: Array<{ id: number; title: string; timestamp: number; path: string }> = raw ? JSON.parse(raw) : [];
+      const entry = { id: vibe.id, title: vibe.title || '未命名', timestamp: Date.now(), path: `/p/${vibe.id}` };
+      const updated = [entry, ...prev.filter(h => h.id !== vibe.id)].slice(0, 50);
+      localStorage.setItem('bk_history', JSON.stringify(updated));
+    } catch { /* storage full or parse error */ }
+  }, [vibe?.id]);
+
   // 切回分頁時自動刷新最新資料（vibe 主資料 + remix 子列表）
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -417,7 +429,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
   };
 
   return (
-    <div className="md:ml-16 h-[calc(100vh-64px)] flex overflow-hidden bg-black">
+    <div className="md:ml-56 h-[calc(100vh-64px)] flex overflow-hidden bg-black">
 
       {/* Fullscreen overlay */}
       {isFullscreen && (

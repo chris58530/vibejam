@@ -4,7 +4,6 @@ import { supabase, signOut } from '../lib/supabase';
 import AuthModal, { AuthView } from './AuthModal';
 import { useI18n, Language } from '../lib/i18n';
 import { useWorkspaceStore } from '../lib/workspaceStore';
-import { HelpModal } from './Sidebar';
 
 interface NavbarProps {
   savePanelOpen?: boolean;
@@ -17,7 +16,6 @@ const LANGUAGES: { code: Language; label: string; flag: string }[] = [
 ];
 
 export default function Navbar({ savePanelOpen, onToggleSavePanel }: NavbarProps) {
-  const [helpOpen, setHelpOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { t, language, setLanguage } = useI18n();
@@ -68,7 +66,7 @@ export default function Navbar({ savePanelOpen, onToggleSavePanel }: NavbarProps
 
   return (
     <>
-      <header className={`fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl flex items-center justify-between pr-6 h-16 ${isHome ? 'pl-6 md:pl-60' : isWorkspace ? 'pl-6' : 'pl-6 md:pl-20'} ${!isWorkspace ? 'border-b border-transparent' : 'border-b border-outline-variant/10'}`}>
+      <header className={`fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl flex items-center justify-between pr-6 h-16 pl-6 md:pl-60 ${!isWorkspace ? 'border-b border-transparent' : 'border-b border-outline-variant/10'}`}>
         <div className="flex items-center gap-8">
           {isWorkspace ? (
             <div
@@ -110,25 +108,11 @@ export default function Navbar({ savePanelOpen, onToggleSavePanel }: NavbarProps
           {isWorkspace ? (
             <>
               <button
-                onClick={() => navigate('/')}
-                className="text-on-surface/60 hover:bg-surface-container-high hover:text-on-surface p-2 rounded-lg transition-colors"
-                title="Home"
-              >
-                <span className="material-symbols-outlined text-[20px]">home</span>
-              </button>
-              <button
                 onClick={onToggleSavePanel}
                 className={`p-2 rounded-lg transition-colors ${savePanelOpen ? 'text-primary bg-surface-container-high' : 'text-on-surface/60 hover:bg-surface-container-high hover:text-on-surface'}`}
                 title="我的專案"
               >
                 <span className="material-symbols-outlined text-[20px]" style={savePanelOpen ? { fontVariationSettings: "'FILL' 1" } : {}}>folder</span>
-              </button>
-              <button
-                onClick={() => setHelpOpen(true)}
-                className="text-on-surface/60 hover:bg-surface-container-high hover:text-on-surface p-2 rounded-lg transition-colors"
-                title="使用說明"
-              >
-                <span className="material-symbols-outlined text-[20px]">help</span>
               </button>
               <div className="h-6 w-px bg-outline-variant/20 mx-2"></div>
               <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-mono transition-colors ${
@@ -147,8 +131,6 @@ export default function Navbar({ savePanelOpen, onToggleSavePanel }: NavbarProps
                 )}
                 {saveStatus === 'unsaved' ? '未儲存' : saveStatus === 'saving' ? '儲存中...' : '已儲存'}
               </div>
-              <div className="h-6 w-px bg-outline-variant/20 mx-2"></div>
-              <button onClick={() => navigate('/settings')} className="material-symbols-outlined text-on-surface/60 hover:text-on-background transition-colors p-2 rounded-lg" title={t('nav_settings')}>settings</button>
             </>
           ) : null}
 
@@ -293,7 +275,7 @@ export default function Navbar({ savePanelOpen, onToggleSavePanel }: NavbarProps
         initialView={authView}
       />
 
-      {helpOpen && <HelpModal onClose={() => setHelpOpen(false)} />}
+
     </>
   );
 }

@@ -89,12 +89,12 @@ export default function Profile() {
             ? allVibes.filter(v => v.author_name === decodedUsername)
             : [];
           setUserVibes(filtered);
-        }).catch(() => {});
+        }).catch(() => { });
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [decodedUsername, currentUser]);
 
   const handleSaveMotto = async () => {
@@ -136,7 +136,7 @@ export default function Profile() {
   const likesCount = userProfile?.likes_count || 0;
 
   return (
-    <div className="md:ml-16 min-h-screen bg-surface flex flex-col">
+    <main className="md:ml-56 min-h-screen bg-surface flex flex-col">
       {/* Banner */}
       <div className="w-full h-32 md:h-56 bg-surface-container border-b border-outline-variant/10 relative overflow-hidden flex items-center justify-center editor-well shrink-0">
         <div className="absolute inset-0 bg-gradient-to-t from-surface to-transparent" />
@@ -238,8 +238,8 @@ export default function Profile() {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`pb-4 text-xs font-mono font-bold tracking-widest uppercase transition-colors border-b-2 -mb-px px-2 ${activeTab === tab
-                  ? 'text-primary border-primary'
-                  : 'text-on-surface/30 border-transparent hover:text-on-surface/60'
+                ? 'text-primary border-primary'
+                : 'text-on-surface/30 border-transparent hover:text-on-surface/60'
                 }`}
             >
               {tab}{tab === 'Saves' && saves.length > 0 && (
@@ -376,7 +376,7 @@ export default function Profile() {
           </div>
         </div>
       )}
-    </div>
+    </main>
   );
 }
 
