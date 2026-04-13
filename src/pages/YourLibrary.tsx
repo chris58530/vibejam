@@ -199,79 +199,91 @@ export default function YourLibrary({ currentUser }: YourLibraryProps) {
   }
 
   /* ═══════════════════════════════════════════
-     TAB 2 — Saved (YT Playlist style)
-     Side panel hero + vertical item list
+     TAB 2 — Saved (card grid)
+     Page header + responsive card grid
      ═══════════════════════════════════════════ */
   if (activeTab === 'saved') {
     return (
       <main className="md:ml-56 min-h-screen bg-surface overflow-x-hidden">
-        <div className="flex flex-col lg:flex-row min-h-screen">
-          {/* Side Panel — gradient hero */}
-          <div className="lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] lg:w-[340px] xl:w-[380px] shrink-0 bg-gradient-to-b from-primary/20 via-primary/8 to-surface border-b lg:border-b-0 lg:border-r border-outline-variant/10">
-            <div className="flex flex-col items-center lg:items-start lg:justify-center lg:h-full px-6 py-8 lg:px-8 lg:py-12">
-              <div className="w-16 h-16 rounded-xl bg-primary/15 flex items-center justify-center mb-5">
-                <span className="material-symbols-outlined text-[28px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>playlist_play</span>
+        {/* Header */}
+        <div className="border-b border-outline-variant/10">
+          <div className="max-w-6xl mx-auto px-4 md:px-8 pt-8 pb-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2.5 mb-2">
+                  <span className="material-symbols-outlined text-[20px] text-on-surface/50" style={{ fontVariationSettings: "'FILL' 1" }}>playlist_play</span>
+                  <h1 className="text-lg font-bold text-on-surface">{t('library_saved_title')}</h1>
+                </div>
+                <p className="text-sm text-on-surface/40 max-w-lg">{t('library_saved_intro')}</p>
+                {savedKits.length > 0 && (
+                  <p className="text-xs text-on-surface/30 mt-2">
+                    {savedKits.length} {language === 'zh-TW' ? '個已儲存' : 'saved'} · {authorId}
+                  </p>
+                )}
               </div>
-              <h1 className="text-2xl font-bold text-on-surface">{t('library_saved_title')}</h1>
-              <p className="text-sm text-on-surface/45 mt-2 lg:max-w-[280px] leading-relaxed">{t('library_saved_intro')}</p>
-
-              <div className="flex items-center gap-3 mt-5 text-xs text-on-surface/40">
-                <span>{savedKits.length} {language === 'zh-TW' ? '個項目' : 'items'}</span>
-                <span className="w-1 h-1 rounded-full bg-on-surface/20" />
-                <span>{authorId}</span>
-              </div>
-
               <button
                 onClick={() => navigate('/workspace')}
-                className="mt-6 flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-on-primary text-sm font-semibold hover:bg-primary/90 transition-colors"
+                className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-on-primary text-sm font-semibold hover:bg-primary/90 transition-colors cursor-pointer"
               >
-                <span className="material-symbols-outlined text-[18px]">add</span>
-                {t('library_go_workspace')}
+                <span className="material-symbols-outlined text-[16px]">add</span>
+                <span className="hidden sm:inline">{t('library_go_workspace')}</span>
+                <span className="sm:hidden">{language === 'zh-TW' ? '新增' : 'Add'}</span>
               </button>
             </div>
           </div>
+        </div>
 
-          {/* Item List */}
-          <div className="flex-1 min-w-0">
-            {savedKits.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-24 text-center px-6">
-                <span className="material-symbols-outlined text-[48px] text-on-surface/15">playlist_play</span>
-                <h2 className="text-base font-semibold text-on-surface/50 mt-4">{t('library_saved_empty_title')}</h2>
-                <p className="text-sm text-on-surface/35 mt-1.5 max-w-sm">{t('library_saved_empty_desc')}</p>
-              </div>
-            ) : (
-              <div className="max-w-3xl px-4 md:px-8 py-6">
-                <div className="space-y-1">
-                  {savedKits.map((kit, idx) => (
-                    <article
-                      key={kit.id}
-                      onClick={() => navigate('/workspace')}
-                      className="group flex items-center gap-4 px-3 py-3 -mx-1 rounded-xl hover:bg-surface-container transition-colors cursor-pointer"
-                    >
-                      <span className="text-xs text-on-surface/25 w-6 text-center shrink-0 tabular-nums">{idx + 1}</span>
-                      <div className="w-24 h-14 rounded-lg bg-surface-container-high shrink-0 overflow-hidden flex items-center justify-center border border-outline-variant/10">
-                        <span className="material-symbols-outlined text-[22px] text-on-surface/20">deployed_code</span>
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-on-surface truncate">{kit.title || t('library_untitled')}</p>
-                        <p className="text-xs text-on-surface/35 mt-0.5 line-clamp-1">{kit.description || t('library_saved_fallback')}</p>
-                        {kit.tags && (
-                          <div className="flex gap-1.5 mt-1.5">
-                            {kit.tags.split(',').slice(0, 3).map(tag => (
-                              <span key={tag.trim()} className="px-1.5 py-0.5 rounded text-[10px] bg-surface-container-high text-on-surface/40">{tag.trim()}</span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      <span className="text-[11px] text-on-surface/30 shrink-0">
+        {/* Content */}
+        <div className="max-w-6xl mx-auto px-4 md:px-8 py-8 pb-20">
+          {savedKits.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-24 text-center">
+              <span className="material-symbols-outlined text-[48px] text-on-surface/15">playlist_play</span>
+              <h2 className="text-base font-semibold text-on-surface/50 mt-4">{t('library_saved_empty_title')}</h2>
+              <p className="text-sm text-on-surface/35 mt-1.5 max-w-sm">{t('library_saved_empty_desc')}</p>
+              <button
+                onClick={() => navigate('/workspace')}
+                className="mt-5 flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-on-primary text-sm font-semibold hover:bg-primary/90 transition-colors cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[16px]">add</span>
+                {t('library_go_workspace')}
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {savedKits.map(kit => (
+                <article
+                  key={kit.id}
+                  onClick={() => navigate('/workspace')}
+                  className="group rounded-xl overflow-hidden border border-outline-variant/10 bg-surface-container-low hover:border-outline-variant/25 hover:bg-surface-container transition-colors cursor-pointer"
+                >
+                  {/* Thumbnail */}
+                  <div className="aspect-video bg-surface-container-high flex items-center justify-center relative overflow-hidden">
+                    <span className="material-symbols-outlined text-[32px] text-on-surface/15">deployed_code</span>
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                      <span className="material-symbols-outlined text-[24px] text-white opacity-0 group-hover:opacity-100 transition-opacity">play_arrow</span>
+                    </div>
+                  </div>
+                  {/* Meta */}
+                  <div className="p-3">
+                    <p className="text-sm font-semibold text-on-surface truncate">{kit.title || t('library_untitled')}</p>
+                    <p className="text-xs text-on-surface/40 mt-0.5 line-clamp-2 leading-relaxed">{kit.description || t('library_saved_fallback')}</p>
+                    <div className="flex items-center justify-between mt-2.5">
+                      {kit.tags ? (
+                        <div className="flex gap-1 min-w-0 overflow-hidden">
+                          {kit.tags.split(',').slice(0, 2).map(tag => (
+                            <span key={tag.trim()} className="px-1.5 py-0.5 rounded bg-surface-container text-[10px] text-on-surface/40 truncate max-w-[80px]">{tag.trim()}</span>
+                          ))}
+                        </div>
+                      ) : <span />}
+                      <span className="text-[11px] text-on-surface/30 shrink-0 tabular-nums">
                         {new Date(kit.savedAt).toLocaleDateString(language === 'zh-TW' ? 'zh-TW' : 'en-US', { month: 'short', day: 'numeric' })}
                       </span>
-                    </article>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
         </div>
       </main>
     );
