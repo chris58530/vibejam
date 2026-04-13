@@ -1,13 +1,11 @@
-import React, { useState, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { useI18n } from './lib/i18n';
 import './lib/themeStore'; // bootstrap: apply dark palette CSS vars on load
-import './lib/devLog';    // intercept console + capture global errors early
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import BottomTabBar from './components/BottomTabBar';
 import DebugOverlay from './components/DebugOverlay';
-import DevLogPanel from './components/DevLogPanel';
 import Home from './pages/Home';
 import Workspace from './pages/Workspace';
 import RemixStudio from './pages/RemixStudio';
@@ -16,44 +14,140 @@ import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import InviteAccept from './pages/InviteAccept';
 import QALab from './pages/QALab';
+import YourLibrary from './pages/YourLibrary';
 import { api, User } from './lib/api';
 import { supabase } from './lib/supabase';
 import { useAIKeyStore } from './lib/aiKeyStore';
-import { devLog } from './lib/devLog';
+
+const SCROLL_TARGET_SELECTOR =
+  '[data-scroll-root], [class*="overflow-y-auto"], [class*="overflow-auto"], [class*="overflow-scroll"]';
+const RESET_TICK_MS = 50;
+const RESET_TICK_LIMIT = 40;
+const RESET_OBSERVER_WINDOW_MS = 2500;
+
+function disableScrollRestoration() {
+  if ('scrollRestoration' in window.history) {
+    window.history.scrollRestoration = 'manual';
+  }
+}
+
+function stripHash(pathname: string, search: string) {
+  if (!window.location.hash) return;
+  window.history.replaceState(window.history.state, document.title, `${pathname}${search}`);
+}
+
+function resetAllScrollPositions() {
+  const targets = new Set<HTMLElement>();
+
+  if (document.scrollingElement instanceof HTMLElement) {
+    targets.add(document.scrollingElement);
+  }
+  targets.add(document.documentElement);
+  if (document.body) targets.add(document.body);
+
+  document.querySelectorAll<HTMLElement>(SCROLL_TARGET_SELECTOR).forEach((el) => {
+    targets.add(el);
+  });
+
+  targets.forEach((el) => {
+    el.scrollTop = 0;
+    el.scrollLeft = 0;
+    el.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  });
+
+  window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+}
 
 function ScrollToTop() {
-  const { pathname } = useLocation();
+  const location = useLocation();
+  const handledInitialLoadRef = useRef(false);
 
-  // 關閉瀏覽器的 Scroll Restoration，防止它在我們 reset 之後又把捲軸還原回舊位置
   useLayoutEffect(() => {
-    if ('scrollRestoration' in history) {
-      history.scrollRestoration = 'manual';
-      devLog.info('[SCROLL_RESTORATION] set to manual');
+    disableScrollRestoration();
+    if (!handledInitialLoadRef.current) {
+      handledInitialLoadRef.current = true;
+      stripHash(location.pathname, location.search);
     }
-  }, []);
 
-  useLayoutEffect(() => {
-    let pass = 0;
-    const reset = (label: string) => {
-      const before = window.scrollY;
-      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-      if (document.scrollingElement) document.scrollingElement.scrollTop = 0;
-      const after = window.scrollY;
-      devLog.info(`[SCROLL_RESET #${++pass} ${label}] before=${before} after=${after} path=${pathname}`);
+    let stoppedByUser = false;
+    let lastObserverReset = 0;
+    const stopOnUserInput = () => {
+      stoppedByUser = true;
+    };
+    const reset = () => {
+      if (!stoppedByUser) resetAllScrollPositions();
+    };
+    const scheduleReset = () => {
+      if (stoppedByUser) return;
+
+      const now = window.performance.now();
+      if (now - lastObserverReset < 32) return;
+      lastObserverReset = now;
+      window.requestAnimationFrame(reset);
     };
 
-    reset('sync');
-    const raf = requestAnimationFrame(() => reset('rAF'));
-    const timers = [
-      window.setTimeout(() => reset('t=0'),    0),
-      window.setTimeout(() => reset('t=100'), 100),
-      window.setTimeout(() => reset('t=400'), 400),
-    ];
+    reset();
+    const raf = window.requestAnimationFrame(reset);
+    const raf2 = window.requestAnimationFrame(() => window.requestAnimationFrame(reset));
+    const t0 = window.setTimeout(reset, 0);
+    const t1 = window.setTimeout(reset, 120);
+    const t2 = window.setTimeout(reset, 600);
+    const handlePageShow = () => reset();
+    const handleLoad = () => reset();
+
+    const mutationObserver = new MutationObserver(scheduleReset);
+    mutationObserver.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+    });
+
+    const resizeObserver = typeof ResizeObserver === 'undefined'
+      ? null
+      : new ResizeObserver(scheduleReset);
+    resizeObserver?.observe(document.documentElement);
+    const scrollRoot = document.querySelector<HTMLElement>('[data-scroll-root]');
+    if (scrollRoot) resizeObserver?.observe(scrollRoot);
+    const observerTimeout = window.setTimeout(() => {
+      mutationObserver.disconnect();
+      resizeObserver?.disconnect();
+    }, RESET_OBSERVER_WINDOW_MS);
+
+    void document.fonts?.ready.then(() => reset()).catch(() => undefined);
+
+    let ticks = 0;
+    const interval = window.setInterval(() => {
+      if (stoppedByUser || ticks >= RESET_TICK_LIMIT) {
+        window.clearInterval(interval);
+        return;
+      }
+      ticks += 1;
+      reset();
+    }, RESET_TICK_MS);
+
+    window.addEventListener('pageshow', handlePageShow);
+    window.addEventListener('load', handleLoad);
+    window.addEventListener('wheel', stopOnUserInput, { passive: true });
+    window.addEventListener('touchstart', stopOnUserInput, { passive: true });
+    window.addEventListener('keydown', stopOnUserInput);
+
     return () => {
-      cancelAnimationFrame(raf);
-      timers.forEach(clearTimeout);
+      window.cancelAnimationFrame(raf);
+      window.cancelAnimationFrame(raf2);
+      window.clearTimeout(t0);
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      window.clearTimeout(observerTimeout);
+      window.clearInterval(interval);
+      mutationObserver.disconnect();
+      resizeObserver?.disconnect();
+      window.removeEventListener('pageshow', handlePageShow);
+      window.removeEventListener('load', handleLoad);
+      window.removeEventListener('wheel', stopOnUserInput);
+      window.removeEventListener('touchstart', stopOnUserInput);
+      window.removeEventListener('keydown', stopOnUserInput);
     };
-  }, [pathname]);
+  }, [location.key, location.pathname, location.search, location.hash]);
 
   return null;
 }
@@ -64,79 +158,17 @@ export default function App() {
   const [debugMode, setDebugMode] = useState(false);
   const [savePanelOpen, setSavePanelOpen] = useState(false);
 
-  // Initialize AI Key Store
   useEffect(() => {
     useAIKeyStore.getState().initialize();
-  }, []);
-
-  // ── Scroll / Focus 診斷監聽（幫助找出讓頁面非預期捲動的兇手）──────────────
-  useEffect(() => {
-    devLog.info('[APP_MOUNT] App mounted, diagnostics active');
-
-    // 每次 window 捲動都記錄位置；scrollY > 50 時附上 call stack 找兇手
-    const onScroll = () => {
-      const y = window.scrollY;
-      if (y > 50) {
-        const stack = new Error().stack?.split('\n').slice(1, 5).join(' | ') ?? '';
-        devLog.warn(`[SCROLL ⚠] scrollY=${y} | ${stack}`);
-      } else {
-        devLog.log(`[SCROLL] scrollY=${y} scrollX=${window.scrollX}`);
-      }
-    };
-
-    // focusin（capture）捕捉任何元素獲得 focus，尤其是 iframe 裡的元素觸發父頁面捲動
-    const onFocusIn = (e: FocusEvent) => {
-      const target = e.target as Element | null;
-      if (!target) return;
-      const tag  = target.tagName ?? '?';
-      const id   = target.id ? `#${target.id}` : '';
-      const cls  = typeof target.className === 'string'
-        ? target.className.trim().slice(0, 40)
-        : '';
-      const isIframe = target.tagName === 'IFRAME';
-      devLog.log(`[FOCUS${isIframe ? ' ⚠IFRAME' : ''}] ${tag}${id} "${cls}" scrollY=${window.scrollY}`);
-    };
-
-    // MutationObserver：偵測新 iframe 被插入 DOM，並在它 load 完成時記錄
-    const onIframeLoad = (iframe: HTMLIFrameElement) => {
-      devLog.info(`[IFRAME_LOAD] src="${iframe.title}" scrollY=${window.scrollY}`);
-    };
-    const mo = new MutationObserver(mutations => {
-      for (const m of mutations) {
-        m.addedNodes.forEach(node => {
-          if (node instanceof HTMLIFrameElement) {
-            devLog.info(`[IFRAME_ADD] title="${node.title}" scrollY=${window.scrollY}`);
-            node.addEventListener('load', () => onIframeLoad(node), { once: true });
-          }
-        });
-      }
-    });
-    mo.observe(document.body, { childList: true, subtree: true });
-
-    // 已經存在的 iframe（首次 mount）
-    document.querySelectorAll<HTMLIFrameElement>('iframe').forEach(iframe => {
-      iframe.addEventListener('load', () => onIframeLoad(iframe), { once: true });
-    });
-
-    window.addEventListener('scroll', onScroll, { passive: true });
-    document.addEventListener('focusin', onFocusIn, true);
-
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      document.removeEventListener('focusin', onFocusIn, true);
-      mo.disconnect();
-    };
   }, []);
 
   useEffect(() => {
     if (!supabase) return;
 
-    // Check existing session on mount
     supabase.auth.getSession().then(({ data }) => {
       if (data.session?.user) syncUser(data.session.user);
     });
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         syncUser(session.user);
@@ -163,10 +195,29 @@ export default function App() {
 
   const location = useLocation();
 
-  // QA Lab 獨立視窗，不套主 layout
   if (location.pathname === '/qa-lab') {
     return <QALab />;
   }
+
+  const routeContent = location.pathname === '/library'
+    ? <YourLibrary currentUser={currentUser ?? undefined} />
+    : (
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/workspace" element={<Workspace currentUser={currentUser ?? undefined} savePanelOpen={savePanelOpen} />} />
+        <Route path="/remix" element={<RemixStudio currentUser={currentUser ?? undefined} />} />
+        <Route path="/library" element={<YourLibrary currentUser={currentUser ?? undefined} />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/invite/:token" element={<InviteAccept />} />
+        <Route path="/p/:id" element={<VibeDetail currentUser={currentUser ?? undefined} />} />
+        <Route path="/@:username" element={<Profile />} />
+        <Route path="*" element={
+          <div className="flex items-center justify-center h-full text-white/50">
+            {t('app_not_found')}
+          </div>
+        } />
+      </Routes>
+    );
 
   return (
     <div className="min-h-screen bg-surface text-on-surface font-sans selection:bg-primary/30">
@@ -175,25 +226,11 @@ export default function App() {
       <div className="flex w-full min-h-screen pt-16">
         <Sidebar dbUser={currentUser ?? undefined} />
         <main className="flex-1 pb-16 md:pb-0 relative" data-scroll-root>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/workspace" element={<Workspace currentUser={currentUser ?? undefined} savePanelOpen={savePanelOpen} />} />
-            <Route path="/remix" element={<RemixStudio currentUser={currentUser ?? undefined} />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/invite/:token" element={<InviteAccept />} />
-            <Route path="/p/:id" element={<VibeDetail currentUser={currentUser ?? undefined} />} />
-            <Route path="/:username" element={<Profile />} />
-            <Route path="*" element={
-              <div className="flex items-center justify-center h-full text-white/50">
-                {t('app_not_found')}
-              </div>
-            } />
-          </Routes>
+          {routeContent}
         </main>
       </div>
       <BottomTabBar />
 
-      {/* ── Debug FAB（所有頁面浮空顯示）── */}
       <button
         onClick={() => window.open('/qa-lab', '_blank')}
         title="開啟 QA 測試頁面"
@@ -204,24 +241,21 @@ export default function App() {
       <button
         onClick={() => setDebugMode(d => !d)}
         title={debugMode ? '關閉 Debug 模式' : '開啟 Debug 模式'}
-        className={`fixed bottom-20 right-4 md:bottom-6 md:right-6 z-[199] w-11 h-11 rounded-full shadow-2xl flex items-center justify-center transition-all duration-200 ${
-          debugMode
-            ? 'bg-red-500 text-white ring-4 ring-red-500/30 scale-110'
-            : 'bg-surface-container-high text-on-surface/50 hover:text-red-400 hover:bg-red-500/10 hover:ring-2 hover:ring-red-500/20'
-        }`}
+        className={`fixed bottom-20 right-4 md:bottom-6 md:right-6 z-[199] w-11 h-11 rounded-full shadow-2xl flex items-center justify-center transition-all duration-200 ${debugMode
+          ? 'bg-red-500 text-white ring-4 ring-red-500/30 scale-110'
+          : 'bg-surface-container-high text-on-surface/50 hover:text-red-400 hover:bg-red-500/10 hover:ring-2 hover:ring-red-500/20'
+          }`}
       >
         <span className="material-symbols-outlined text-[20px]">bug_report</span>
       </button>
 
       {debugMode && <DebugOverlay onClose={() => setDebugMode(false)} />}
-      <DevLogPanel />
 
-      {/* Global Styles for custom scrollbar */}
       <style dangerouslySetInnerHTML={{
         __html: `
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
+
         .custom-scrollbar::-webkit-scrollbar {
           width: 6px;
         }
@@ -235,8 +269,7 @@ export default function App() {
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: rgba(255, 255, 255, 0.2);
         }
-      `}} />
+      ` }} />
     </div>
   );
 }
-
