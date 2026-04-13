@@ -231,14 +231,6 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
   const [vibeChildren, setVibeChildren] = useState<VibeChild[]>([]);
   const [lineageLoading, setLineageLoading] = useState(true);
 
-  const leftNavItems = [
-    { key: 'home', label: t('sidebar_home'), icon: 'home', path: '/' },
-    { key: 'trending', label: t('sidebar_trending'), icon: 'trending_up', path: '/?feed=trending' },
-    { key: 'following', label: t('sidebar_following'), icon: 'subscriptions', path: '/?feed=following' },
-    { key: 'workspace', label: t('sidebar_workspace'), icon: 'terminal', path: '/workspace' },
-    { key: 'settings', label: t('sidebar_settings'), icon: 'settings', path: '/settings' },
-  ];
-
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isFullscreen) setIsFullscreen(false);
@@ -425,7 +417,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
   };
 
   return (
-    <div className="h-[calc(100vh-64px)] flex overflow-hidden bg-black">
+    <div className="md:ml-16 h-[calc(100vh-64px)] flex overflow-hidden bg-black">
 
       {/* Fullscreen overlay */}
       {isFullscreen && (
@@ -487,43 +479,6 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
 
       {/* ═══════ THREE-COLUMN LAYOUT ═══════ */}
       {/* mr-[10px] on bg-black creates the 10px black divider lines */}
-
-      {/* ── LEFT NAV ── expanded with icon + label, matches global sidebar ── */}
-      <div className="hidden lg:flex flex-col w-48 bg-surface-container-low shrink-0 mr-[10px] rounded-xl border-r border-outline-variant/5">
-        <nav className="space-y-1 px-2 pt-3">
-          {leftNavItems.map(({ key, label, icon, path }) => {
-            const isActive =
-              (key === 'trending' && location.search.includes('feed=trending')) ||
-              (key === 'following' && location.search.includes('feed=following')) ||
-              (key === 'home' && location.pathname === '/' && !location.search) ||
-              (key === 'workspace' && location.pathname === '/workspace') ||
-              (key === 'settings' && location.pathname === '/settings');
-            return (
-              <button
-                key={key}
-                onClick={() => navigate(path)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors duration-200 font-body font-medium text-sm cursor-pointer ${isActive ? 'text-primary bg-surface-container-high' : 'text-on-surface/70 hover:bg-surface-container-high hover:text-on-surface'
-                  }`}
-                title={label}
-              >
-                <span className="material-symbols-outlined shrink-0 text-[22px]" style={isActive ? { fontVariationSettings: "'FILL' 1" } : {}}>{icon}</span>
-                <span className="whitespace-nowrap">{label}</span>
-              </button>
-            );
-          })}
-        </nav>
-        <div className="mt-auto border-t border-outline-variant/10 px-2 pt-3 pb-3">
-          <div className="px-3 mb-2">
-            <span className="text-[10px] uppercase tracking-[0.2em] text-on-surface/30 font-bold">Library</span>
-          </div>
-          {[{ icon: 'history', label: 'History' }, { icon: 'playlist_play', label: 'Saved Kits' }, { icon: 'thumb_up', label: 'Liked Code' }].map(({ icon, label }) => (
-            <button key={label} className="w-full flex items-center gap-3 px-3 py-2 text-on-surface/70 hover:bg-surface-container-high hover:text-on-surface rounded-lg transition-colors text-sm font-body cursor-pointer">
-              <span className="material-symbols-outlined text-[18px] shrink-0">{icon}</span>
-              <span>{label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
 
       {/* ── CENTER + RIGHT + FOOTER WRAPPER ── */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
