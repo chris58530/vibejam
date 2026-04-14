@@ -51,9 +51,7 @@ export async function signInWithGitHub() {
 
   // 不指定 redirectTo，讓 Supabase 使用 Dashboard 設定的 Site URL (https://beaverkit.io)
   // implicit flow 會把 #access_token= 附在 Site URL 後面
-  devLog.info(`[GitHub OAuth] ④ 呼叫 signInWithOAuth (不指定 redirectTo，使用 Site URL)`);
-  // 將跳轉前的診斷資訊存入 sessionStorage，供跳轉返回後復原到 DevLog
-  // 注意：必須在 signInWithOAuth 之前存，因為呼叫後可能立即跳轉
+  devLog.info(`[GitHub OAuth] ④ 呼叫 signInWithOAuth (implicit flow, Site URL)`);
   try {
     sessionStorage.setItem('__oauth_debug_redirected_at', String(Date.now()));
     sessionStorage.setItem('__oauth_debug_origin', 'Site URL (no redirectTo)');
@@ -70,14 +68,13 @@ export async function signInWithGitHub() {
   }
 
   devLog.info(`[GitHub OAuth] ⑤ signInWithOAuth 完成 | error=${error?.message ?? 'none'}`);
-  console.log('[Auth] GitHub OAuth response:', { error });
 
   if (error) {
     devLog.error(`[GitHub OAuth] ⑥ Supabase 回傳錯誤: ${error.message}`);
     throw error;
   }
 
-  // SDK 會自行跳轉，此行之後的程式碼不會執行
+  // SDK 會自行跳轉
   devLog.info('[GitHub OAuth] ⑥ SDK 正在跳轉至 GitHub…');
 }
 

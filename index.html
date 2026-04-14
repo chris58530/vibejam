@@ -41,6 +41,9 @@
     (function () {
       var clearHash = function () {
         if (!window.location.hash) return;
+        // 不清除 Supabase OAuth token（implicit flow 或 error）
+        var h = window.location.hash;
+        if (h.indexOf('access_token') !== -1 || h.indexOf('refresh_token') !== -1 || h.indexOf('error_description') !== -1) return;
         var cleanUrl = window.location.pathname + window.location.search;
         window.history.replaceState(window.history.state, document.title, cleanUrl);
       };
