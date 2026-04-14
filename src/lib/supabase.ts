@@ -44,13 +44,20 @@ export async function signInWithGitHub() {
   }
 
   devLog.info(`[GitHub OAuth] ④ 呼叫 signInWithOAuth (redirectTo=${window.location.origin})`);
-  let data: any, error: any;
+  // 將跳轉前的診斷資訊存入 sessionStorage，供跳轉返回後復原到 DevLog
+  // 注意：必須在 signInWithOAuth 之前存，因為呼叫後可能立即跳轉
   try {
-    ({ data, error } = await client.auth.signInWithOAuth({
+    sessionStorage.setItem('__oauth_debug_redirected_at', String(Date.now()));
+    sessionStorage.setItem('__oauth_debug_origin', window.location.origin);
+  } catch { /* sessionStorage 不可用時靜默 */ }
+
+  let error: any;
+  try {
+    // 不使用 skipBrowserRedirect，讓 SDK 自行處理 PKCE code_verifier 存入 localStorage 並跳轉
+    ({ error } = await client.auth.signInWithOAuth({
       provider: 'github',
       options: {
         redirectTo: window.location.origin,
-        skipBrowserRedirect: true,
       },
     }));
   } catch (e: any) {
@@ -58,27 +65,16 @@ export async function signInWithGitHub() {
     throw e;
   }
 
-  devLog.info(`[GitHub OAuth] ⑤ 收到回應 → url=${data?.url ? data.url.slice(0, 70) + '…' : 'null'} | error=${error?.message ?? 'none'}`);
-  console.log('[Auth] GitHub OAuth response:', { data, error });
+  devLog.info(`[GitHub OAuth] ⑤ signInWithOAuth 完成 | error=${error?.message ?? 'none'}`);
+  console.log('[Auth] GitHub OAuth response:', { error });
 
   if (error) {
     devLog.error(`[GitHub OAuth] ⑥ Supabase 回傳錯誤: ${error.message}`);
     throw error;
   }
-  if (!data?.url) {
-    devLog.error('[GitHub OAuth] ⑥ data.url 為空 → GitHub provider 未啟用或 Redirect URL 未加入白名單');
-    throw new Error('GitHub OAuth 未設定或已停用，請至 Supabase 後台啟用 GitHub 提供商並確認 Redirect URL 已加入白名單');
-  }
 
-  devLog.info(`[GitHub OAuth] ⑥ 即將跳轉至 GitHub → ${data.url.slice(0, 80)}…`);
-  // 將跳轉前的診斷資訊存入 sessionStorage，供跳轉返回後復原到 DevLog
-  try {
-    sessionStorage.setItem('__oauth_debug_redirected_at', String(Date.now()));
-    sessionStorage.setItem('__oauth_debug_url', data.url.slice(0, 120));
-    sessionStorage.setItem('__oauth_debug_origin', window.location.origin);
-  } catch { /* sessionStorage 不可用時靜默 */ }
-
-  window.location.href = data.url;
+  // SDK 會自行跳轉，此行之後的程式碼不會執行
+  devLog.info('[GitHub OAuth] ⑥ SDK 正在跳轉至 GitHub…');
 }
 
 export async function signUpWithEmail(
