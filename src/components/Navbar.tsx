@@ -91,13 +91,24 @@ export default function Navbar({ savePanelOpen, onToggleSavePanel }: NavbarProps
           )}
 
           {!isWorkspace && (
-            <div className="hidden md:flex items-center bg-surface-container-low px-4 py-2 rounded-xl gap-3 w-48 lg:w-72 xl:w-96 group transition-all duration-300 ring-1 ring-black/[0.06] focus-within:ring-primary/30">
-              <span className="material-symbols-outlined text-on-surface-variant text-sm">search</span>
-              <input
-                className="bg-transparent border-none focus:ring-0 text-sm w-full font-body placeholder:text-on-surface-variant/50 outline-none"
-                placeholder={t('nav_search_placeholder')}
-                type="text"
-              />
+            <div className="hidden md:flex items-center gap-2">
+              {!isHome && (
+                <button
+                  onClick={() => navigate(-1)}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface-container-low hover:bg-surface-container-high transition-colors ring-1 ring-black/[0.06]"
+                  aria-label="Go back"
+                >
+                  <span className="material-symbols-outlined text-on-surface/70 text-[20px]">chevron_left</span>
+                </button>
+              )}
+              <div className="flex items-center bg-surface-container-low px-4 py-2 rounded-xl gap-3 w-48 lg:w-72 xl:w-96 group transition-all duration-300 ring-1 ring-black/[0.06] focus-within:ring-primary/30 h-10">
+                <span className="material-symbols-outlined text-on-surface-variant text-sm">search</span>
+                <input
+                  className="bg-transparent border-none focus:ring-0 text-sm w-full font-body placeholder:text-on-surface-variant/50 outline-none"
+                  placeholder={t('nav_search_placeholder')}
+                  type="text"
+                />
+              </div>
             </div>
           )}
 
