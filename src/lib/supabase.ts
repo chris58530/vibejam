@@ -43,10 +43,10 @@ export async function signInWithGitHub() {
     throw e;
   }
 
-  // window.location.origin 不含斜線（e.g. "https://beaverkit.io"）
-  // Supabase 做嚴格比對，須與 Dashboard Redirect URLs 完全吻合
-  // 加上 "/" 確保與 "https://beaverkit.io/" 設定相符
-  const redirectTo = window.location.origin + '/';
+  // 使用專用 callback 路由，避免根路徑 / 被 Vercel trailing slash 正規化時丟失 ?code=
+  // Supabase Dashboard → Authentication → URL Configuration → Redirect URLs
+  // 必須包含此 URL：https://beaverkit.io/auth/callback
+  const redirectTo = window.location.origin + '/auth/callback';
   devLog.info(`[GitHub OAuth] ④ 呼叫 signInWithOAuth (redirectTo=${redirectTo})`);
   // 將跳轉前的診斷資訊存入 sessionStorage，供跳轉返回後復原到 DevLog
   // 注意：必須在 signInWithOAuth 之前存，因為呼叫後可能立即跳轉

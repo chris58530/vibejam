@@ -16,6 +16,7 @@ import Settings from './pages/Settings';
 import InviteAccept from './pages/InviteAccept';
 import QALab from './pages/QALab';
 import YourLibrary from './pages/YourLibrary';
+import AuthCallback from './pages/AuthCallback';
 import { api, User } from './lib/api';
 import { supabase } from './lib/supabase';
 import { useAIKeyStore } from './lib/aiKeyStore';
@@ -271,6 +272,7 @@ export default function App() {
         <Route path="/remix" element={<RemixStudio currentUser={currentUser ?? undefined} />} />
         <Route path="/library" element={<YourLibrary currentUser={currentUser ?? undefined} />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/invite/:token" element={<InviteAccept />} />
         <Route path="/p/:id" element={<VibeDetail currentUser={currentUser ?? undefined} />} />
         <Route path="/@:username" element={<Profile />} />
