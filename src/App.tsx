@@ -19,6 +19,7 @@ import YourLibrary from './pages/YourLibrary';
 import { api, User } from './lib/api';
 import { supabase } from './lib/supabase';
 import { useAIKeyStore } from './lib/aiKeyStore';
+import { devLog } from './lib/devLog';
 
 const SCROLL_TARGET_SELECTOR =
   '[data-scroll-root], [class*="overflow-y-auto"], [class*="overflow-auto"], [class*="overflow-scroll"]';
@@ -167,13 +168,49 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!supabase) return;
+    if (!supabase) {
+      devLog.warn('[Auth] Supabase 未初始化（env 未設定），跳過 auth 監聽');
+      return;
+    }
+
+    // ── 復原 OAuth 跳轉前的診斷資訊 ──────────────────────────────────────
+    try {
+      const redirectedAt = sessionStorage.getItem('__oauth_debug_redirected_at');
+      if (redirectedAt) {
+        const elapsed = Date.now() - Number(redirectedAt);
+        const redirectUrl = sessionStorage.getItem('__oauth_debug_url') ?? '(unknown)';
+        devLog.info(`[Auth] ✅ 偵測到 OAuth redirect 返回（${elapsed}ms 前跳轉）`);
+        devLog.info(`[Auth]    跳轉 URL 前 80 字元: ${redirectUrl}`);
+        sessionStorage.removeItem('__oauth_debug_redirected_at');
+        sessionStorage.removeItem('__oauth_debug_url');
+        sessionStorage.removeItem('__oauth_debug_origin');
+      }
+    } catch { /* ignore */ }
+
+    // ── 記錄目前 URL hash（Supabase implicit flow 把 token 放在 hash 裡）──
+    const hash = window.location.hash;
+    if (hash) {
+      if (hash.includes('access_token')) {
+        devLog.info('[Auth] URL hash 含 access_token → Supabase 應可自動讀取 session');
+      } else if (hash.includes('error')) {
+        devLog.error(`[Auth] URL hash 含 error → ${hash.slice(0, 120)}`);
+      } else {
+        devLog.info(`[Auth] URL hash: ${hash.slice(0, 80)}`);
+      }
+    } else {
+      devLog.info('[Auth] URL 無 hash（OAuth callback 使用 PKCE 或尚未跳轉）');
+    }
 
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session?.user) syncUser(data.session.user);
+      const u = data.session?.user;
+      devLog.info(`[Auth] getSession → ${u ? `有 session (${u.email ?? u.id.slice(0, 8)})` : '無 session'}`);
+      if (u) syncUser(u);
+    }).catch((e: any) => {
+      devLog.error(`[Auth] getSession 失敗: ${e.message}`);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      devLog.info(`[Auth] onAuthStateChange: event=${_event} | session=${session ? `yes (${session.user.email ?? session.user.id.slice(0, 8)})` : 'null'}`);
       if (session?.user) {
         syncUser(session.user);
       } else {
@@ -185,14 +222,19 @@ export default function App() {
   }, []);
 
   const syncUser = async (supabaseUser: any) => {
+    const uid = supabaseUser.id?.slice(0, 8) ?? '?';
+    const email = supabaseUser.email ?? '(no email)';
+    devLog.info(`[Auth] syncUser 開始 → id=${uid}… email=${email}`);
     try {
       const user = await api.syncUser({
         supabase_id: supabaseUser.id,
         username: supabaseUser.user_metadata?.user_name || supabaseUser.user_metadata?.name || supabaseUser.email || 'anonymous',
         avatar: supabaseUser.user_metadata?.avatar_url || '',
       });
+      devLog.info(`[Auth] syncUser 成功 → username=${user.username}`);
       setCurrentUser(user);
-    } catch (e) {
+    } catch (e: any) {
+      devLog.error(`[Auth] syncUser 失敗: ${e?.message ?? e}`);
       console.error('Failed to sync user:', e);
     }
   };

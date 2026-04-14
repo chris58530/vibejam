@@ -1,4 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { devLog } from './devLog';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
@@ -30,17 +31,53 @@ function getSupabase(): SupabaseClient {
 }
 
 export async function signInWithGitHub() {
-  const client = getSupabase();
-  const { data, error } = await client.auth.signInWithOAuth({
-    provider: 'github',
-    options: {
-      redirectTo: window.location.origin,
-      skipBrowserRedirect: true,
-    },
-  });
+  devLog.info('[GitHub OAuth] ① 開始登入流程');
+  devLog.info(`[GitHub OAuth] ② env: SUPABASE_URL=${supabaseUrl ? supabaseUrl.slice(0, 35) + '…' : '(空！)'} | KEY=${supabaseAnonKey ? '已設定' : '(空！)'}`);
+
+  let client: SupabaseClient;
+  try {
+    client = getSupabase();
+    devLog.info('[GitHub OAuth] ③ Supabase client 取得成功');
+  } catch (e: any) {
+    devLog.error(`[GitHub OAuth] ③ Supabase client 取得失敗: ${e.message}`);
+    throw e;
+  }
+
+  devLog.info(`[GitHub OAuth] ④ 呼叫 signInWithOAuth (redirectTo=${window.location.origin})`);
+  let data: any, error: any;
+  try {
+    ({ data, error } = await client.auth.signInWithOAuth({
+      provider: 'github',
+      options: {
+        redirectTo: window.location.origin,
+        skipBrowserRedirect: true,
+      },
+    }));
+  } catch (e: any) {
+    devLog.error(`[GitHub OAuth] ④ signInWithOAuth 拋出例外: ${e.message}`);
+    throw e;
+  }
+
+  devLog.info(`[GitHub OAuth] ⑤ 收到回應 → url=${data?.url ? data.url.slice(0, 70) + '…' : 'null'} | error=${error?.message ?? 'none'}`);
   console.log('[Auth] GitHub OAuth response:', { data, error });
-  if (error) throw error;
-  if (!data?.url) throw new Error('GitHub OAuth 未設定或已停用，請至 Supabase 後台啟用 GitHub 提供商並確認 Redirect URL 已加入白名單');
+
+  if (error) {
+    devLog.error(`[GitHub OAuth] ⑥ Supabase 回傳錯誤: ${error.message}`);
+    throw error;
+  }
+  if (!data?.url) {
+    devLog.error('[GitHub OAuth] ⑥ data.url 為空 → GitHub provider 未啟用或 Redirect URL 未加入白名單');
+    throw new Error('GitHub OAuth 未設定或已停用，請至 Supabase 後台啟用 GitHub 提供商並確認 Redirect URL 已加入白名單');
+  }
+
+  devLog.info(`[GitHub OAuth] ⑥ 即將跳轉至 GitHub → ${data.url.slice(0, 80)}…`);
+  // 將跳轉前的診斷資訊存入 sessionStorage，供跳轉返回後復原到 DevLog
+  try {
+    sessionStorage.setItem('__oauth_debug_redirected_at', String(Date.now()));
+    sessionStorage.setItem('__oauth_debug_url', data.url.slice(0, 120));
+    sessionStorage.setItem('__oauth_debug_origin', window.location.origin);
+  } catch { /* sessionStorage 不可用時靜默 */ }
+
   window.location.href = data.url;
 }
 
