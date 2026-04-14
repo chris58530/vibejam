@@ -34,7 +34,28 @@ export default function AuthCallback() {
       return;
     }
 
-    // ── PKCE flow: ?code=xxx ────────────────────────────────────────────────
+    // ── 先檢查 SDK 是否已自動 exchange（detectSessionInUrl = true 預設行為）──
+    // 當 ?code= 在 URL 裡，Supabase SDK 可能在我們的 useEffect 執行前就已完成 exchange
+    // 並透過 history.replaceState 清除 ?code=，此時 getSession() 應已有 session
+    const checkExisting = supabase.auth.getSession().then(({ data }) => {
+      if (data.session) {
+        devLog.info(`[AuthCallback] ✅ SDK 已自動處理登入 → ${data.session.user.email ?? data.session.user.id}`);
+        navigate('/', { replace: true });
+        return true;
+      }
+      return false;
+    });
+
+    // ── 訂閱 onAuthStateChange，處理 SDK 異步 exchange 完成的情況 ─────────────
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      devLog.info(`[AuthCallback] onAuthStateChange: event=${event} | session=${session ? session.user.email ?? session.user.id : 'null'}`);
+      if (event === 'SIGNED_IN' && session) {
+        devLog.info('[AuthCallback] ✅ SIGNED_IN via onAuthStateChange → 跳轉首頁');
+        navigate('/', { replace: true });
+      }
+    });
+
+    // ── OAuth error params ──────────────────────────────────────────────────
     const params = new URLSearchParams(search);
     const code   = params.get('code');
     const errCode = params.get('error');
@@ -42,16 +63,19 @@ export default function AuthCallback() {
 
     if (errCode) {
       devLog.error(`[AuthCallback] ❌ OAuth error: ${errCode} — ${errDesc}`);
+      subscription.unsubscribe();
       setStatus('error');
       setErrorMsg(`${errCode}: ${decodeURIComponent(errDesc ?? '')}`);
       return;
     }
 
+    // ── PKCE flow: ?code=xxx ────────────────────────────────────────────────
     if (code) {
       devLog.info(`[AuthCallback] ✅ 收到 ?code=, 呼叫 exchangeCodeForSession...`);
       supabase.auth.exchangeCodeForSession(search).then(({ data, error }) => {
         if (error) {
           devLog.error(`[AuthCallback] exchangeCodeForSession 失敗: ${error.message}`);
+          subscription.unsubscribe();
           setStatus('error');
           setErrorMsg(error.message);
         } else {
@@ -59,23 +83,37 @@ export default function AuthCallback() {
           navigate('/', { replace: true });
         }
       });
-      return;
+      return () => subscription.unsubscribe();
     }
 
     // ── Implicit flow: #access_token=xxx ───────────────────────────────────
     if (hash.includes('access_token')) {
       devLog.info('[AuthCallback] ✅ hash 含 access_token, 等待 SDK 處理後跳轉...');
-      // The Supabase SDK detects and processes the hash automatically via onAuthStateChange.
-      // Just wait briefly then redirect home.
-      const t = setTimeout(() => navigate('/', { replace: true }), 1000);
-      return () => clearTimeout(t);
+      return () => subscription.unsubscribe();
     }
 
-    // ── 無任何 auth 參數 ────────────────────────────────────────────────────
-    devLog.warn('[AuthCallback] ⚠️ 無 ?code= 也無 #access_token= → Supabase 沒帶 token 回來');
-    devLog.warn('[AuthCallback] 請確認 Supabase Dashboard → Redirect URLs 包含 https://beaverkit.io/auth/callback');
-    setStatus('error');
-    setErrorMsg('沒有收到授權碼。請確認 Supabase Dashboard 的 Redirect URLs 已加入 https://beaverkit.io/auth/callback');
+    // ── 無任何 auth 參數：可能 SDK 已先處理，等待 onAuthStateChange 或 timeout ──
+    devLog.warn('[AuthCallback] ⚠️ 無 ?code= 也無 #access_token= → 等待 SDK onAuthStateChange (3s)...');
+    checkExisting.then((alreadyHandled) => {
+      if (alreadyHandled) return;
+      // 等待 3 秒，讓 SDK 有機會完成異步 exchange
+      const t = setTimeout(() => {
+        supabase!.auth.getSession().then(({ data }) => {
+          if (data.session) {
+            devLog.info('[AuthCallback] ✅ 3s 後偵測到 session → 跳轉');
+            navigate('/', { replace: true });
+          } else {
+            devLog.warn('[AuthCallback] 3s 後仍無 session → 顯示錯誤');
+            subscription.unsubscribe();
+            setStatus('error');
+            setErrorMsg('沒有收到授權碼。請確認 Supabase Dashboard 的 Redirect URLs 已加入 https://beaverkit.io/auth/callback，以及 Site URL 設為 https://beaverkit.io');
+          }
+        });
+      }, 3000);
+      return () => clearTimeout(t);
+    });
+
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
   if (status === 'error') {
