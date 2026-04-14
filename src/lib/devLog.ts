@@ -55,3 +55,16 @@ window.addEventListener('error', ev => {
 window.addEventListener('unhandledrejection', ev => {
   devLog.addEntry('error', `[PROMISE] ${String(ev.reason)}`);
 });
+
+// ── Boot-time URL capture ──────────────────────────────────────────────────────
+// 在 supabase.ts 的 createClient 之前執行（devLog 是其依賴），
+// 捕捉最原始的 URL（Supabase SDK 尚未有機會清除 ?code= 或 #access_token=）
+try {
+  const bootHref = window.location.href;
+  const bootSearch = window.location.search;
+  const bootHash = window.location.hash;
+  sessionStorage.setItem('__boot_href', bootHref);
+  devLog.info(`[BOOT] href=${bootHref.slice(0, 200)}`);
+  if (bootSearch) devLog.info(`[BOOT] search=${bootSearch.slice(0, 100)}`);
+  if (bootHash)   devLog.info(`[BOOT] hash=${bootHash.slice(0, 80)}`);
+} catch { /* noop */ }

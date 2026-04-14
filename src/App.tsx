@@ -178,41 +178,44 @@ export default function App() {
       const redirectedAt = sessionStorage.getItem('__oauth_debug_redirected_at');
       if (redirectedAt) {
         const elapsed = Date.now() - Number(redirectedAt);
-        const redirectUrl = sessionStorage.getItem('__oauth_debug_url') ?? '(unknown)';
+        const redirectOrigin = sessionStorage.getItem('__oauth_debug_origin') ?? '(unknown)';
         devLog.info(`[Auth] ✅ 偵測到 OAuth redirect 返回（${elapsed}ms 前跳轉）`);
-        devLog.info(`[Auth]    跳轉 URL 前 80 字元: ${redirectUrl}`);
+        devLog.info(`[Auth]    redirectTo 使用值: ${redirectOrigin}`);
         sessionStorage.removeItem('__oauth_debug_redirected_at');
-        sessionStorage.removeItem('__oauth_debug_url');
         sessionStorage.removeItem('__oauth_debug_origin');
       }
     } catch { /* ignore */ }
 
-    // ── 記錄目前完整 URL（PKCE code 在 query params 裡）──────────────────
+    // ── 讀取 boot-time URL（devLog.ts 在 createClient 前捕捉）────────────
+    const bootHref = (() => { try { const v = sessionStorage.getItem('__boot_href'); sessionStorage.removeItem('__boot_href'); return v; } catch { return null; } })();
+    devLog.info(`[Auth] 頁面初始 href (boot): ${bootHref ? bootHref.slice(0, 200) : '(未記錄)'}`);
+    const bootHadCode = bootHref?.includes('?code=') || bootHref?.includes('&code=');
+    const bootHadToken = bootHref?.includes('access_token');
+    if (bootHadCode)  devLog.info('[Auth] ✅ Boot URL 含 ?code= → SDK 應處理 PKCE exchange');
+    if (bootHadToken) devLog.info('[Auth] ✅ Boot URL 含 access_token → SDK 應處理 implicit flow');
+    if (!bootHadCode && !bootHadToken && bootHref && bootHref !== window.location.origin + '/') {
+      devLog.warn('[Auth] ⚠️ Boot URL 無 auth 參數 → Supabase 未將 token 帶回 redirect，確認 Redirect URL 設定');
+    }
+
+    // ── 記錄目前 URL ──────────────────────────────────────────────────────
     const search = window.location.search;
     const hash = window.location.hash;
     devLog.info(`[Auth] 當前 URL: ${window.location.pathname}${search ? search.slice(0, 80) : '(無 search)'}${hash ? hash.slice(0, 40) : ''}`);
-
-    if (search.includes('code=')) {
-      devLog.info('[Auth] ✅ URL query 含 ?code= → PKCE code exchange 應自動觸發');
-    } else if (search.includes('error=')) {
-      devLog.error(`[Auth] ❌ URL query 含 error: ${search.slice(0, 120)}`);
+    if (bootHadCode && !search.includes('code=')) {
+      devLog.warn('[Auth] ⚠️ ?code= 存在於 boot URL 但現在消失 → SDK 已嘗試處理（可能 exchange 失敗）');
     }
 
-    if (hash.includes('access_token')) {
-      devLog.info('[Auth] URL hash 含 access_token → implicit flow');
-    } else if (hash.includes('error')) {
-      devLog.error(`[Auth] URL hash 含 error → ${hash.slice(0, 120)}`);
-    }
-
-    // ── 檢查 localStorage 是否有 PKCE code_verifier（跳轉前應由 SDK 存入）──
+    // ── 檢查 localStorage + sessionStorage 的 Supabase key ────────────────
     try {
-      const allKeys = Object.keys(localStorage);
-      const sbKeys = allKeys.filter(k => k.toLowerCase().includes('supabase') || k.startsWith('sb-'));
-      devLog.info(`[Auth] localStorage supabase 相關 key (${sbKeys.length}): ${sbKeys.join(' | ') || '(無)'}`);
-      const pkceKey = allKeys.find(k => k.includes('code-verifier') || k.includes('pkce') || k.includes('code_verifier'));
-      devLog.info(`[Auth] PKCE code_verifier key: ${pkceKey ?? '(找不到！PKCE exchange 將會失敗)'}`);
+      const lsKeys = Object.keys(localStorage).filter(k => k.toLowerCase().includes('supabase') || k.startsWith('sb-'));
+      const ssKeys = Object.keys(sessionStorage).filter(k => k.toLowerCase().includes('supabase') || k.startsWith('sb-'));
+      devLog.info(`[Auth] localStorage sb key (${lsKeys.length}): ${lsKeys.join(' | ') || '(無)'}`);
+      devLog.info(`[Auth] sessionStorage sb key (${ssKeys.length}): ${ssKeys.join(' | ') || '(無)'}`);
+      const verifier = [...Object.keys(localStorage), ...Object.keys(sessionStorage)]
+        .find(k => k.includes('code-verifier') || k.includes('pkce') || k.includes('code_verifier'));
+      devLog.info(`[Auth] PKCE verifier key: ${verifier ?? '(找不到！exchange 將失敗)'}`);
     } catch (e: any) {
-      devLog.warn(`[Auth] 無法讀取 localStorage: ${e.message}`);
+      devLog.warn(`[Auth] 無法讀取 storage: ${e.message}`);
     }
 
     supabase.auth.getSession().then(({ data }) => {
