@@ -187,18 +187,32 @@ export default function App() {
       }
     } catch { /* ignore */ }
 
-    // ── 記錄目前 URL hash（Supabase implicit flow 把 token 放在 hash 裡）──
+    // ── 記錄目前完整 URL（PKCE code 在 query params 裡）──────────────────
+    const search = window.location.search;
     const hash = window.location.hash;
-    if (hash) {
-      if (hash.includes('access_token')) {
-        devLog.info('[Auth] URL hash 含 access_token → Supabase 應可自動讀取 session');
-      } else if (hash.includes('error')) {
-        devLog.error(`[Auth] URL hash 含 error → ${hash.slice(0, 120)}`);
-      } else {
-        devLog.info(`[Auth] URL hash: ${hash.slice(0, 80)}`);
-      }
-    } else {
-      devLog.info('[Auth] URL 無 hash（OAuth callback 使用 PKCE 或尚未跳轉）');
+    devLog.info(`[Auth] 當前 URL: ${window.location.pathname}${search ? search.slice(0, 80) : '(無 search)'}${hash ? hash.slice(0, 40) : ''}`);
+
+    if (search.includes('code=')) {
+      devLog.info('[Auth] ✅ URL query 含 ?code= → PKCE code exchange 應自動觸發');
+    } else if (search.includes('error=')) {
+      devLog.error(`[Auth] ❌ URL query 含 error: ${search.slice(0, 120)}`);
+    }
+
+    if (hash.includes('access_token')) {
+      devLog.info('[Auth] URL hash 含 access_token → implicit flow');
+    } else if (hash.includes('error')) {
+      devLog.error(`[Auth] URL hash 含 error → ${hash.slice(0, 120)}`);
+    }
+
+    // ── 檢查 localStorage 是否有 PKCE code_verifier（跳轉前應由 SDK 存入）──
+    try {
+      const allKeys = Object.keys(localStorage);
+      const sbKeys = allKeys.filter(k => k.toLowerCase().includes('supabase') || k.startsWith('sb-'));
+      devLog.info(`[Auth] localStorage supabase 相關 key (${sbKeys.length}): ${sbKeys.join(' | ') || '(無)'}`);
+      const pkceKey = allKeys.find(k => k.includes('code-verifier') || k.includes('pkce') || k.includes('code_verifier'));
+      devLog.info(`[Auth] PKCE code_verifier key: ${pkceKey ?? '(找不到！PKCE exchange 將會失敗)'}`);
+    } catch (e: any) {
+      devLog.warn(`[Auth] 無法讀取 localStorage: ${e.message}`);
     }
 
     supabase.auth.getSession().then(({ data }) => {
