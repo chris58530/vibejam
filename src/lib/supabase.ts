@@ -49,26 +49,20 @@ export async function signInWithGitHub() {
     throw e;
   }
 
-  // 使用專用 callback 路由，避免根路徑 / 被 Vercel trailing slash 正規化時丟失 ?code=
-  // Supabase Dashboard → Authentication → URL Configuration → Redirect URLs
-  // 必須包含此 URL：https://beaverkit.io/auth/callback
-  const redirectTo = window.location.origin + '/auth/callback';
-  devLog.info(`[GitHub OAuth] ④ 呼叫 signInWithOAuth (redirectTo=${redirectTo})`);
+  // 不指定 redirectTo，讓 Supabase 使用 Dashboard 設定的 Site URL (https://beaverkit.io)
+  // implicit flow 會把 #access_token= 附在 Site URL 後面
+  devLog.info(`[GitHub OAuth] ④ 呼叫 signInWithOAuth (不指定 redirectTo，使用 Site URL)`);
   // 將跳轉前的診斷資訊存入 sessionStorage，供跳轉返回後復原到 DevLog
   // 注意：必須在 signInWithOAuth 之前存，因為呼叫後可能立即跳轉
   try {
     sessionStorage.setItem('__oauth_debug_redirected_at', String(Date.now()));
-    sessionStorage.setItem('__oauth_debug_origin', redirectTo);
+    sessionStorage.setItem('__oauth_debug_origin', 'Site URL (no redirectTo)');
   } catch { /* sessionStorage 不可用時靜默 */ }
 
   let error: any;
   try {
-    // 不使用 skipBrowserRedirect，讓 SDK 自行處理 PKCE code_verifier 存入 localStorage 並跳轉
     ({ error } = await client.auth.signInWithOAuth({
       provider: 'github',
-      options: {
-        redirectTo,
-      },
     }));
   } catch (e: any) {
     devLog.error(`[GitHub OAuth] ④ signInWithOAuth 拋出例外: ${e.message}`);
