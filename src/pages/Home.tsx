@@ -1,9 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, Vibe } from '../lib/api';
-import VibeCard from '../components/VibeCard';
 import Footer from '../components/Footer';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 // ─── Feed tabs ────────────────────────────────────────────────────────────────
 type FeedTab = 'movers' | 'new' | 'market-cap' | 'oldest';
@@ -21,22 +19,130 @@ function formatViews(n: number): string {
   return String(n);
 }
 
+function timeAgo(dateStr: string): string {
+  if (!dateStr) return '';
+  const diffMs = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months}mo ago`;
+  return `${Math.floor(months / 12)}y ago`;
+}
+
+const FREEZE_SCRIPT = `
+  <style>*, *::before, *::after { animation-play-state: paused !important; transition: none !important; }</style>
+  <script>
+    const orig = window.requestAnimationFrame;
+    window.requestAnimationFrame = function(cb) {
+      if (!window.hasRenderedFirstFrame) { window.hasRenderedFirstFrame = true; return orig(cb); }
+      return 0;
+    };
+  </script>
+`;
+
+// ─── HomeCard ─────────────────────────────────────────────────────────────────
+function HomeCard({ vibe, onSelect }: { vibe: Vibe; onSelect: (v: Vibe) => void }) {
+  const [isHovered, setIsHovered] = useState(false);
+  const navigate = useNavigate();
+
+  const rawCode = vibe.latest_code || '';
+  const previewCode = isHovered
+    ? rawCode
+    : (rawCode.includes('<head>') ? rawCode.replace('<head>', '<head>' + FREEZE_SCRIPT) : FREEZE_SCRIPT + rawCode);
+
+  const avatarSrc = vibe.author_avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(vibe.author_name)}`;
+
+  return (
+    <div
+      onClick={() => onSelect(vibe)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className="group cursor-pointer bg-white/[0.03] backdrop-blur-sm rounded-2xl overflow-hidden border border-white/5 hover:border-primary/20 transition-all duration-250"
+    >
+      {/* Thumbnail */}
+      <div className="relative aspect-video overflow-hidden bg-surface-container-lowest">
+        <div className={`absolute inset-0 z-10 pointer-events-none transition-opacity duration-300 ${isHovered ? 'opacity-0' : 'opacity-100 bg-black/25'}`} />
+        <iframe
+          srcDoc={previewCode}
+          className="absolute top-0 left-0 w-[200%] h-[200%] scale-50 origin-top-left border-none pointer-events-none group-hover:scale-[0.51] transition-transform duration-500"
+          title={vibe.title}
+          sandbox="allow-scripts"
+          loading="lazy"
+        />
+        {/* Views badge */}
+        <div className="absolute top-3 right-3 bg-black/75 backdrop-blur-sm px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/10 z-20 pointer-events-none text-on-surface/80">
+          {formatViews(vibe.views)}
+        </div>
+      </div>
+
+      {/* Card Content */}
+      <div className="p-5">
+        {/* Author row */}
+        <div className="flex items-center gap-3 mb-4">
+          <button
+            className="w-10 h-10 rounded-full border border-primary/30 p-0.5 flex-shrink-0 cursor-pointer hover:border-primary/60 transition-colors"
+            onClick={(e) => { e.stopPropagation(); navigate(`/@${encodeURIComponent(vibe.author_name)}`); }}
+          >
+            <img
+              src={avatarSrc}
+              alt={vibe.author_name}
+              className="w-full h-full rounded-full object-cover"
+            />
+          </button>
+          <div className="min-w-0">
+            <h4 className="text-sm font-bold text-on-surface truncate">{vibe.author_name}</h4>
+            <p className="text-[10px] text-zinc-500 uppercase tracking-widest">{timeAgo(vibe.created_at)}</p>
+          </div>
+        </div>
+
+        {/* Title */}
+        <h3 className="text-lg font-bold tracking-tight mb-1.5 text-on-surface group-hover:text-primary transition-colors duration-200 line-clamp-2 leading-snug">
+          {vibe.title}
+        </h3>
+
+        {/* Description */}
+        {vibe.description && (
+          <p className="text-sm text-zinc-400 mb-5 leading-relaxed line-clamp-2">{vibe.description}</p>
+        )}
+
+        {/* Footer */}
+        <div className="flex items-center justify-between pt-4 border-t border-white/[0.06] mt-4">
+          <div className="flex gap-4">
+            <div className="flex items-center gap-1.5 text-zinc-500">
+              <span className="material-symbols-outlined text-[18px]">favorite</span>
+              <span className="text-xs font-bold">{formatViews(vibe.like_count ?? 0)}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-zinc-500">
+              <span className="material-symbols-outlined text-[18px]">chat_bubble</span>
+              <span className="text-xs font-bold">{vibe.comment_count ?? 0}</span>
+            </div>
+            {(vibe.remix_count ?? 0) > 0 && (
+              <div className="flex items-center gap-1.5 text-zinc-500">
+                <span className="material-symbols-outlined text-[18px]">fork_right</span>
+                <span className="text-xs font-bold">{vibe.remix_count}</span>
+              </div>
+            )}
+          </div>
+          <span className="material-symbols-outlined text-zinc-600 cursor-pointer hover:text-primary transition-colors duration-200 text-[20px]">
+            more_horiz
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Trending Hero ──────────────────────────────────────────────────────────────
 function TrendingHero({ vibe, onSelect }: { vibe?: Vibe; onSelect: (v: Vibe) => void }) {
   if (!vibe) return null;
 
   const rawCode = vibe.latest_code || '';
-  const freezeScript = `
-    <style>*, *::before, *::after { animation-play-state: paused !important; transition: none !important; }</style>
-    <script>
-      const orig = window.requestAnimationFrame;
-      window.requestAnimationFrame = function(cb) {
-        if (!window.hasRenderedFirstFrame) { window.hasRenderedFirstFrame = true; return orig(cb); }
-        return 0;
-      };
-    </script>
-  `;
-  const code = rawCode.includes('<head>') ? rawCode.replace('<head>', '<head>' + freezeScript) : freezeScript + rawCode;
+  const code = rawCode.includes('<head>') ? rawCode.replace('<head>', '<head>' + FREEZE_SCRIPT) : FREEZE_SCRIPT + rawCode;
 
   return (
     <section 
@@ -214,11 +320,11 @@ export default function Home() {
               ? Array.from({ length: 8 }).map((_, i) => (
                   <div key={i} className="aspect-video bg-surface-container-highest rounded-xl animate-pulse" />
                 ))
-              : (loading || filteredVibes.length === 0 ? [] : filteredVibes.slice(1)).map(vibe => (
-                  <VibeCard
+              : filteredVibes.map(vibe => (
+                  <HomeCard
                     key={vibe.id}
                     vibe={vibe}
-                    onClick={() => handleSelectVibe(vibe)}
+                    onSelect={handleSelectVibe}
                   />
                 ))
             }
