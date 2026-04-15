@@ -294,13 +294,13 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
       if (document.visibilityState === 'visible') {
         loadVibe();
         if (id) {
-          api.getVibeChildren(Number(id)).then(chi => setVibeChildren(chi)).catch(() => {});
+          api.getVibeChildren(Number(id)).then(chi => setVibeChildren(chi)).catch(() => { });
         }
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, supabaseUser]);
 
   const ancestorChain = ancestors.slice(0, -1); // remove last (current)
@@ -538,8 +538,8 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                       key={version.id}
                       onClick={() => handleSelectVersion(version)}
                       className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${isSel
-                          ? 'bg-primary/15 text-primary ring-1 ring-primary/25'
-                          : 'text-on-surface/45 hover:bg-surface-container-high hover:text-on-surface/70'
+                        ? 'bg-primary/15 text-primary ring-1 ring-primary/25'
+                        : 'text-on-surface/45 hover:bg-surface-container-high hover:text-on-surface/70'
                         }`}
                     >
                       <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${isSel ? 'bg-primary' : 'bg-on-surface/20'}`} />

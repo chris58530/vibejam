@@ -21,11 +21,11 @@ function formatViews(n: number): string {
   return String(n);
 }
 
-// ─── Trending Carousel ────────────────────────────────────────────────────────
-function TrendingCarousel({ vibes, onSelect }: { vibes: Vibe[]; onSelect: (v: Vibe) => void }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [isHoveredId, setIsHoveredId] = useState<number | null>(null);
+// ─── Trending Hero ──────────────────────────────────────────────────────────────
+function TrendingHero({ vibe, onSelect }: { vibe?: Vibe; onSelect: (v: Vibe) => void }) {
+  if (!vibe) return null;
 
+  const rawCode = vibe.latest_code || '';
   const freezeScript = `
     <style>*, *::before, *::after { animation-play-state: paused !important; transition: none !important; }</style>
     <script>
@@ -36,86 +36,57 @@ function TrendingCarousel({ vibes, onSelect }: { vibes: Vibe[]; onSelect: (v: Vi
       };
     </script>
   `;
-
-  const scroll = (dir: 'left' | 'right') => {
-    scrollRef.current?.scrollBy({ left: dir === 'left' ? -290 : 290, behavior: 'smooth' });
-  };
-
-  if (vibes.length === 0) return null;
+  const code = rawCode.includes('<head>') ? rawCode.replace('<head>', '<head>' + freezeScript) : freezeScript + rawCode;
 
   return (
-    <div className="relative px-4 pt-3 pb-1">
-      {/* Header row */}
-      <div className="flex items-center justify-between mb-2 px-2">
-        <span className="text-xs font-semibold text-on-surface/50 tracking-widest uppercase">Trending</span>
-        <div className="flex gap-1">
-          <button
-            onClick={() => scroll('left')}
-            className="p-1 rounded-md hover:bg-on-surface/[0.07] text-on-surface/40 hover:text-on-surface/80 transition-colors cursor-pointer"
-            aria-label="Scroll left"
-          >
-            <ChevronLeft size={16} />
-          </button>
-          <button
-            onClick={() => scroll('right')}
-            className="p-1 rounded-md hover:bg-on-surface/[0.07] text-on-surface/40 hover:text-on-surface/80 transition-colors cursor-pointer"
-            aria-label="Scroll right"
-          >
-            <ChevronRight size={16} />
-          </button>
-        </div>
+    <section 
+      onClick={() => onSelect(vibe)}
+      className="relative aspect-[21/9] lg:aspect-[16/6] rounded-2xl overflow-hidden mb-8 lg:mb-12 group cursor-pointer border border-white/5 shadow-2xl"
+    >
+      <div className="absolute inset-0 bg-surface-container-lowest transition-transform duration-700 transform scale-105 group-hover:scale-100 pointer-events-none">
+        <iframe
+          srcDoc={code}
+          className="absolute top-0 left-0 w-[200%] h-[200%] scale-50 origin-top-left border-none pointer-events-none"
+          title={vibe.title}
+          sandbox="allow-scripts"
+          loading="lazy"
+        />
       </div>
-
-      {/* Scroll container */}
-      <div
-        ref={scrollRef}
-        className="flex gap-3 overflow-x-auto pb-2 pr-4"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-      >
-        {vibes.map((vibe) => {
-          const isHovered = isHoveredId === vibe.id;
-          const rawCode = vibe.latest_code || '';
-          const code = isHovered
-            ? rawCode
-            : (rawCode.includes('<head>') ? rawCode.replace('<head>', '<head>' + freezeScript) : freezeScript + rawCode);
-
-          return (
-            <div
-              key={vibe.id}
-              onClick={() => onSelect(vibe)}
-              onMouseEnter={() => setIsHoveredId(vibe.id)}
-              onMouseLeave={() => setIsHoveredId(null)}
-              className="flex-shrink-0 w-[220px] group cursor-pointer"
-            >
-              {/* Preview thumbnail */}
-              <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-surface-container-lowest ring-1 ring-on-surface/[0.06] group-hover:ring-primary/30 transition-all duration-200">
-                <div className={`absolute inset-0 z-10 pointer-events-none transition-opacity duration-200 ${isHovered ? 'opacity-0' : 'opacity-100 bg-black/30'}`} />
-                <iframe
-                  srcDoc={code}
-                  className="absolute top-0 left-0 w-[200%] h-[200%] scale-50 origin-top-left border-none pointer-events-none"
-                  title={vibe.title}
-                  sandbox="allow-scripts"
-                  loading="lazy"
-                />
-                {/* Views badge */}
-                <div className="absolute top-1.5 left-1.5 bg-black/75 backdrop-blur-sm px-1.5 py-0.5 rounded text-[10px] font-mono text-on-surface/80 z-20 pointer-events-none">
-                  {formatViews(vibe.views)}
-                </div>
-              </div>
-              {/* Card info below */}
-              <div className="mt-1.5 px-0.5">
-                <p className="text-xs font-bold text-on-surface truncate group-hover:text-primary transition-colors duration-150 leading-tight">
-                  {vibe.title}
-                </p>
-                <p className="text-[10px] text-on-surface/40 truncate mt-0.5">
-                  {vibe.author_name.slice(0, 8).toUpperCase()} · {vibe.author_name}
-                </p>
+      
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent pointer-events-none"></div>
+      
+      <div className="absolute bottom-0 left-0 p-6 lg:p-12 w-full bg-white/[0.02] backdrop-blur-md border-t border-white/5">
+        <div className="max-w-3xl">
+          <span className="bg-primary-container text-on-primary text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full mb-3 md:mb-4 inline-block">
+            Trending Now
+          </span>
+          <h1 className="text-3xl md:text-4xl lg:text-6xl font-black tracking-tighter text-on-surface mb-2 font-headline drop-shadow-lg line-clamp-2">
+            {vibe.title}
+          </h1>
+          
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full border border-primary/30 p-0.5 bg-surface">
+              <div className="w-full h-full rounded-full bg-surface-container flex items-center justify-center text-primary font-bold text-xs md:text-sm">
+                {vibe.author_name ? vibe.author_name.charAt(0).toUpperCase() : '?'}
               </div>
             </div>
-          );
-        })}
+            <div>
+              <h4 className="text-xs md:text-sm font-bold text-on-surface">{vibe.author_name || 'Anonymous'}</h4>
+              <p className="text-[10px] text-zinc-400 uppercase tracking-widest">{formatViews(vibe.views)} Views</p>
+            </div>
+          </div>
+
+          <div className="flex gap-3 md:gap-4">
+            <button className="px-6 py-2.5 md:px-8 md:py-3 bg-primary-container text-on-primary rounded-full font-bold text-sm md:text-base hover:shadow-[0_0_32px_rgba(255,179,182,0.4)] transition-all active:scale-95 cursor-pointer">
+              Explore Project
+            </button>
+            <button className="hidden md:block px-8 py-3 bg-white/5 border border-white/10 text-on-surface rounded-full font-bold hover:bg-white/10 transition-all active:scale-95 cursor-pointer backdrop-blur-md">
+              Save to Library
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -181,28 +152,29 @@ export default function Home() {
     filteredVibes.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
   }
 
-  const maxViews = filteredVibes.reduce((max, v) => Math.max(max, v.views), 1);
-
   return (
-    <main className="md:ml-56 md:w-[calc(100vw-14rem)] min-h-screen bg-surface flex flex-col overflow-x-hidden">
+    <main className="md:ml-56 md:w-[calc(100vw-14rem)] min-h-screen bg-surface flex flex-col overflow-x-hidden pt-24 pb-12 px-6 lg:px-12 max-w-[1600px] mx-auto">
 
-      {/* ── Trending Carousel ── */}
-      <TrendingCarousel vibes={trendingVibes} onSelect={handleSelectVibe} />
+      {/* ── Trending Hero Section ── */}
+      {!loading && trendingVibes.length > 0 && (
+        <TrendingHero vibe={trendingVibes[0]} onSelect={handleSelectVibe} />
+      )}
+      {loading && (
+        <div className="aspect-[21/9] lg:aspect-[16/6] bg-surface-container-highest rounded-2xl animate-pulse mb-8 lg:mb-12 border border-white/5" />
+      )}
 
-      {/* ── Feed Tab Bar ── */}
-      <div className="sticky top-16 z-30 bg-surface/95 backdrop-blur-md border-b border-outline-variant/10">
-        <div className="flex items-center gap-2.5 px-4 py-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+      {/* ── Feed Tabs ── */}
+      <div className="flex items-center justify-between mb-8 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+        <div className="flex gap-2 p-1 bg-white/5 backdrop-blur-2xl rounded-full border border-white/5 flex-shrink-0">
           {FEED_TABS.map(tab => (
             <button
               key={tab.key}
               onClick={() => setActiveFeed(tab.key)}
-              className={`
-                flex items-center gap-2 px-4 py-2 text-sm font-medium font-body whitespace-nowrap cursor-pointer
-                rounded-lg transition-all duration-150 flex-shrink-0
-                ${activeFeed === tab.key
-                  ? 'bg-on-surface text-surface'
-                  : 'bg-surface-container text-on-surface/60 hover:bg-surface-container-high hover:text-on-surface'}
-              `}
+              className={`px-5 py-2 md:px-6 rounded-full text-xs md:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                activeFeed === tab.key
+                  ? 'bg-primary-container text-on-primary'
+                  : 'text-zinc-400 hover:text-on-surface'
+              }`}
             >
               {tab.dot && (
                 <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: tab.dot }} />
@@ -211,10 +183,15 @@ export default function Home() {
             </button>
           ))}
         </div>
+        
+        <button className="hidden md:flex items-center gap-2 px-4 py-2 text-zinc-400 hover:text-on-surface transition-all cursor-pointer flex-shrink-0">
+          <span className="material-symbols-outlined text-lg">tune</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest">Filters</span>
+        </button>
       </div>
 
       {/* ── Card Grid ── */}
-      <div className="px-4 pr-5 py-3 flex-1 overflow-x-hidden">
+      <div className="flex-1 overflow-x-hidden pb-8">
         {error && !loading && vibes.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
             <span className="material-symbols-outlined text-[48px] text-on-surface/20">cloud_off</span>
@@ -232,12 +209,12 @@ export default function Home() {
             <p className="text-on-surface/40 text-sm">還沒有任何作品，去 Workspace 建立第一個吧！</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {loading
               ? Array.from({ length: 8 }).map((_, i) => (
                   <div key={i} className="aspect-video bg-surface-container-highest rounded-xl animate-pulse" />
                 ))
-              : filteredVibes.map(vibe => (
+              : (loading || filteredVibes.length === 0 ? [] : filteredVibes.slice(1)).map(vibe => (
                   <VibeCard
                     key={vibe.id}
                     vibe={vibe}
