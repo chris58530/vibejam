@@ -130,9 +130,9 @@ function SideRailCard({ vibe, label, onSelect }: { vibe: Vibe; label: string; on
       onClick={() => onSelect(vibe)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="group grid cursor-pointer gap-4 rounded-3xl border border-outline-variant/15 bg-surface-container-low p-4 transition-colors duration-200 hover:border-primary/25 hover:bg-surface-container sm:grid-cols-[120px_minmax(0,1fr)]"
+      className="group grid cursor-pointer gap-4 rounded-3xl border border-outline-variant/15 bg-surface-container-low p-4 transition-colors duration-200 hover:border-primary/25 hover:bg-surface-container sm:grid-cols-[160px_minmax(0,1fr)]"
     >
-      <div className="relative overflow-hidden rounded-2xl bg-surface-container-lowest aspect-[4/3] sm:h-full sm:min-h-[110px]">
+      <div className="relative w-full overflow-hidden rounded-2xl bg-surface-container-lowest aspect-[4/3]">
         <div className={`absolute inset-0 z-10 pointer-events-none transition-opacity duration-200 ${isHovered ? 'opacity-0' : 'opacity-100 bg-black/25'}`} />
         <iframe
           srcDoc={getPreviewCode(vibe.latest_code || '', isHovered)}
@@ -482,7 +482,7 @@ export default function Home() {
 
   return (
     <section className="md:ml-56 min-h-screen bg-surface overflow-x-hidden">
-      <div className="mx-auto max-w-[1800px] space-y-10 px-5 pb-16 pt-24 md:px-10 lg:px-12">
+      <div className="space-y-10 px-4 pb-16 pt-24 md:px-6 lg:px-8">
         {loading ? (
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.58fr)]">
             <div className="min-h-[480px] rounded-3xl border border-outline-variant/15 bg-surface-container-highest animate-pulse xl:min-h-[540px]" />
