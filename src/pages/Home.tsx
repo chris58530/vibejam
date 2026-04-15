@@ -369,7 +369,7 @@ function HomeCard({ vibe, onSelect }: { vibe: Vibe; onSelect: (v: Vibe) => void 
       onMouseLeave={() => setIsHovered(false)}
       className="group cursor-pointer overflow-hidden rounded-3xl border border-outline-variant/15 bg-surface-container-low transition-colors duration-200 hover:border-primary/25 hover:bg-surface-container"
     >
-      <div className="relative aspect-video overflow-hidden bg-surface-container-lowest">
+      <div className="relative aspect-[16/10] overflow-hidden rounded-t-3xl bg-surface-container-lowest">
         <div className={`absolute inset-0 z-10 pointer-events-none transition-opacity duration-200 ${isHovered ? 'opacity-0' : 'opacity-100 bg-black/24'}`} />
         <iframe
           srcDoc={getPreviewCode(vibe.latest_code || '', isHovered)}
@@ -383,7 +383,7 @@ function HomeCard({ vibe, onSelect }: { vibe: Vibe; onSelect: (v: Vibe) => void 
         </div>
       </div>
 
-      <div className="space-y-4 p-5">
+      <div className="space-y-3 border-t border-outline-variant/12 p-5 pt-4">
         <ProjectMetaRow vibe={vibe} />
 
         <div className="space-y-2">
@@ -482,7 +482,7 @@ export default function Home() {
 
   return (
     <section className="md:ml-56 min-h-screen bg-surface overflow-x-hidden">
-      <div className="mx-auto max-w-[1440px] space-y-10 px-6 pb-16 pt-24 md:px-8">
+      <div className="mx-auto max-w-[1800px] space-y-10 px-5 pb-16 pt-24 md:px-10 lg:px-12">
         {loading ? (
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.58fr)]">
             <div className="min-h-[480px] rounded-3xl border border-outline-variant/15 bg-surface-container-highest animate-pulse xl:min-h-[540px]" />
@@ -569,7 +569,7 @@ export default function Home() {
               <p className="text-sm text-on-surface/50">還沒有任何作品，去 Workspace 建立第一個吧！</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {loading
                 ? Array.from({ length: 8 }).map((_, i) => (
                     <div key={i} className="aspect-video rounded-3xl bg-surface-container-highest animate-pulse" />
