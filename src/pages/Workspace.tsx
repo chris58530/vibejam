@@ -914,7 +914,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
               {activeChatProviders.length > 1 ? (
                 <select
                   value={selectedProvider}
-                  onChange={(e) => setSelectedProvider(e.target.value)}
+                  onChange={(e) => setSelectedProvider(e.target.value as ChatProvider)}
                   className="bg-surface-container-high text-on-surface text-[11px] font-medium rounded-lg px-2 py-1 border border-outline-variant/10 focus:outline-none focus:ring-1 focus:ring-primary/40 cursor-pointer"
                 >
                   {activeChatProviders.map(p => (

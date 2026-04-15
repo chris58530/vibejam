@@ -8,7 +8,10 @@ export default function DevLogPanel() {
   const [copied, setCopied]       = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => devLog.subscribe(() => setEntries([...devLog.getEntries()])), []);
+  useEffect(() => {
+    const unsub = devLog.subscribe(() => setEntries([...devLog.getEntries()]));
+    return () => { unsub(); };
+  }, []);
 
   useEffect(() => {
     if (autoScroll && open && listRef.current) {
