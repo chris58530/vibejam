@@ -130,9 +130,9 @@ function SideRailCard({ vibe, label, onSelect }: { vibe: Vibe; label: string; on
       onClick={() => onSelect(vibe)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="group grid cursor-pointer gap-4 rounded-[26px] border border-outline-variant/15 bg-surface-container-low/80 p-4 transition-colors duration-200 hover:border-primary/25 hover:bg-surface-container sm:grid-cols-[120px_minmax(0,1fr)]"
+      className="group grid cursor-pointer gap-4 rounded-3xl border border-outline-variant/15 bg-surface-container-low p-4 transition-colors duration-200 hover:border-primary/25 hover:bg-surface-container sm:grid-cols-[120px_minmax(0,1fr)]"
     >
-      <div className="relative overflow-hidden rounded-[22px] bg-surface-container-lowest aspect-[4/3] sm:h-full sm:min-h-[110px]">
+      <div className="relative overflow-hidden rounded-2xl bg-surface-container-lowest aspect-[4/3] sm:h-full sm:min-h-[110px]">
         <div className={`absolute inset-0 z-10 pointer-events-none transition-opacity duration-200 ${isHovered ? 'opacity-0' : 'opacity-100 bg-black/25'}`} />
         <iframe
           srcDoc={getPreviewCode(vibe.latest_code || '', isHovered)}
@@ -166,7 +166,7 @@ function SideRailCard({ vibe, label, onSelect }: { vibe: Vibe; label: string; on
 
 function PlatformPulseCard({ totalProjects, totalViews, totalRemixes }: { totalProjects: number; totalViews: number; totalRemixes: number }) {
   return (
-    <section className="rounded-[28px] border border-outline-variant/15 bg-surface-container-low/85 p-5 shadow-[0_18px_40px_rgba(0,0,0,0.18)]">
+    <section className="rounded-3xl border border-outline-variant/15 bg-surface-container-low p-5">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-tertiary">Platform Pulse</p>
@@ -181,16 +181,16 @@ function PlatformPulseCard({ totalProjects, totalViews, totalRemixes }: { totalP
       </div>
 
       <div className="mt-5 grid grid-cols-3 gap-3">
-        <div className="rounded-2xl border border-outline-variant/12 bg-surface/60 p-3">
-          <p className="text-[10px] uppercase tracking-[0.18em] text-on-surface/45">Projects</p>
+        <div className="rounded-2xl border border-outline-variant/15 bg-surface-container p-4">
+          <p className="text-[11px] uppercase tracking-[0.18em] text-on-surface/45">Projects</p>
           <p className="mt-2 text-xl font-bold text-on-surface">{totalProjects}</p>
         </div>
-        <div className="rounded-2xl border border-outline-variant/12 bg-surface/60 p-3">
-          <p className="text-[10px] uppercase tracking-[0.18em] text-on-surface/45">Views</p>
+        <div className="rounded-2xl border border-outline-variant/15 bg-surface-container p-4">
+          <p className="text-[11px] uppercase tracking-[0.18em] text-on-surface/45">Views</p>
           <p className="mt-2 text-xl font-bold text-on-surface">{formatViews(totalViews)}</p>
         </div>
-        <div className="rounded-2xl border border-outline-variant/12 bg-surface/60 p-3">
-          <p className="text-[10px] uppercase tracking-[0.18em] text-on-surface/45">Remixes</p>
+        <div className="rounded-2xl border border-outline-variant/15 bg-surface-container p-4">
+          <p className="text-[11px] uppercase tracking-[0.18em] text-on-surface/45">Remixes</p>
           <p className="mt-2 text-xl font-bold text-on-surface">{formatViews(totalRemixes)}</p>
         </div>
       </div>
@@ -221,15 +221,15 @@ function FeaturedShowcase({
   const feedCopy = FEED_COPY[feed];
 
   return (
-    <section className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(340px,0.85fr)] xl:items-stretch">
+    <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.58fr)] xl:items-stretch">
       <article
         onClick={() => onSelect(featured)}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        className="group relative overflow-hidden rounded-[32px] border border-outline-variant/15 bg-surface-container-low shadow-[0_28px_80px_rgba(0,0,0,0.24)] cursor-pointer"
+        className="group relative overflow-hidden rounded-3xl border border-outline-variant/15 bg-surface-container-low cursor-pointer"
       >
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/12 via-transparent to-tertiary/10" />
-        <div className="grid min-h-[420px] xl:grid-cols-[minmax(0,1.12fr)_minmax(320px,0.88fr)] xl:min-h-[520px]">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-tertiary/8" />
+        <div className="grid min-h-[480px] xl:grid-cols-2 xl:min-h-[540px]">
           <div className="relative min-h-[280px] overflow-hidden bg-surface-container-lowest xl:min-h-full">
             <div className={`absolute inset-0 z-10 pointer-events-none transition-opacity duration-200 ${isHovered ? 'opacity-0' : 'opacity-100 bg-black/22'}`} />
             <iframe
@@ -241,7 +241,7 @@ function FeaturedShowcase({
             />
             <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-background/65 via-background/18 to-transparent" />
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-background/80 via-background/20 to-transparent xl:hidden" />
-            <div className="absolute left-4 top-4 z-20 rounded-full border border-outline-variant/20 bg-surface/80 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-on-surface/70 backdrop-blur-md">
+            <div className="absolute left-4 top-4 z-20 rounded-full border border-outline-variant/20 bg-surface/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-on-surface/70 backdrop-blur-md">
               {feedCopy.eyebrow}
             </div>
             <div className="absolute right-4 top-4 z-20 rounded-full border border-outline-variant/20 bg-surface/80 px-3 py-1 text-xs font-semibold text-on-surface/75 backdrop-blur-md">
@@ -249,14 +249,14 @@ function FeaturedShowcase({
             </div>
           </div>
 
-          <div className="relative z-10 flex flex-col justify-between gap-6 border-t border-outline-variant/10 bg-surface/72 p-6 backdrop-blur-md xl:border-l xl:border-t-0 xl:p-8">
+          <div className="relative z-10 flex flex-col justify-between gap-6 border-t border-outline-variant/15 bg-surface-container-low p-6 xl:border-l xl:border-t-0 xl:p-8">
             <div className="space-y-5">
               <div className="space-y-3">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary/85">{feedCopy.eyebrow}</p>
-                <h1 className="text-3xl font-black tracking-tight text-on-surface sm:text-4xl xl:text-[2.8rem] xl:leading-[1.05]">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-primary/85">{feedCopy.eyebrow}</p>
+                <h1 className="text-4xl font-black tracking-tight text-on-surface xl:text-5xl xl:leading-[1.08]">
                   {featured.title}
                 </h1>
-                <p className="max-w-[34rem] text-sm leading-relaxed text-on-surface/65 sm:text-[15px]">
+                <p className="max-w-[34rem] text-sm leading-relaxed text-on-surface/65">
                   {featured.description || feedCopy.description}
                 </p>
               </div>
@@ -266,7 +266,7 @@ function FeaturedShowcase({
                   {tags.map((tag) => (
                     <span
                       key={tag}
-                      className="rounded-full border border-outline-variant/18 bg-surface-container/80 px-3 py-1 text-xs font-medium text-on-surface/72"
+                      className="rounded-full border border-outline-variant/18 bg-surface-container px-3 py-1 text-xs font-medium text-on-surface/72"
                     >
                       {tag}
                     </span>
@@ -299,17 +299,17 @@ function FeaturedShowcase({
               </div>
 
               <div className="grid grid-cols-3 gap-3">
-                <div className="rounded-2xl border border-outline-variant/12 bg-surface-container/75 p-3">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-on-surface/45">Views</p>
-                  <p className="mt-2 text-lg font-bold text-on-surface">{formatViews(featured.views)}</p>
+                <div className="rounded-2xl border border-outline-variant/15 bg-surface-container p-4">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-on-surface/45">Views</p>
+                  <p className="mt-2 text-xl font-bold text-on-surface">{formatViews(featured.views)}</p>
                 </div>
-                <div className="rounded-2xl border border-outline-variant/12 bg-surface-container/75 p-3">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-on-surface/45">Likes</p>
-                  <p className="mt-2 text-lg font-bold text-on-surface">{formatViews(featured.like_count ?? 0)}</p>
+                <div className="rounded-2xl border border-outline-variant/15 bg-surface-container p-4">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-on-surface/45">Likes</p>
+                  <p className="mt-2 text-xl font-bold text-on-surface">{formatViews(featured.like_count ?? 0)}</p>
                 </div>
-                <div className="rounded-2xl border border-outline-variant/12 bg-surface-container/75 p-3">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-on-surface/45">Remixes</p>
-                  <p className="mt-2 text-lg font-bold text-on-surface">{formatViews(featured.remix_count ?? 0)}</p>
+                <div className="rounded-2xl border border-outline-variant/15 bg-surface-container p-4">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-on-surface/45">Remixes</p>
+                  <p className="mt-2 text-xl font-bold text-on-surface">{formatViews(featured.remix_count ?? 0)}</p>
                 </div>
               </div>
 
@@ -330,7 +330,7 @@ function FeaturedShowcase({
                     e.stopPropagation();
                     navigate(`/@${encodeURIComponent(featured.author_name)}`);
                   }}
-                  className="rounded-full border border-outline-variant/20 bg-surface-container/75 px-5 py-3 text-sm font-semibold text-on-surface transition-colors duration-200 hover:border-primary/35 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                  className="rounded-full border border-outline-variant/20 bg-surface-container px-5 py-3 text-sm font-semibold text-on-surface transition-colors duration-200 hover:border-primary/35 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                 >
                   View Author
                 </button>
@@ -340,7 +340,7 @@ function FeaturedShowcase({
         </div>
       </article>
 
-      <div className="grid auto-rows-fr gap-4">
+      <div className="grid gap-6">
         {supporting.map((vibe, index) => (
           <SideRailCard
             key={vibe.id}
@@ -367,7 +367,7 @@ function HomeCard({ vibe, onSelect }: { vibe: Vibe; onSelect: (v: Vibe) => void 
       onClick={() => onSelect(vibe)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="group cursor-pointer overflow-hidden rounded-[28px] border border-outline-variant/15 bg-surface-container-low/82 shadow-[0_18px_48px_rgba(0,0,0,0.18)] transition-colors duration-200 hover:border-primary/25 hover:bg-surface-container"
+      className="group cursor-pointer overflow-hidden rounded-3xl border border-outline-variant/15 bg-surface-container-low transition-colors duration-200 hover:border-primary/25 hover:bg-surface-container"
     >
       <div className="relative aspect-video overflow-hidden bg-surface-container-lowest">
         <div className={`absolute inset-0 z-10 pointer-events-none transition-opacity duration-200 ${isHovered ? 'opacity-0' : 'opacity-100 bg-black/24'}`} />
@@ -378,7 +378,7 @@ function HomeCard({ vibe, onSelect }: { vibe: Vibe; onSelect: (v: Vibe) => void 
           sandbox="allow-scripts"
           loading="lazy"
         />
-        <div className="absolute right-3 top-3 z-20 rounded-full border border-outline-variant/20 bg-surface/78 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-on-surface/72 backdrop-blur-md">
+        <div className="absolute right-3 top-3 z-20 rounded-full border border-outline-variant/20 bg-surface/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-on-surface/72 backdrop-blur-md">
           {formatViews(vibe.views)}
         </div>
       </div>
@@ -387,7 +387,7 @@ function HomeCard({ vibe, onSelect }: { vibe: Vibe; onSelect: (v: Vibe) => void 
         <ProjectMetaRow vibe={vibe} />
 
         <div className="space-y-2">
-          <h3 className="line-clamp-2 text-xl font-bold tracking-tight text-on-surface transition-colors duration-200 group-hover:text-primary">
+          <h3 className="line-clamp-2 text-lg font-bold tracking-tight text-on-surface transition-colors duration-200 group-hover:text-primary">
             {vibe.title}
           </h3>
           <p className="line-clamp-2 text-sm leading-relaxed text-on-surface/60">
@@ -482,14 +482,14 @@ export default function Home() {
 
   return (
     <section className="md:ml-56 min-h-screen bg-surface overflow-x-hidden">
-      <div className="space-y-8 px-4 pb-12 pt-24 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <div className="mx-auto max-w-[1440px] space-y-10 px-6 pb-16 pt-24 md:px-8">
         {loading ? (
-          <div className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(340px,0.85fr)]">
-            <div className="min-h-[420px] rounded-[32px] border border-outline-variant/12 bg-surface-container-highest animate-pulse xl:min-h-[520px]" />
-            <div className="grid gap-4">
-              <div className="min-h-[184px] rounded-[28px] bg-surface-container-highest animate-pulse" />
-              <div className="min-h-[184px] rounded-[28px] bg-surface-container-highest animate-pulse" />
-              <div className="min-h-[210px] rounded-[28px] bg-surface-container-highest animate-pulse" />
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.58fr)]">
+            <div className="min-h-[480px] rounded-3xl border border-outline-variant/15 bg-surface-container-highest animate-pulse xl:min-h-[540px]" />
+            <div className="grid gap-6">
+              <div className="min-h-[200px] rounded-3xl bg-surface-container-highest animate-pulse" />
+              <div className="min-h-[200px] rounded-3xl bg-surface-container-highest animate-pulse" />
+              <div className="min-h-[220px] rounded-3xl bg-surface-container-highest animate-pulse" />
             </div>
           </div>
         ) : featuredVibe ? (
@@ -504,21 +504,21 @@ export default function Home() {
           />
         ) : null}
 
-        <section className="space-y-5">
+        <section className="space-y-6">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
             <div className="space-y-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-on-surface/45">Discover</p>
-              <h2 className="text-2xl font-bold tracking-tight text-on-surface sm:text-[2rem]">Community projects with room to breathe</h2>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-on-surface/45">Discover</p>
+              <h2 className="text-2xl font-bold tracking-tight text-on-surface">Community projects</h2>
             </div>
 
             <div className="flex items-center gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-              <div className="flex flex-shrink-0 items-center gap-2 rounded-full border border-outline-variant/15 bg-surface-container-low/85 p-1.5 backdrop-blur-md">
+              <div className="flex flex-shrink-0 items-center gap-1 rounded-full bg-surface-container-low p-1">
                 {FEED_TABS.map((tab) => (
                   <button
                     key={tab.key}
                     type="button"
                     onClick={() => setActiveFeed(tab.key)}
-                    className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-xs font-semibold tracking-wide transition-colors duration-200 sm:px-5 ${
+                    className={`flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-semibold tracking-wide transition-colors duration-200 ${
                       activeFeed === tab.key
                         ? 'bg-primary text-on-primary'
                         : 'text-on-surface/65 hover:bg-surface-container hover:text-on-surface'
@@ -530,7 +530,7 @@ export default function Home() {
                 ))}
               </div>
 
-              <div className="hidden rounded-full border border-outline-variant/15 bg-surface-container-low/85 px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-on-surface/45 xl:flex">
+              <div className="hidden rounded-full bg-surface-container-low px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.18em] text-on-surface/45 xl:flex">
                 {filteredVibes.length} visible
               </div>
             </div>
@@ -542,7 +542,7 @@ export default function Home() {
             </p>
             <button
               type="button"
-              className="hidden items-center gap-2 rounded-full border border-outline-variant/15 bg-surface-container-low/85 px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-on-surface/50 transition-colors duration-200 hover:border-primary/30 hover:text-primary lg:flex"
+              className="hidden items-center gap-2 rounded-full border border-outline-variant/15 bg-surface-container-low px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.18em] text-on-surface/50 transition-colors duration-200 hover:border-primary/30 hover:text-primary lg:flex"
             >
               <span className="material-symbols-outlined text-base">tune</span>
               Filters
@@ -552,7 +552,7 @@ export default function Home() {
 
         <section className="pb-8">
           {error && !loading && vibes.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-4 rounded-[28px] border border-outline-variant/15 bg-surface-container-low/85 py-20 text-center">
+            <div className="flex flex-col items-center justify-center gap-4 rounded-3xl border border-outline-variant/15 bg-surface-container-low py-20 text-center">
               <span className="material-symbols-outlined text-[48px] text-on-surface/20">cloud_off</span>
               <p className="text-sm text-on-surface/50">無法載入內容，請檢查網路連線</p>
               <button
@@ -564,15 +564,15 @@ export default function Home() {
               </button>
             </div>
           ) : !loading && filteredVibes.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-3 rounded-[28px] border border-outline-variant/15 bg-surface-container-low/85 py-20 text-center">
+            <div className="flex flex-col items-center justify-center gap-3 rounded-3xl border border-outline-variant/15 bg-surface-container-low py-20 text-center">
               <span className="material-symbols-outlined text-[48px] text-on-surface/20">explore</span>
               <p className="text-sm text-on-surface/50">還沒有任何作品，去 Workspace 建立第一個吧！</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
               {loading
                 ? Array.from({ length: 8 }).map((_, i) => (
-                    <div key={i} className="aspect-video rounded-[28px] bg-surface-container-highest animate-pulse" />
+                    <div key={i} className="aspect-video rounded-3xl bg-surface-container-highest animate-pulse" />
                   ))
                 : gridVibes.map((vibe) => (
                     <HomeCard
