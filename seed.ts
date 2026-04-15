@@ -21,10 +21,10 @@ async function main() {
   const userId = user.id;
 
   const vibes = [
-  {
-    title: 'Matrix Rain',
-    tags: 'Canvas, Animation, Cyberpunk',
-    code: `<!DOCTYPE html><html><head><style>
+    {
+      title: 'Matrix Rain',
+      tags: 'Canvas, Animation, Cyberpunk',
+      code: `<!DOCTYPE html><html><head><style>
 body{margin:0;background:#000;overflow:hidden}
 canvas{display:block}
 </style></head><body>
@@ -47,11 +47,11 @@ function draw(){
 }
 setInterval(draw,33);
 </script></body></html>`
-  },
-  {
-    title: 'Neon Ripple Button',
-    tags: 'CSS, Interaction, Neon',
-    code: `<!DOCTYPE html><html><head><style>
+    },
+    {
+      title: 'Neon Ripple Button',
+      tags: 'CSS, Interaction, Neon',
+      code: `<!DOCTYPE html><html><head><style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#0a0a0a;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif}
 .btn{position:relative;padding:18px 52px;font-size:18px;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:#fff;background:transparent;border:2px solid #7c3aed;border-radius:4px;cursor:pointer;overflow:hidden;transition:color .3s}
@@ -63,11 +63,11 @@ body{background:#0a0a0a;display:flex;align-items:center;justify-content:center;h
 </style></head><body>
 <button class="btn"><span class="glow"></span>Jam It Out!</button>
 </body></html>`
-  },
-  {
-    title: 'Particle Galaxy',
-    tags: 'Canvas, Generative Art, Space',
-    code: `<!DOCTYPE html><html><head><style>
+    },
+    {
+      title: 'Particle Galaxy',
+      tags: 'Canvas, Generative Art, Space',
+      code: `<!DOCTYPE html><html><head><style>
 body{margin:0;background:#000;overflow:hidden}
 canvas{display:block}
 </style></head><body>
@@ -95,11 +95,11 @@ function draw(){
 }
 draw();
 </script></body></html>`
-  },
-  {
-    title: 'Glassmorphic Dashboard',
-    tags: 'SaaS, Glassmorphism, Dashboard',
-    code: `<!DOCTYPE html><html><head><style>
+    },
+    {
+      title: 'Glassmorphic Dashboard',
+      tags: 'SaaS, Glassmorphism, Dashboard',
+      code: `<!DOCTYPE html><html><head><style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{min-height:100vh;background:linear-gradient(135deg,#1e1b4b 0%,#312e81 40%,#4c1d95 100%);font-family:'Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;padding:20px}
 .dash{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;max-width:600px;width:100%}
@@ -143,11 +143,11 @@ body{min-height:100vh;background:linear-gradient(135deg,#1e1b4b 0%,#312e81 40%,#
   </div>
 </div>
 </body></html>`
-  },
-  {
-    title: 'Bouncy Ball Physics',
-    tags: 'Canvas, Physics, Game',
-    code: `<!DOCTYPE html><html><head><style>
+    },
+    {
+      title: 'Bouncy Ball Physics',
+      tags: 'Canvas, Physics, Game',
+      code: `<!DOCTYPE html><html><head><style>
 body{margin:0;background:#111;overflow:hidden;display:flex;align-items:center;justify-content:center;height:100vh}
 canvas{border-radius:16px;border:1px solid rgba(255,255,255,.1)}
 </style></head><body>
@@ -179,11 +179,11 @@ function draw(){
 }
 draw();
 </script></body></html>`
-  },
-  {
-    title: 'MiniMax API Key Tester',
-    tags: 'AI, MiniMax, API, Tool',
-    code: `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+    },
+    {
+      title: 'MiniMax API Key Tester',
+      tags: 'AI, MiniMax, API, Tool',
+      code: `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>MiniMax Key Tester</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -376,11 +376,11 @@ function renderMessages(){
   c.scrollTop=c.scrollHeight;
 }
 </script></body></html>`
-  },
-  {
-    title: 'BeaverBot AI Chat',
-    tags: 'AI, Chatbot, API',
-    code: `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+    },
+    {
+      title: 'BeaverBot AI Chat',
+      tags: 'AI, Chatbot, API',
+      code: `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>BeaverBot AI Chat</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -493,7 +493,7 @@ async function send(){
 }
 if(API_KEY)renderChat();else renderKeySetup();
 </script></body></html>`
-  }
+    }
   ];
 
   for (const v of vibes) {

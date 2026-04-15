@@ -809,8 +809,8 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
             onClick={handleSave}
             title="儲存專案 (本機)"
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all border ${saveStatus === 'unsaved'
-                ? 'border-amber-500/50 text-amber-400 bg-amber-500/10 hover:bg-amber-500/20'
-                : 'border-outline-variant/20 text-on-surface/50 bg-surface-container-low hover:bg-surface-container-high hover:text-on-surface'
+              ? 'border-amber-500/50 text-amber-400 bg-amber-500/10 hover:bg-amber-500/20'
+              : 'border-outline-variant/20 text-on-surface/50 bg-surface-container-low hover:bg-surface-container-high hover:text-on-surface'
               }`}
           >
             <span className="material-symbols-outlined text-[13px]">
@@ -1107,8 +1107,8 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
             <button
               onClick={() => setRightTab('code')}
               className={`px-6 py-1.5 rounded-md font-medium text-sm flex items-center gap-2 transition-colors ${rightTab === 'code'
-                  ? 'bg-white/10 text-on-surface shadow-sm'
-                  : 'text-on-surface/40 hover:text-on-surface/70'
+                ? 'bg-white/10 text-on-surface shadow-sm'
+                : 'text-on-surface/40 hover:text-on-surface/70'
                 }`}
             >
               <span className="material-symbols-outlined text-[16px]">code</span>
@@ -1117,8 +1117,8 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
             <button
               onClick={() => setRightTab('preview')}
               className={`px-6 py-1.5 rounded-md font-medium text-sm flex items-center gap-2 transition-colors ${rightTab === 'preview'
-                  ? 'bg-white/10 text-on-surface shadow-sm'
-                  : 'text-on-surface/40 hover:text-on-surface/70'
+                ? 'bg-white/10 text-on-surface shadow-sm'
+                : 'text-on-surface/40 hover:text-on-surface/70'
                 }`}
             >
               <span className="material-symbols-outlined text-[16px]">visibility</span>

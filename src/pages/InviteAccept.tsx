@@ -15,6 +15,7 @@ export default function InviteAccept() {
   const [accepted, setAccepted] = useState(false);
 
   useEffect(() => {
+    if (!supabase) return;
     supabase.auth.getSession().then(({ data }) => setSupabaseUser(data.session?.user ?? null));
   }, []);
 

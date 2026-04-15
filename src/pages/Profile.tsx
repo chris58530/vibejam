@@ -36,6 +36,7 @@ export default function Profile() {
   const decodedUsername = rawUsername ? decodeURIComponent(rawUsername) : 'Guest Creator';
 
   useEffect(() => {
+    if (!supabase) return;
     supabase.auth.getSession().then(({ data }) => setCurrentUser(data.session?.user ?? null));
   }, []);
 

@@ -2,10 +2,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { devLog, LogEntry } from '../lib/devLog';
 
 export default function DevLogPanel() {
-  const [open, setOpen]           = useState(false);
-  const [entries, setEntries]     = useState<LogEntry[]>(() => devLog.getEntries());
+  const [open, setOpen] = useState(false);
+  const [entries, setEntries] = useState<LogEntry[]>(() => devLog.getEntries());
   const [autoScroll, setAutoScroll] = useState(true);
-  const [copied, setCopied]       = useState(false);
+  const [copied, setCopied] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -20,7 +20,7 @@ export default function DevLogPanel() {
   }, [entries, autoScroll, open]);
 
   const errorCount = entries.filter(e => e.type === 'error').length;
-  const warnCount  = entries.filter(e => e.type === 'warn').length;
+  const warnCount = entries.filter(e => e.type === 'warn').length;
 
   const copyAll = async () => {
     const t0 = entries[0]?.timestamp ?? Date.now();
@@ -75,7 +75,7 @@ export default function DevLogPanel() {
               <span className="text-xs font-mono text-white/70 font-semibold">DevLog</span>
               <span className="text-[10px] text-white/30 font-mono">{entries.length} entries</span>
               {errorCount > 0 && <span className="text-[10px] text-red-400 font-mono">{errorCount}E</span>}
-              {warnCount  > 0 && <span className="text-[10px] text-yellow-400 font-mono">{warnCount}W</span>}
+              {warnCount > 0 && <span className="text-[10px] text-yellow-400 font-mono">{warnCount}W</span>}
             </div>
             <div className="flex items-center gap-0.5">
               <button onClick={copyAll}
@@ -106,21 +106,19 @@ export default function DevLogPanel() {
               const rel = `+${((e.timestamp - t0) / 1000).toFixed(3)}s`;
               return (
                 <div key={e.id}
-                  className={`px-3 py-[2px] ${
-                    e.type === 'error' ? 'text-red-400 bg-red-900/10' :
-                    e.type === 'warn'  ? 'text-yellow-300 bg-yellow-900/10' :
-                    e.type === 'info'  ? 'text-blue-300' :
-                    'text-white/55'
-                  }`}
+                  className={`px-3 py-[2px] ${e.type === 'error' ? 'text-red-400 bg-red-900/10' :
+                      e.type === 'warn' ? 'text-yellow-300 bg-yellow-900/10' :
+                        e.type === 'info' ? 'text-blue-300' :
+                          'text-white/55'
+                    }`}
                   style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}
                 >
                   <span className="text-white/20 select-none mr-1.5">{rel}</span>
-                  <span className={`mr-1.5 text-[9px] font-bold uppercase select-none ${
-                    e.type === 'error' ? 'text-red-500' :
-                    e.type === 'warn'  ? 'text-yellow-500' :
-                    e.type === 'info'  ? 'text-blue-400' :
-                    'text-white/20'
-                  }`}>[{e.type}]</span>
+                  <span className={`mr-1.5 text-[9px] font-bold uppercase select-none ${e.type === 'error' ? 'text-red-500' :
+                      e.type === 'warn' ? 'text-yellow-500' :
+                        e.type === 'info' ? 'text-blue-400' :
+                          'text-white/20'
+                    }`}>[{e.type}]</span>
                   <span className="break-all whitespace-pre-wrap">{e.message}</span>
                 </div>
               );

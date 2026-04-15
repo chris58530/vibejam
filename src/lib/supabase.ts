@@ -6,12 +6,12 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 export const supabase: SupabaseClient | null = supabaseUrl
   ? createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        flowType: 'implicit',
-        detectSessionInUrl: true,
-        persistSession: true,
-      },
-    })
+    auth: {
+      flowType: 'implicit',
+      detectSessionInUrl: true,
+      persistSession: true,
+    },
+  })
   : null;
 
 /** Thrown when the Supabase client is not initialized (missing env vars). */

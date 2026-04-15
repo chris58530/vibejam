@@ -241,6 +241,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
 
   const [supabaseUser, setSupabaseUser] = useState<any>(null);
   useEffect(() => {
+    if (!supabase) return;
     supabase.auth.getSession().then(({ data }) => setSupabaseUser(data.session?.user ?? null));
   }, []);
 
