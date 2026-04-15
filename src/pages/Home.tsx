@@ -3,16 +3,45 @@ import { useNavigate } from 'react-router-dom';
 import { api, Vibe } from '../lib/api';
 import Footer from '../components/Footer';
 
-// ─── Feed tabs ────────────────────────────────────────────────────────────────
 type FeedTab = 'movers' | 'new' | 'market-cap' | 'oldest';
-const FEED_TABS: { key: FeedTab; label: string; dot?: string }[] = [
-  { key: 'movers',     label: 'Movers',     dot: '#F97316' },
-  { key: 'new',        label: 'New',        dot: '#22C55E' },
-  { key: 'market-cap', label: 'Market Cap' },
-  { key: 'oldest',     label: 'Oldest' },
+
+const FEED_TABS: { key: FeedTab; label: string; dotClass?: string }[] = [
+  { key: 'movers', label: 'For You', dotClass: 'bg-primary' },
+  { key: 'new', label: 'Recent', dotClass: 'bg-tertiary' },
+  { key: 'market-cap', label: 'Popular', dotClass: 'bg-primary-container' },
+  { key: 'oldest', label: 'Archive' },
 ];
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+const FEED_COPY: Record<FeedTab, { eyebrow: string; description: string }> = {
+  movers: {
+    eyebrow: 'Remix Momentum',
+    description: 'Projects pulling the most remixes and repeat visits across the public feed.',
+  },
+  new: {
+    eyebrow: 'Fresh Drop',
+    description: 'The latest community builds, surfaced before the feed gets crowded.',
+  },
+  'market-cap': {
+    eyebrow: 'Audience Magnet',
+    description: 'The most-viewed work on BeaverKit right now, ranked by attention.',
+  },
+  oldest: {
+    eyebrow: 'Archive Highlight',
+    description: 'Older experiments worth another pass instead of disappearing into history.',
+  },
+};
+
+const FREEZE_SCRIPT = `
+  <style>*, *::before, *::after { animation-play-state: paused !important; transition: none !important; }</style>
+  <script>
+    const orig = window.requestAnimationFrame;
+    window.requestAnimationFrame = function(cb) {
+      if (!window.hasRenderedFirstFrame) { window.hasRenderedFirstFrame = true; return orig(cb); }
+      return 0;
+    };
+  </script>
+`;
+
 function formatViews(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
@@ -34,169 +63,360 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(months / 12)}y ago`;
 }
 
-const FREEZE_SCRIPT = `
-  <style>*, *::before, *::after { animation-play-state: paused !important; transition: none !important; }</style>
-  <script>
-    const orig = window.requestAnimationFrame;
-    window.requestAnimationFrame = function(cb) {
-      if (!window.hasRenderedFirstFrame) { window.hasRenderedFirstFrame = true; return orig(cb); }
-      return 0;
-    };
-  </script>
-`;
+function getPreviewCode(rawCode: string, isLive: boolean): string {
+  if (isLive) return rawCode;
+  return rawCode.includes('<head>')
+    ? rawCode.replace('<head>', '<head>' + FREEZE_SCRIPT)
+    : FREEZE_SCRIPT + rawCode;
+}
 
-// ─── HomeCard ─────────────────────────────────────────────────────────────────
-function HomeCard({ vibe, onSelect }: { vibe: Vibe; onSelect: (v: Vibe) => void }) {
-  const [isHovered, setIsHovered] = useState(false);
+function getAvatarSrc(vibe: Vibe): string {
+  return vibe.author_avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(vibe.author_name)}`;
+}
+
+function parseTags(tags?: string): string[] {
+  if (!tags) return [];
+
+  const seen = new Set<string>();
+  return tags
+    .split(/[\n,]+/)
+    .flatMap((part) => part.split(/\s+/))
+    .map((tag) => tag.trim())
+    .filter(Boolean)
+    .map((tag) => tag.replace(/^#+/, ''))
+    .filter((tag) => {
+      const normalized = tag.toLowerCase();
+      if (seen.has(normalized)) return false;
+      seen.add(normalized);
+      return true;
+    })
+    .slice(0, 3)
+    .map((tag) => `#${tag}`);
+}
+
+function ProjectMetaRow({ vibe }: { vibe: Vibe }) {
   const navigate = useNavigate();
 
-  const rawCode = vibe.latest_code || '';
-  const previewCode = isHovered
-    ? rawCode
-    : (rawCode.includes('<head>') ? rawCode.replace('<head>', '<head>' + FREEZE_SCRIPT) : FREEZE_SCRIPT + rawCode);
-
-  const avatarSrc = vibe.author_avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(vibe.author_name)}`;
-
   return (
-    <div
-      onClick={() => onSelect(vibe)}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      className="group cursor-pointer bg-white/[0.03] backdrop-blur-sm rounded-2xl overflow-hidden border border-white/5 hover:border-primary/20 transition-all duration-250"
-    >
-      {/* Thumbnail */}
-      <div className="relative aspect-video overflow-hidden bg-surface-container-lowest">
-        <div className={`absolute inset-0 z-10 pointer-events-none transition-opacity duration-300 ${isHovered ? 'opacity-0' : 'opacity-100 bg-black/25'}`} />
-        <iframe
-          srcDoc={previewCode}
-          className="absolute top-0 left-0 w-[200%] h-[200%] scale-50 origin-top-left border-none pointer-events-none group-hover:scale-[0.51] transition-transform duration-500"
-          title={vibe.title}
-          sandbox="allow-scripts"
-          loading="lazy"
+    <div className="flex items-center gap-3">
+      <button
+        type="button"
+        aria-label={`Open ${vibe.author_name} profile`}
+        onClick={(e) => {
+          e.stopPropagation();
+          navigate(`/@${encodeURIComponent(vibe.author_name)}`);
+        }}
+        className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-outline-variant/20 bg-surface-container-high transition-colors duration-200 hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+      >
+        <img
+          src={getAvatarSrc(vibe)}
+          alt={vibe.author_name}
+          className="h-full w-full object-cover"
         />
-        {/* Views badge */}
-        <div className="absolute top-3 right-3 bg-black/75 backdrop-blur-sm px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/10 z-20 pointer-events-none text-on-surface/80">
-          {formatViews(vibe.views)}
-        </div>
-      </div>
-
-      {/* Card Content */}
-      <div className="p-5">
-        {/* Author row */}
-        <div className="flex items-center gap-3 mb-4">
-          <button
-            className="w-10 h-10 rounded-full border border-primary/30 p-0.5 flex-shrink-0 cursor-pointer hover:border-primary/60 transition-colors"
-            onClick={(e) => { e.stopPropagation(); navigate(`/@${encodeURIComponent(vibe.author_name)}`); }}
-          >
-            <img
-              src={avatarSrc}
-              alt={vibe.author_name}
-              className="w-full h-full rounded-full object-cover"
-            />
-          </button>
-          <div className="min-w-0">
-            <h4 className="text-sm font-bold text-on-surface truncate">{vibe.author_name}</h4>
-            <p className="text-[10px] text-zinc-500 uppercase tracking-widest">{timeAgo(vibe.created_at)}</p>
-          </div>
-        </div>
-
-        {/* Title */}
-        <h3 className="text-lg font-bold tracking-tight mb-1.5 text-on-surface group-hover:text-primary transition-colors duration-200 line-clamp-2 leading-snug">
-          {vibe.title}
-        </h3>
-
-        {/* Description */}
-        {vibe.description && (
-          <p className="text-sm text-zinc-400 mb-5 leading-relaxed line-clamp-2">{vibe.description}</p>
-        )}
-
-        {/* Footer */}
-        <div className="flex items-center justify-between pt-4 border-t border-white/[0.06] mt-4">
-          <div className="flex gap-4">
-            <div className="flex items-center gap-1.5 text-zinc-500">
-              <span className="material-symbols-outlined text-[18px]">favorite</span>
-              <span className="text-xs font-bold">{formatViews(vibe.like_count ?? 0)}</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-zinc-500">
-              <span className="material-symbols-outlined text-[18px]">chat_bubble</span>
-              <span className="text-xs font-bold">{vibe.comment_count ?? 0}</span>
-            </div>
-            {(vibe.remix_count ?? 0) > 0 && (
-              <div className="flex items-center gap-1.5 text-zinc-500">
-                <span className="material-symbols-outlined text-[18px]">fork_right</span>
-                <span className="text-xs font-bold">{vibe.remix_count}</span>
-              </div>
-            )}
-          </div>
-          <span className="material-symbols-outlined text-zinc-600 cursor-pointer hover:text-primary transition-colors duration-200 text-[20px]">
-            more_horiz
-          </span>
-        </div>
+      </button>
+      <div className="min-w-0">
+        <p className="truncate text-sm font-semibold text-on-surface">{vibe.author_name}</p>
+        <p className="text-[11px] uppercase tracking-[0.18em] text-on-surface/45">{timeAgo(vibe.created_at)}</p>
       </div>
     </div>
   );
 }
 
-// ─── Trending Hero ──────────────────────────────────────────────────────────────
-function TrendingHero({ vibe, onSelect }: { vibe?: Vibe; onSelect: (v: Vibe) => void }) {
-  if (!vibe) return null;
-
-  const rawCode = vibe.latest_code || '';
-  const code = rawCode.includes('<head>') ? rawCode.replace('<head>', '<head>' + FREEZE_SCRIPT) : FREEZE_SCRIPT + rawCode;
+function SideRailCard({ vibe, label, onSelect }: { vibe: Vibe; label: string; onSelect: (v: Vibe) => void }) {
+  const [isHovered, setIsHovered] = useState(false);
 
   return (
-    <section 
+    <article
       onClick={() => onSelect(vibe)}
-      className="relative aspect-[21/9] lg:aspect-[16/6] rounded-2xl overflow-hidden mb-8 lg:mb-12 group cursor-pointer border border-white/5 shadow-2xl"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className="group grid cursor-pointer gap-4 rounded-[26px] border border-outline-variant/15 bg-surface-container-low/80 p-4 transition-colors duration-200 hover:border-primary/25 hover:bg-surface-container sm:grid-cols-[120px_minmax(0,1fr)]"
     >
-      <div className="absolute inset-0 bg-surface-container-lowest transition-transform duration-700 transform scale-105 group-hover:scale-100 pointer-events-none">
+      <div className="relative overflow-hidden rounded-[22px] bg-surface-container-lowest aspect-[4/3] sm:h-full sm:min-h-[110px]">
+        <div className={`absolute inset-0 z-10 pointer-events-none transition-opacity duration-200 ${isHovered ? 'opacity-0' : 'opacity-100 bg-black/25'}`} />
         <iframe
-          srcDoc={code}
-          className="absolute top-0 left-0 w-[200%] h-[200%] scale-50 origin-top-left border-none pointer-events-none"
+          srcDoc={getPreviewCode(vibe.latest_code || '', isHovered)}
+          className="absolute top-0 left-0 h-[200%] w-[200%] origin-top-left scale-50 border-none pointer-events-none transition-transform duration-500 group-hover:scale-[0.51]"
           title={vibe.title}
           sandbox="allow-scripts"
           loading="lazy"
         />
       </div>
-      
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent pointer-events-none"></div>
-      
-      <div className="absolute bottom-0 left-0 p-6 lg:p-12 w-full bg-white/[0.02] backdrop-blur-md border-t border-white/5">
-        <div className="max-w-3xl">
-          <span className="bg-primary-container text-on-primary text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full mb-3 md:mb-4 inline-block">
-            Trending Now
-          </span>
-          <h1 className="text-3xl md:text-4xl lg:text-6xl font-black tracking-tighter text-on-surface mb-2 font-headline drop-shadow-lg line-clamp-2">
-            {vibe.title}
-          </h1>
-          
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full border border-primary/30 p-0.5 bg-surface">
-              <div className="w-full h-full rounded-full bg-surface-container flex items-center justify-center text-primary font-bold text-xs md:text-sm">
-                {vibe.author_name ? vibe.author_name.charAt(0).toUpperCase() : '?'}
-              </div>
-            </div>
-            <div>
-              <h4 className="text-xs md:text-sm font-bold text-on-surface">{vibe.author_name || 'Anonymous'}</h4>
-              <p className="text-[10px] text-zinc-400 uppercase tracking-widest">{formatViews(vibe.views)} Views</p>
-            </div>
-          </div>
 
-          <div className="flex gap-3 md:gap-4">
-            <button className="px-6 py-2.5 md:px-8 md:py-3 bg-primary-container text-on-primary rounded-full font-bold text-sm md:text-base hover:shadow-[0_0_32px_rgba(255,179,182,0.4)] transition-all active:scale-95 cursor-pointer">
-              Explore Project
-            </button>
-            <button className="hidden md:block px-8 py-3 bg-white/5 border border-white/10 text-on-surface rounded-full font-bold hover:bg-white/10 transition-all active:scale-95 cursor-pointer backdrop-blur-md">
-              Save to Library
-            </button>
-          </div>
+      <div className="min-w-0 space-y-3">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-primary/85">{label}</p>
+        <div className="space-y-2">
+          <h3 className="line-clamp-2 text-lg font-bold tracking-tight text-on-surface transition-colors duration-200 group-hover:text-primary">
+            {vibe.title}
+          </h3>
+          <p className="line-clamp-2 text-sm leading-relaxed text-on-surface/60">
+            {vibe.description || 'Open the project to inspect the interaction, code structure, and version history.'}
+          </p>
+        </div>
+        <ProjectMetaRow vibe={vibe} />
+        <div className="flex flex-wrap items-center gap-3 text-xs font-medium text-on-surface/55">
+          <span>{formatViews(vibe.views)} views</span>
+          <span>{vibe.comment_count ?? 0} comments</span>
+          <span>{vibe.remix_count ?? 0} remixes</span>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function PlatformPulseCard({ totalProjects, totalViews, totalRemixes }: { totalProjects: number; totalViews: number; totalRemixes: number }) {
+  return (
+    <section className="rounded-[28px] border border-outline-variant/15 bg-surface-container-low/85 p-5 shadow-[0_18px_40px_rgba(0,0,0,0.18)]">
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-tertiary">Platform Pulse</p>
+          <h3 className="text-xl font-bold tracking-tight text-on-surface">Real projects, no placeholder filler</h3>
+          <p className="text-sm leading-relaxed text-on-surface/60">
+            This rail stays tied to live BeaverKit data so the layout reads full without inventing fake content.
+          </p>
+        </div>
+        <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-tertiary/15 text-tertiary">
+          <span className="material-symbols-outlined text-[20px]">equalizer</span>
+        </div>
+      </div>
+
+      <div className="mt-5 grid grid-cols-3 gap-3">
+        <div className="rounded-2xl border border-outline-variant/12 bg-surface/60 p-3">
+          <p className="text-[10px] uppercase tracking-[0.18em] text-on-surface/45">Projects</p>
+          <p className="mt-2 text-xl font-bold text-on-surface">{totalProjects}</p>
+        </div>
+        <div className="rounded-2xl border border-outline-variant/12 bg-surface/60 p-3">
+          <p className="text-[10px] uppercase tracking-[0.18em] text-on-surface/45">Views</p>
+          <p className="mt-2 text-xl font-bold text-on-surface">{formatViews(totalViews)}</p>
+        </div>
+        <div className="rounded-2xl border border-outline-variant/12 bg-surface/60 p-3">
+          <p className="text-[10px] uppercase tracking-[0.18em] text-on-surface/45">Remixes</p>
+          <p className="mt-2 text-xl font-bold text-on-surface">{formatViews(totalRemixes)}</p>
         </div>
       </div>
     </section>
   );
 }
 
-// ─── Home Page ────────────────────────────────────────────────────────────────
+function FeaturedShowcase({
+  featured,
+  supporting,
+  feed,
+  totalProjects,
+  totalViews,
+  totalRemixes,
+  onSelect,
+}: {
+  featured: Vibe;
+  supporting: Vibe[];
+  feed: FeedTab;
+  totalProjects: number;
+  totalViews: number;
+  totalRemixes: number;
+  onSelect: (v: Vibe) => void;
+}) {
+  const [isHovered, setIsHovered] = useState(false);
+  const navigate = useNavigate();
+  const tags = parseTags(featured.tags);
+  const feedCopy = FEED_COPY[feed];
+
+  return (
+    <section className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(340px,0.85fr)] xl:items-stretch">
+      <article
+        onClick={() => onSelect(featured)}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className="group relative overflow-hidden rounded-[32px] border border-outline-variant/15 bg-surface-container-low shadow-[0_28px_80px_rgba(0,0,0,0.24)] cursor-pointer"
+      >
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/12 via-transparent to-tertiary/10" />
+        <div className="grid min-h-[420px] xl:grid-cols-[minmax(0,1.12fr)_minmax(320px,0.88fr)] xl:min-h-[520px]">
+          <div className="relative min-h-[280px] overflow-hidden bg-surface-container-lowest xl:min-h-full">
+            <div className={`absolute inset-0 z-10 pointer-events-none transition-opacity duration-200 ${isHovered ? 'opacity-0' : 'opacity-100 bg-black/22'}`} />
+            <iframe
+              srcDoc={getPreviewCode(featured.latest_code || '', isHovered)}
+              className="absolute top-0 left-0 h-[200%] w-[200%] origin-top-left scale-50 border-none pointer-events-none transition-transform duration-700 group-hover:scale-[0.515]"
+              title={featured.title}
+              sandbox="allow-scripts"
+              loading="lazy"
+            />
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-background/65 via-background/18 to-transparent" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-background/80 via-background/20 to-transparent xl:hidden" />
+            <div className="absolute left-4 top-4 z-20 rounded-full border border-outline-variant/20 bg-surface/80 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-on-surface/70 backdrop-blur-md">
+              {feedCopy.eyebrow}
+            </div>
+            <div className="absolute right-4 top-4 z-20 rounded-full border border-outline-variant/20 bg-surface/80 px-3 py-1 text-xs font-semibold text-on-surface/75 backdrop-blur-md">
+              {formatViews(featured.views)} views
+            </div>
+          </div>
+
+          <div className="relative z-10 flex flex-col justify-between gap-6 border-t border-outline-variant/10 bg-surface/72 p-6 backdrop-blur-md xl:border-l xl:border-t-0 xl:p-8">
+            <div className="space-y-5">
+              <div className="space-y-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary/85">{feedCopy.eyebrow}</p>
+                <h1 className="text-3xl font-black tracking-tight text-on-surface sm:text-4xl xl:text-[2.8rem] xl:leading-[1.05]">
+                  {featured.title}
+                </h1>
+                <p className="max-w-[34rem] text-sm leading-relaxed text-on-surface/65 sm:text-[15px]">
+                  {featured.description || feedCopy.description}
+                </p>
+              </div>
+
+              {tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="rounded-full border border-outline-variant/18 bg-surface-container/80 px-3 py-1 text-xs font-medium text-on-surface/72"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-5">
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  aria-label={`Open ${featured.author_name} profile`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/@${encodeURIComponent(featured.author_name)}`);
+                  }}
+                  className="h-12 w-12 overflow-hidden rounded-full border border-outline-variant/20 bg-surface-container-high transition-colors duration-200 hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                >
+                  <img
+                    src={getAvatarSrc(featured)}
+                    alt={featured.author_name}
+                    className="h-full w-full object-cover"
+                  />
+                </button>
+                <div>
+                  <p className="text-sm font-semibold text-on-surface">{featured.author_name || 'Anonymous'}</p>
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-on-surface/45">Published {timeAgo(featured.created_at)}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div className="rounded-2xl border border-outline-variant/12 bg-surface-container/75 p-3">
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-on-surface/45">Views</p>
+                  <p className="mt-2 text-lg font-bold text-on-surface">{formatViews(featured.views)}</p>
+                </div>
+                <div className="rounded-2xl border border-outline-variant/12 bg-surface-container/75 p-3">
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-on-surface/45">Likes</p>
+                  <p className="mt-2 text-lg font-bold text-on-surface">{formatViews(featured.like_count ?? 0)}</p>
+                </div>
+                <div className="rounded-2xl border border-outline-variant/12 bg-surface-container/75 p-3">
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-on-surface/45">Remixes</p>
+                  <p className="mt-2 text-lg font-bold text-on-surface">{formatViews(featured.remix_count ?? 0)}</p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelect(featured);
+                  }}
+                  className="rounded-full bg-primary px-5 py-3 text-sm font-semibold text-on-primary transition-colors duration-200 hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                >
+                  Open Project
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/@${encodeURIComponent(featured.author_name)}`);
+                  }}
+                  className="rounded-full border border-outline-variant/20 bg-surface-container/75 px-5 py-3 text-sm font-semibold text-on-surface transition-colors duration-200 hover:border-primary/35 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                >
+                  View Author
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <div className="grid auto-rows-fr gap-4">
+        {supporting.map((vibe, index) => (
+          <SideRailCard
+            key={vibe.id}
+            vibe={vibe}
+            label={index === 0 ? 'Next In Queue' : 'Keep Watching'}
+            onSelect={onSelect}
+          />
+        ))}
+        <PlatformPulseCard
+          totalProjects={totalProjects}
+          totalViews={totalViews}
+          totalRemixes={totalRemixes}
+        />
+      </div>
+    </section>
+  );
+}
+
+function HomeCard({ vibe, onSelect }: { vibe: Vibe; onSelect: (v: Vibe) => void }) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <article
+      onClick={() => onSelect(vibe)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className="group cursor-pointer overflow-hidden rounded-[28px] border border-outline-variant/15 bg-surface-container-low/82 shadow-[0_18px_48px_rgba(0,0,0,0.18)] transition-colors duration-200 hover:border-primary/25 hover:bg-surface-container"
+    >
+      <div className="relative aspect-video overflow-hidden bg-surface-container-lowest">
+        <div className={`absolute inset-0 z-10 pointer-events-none transition-opacity duration-200 ${isHovered ? 'opacity-0' : 'opacity-100 bg-black/24'}`} />
+        <iframe
+          srcDoc={getPreviewCode(vibe.latest_code || '', isHovered)}
+          className="absolute top-0 left-0 h-[200%] w-[200%] origin-top-left scale-50 border-none pointer-events-none transition-transform duration-500 group-hover:scale-[0.512]"
+          title={vibe.title}
+          sandbox="allow-scripts"
+          loading="lazy"
+        />
+        <div className="absolute right-3 top-3 z-20 rounded-full border border-outline-variant/20 bg-surface/78 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-on-surface/72 backdrop-blur-md">
+          {formatViews(vibe.views)}
+        </div>
+      </div>
+
+      <div className="space-y-4 p-5">
+        <ProjectMetaRow vibe={vibe} />
+
+        <div className="space-y-2">
+          <h3 className="line-clamp-2 text-xl font-bold tracking-tight text-on-surface transition-colors duration-200 group-hover:text-primary">
+            {vibe.title}
+          </h3>
+          <p className="line-clamp-2 text-sm leading-relaxed text-on-surface/60">
+            {vibe.description || 'Open the project to inspect the interaction, code structure, and version history.'}
+          </p>
+        </div>
+
+        <div className="flex items-center justify-between border-t border-outline-variant/12 pt-4 text-on-surface/50">
+          <div className="flex flex-wrap items-center gap-4 text-xs font-medium">
+            <span className="flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[18px]">favorite</span>
+              {formatViews(vibe.like_count ?? 0)}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[18px]">chat_bubble</span>
+              {vibe.comment_count ?? 0}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[18px]">fork_right</span>
+              {vibe.remix_count ?? 0}
+            </span>
+          </div>
+          <span className="material-symbols-outlined text-[20px] transition-colors duration-200 group-hover:text-primary">more_horiz</span>
+        </div>
+      </div>
+    </article>
+  );
+}
+
 export default function Home() {
   const [vibes, setVibes] = useState<Vibe[]>([]);
   const [loading, setLoading] = useState(true);
@@ -228,7 +448,6 @@ export default function Home() {
     fetchVibes();
   }, []);
 
-  // 切回分頁時自動刷新列表
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
@@ -237,17 +456,14 @@ export default function Home() {
         }).catch(() => {});
       }
     };
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
   const handleSelectVibe = (vibe: Vibe) => navigate(`/p/${vibe.id}`);
 
-  // Trending = top 10 by views
-  const trendingVibes = [...vibes].sort((a, b) => b.views - a.views).slice(0, 8);
-
-  let filteredVibes = [...vibes];
-
+  const filteredVibes = [...vibes];
   if (activeFeed === 'movers') {
     filteredVibes.sort((a, b) => (b.remix_count ?? 0) - (a.remix_count ?? 0) || b.views - a.views);
   } else if (activeFeed === 'new') {
@@ -258,82 +474,120 @@ export default function Home() {
     filteredVibes.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
   }
 
+  const featuredVibe = filteredVibes[0];
+  const supportingVibes = filteredVibes.slice(1, 3);
+  const gridVibes = filteredVibes.length > 3 ? filteredVibes.slice(3) : filteredVibes.slice(1);
+  const totalViews = vibes.reduce((sum, vibe) => sum + vibe.views, 0);
+  const totalRemixes = vibes.reduce((sum, vibe) => sum + (vibe.remix_count ?? 0), 0);
+
   return (
-    <main className="md:ml-56 md:w-[calc(100vw-14rem)] min-h-screen bg-surface flex flex-col overflow-x-hidden pt-24 pb-12 px-6 lg:px-12 max-w-[1600px] mx-auto">
+    <section className="md:ml-56 min-h-screen bg-surface overflow-x-hidden">
+      <div className="space-y-8 px-4 pb-12 pt-24 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        {loading ? (
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(340px,0.85fr)]">
+            <div className="min-h-[420px] rounded-[32px] border border-outline-variant/12 bg-surface-container-highest animate-pulse xl:min-h-[520px]" />
+            <div className="grid gap-4">
+              <div className="min-h-[184px] rounded-[28px] bg-surface-container-highest animate-pulse" />
+              <div className="min-h-[184px] rounded-[28px] bg-surface-container-highest animate-pulse" />
+              <div className="min-h-[210px] rounded-[28px] bg-surface-container-highest animate-pulse" />
+            </div>
+          </div>
+        ) : featuredVibe ? (
+          <FeaturedShowcase
+            featured={featuredVibe}
+            supporting={supportingVibes}
+            feed={activeFeed}
+            totalProjects={vibes.length}
+            totalViews={totalViews}
+            totalRemixes={totalRemixes}
+            onSelect={handleSelectVibe}
+          />
+        ) : null}
 
-      {/* ── Trending Hero Section ── */}
-      {!loading && trendingVibes.length > 0 && (
-        <TrendingHero vibe={trendingVibes[0]} onSelect={handleSelectVibe} />
-      )}
-      {loading && (
-        <div className="aspect-[21/9] lg:aspect-[16/6] bg-surface-container-highest rounded-2xl animate-pulse mb-8 lg:mb-12 border border-white/5" />
-      )}
+        <section className="space-y-5">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+            <div className="space-y-2">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-on-surface/45">Discover</p>
+              <h2 className="text-2xl font-bold tracking-tight text-on-surface sm:text-[2rem]">Community projects with room to breathe</h2>
+            </div>
 
-      {/* ── Feed Tabs ── */}
-      <div className="flex items-center justify-between mb-8 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-        <div className="flex gap-2 p-1 bg-white/5 backdrop-blur-2xl rounded-full border border-white/5 flex-shrink-0">
-          {FEED_TABS.map(tab => (
+            <div className="flex items-center gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+              <div className="flex flex-shrink-0 items-center gap-2 rounded-full border border-outline-variant/15 bg-surface-container-low/85 p-1.5 backdrop-blur-md">
+                {FEED_TABS.map((tab) => (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => setActiveFeed(tab.key)}
+                    className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-xs font-semibold tracking-wide transition-colors duration-200 sm:px-5 ${
+                      activeFeed === tab.key
+                        ? 'bg-primary text-on-primary'
+                        : 'text-on-surface/65 hover:bg-surface-container hover:text-on-surface'
+                    }`}
+                  >
+                    {tab.dotClass && <span className={`h-2 w-2 rounded-full ${tab.dotClass}`} />}
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="hidden rounded-full border border-outline-variant/15 bg-surface-container-low/85 px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-on-surface/45 xl:flex">
+                {filteredVibes.length} visible
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-4">
+            <p className="max-w-2xl text-sm leading-relaxed text-on-surface/60">
+              {FEED_COPY[activeFeed].description}
+            </p>
             <button
-              key={tab.key}
-              onClick={() => setActiveFeed(tab.key)}
-              className={`px-5 py-2 md:px-6 rounded-full text-xs md:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 ${
-                activeFeed === tab.key
-                  ? 'bg-primary-container text-on-primary'
-                  : 'text-zinc-400 hover:text-on-surface'
-              }`}
+              type="button"
+              className="hidden items-center gap-2 rounded-full border border-outline-variant/15 bg-surface-container-low/85 px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-on-surface/50 transition-colors duration-200 hover:border-primary/30 hover:text-primary lg:flex"
             >
-              {tab.dot && (
-                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: tab.dot }} />
-              )}
-              {tab.label}
-            </button>
-          ))}
-        </div>
-        
-        <button className="hidden md:flex items-center gap-2 px-4 py-2 text-zinc-400 hover:text-on-surface transition-all cursor-pointer flex-shrink-0">
-          <span className="material-symbols-outlined text-lg">tune</span>
-          <span className="text-[10px] font-bold uppercase tracking-widest">Filters</span>
-        </button>
-      </div>
-
-      {/* ── Card Grid ── */}
-      <div className="flex-1 overflow-x-hidden pb-8">
-        {error && !loading && vibes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <span className="material-symbols-outlined text-[48px] text-on-surface/20">cloud_off</span>
-            <p className="text-on-surface/40 text-sm">無法載入內容，請檢查網路連線</p>
-            <button
-              onClick={() => fetchVibes()}
-              className="px-4 py-2 rounded-full bg-primary/15 text-primary text-sm font-medium hover:bg-primary/25 transition-colors cursor-pointer"
-            >
-              重新載入
+              <span className="material-symbols-outlined text-base">tune</span>
+              Filters
             </button>
           </div>
-        ) : !loading && filteredVibes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-3">
-            <span className="material-symbols-outlined text-[48px] text-on-surface/20">explore</span>
-            <p className="text-on-surface/40 text-sm">還沒有任何作品，去 Workspace 建立第一個吧！</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {loading
-              ? Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="aspect-video bg-surface-container-highest rounded-xl animate-pulse" />
-                ))
-              : filteredVibes.map(vibe => (
-                  <HomeCard
-                    key={vibe.id}
-                    vibe={vibe}
-                    onSelect={handleSelectVibe}
-                  />
-                ))
-            }
-          </div>
-        )}
-      </div>
+        </section>
 
-      <Footer />
-    </main>
+        <section className="pb-8">
+          {error && !loading && vibes.length === 0 ? (
+            <div className="flex flex-col items-center justify-center gap-4 rounded-[28px] border border-outline-variant/15 bg-surface-container-low/85 py-20 text-center">
+              <span className="material-symbols-outlined text-[48px] text-on-surface/20">cloud_off</span>
+              <p className="text-sm text-on-surface/50">無法載入內容，請檢查網路連線</p>
+              <button
+                type="button"
+                onClick={() => fetchVibes()}
+                className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition-colors duration-200 hover:bg-primary/90"
+              >
+                重新載入
+              </button>
+            </div>
+          ) : !loading && filteredVibes.length === 0 ? (
+            <div className="flex flex-col items-center justify-center gap-3 rounded-[28px] border border-outline-variant/15 bg-surface-container-low/85 py-20 text-center">
+              <span className="material-symbols-outlined text-[48px] text-on-surface/20">explore</span>
+              <p className="text-sm text-on-surface/50">還沒有任何作品，去 Workspace 建立第一個吧！</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              {loading
+                ? Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className="aspect-video rounded-[28px] bg-surface-container-highest animate-pulse" />
+                  ))
+                : gridVibes.map((vibe) => (
+                    <HomeCard
+                      key={vibe.id}
+                      vibe={vibe}
+                      onSelect={handleSelectVibe}
+                    />
+                  ))}
+            </div>
+          )}
+        </section>
+
+        <Footer />
+      </div>
+    </section>
   );
 }
 
