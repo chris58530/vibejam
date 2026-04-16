@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { api, Vibe, User } from '../lib/api';
+import { api, apiFetch, Vibe, User } from '../lib/api';
 import { supabase, signUpWithEmail, signInWithEmail, signOut } from '../lib/supabase';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -480,7 +480,7 @@ export default function QALab() {
     addLog('info', '正在 Ping API...');
     const start = performance.now();
     try {
-      const res = await fetch('/api/vibes');
+      const res = await apiFetch('/vibes');
       const ms = Math.round(performance.now() - start);
       if (res.ok) {
         setPingResult({ ms, ok: true, msg: `HTTP ${res.status} · ${ms}ms` });

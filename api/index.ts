@@ -1,7 +1,11 @@
 import express from 'express';
 import cors from 'cors';
 import crypto from 'crypto';
+import dotenv from 'dotenv';
 import { db, initializeDatabase } from '../src/lib/dbPostgres.js';
+
+dotenv.config({ path: '.env.local' });
+dotenv.config();
 
 const app = express();
 app.use(cors());
@@ -9,7 +13,7 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 let initialized = false;
-async function ensureDb() {
+export async function ensureDb() {
   if (!initialized) {
     try {
       await initializeDatabase();
@@ -903,28 +907,34 @@ app.post('/api/ai/chat/stream', async (req, res) => {
   }
 });
 
-// OG meta endpoint – serves lightweight HTML with Open Graph tags for social bots
+export const BOT_UA_RE = /bot|crawler|spider|facebookexternalhit|twitterbot|linkedinbot|slackbot|discordbot|telegrambot|line|whatsapp/i;
+
 function escapeHtml(str: string): string {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-app.get('/api/og/vibe/:id', async (req, res) => {
-  try {
-    await ensureDb();
-    const vibeId = req.params.id;
-    const vibe = await db.get(`
-      SELECT v.title, v.tags, v.description, u.username as author_name
-      FROM vibes v JOIN users u ON v.author_id = u.id WHERE v.id = $1 AND v.visibility != 'private'
-    `, [vibeId]);
-    if (!vibe) return res.status(404).send('Not found');
+export async function sendOgHtml(
+  vibeId: string,
+  pageUrl: string,
+  res: express.Response,
+  includeRefresh = true,
+): Promise<boolean> {
+  await ensureDb();
 
-    const title = escapeHtml(vibe.title);
-    const author = escapeHtml(vibe.author_name);
-    const description = escapeHtml(vibe.description || `Interactive code by ${vibe.author_name}${vibe.tags ? ' · ' + vibe.tags : ''}`);
-    const pageUrl = `${req.protocol}://${req.get('host')}/p/${vibeId}`;
+  const vibe = await db.get(`
+    SELECT v.title, v.tags, v.description, u.username as author_name
+    FROM vibes v JOIN users u ON v.author_id = u.id WHERE v.id = $1 AND v.visibility != 'private'
+  `, [vibeId]);
 
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.send(`<!DOCTYPE html>
+  if (!vibe) return false;
+
+  const title = escapeHtml(vibe.title);
+  const author = escapeHtml(vibe.author_name);
+  const description = escapeHtml(vibe.description || `Interactive code by ${vibe.author_name}${vibe.tags ? ' · ' + vibe.tags : ''}`);
+  const safeUrl = escapeHtml(pageUrl);
+
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -933,15 +943,24 @@ app.get('/api/og/vibe/:id', async (req, res) => {
   <meta property="og:type" content="website" />
   <meta property="og:title" content="${title} by ${author} | BeaverKit" />
   <meta property="og:description" content="${description}" />
-  <meta property="og:url" content="${escapeHtml(pageUrl)}" />
+  <meta property="og:url" content="${safeUrl}" />
   <meta property="og:site_name" content="BeaverKit" />
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="${title} by ${author} | BeaverKit" />
-  <meta name="twitter:description" content="${description}" />
-  <meta http-equiv="refresh" content="0;url=${escapeHtml(pageUrl)}" />
+  <meta name="twitter:description" content="${description}" />${includeRefresh ? `
+  <meta http-equiv="refresh" content="0;url=${safeUrl}" />` : ''}
 </head>
-<body><a href="${escapeHtml(pageUrl)}">${title}</a></body>
+<body><a href="${safeUrl}">${title}</a></body>
 </html>`);
+  return true;
+}
+
+app.get('/api/og/vibe/:id', async (req, res) => {
+  try {
+    const vibeId = req.params.id;
+    const pageUrl = `${req.protocol}://${req.get('host')}/p/${vibeId}`;
+    const sent = await sendOgHtml(vibeId, pageUrl, res, true);
+    if (!sent) return res.status(404).send('Not found');
   } catch (err: any) { res.status(500).send('Error'); }
 });
 

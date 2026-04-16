@@ -6,6 +6,10 @@ coverage/
 *.log
 .env*
 !.env.example
+*.db
+*.ps1
+test_crypto.js
+design-mockup.html
 
 # Python cache
 __pycache__/

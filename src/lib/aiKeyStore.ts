@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { api } from './api';
 import { encrypt, decrypt } from './crypto';
 
 export type AIProvider = 'gemini' | 'openai' | 'replicate' | 'stability' | 'minimax';
@@ -193,20 +194,14 @@ export const useAIKeyStore = create<AIKeyState>((set, get) => ({
     set(state => ({ testResults: { ...state.testResults, [provider]: 'testing' }, testMessages: { ...state.testMessages, [provider]: '' } }));
 
     try {
-      const res = await fetch('/api/ai/test', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider, apiKey: key }),
-      });
-      const data = await res.json().catch(() => ({}));
-      const ok = res.ok;
-      localStorage.setItem(VALID_PREFIX + provider, ok ? '1' : '0');
+      await api.ai.testKey(provider, key);
+      localStorage.setItem(VALID_PREFIX + provider, '1');
       set(state => ({
-        validated: { ...state.validated, [provider]: ok },
-        testResults: { ...state.testResults, [provider]: ok ? 'success' : 'error' },
-        testMessages: { ...state.testMessages, [provider]: ok ? '' : (data.error || '連線失敗，請確認 Key 是否正確') },
+        validated: { ...state.validated, [provider]: true },
+        testResults: { ...state.testResults, [provider]: 'success' },
+        testMessages: { ...state.testMessages, [provider]: '' },
       }));
-      return ok;
+      return true;
     } catch (err: any) {
       localStorage.setItem(VALID_PREFIX + provider, '0');
       set(state => ({

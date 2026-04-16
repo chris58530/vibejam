@@ -114,212 +114,234 @@ export function toSlug(title: string): string {
 
 const API_BASE = '/api';
 
+interface ApiFetchOptions extends RequestInit {
+  timeoutMs?: number;
+}
+
+async function readErrorMessage(res: Response, fallback: string): Promise<string> {
+  const data = await res.json().catch(() => null);
+  if (data && typeof data.error === 'string' && data.error.trim()) {
+    return data.error;
+  }
+  const text = await res.text().catch(() => '');
+  return text.slice(0, 200) || fallback;
+}
+
+export async function apiFetch(path: string, options: ApiFetchOptions = {}): Promise<Response> {
+  const { timeoutMs = 15000, signal, ...init } = options;
+  const controller = new AbortController();
+  let timeoutId: number | undefined;
+
+  const abortFromSignal = () => controller.abort();
+  if (signal) {
+    if (signal.aborted) {
+      controller.abort();
+    } else {
+      signal.addEventListener('abort', abortFromSignal, { once: true });
+    }
+  }
+
+  if (timeoutMs > 0) {
+    timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+  }
+
+  try {
+    return await fetch(`${API_BASE}${path}`, {
+      ...init,
+      signal: controller.signal,
+    });
+  } finally {
+    if (timeoutId !== undefined) {
+      window.clearTimeout(timeoutId);
+    }
+    if (signal) {
+      signal.removeEventListener('abort', abortFromSignal);
+    }
+  }
+}
+
+export async function apiJson<T>(path: string, options: ApiFetchOptions = {}, fallbackError = 'Request failed'): Promise<T> {
+  const res = await apiFetch(path, options);
+  if (!res.ok) {
+    throw new Error(await readErrorMessage(res, `${fallbackError} (${res.status})`));
+  }
+  return res.json();
+}
+
 export const api = {
   async syncUser(data: { supabase_id: string; username: string; avatar: string }): Promise<User> {
-    const res = await fetch(`${API_BASE}/auth/sync`, {
+    return apiJson<User>('/auth/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
-    });
-    if (!res.ok) {
-      const text = await res.text().catch(() => res.status.toString());
-      throw new Error(`syncUser failed (${res.status}): ${text.slice(0, 200)}`);
-    }
-    return res.json();
+    }, 'syncUser failed');
   },
   async getUserProfile(username: string): Promise<User> {
-    const res = await fetch(`${API_BASE}/users/${encodeURIComponent(username)}`);
-    if (!res.ok) throw new Error('User not found');
-    return res.json();
+    return apiJson<User>(`/users/${encodeURIComponent(username)}`, {}, 'User not found');
   },
   async updateUserProfile(username: string, data: { motto: string }): Promise<User> {
-    const res = await fetch(`${API_BASE}/users/${encodeURIComponent(username)}`, {
+    return apiJson<User>(`/users/${encodeURIComponent(username)}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
-    });
-    if (!res.ok) throw new Error('Failed to update user');
-    return res.json();
+    }, 'Failed to update user');
   },
   async getVibes(supabaseId?: string): Promise<Vibe[]> {
     const params = supabaseId ? `?supabase_id=${encodeURIComponent(supabaseId)}` : '';
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
-    try {
-      const res = await fetch(`${API_BASE}/vibes${params}`, { signal: controller.signal });
-      if (!res.ok) throw new Error(`Failed to fetch vibes: ${res.status}`);
-      const data = await res.json();
-      return Array.isArray(data) ? data : [];
-    } finally {
-      clearTimeout(timeout);
-    }
+    const data = await apiJson<unknown>(`/vibes${params}`, { timeoutMs: 15000 }, 'Failed to fetch vibes');
+    return Array.isArray(data) ? data as Vibe[] : [];
   },
   async getVibeBySlug(username: string, slug: string, supabaseId?: string): Promise<Vibe> {
     const params = supabaseId ? `?supabase_id=${encodeURIComponent(supabaseId)}` : '';
-    const res = await fetch(`${API_BASE}/vibes/by-slug/${encodeURIComponent(username)}/${encodeURIComponent(slug)}${params}`);
+    const res = await apiFetch(`/vibes/by-slug/${encodeURIComponent(username)}/${encodeURIComponent(slug)}${params}`);
     if (res.status === 403) throw new AccessDeniedError();
     if (!res.ok) throw new Error('Vibe not found');
     return res.json();
   },
   async getVibe(id: string | number, supabaseId?: string): Promise<Vibe> {
     const params = supabaseId ? `?supabase_id=${encodeURIComponent(supabaseId)}` : '';
-    const res = await fetch(`${API_BASE}/vibes/${id}${params}`);
+    const res = await apiFetch(`/vibes/${id}${params}`);
     if (res.status === 403) throw new AccessDeniedError();
     return res.json();
   },
   async createVibe(data: { title: string; tags: string; code: string; description?: string; author_id?: number; parent_vibe_id?: number; parent_version_number?: number; visibility?: 'public' | 'unlisted' | 'private' }): Promise<{ id: number }> {
-    const res = await fetch(`${API_BASE}/vibes`, {
+    return apiJson<{ id: number }>('/vibes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
-    });
-    return res.json();
+    }, 'Failed to create vibe');
   },
   async updateTitle(vibeId: number, supabaseId: string, title: string): Promise<{ success: boolean }> {
-    const res = await fetch(`${API_BASE}/vibes/${vibeId}/title`, {
+    return apiJson<{ success: boolean }>(`/vibes/${vibeId}/title`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ supabase_id: supabaseId, title }),
-    });
-    if (!res.ok) throw new Error('Failed to update title');
-    return res.json();
+    }, 'Failed to update title');
   },
   async updateVisibility(vibeId: number, supabaseId: string, visibility: 'public' | 'unlisted' | 'private'): Promise<{ success: boolean }> {
-    const res = await fetch(`${API_BASE}/vibes/${vibeId}/visibility`, {
+    return apiJson<{ success: boolean }>(`/vibes/${vibeId}/visibility`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ supabase_id: supabaseId, visibility }),
-    });
-    if (!res.ok) throw new Error('Failed to update visibility');
-    return res.json();
+    }, 'Failed to update visibility');
   },
   async updateDescription(vibeId: number, supabaseId: string, description: string): Promise<{ success: boolean }> {
-    const res = await fetch(`${API_BASE}/vibes/${vibeId}/description`, {
+    return apiJson<{ success: boolean }>(`/vibes/${vibeId}/description`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ supabase_id: supabaseId, description }),
-    });
-    if (!res.ok) throw new Error('Failed to update description');
-    return res.json();
+    }, 'Failed to update description');
   },
   async addCollaborator(vibeId: number, supabaseId: string, username: string): Promise<Collaborator> {
-    const res = await fetch(`${API_BASE}/vibes/${vibeId}/collaborators`, {
+    return apiJson<Collaborator>(`/vibes/${vibeId}/collaborators`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ supabase_id: supabaseId, username }),
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error || 'Failed to add collaborator');
-    }
-    return res.json();
+    }, 'Failed to add collaborator');
   },
   async removeCollaborator(vibeId: number, userId: number, supabaseId: string): Promise<{ success: boolean }> {
-    const res = await fetch(`${API_BASE}/vibes/${vibeId}/collaborators/${userId}`, {
+    return apiJson<{ success: boolean }>(`/vibes/${vibeId}/collaborators/${userId}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ supabase_id: supabaseId }),
-    });
-    if (!res.ok) throw new Error('Failed to remove collaborator');
-    return res.json();
+    }, 'Failed to remove collaborator');
   },
   async createInviteLink(vibeId: number, supabaseId: string): Promise<{ token: string }> {
-    const res = await fetch(`${API_BASE}/vibes/${vibeId}/invite-link`, {
+    return apiJson<{ token: string }>(`/vibes/${vibeId}/invite-link`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ supabase_id: supabaseId }),
-    });
-    if (!res.ok) throw new Error('Failed to create invite link');
-    return res.json();
+    }, 'Failed to create invite link');
   },
   async getInviteLinks(vibeId: number, supabaseId: string): Promise<InviteLink[]> {
-    const res = await fetch(`${API_BASE}/vibes/${vibeId}/invite-links?supabase_id=${encodeURIComponent(supabaseId)}`);
-    if (!res.ok) throw new Error('Failed to get invite links');
-    return res.json();
+    return apiJson<InviteLink[]>(`/vibes/${vibeId}/invite-links?supabase_id=${encodeURIComponent(supabaseId)}`, {}, 'Failed to get invite links');
   },
   async revokeInviteLink(vibeId: number, token: string, supabaseId: string): Promise<{ success: boolean }> {
-    const res = await fetch(`${API_BASE}/vibes/${vibeId}/invite-link/${token}`, {
+    return apiJson<{ success: boolean }>(`/vibes/${vibeId}/invite-link/${token}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ supabase_id: supabaseId }),
-    });
-    if (!res.ok) throw new Error('Failed to revoke invite link');
-    return res.json();
+    }, 'Failed to revoke invite link');
   },
   async resolveInviteLink(token: string): Promise<{ valid: boolean; vibe_id?: number; vibe_title?: string; author_name?: string }> {
-    const res = await fetch(`${API_BASE}/invite/${token}`);
-    return res.json();
+    return apiJson<{ valid: boolean; vibe_id?: number; vibe_title?: string; author_name?: string }>(`/invite/${token}`);
   },
   async acceptInviteLink(token: string, supabaseId: string): Promise<{ success: boolean; vibe_id: number; already_owner?: boolean }> {
-    const res = await fetch(`${API_BASE}/invite/${token}/accept`, {
+    return apiJson<{ success: boolean; vibe_id: number; already_owner?: boolean }>(`/invite/${token}/accept`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ supabase_id: supabaseId }),
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error || 'Failed to accept invite');
-    }
-    return res.json();
+    }, 'Failed to accept invite');
   },
   async addVersion(vibeId: number, data: { code: string; update_log: string; author_id?: number }): Promise<{ success: boolean; version: number }> {
-    const res = await fetch(`${API_BASE}/vibes/${vibeId}/versions`, {
+    return apiJson<{ success: boolean; version: number }>(`/vibes/${vibeId}/versions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
-    });
-    return res.json();
+    }, 'Failed to add version');
   },
   async addComment(vibeId: number, data: { content: string; code_snippet?: string; version_id: number; author_id?: number }): Promise<{ success: boolean }> {
-    const res = await fetch(`${API_BASE}/vibes/${vibeId}/comments`, {
+    return apiJson<{ success: boolean }>(`/vibes/${vibeId}/comments`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
-    });
-    return res.json();
+    }, 'Failed to add comment');
   },
   async deleteVibe(vibeId: number, supabaseId: string): Promise<{ success: boolean }> {
-    const res = await fetch(`${API_BASE}/vibes/${vibeId}`, {
+    return apiJson<{ success: boolean }>(`/vibes/${vibeId}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ supabase_id: supabaseId }),
-    });
-    if (!res.ok) throw new Error('Failed to delete vibe');
-    return res.json();
+    }, 'Failed to delete vibe');
   },
   async getVibeChildren(vibeId: number): Promise<VibeChild[]> {
-    const res = await fetch(`${API_BASE}/vibes/${vibeId}/children`);
-    return res.json();
+    return apiJson<VibeChild[]>(`/vibes/${vibeId}/children`);
   },
   async getVibeAncestry(vibeId: number): Promise<VibeAncestor[]> {
-    const res = await fetch(`${API_BASE}/vibes/${vibeId}/ancestry`);
-    return res.json();
+    return apiJson<VibeAncestor[]>(`/vibes/${vibeId}/ancestry`);
   },
   async toggleLike(vibeId: number, supabaseId: string): Promise<{ liked: boolean; like_count: number }> {
-    const res = await fetch(`${API_BASE}/vibes/${vibeId}/like`, {
+    return apiJson<{ liked: boolean; like_count: number }>(`/vibes/${vibeId}/like`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ supabase_id: supabaseId }),
-    });
-    if (!res.ok) throw new Error('Failed to toggle like');
-    return res.json();
+    }, 'Failed to toggle like');
   },
   async toggleFollow(username: string, supabaseId: string): Promise<{ following: boolean; followers_count: number }> {
-    const res = await fetch(`${API_BASE}/users/${encodeURIComponent(username)}/follow`, {
+    return apiJson<{ following: boolean; followers_count: number }>(`/users/${encodeURIComponent(username)}/follow`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ supabase_id: supabaseId }),
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || 'Failed to toggle follow');
-    }
-    return res.json();
+    }, 'Failed to toggle follow');
   },
   async getFollowStatus(username: string, supabaseId?: string): Promise<{ following: boolean; followers_count: number }> {
     const params = supabaseId ? `?supabase_id=${encodeURIComponent(supabaseId)}` : '';
-    const res = await fetch(`${API_BASE}/users/${encodeURIComponent(username)}/follow${params}`);
-    if (!res.ok) throw new Error('Failed to get follow status');
-    return res.json();
+    return apiJson<{ following: boolean; followers_count: number }>(`/users/${encodeURIComponent(username)}/follow${params}`, {}, 'Failed to get follow status');
+  },
+  ai: {
+    async testKey(provider: string, apiKey: string): Promise<{ ok: boolean; provider: string }> {
+      return apiJson<{ ok: boolean; provider: string }>('/ai/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider, apiKey }),
+      }, 'AI key test failed');
+    },
+    async chat(data: { provider: string; apiKey: string; messages: Array<{ role: string; content: string }>; model?: string; temperature?: number; maxTokens?: number }): Promise<{ text: string; tokensUsed?: number }> {
+      return apiJson<{ text: string; tokensUsed?: number }>('/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+        timeoutMs: 30000,
+      }, 'AI chat failed');
+    },
+    async chatStream(data: { provider: string; apiKey: string; messages: Array<{ role: string; content: string }>; model?: string; temperature?: number; maxTokens?: number }, signal?: AbortSignal): Promise<Response> {
+      return apiFetch('/ai/chat/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+        signal,
+        timeoutMs: 0,
+      });
+    },
   },
 };
