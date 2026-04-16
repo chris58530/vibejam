@@ -8,6 +8,8 @@ import { useWorkspaceStore } from '../lib/workspaceStore';
 interface NavbarProps {
   savePanelOpen?: boolean;
   onToggleSavePanel?: () => void;
+  sidebarOpen?: boolean;
+  onToggleSidebar?: () => void;
 }
 
 const LANGUAGES: { code: Language; label: string; flag: string }[] = [
@@ -15,7 +17,7 @@ const LANGUAGES: { code: Language; label: string; flag: string }[] = [
   { code: 'zh-TW', label: '繁體中文', flag: '🇹🇼' },
 ];
 
-export default function Navbar({ savePanelOpen, onToggleSavePanel }: NavbarProps) {
+export default function Navbar({ savePanelOpen, onToggleSavePanel, sidebarOpen = true, onToggleSidebar }: NavbarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { t, language, setLanguage } = useI18n();
@@ -60,8 +62,9 @@ export default function Navbar({ savePanelOpen, onToggleSavePanel }: NavbarProps
 
   return (
     <>
-      <header className={`fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl flex items-center justify-between pr-6 h-16 pl-6 md:pl-60 ${!isWorkspace ? 'border-b border-transparent' : 'border-b border-outline-variant/10'}`}>
-        <div className="flex items-center gap-8">
+      <header className={`fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl flex items-center justify-between pr-6 h-16 pl-6 transition-[padding] duration-300 ${sidebarOpen ? 'md:pl-60' : 'md:pl-20'} ${!isWorkspace ? 'border-b border-transparent' : 'border-b border-outline-variant/10'}`}>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-8">
           {isWorkspace ? (
             <div
               className="text-xl font-bold tracking-tighter text-on-surface flex items-center gap-2 cursor-pointer font-headline"
@@ -107,6 +110,7 @@ export default function Navbar({ savePanelOpen, onToggleSavePanel }: NavbarProps
           )}
 
 
+          </div>
         </div>
 
         <div className="flex items-center gap-4">

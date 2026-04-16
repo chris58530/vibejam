@@ -167,9 +167,11 @@ export function HelpModal({ onClose }: { onClose: () => void }) {
 
 interface SidebarProps {
   dbUser?: User;
+  isOpen?: boolean;
+  onToggle?: () => void;
 }
 
-export default function Sidebar({ dbUser }: SidebarProps = {}) {
+export default function Sidebar({ dbUser, isOpen = true, onToggle }: SidebarProps = {}) {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useI18n();
@@ -206,15 +208,43 @@ export default function Sidebar({ dbUser }: SidebarProps = {}) {
     : null;
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-56 bg-surface-container-low flex flex-col pb-2 hidden md:flex z-50 border-r border-outline-variant/5 overflow-hidden">
+    <aside
+      className={`fixed left-0 top-0 h-screen bg-surface-container-low flex flex-col pb-2 hidden md:flex z-50 border-r border-outline-variant/5 overflow-hidden transition-[width] duration-300 ease-out ${isOpen ? 'w-56' : 'w-16'}`}
+    >
       {/* Logo area */}
-      <div className="h-16 flex items-center px-3 shrink-0 gap-3 cursor-pointer" onClick={() => navigate('/')}>
-        <img src="/Icon.png" alt="BeaverKit" className="w-8 h-8 shrink-0" />
-        <span className="text-lg font-bold tracking-tighter text-on-surface font-headline whitespace-nowrap">
-          BeaverKit
-        </span>
+      <div className={`h-16 flex items-center shrink-0 ${isOpen ? 'px-3 gap-2' : 'justify-center px-2'}`}>
+        {isOpen ? (
+          <>
+            <div
+              className="flex items-center gap-3 cursor-pointer min-w-0 flex-1"
+              onClick={() => navigate('/')}
+            >
+              <img src="/Icon.png" alt="BeaverKit" className="w-8 h-8 shrink-0" />
+              <span className="text-lg font-bold tracking-tighter text-on-surface font-headline whitespace-nowrap">
+                BeaverKit
+              </span>
+            </div>
+            <button
+              onClick={onToggle}
+              title="收合側邊欄"
+              aria-label="收合側邊欄"
+              className="shrink-0 p-1.5 rounded-lg text-on-surface/50 hover:text-on-surface hover:bg-surface-container-high transition-colors"
+            >
+              <span className="material-symbols-outlined text-[20px]">menu_open</span>
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={onToggle}
+            title="展開側邊欄"
+            aria-label="展開側邊欄"
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-on-surface/55 hover:text-on-surface hover:bg-surface-container-high transition-colors"
+          >
+            <span className="material-symbols-outlined text-[20px]">menu</span>
+          </button>
+        )}
       </div>
-      <div className="h-px bg-outline-variant/10 mx-3 shrink-0 mb-2" />
+      <div className={`h-px bg-outline-variant/10 shrink-0 mb-2 ${isOpen ? 'mx-3' : 'mx-2'}`} />
 
       <motion.div
         initial={{ x: -56, opacity: 0 }}
@@ -234,11 +264,10 @@ export default function Sidebar({ dbUser }: SidebarProps = {}) {
               <button
                 key={key}
                 onClick={() => handleNavClick(key, path)}
-                className={`relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-body font-medium text-sm cursor-pointer transition-colors duration-200 ${
-                  isActive
+                className={`relative w-full flex items-center rounded-xl font-body font-medium text-sm cursor-pointer transition-colors duration-200 ${isOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'justify-center px-2 py-2.5'} ${isActive
                     ? 'text-primary'
                     : 'text-on-surface/70 hover:text-on-surface hover:bg-surface-container-high/40'
-                }`}
+                  }`}
                 title={label}
               >
                 {isActive && (
@@ -254,72 +283,75 @@ export default function Sidebar({ dbUser }: SidebarProps = {}) {
                 >
                   {icon}
                 </span>
-                <span className="relative whitespace-nowrap">{label}</span>
+                {isOpen && <span className="relative whitespace-nowrap">{label}</span>}
               </button>
             );
           })}
         </nav>
 
-        <div className="mt-3">
-          <div className="h-px bg-outline-variant/10 mx-4 mb-3" />
-          <div className="px-5 mb-1.5">
-            <span className="text-[10px] uppercase tracking-[0.2em] text-on-surface/30 font-bold">{t('sidebar_your_library')}</span>
-          </div>
-          <nav className="relative space-y-0.5 px-2">
-            {([
-              { icon: 'history', label: t('sidebar_history'), tab: 'history' as const },
-              { icon: 'playlist_play', label: t('sidebar_saved_vibes'), tab: 'saved' as const },
-              { icon: 'thumb_up', label: t('sidebar_liked_code'), tab: 'liked' as const },
-            ]).map(({ icon, label, tab }) => {
-              const isActive = activeLibraryTab === tab;
-              return (
-                <button
-                  key={tab}
-                  onClick={() => navigate(`/library?tab=${tab}`)}
-                  className={`relative w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-colors text-sm font-body font-medium ${
-                    isActive
-                      ? 'text-primary'
-                      : 'text-on-surface/60 hover:bg-surface-container-high hover:text-on-surface'
-                  }`}
-                >
-                  {isActive && (
-                    <motion.div
-                      layoutId="sidebar-library-indicator"
-                      className="absolute inset-0 bg-surface-container-high rounded-xl"
-                      transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-                    />
-                  )}
-                  <span
-                    className="relative material-symbols-outlined text-[20px] shrink-0"
-                    style={isActive ? { fontVariationSettings: "'FILL' 1" } : {}}
+        {isOpen && (
+          <div className="mt-3">
+            <div className="h-px bg-outline-variant/10 mx-4 mb-3" />
+            <div className="px-5 mb-1.5">
+              <span className="text-[10px] uppercase tracking-[0.2em] text-on-surface/30 font-bold">{t('sidebar_your_library')}</span>
+            </div>
+            <nav className="relative space-y-0.5 px-2">
+              {([
+                { icon: 'history', label: t('sidebar_history'), tab: 'history' as const },
+                { icon: 'playlist_play', label: t('sidebar_saved_vibes'), tab: 'saved' as const },
+                { icon: 'thumb_up', label: t('sidebar_liked_code'), tab: 'liked' as const },
+              ]).map(({ icon, label, tab }) => {
+                const isActive = activeLibraryTab === tab;
+                return (
+                  <button
+                    key={tab}
+                    onClick={() => navigate(`/library?tab=${tab}`)}
+                    className={`relative w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-colors text-sm font-body font-medium ${isActive
+                        ? 'text-primary'
+                        : 'text-on-surface/60 hover:bg-surface-container-high hover:text-on-surface'
+                      }`}
                   >
-                    {icon}
-                  </span>
-                  <span className="relative whitespace-nowrap">{label}</span>
-                </button>
-              );
-            })}
-          </nav>
-        </div>
+                    {isActive && (
+                      <motion.div
+                        layoutId="sidebar-library-indicator"
+                        className="absolute inset-0 bg-surface-container-high rounded-xl"
+                        transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                      />
+                    )}
+                    <span
+                      className="relative material-symbols-outlined text-[20px] shrink-0"
+                      style={isActive ? { fontVariationSettings: "'FILL' 1" } : {}}
+                    >
+                      {icon}
+                    </span>
+                    <span className="relative whitespace-nowrap">{label}</span>
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+        )}
 
         <div className="flex-1" />
 
-        <div className="border-t border-outline-variant/10 pt-3 pb-1">
-          <div className="flex flex-wrap gap-x-3 gap-y-1 px-4 mb-1.5">
-            <a href="#" className="text-[10px] text-on-surface/30 hover:text-primary transition-colors uppercase tracking-widest font-body">Terms</a>
-            <a href="#" className="text-[10px] text-on-surface/30 hover:text-primary transition-colors uppercase tracking-widest font-body">Privacy</a>
-            <a href="#" className="text-[10px] text-on-surface/30 hover:text-primary transition-colors uppercase tracking-widest font-body">About</a>
+        {isOpen && (
+          <div className="border-t border-outline-variant/10 pt-3 pb-1">
+            <div className="flex flex-wrap gap-x-3 gap-y-1 px-4 mb-1.5">
+              <a href="#" className="text-[10px] text-on-surface/30 hover:text-primary transition-colors uppercase tracking-widest font-body">Terms</a>
+              <a href="#" className="text-[10px] text-on-surface/30 hover:text-primary transition-colors uppercase tracking-widest font-body">Privacy</a>
+              <a href="#" className="text-[10px] text-on-surface/30 hover:text-primary transition-colors uppercase tracking-widest font-body">About</a>
+            </div>
+            <p className="px-4 text-[10px] text-on-surface/15 font-body">© 2024 BEAVERKIT EDITORIAL</p>
           </div>
-          <p className="px-4 text-[10px] text-on-surface/15 font-body">© 2024 BEAVERKIT EDITORIAL</p>
-        </div>
+        )}
 
         <button
           onClick={() => setHelpOpen(true)}
-          className="shrink-0 flex items-center gap-3 px-3 py-2.5 mx-2 mb-1 text-on-surface/40 hover:text-primary hover:bg-surface-container-high rounded-xl transition-colors"
+          className={`shrink-0 flex items-center mx-2 mb-1 text-on-surface/40 hover:text-primary hover:bg-surface-container-high rounded-xl transition-colors ${isOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'justify-center px-2 py-2.5'}`}
           title="使用說明"
         >
           <span className="material-symbols-outlined shrink-0 text-[22px]">help</span>
-          <span className="whitespace-nowrap text-sm font-medium font-body">使用說明</span>
+          {isOpen && <span className="whitespace-nowrap text-sm font-medium font-body">使用說明</span>}
         </button>
       </motion.div>
 

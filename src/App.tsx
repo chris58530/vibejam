@@ -163,6 +163,13 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [debugMode, setDebugMode] = useState(false);
   const [savePanelOpen, setSavePanelOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (sidebarOpen) root.classList.remove('sidebar-collapsed');
+    else root.classList.add('sidebar-collapsed');
+  }, [sidebarOpen]);
 
   useEffect(() => {
     useAIKeyStore.getState().initialize();
@@ -287,9 +294,18 @@ export default function App() {
   return (
     <div className="min-h-screen bg-surface text-on-surface font-sans selection:bg-primary/30">
       <ScrollToTop />
-      <Navbar savePanelOpen={savePanelOpen} onToggleSavePanel={() => setSavePanelOpen(p => !p)} />
+      <Navbar
+        savePanelOpen={savePanelOpen}
+        onToggleSavePanel={() => setSavePanelOpen(p => !p)}
+        sidebarOpen={sidebarOpen}
+        onToggleSidebar={() => setSidebarOpen(p => !p)}
+      />
       <div className="flex w-full min-h-screen pt-16">
-        <Sidebar dbUser={currentUser ?? undefined} />
+        <Sidebar
+          dbUser={currentUser ?? undefined}
+          isOpen={sidebarOpen}
+          onToggle={() => setSidebarOpen(false)}
+        />
         <main className="flex-1 pb-16 md:pb-0 relative" data-scroll-root>
           {routeContent}
         </main>
@@ -334,6 +350,12 @@ export default function App() {
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: rgba(255, 255, 255, 0.2);
+        }
+
+        @media (min-width: 768px) {
+          html.sidebar-collapsed .md\\:ml-56 { margin-left: 4rem !important; }
+          html.sidebar-collapsed .md\\:pl-60 { padding-left: 5rem !important; }
+          html.sidebar-collapsed .md\\:ml-\\[28rem\\] { margin-left: 18rem !important; }
         }
       ` }} />
     </div>
