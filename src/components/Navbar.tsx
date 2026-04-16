@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase, signOut } from '../lib/supabase';
-import AuthModal, { AuthView } from './AuthModal';
+import AuthModal from './AuthModal';
 import { useI18n, Language } from '../lib/i18n';
 import { useWorkspaceStore } from '../lib/workspaceStore';
 
@@ -21,7 +21,6 @@ export default function Navbar({ savePanelOpen, onToggleSavePanel }: NavbarProps
   const { t, language, setLanguage } = useI18n();
   const [user, setUser] = useState<any>(null);
   const [authOpen, setAuthOpen] = useState(false);
-  const [authView, setAuthView] = useState<AuthView>('login');
   const [langMenuOpen, setLangMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const langMenuRef = useRef<HTMLDivElement>(null);
@@ -34,11 +33,7 @@ export default function Navbar({ savePanelOpen, onToggleSavePanel }: NavbarProps
   useEffect(() => {
     if (!supabase) return;
     supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setAuthView('change-password');
-        setAuthOpen(true);
-      }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
     return () => subscription.unsubscribe();
@@ -57,8 +52,7 @@ export default function Navbar({ savePanelOpen, onToggleSavePanel }: NavbarProps
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const openAuth = (view: AuthView = 'login') => {
-    setAuthView(view);
+  const openAuth = () => {
     setAuthOpen(true);
   };
 
@@ -270,7 +264,7 @@ export default function Navbar({ savePanelOpen, onToggleSavePanel }: NavbarProps
             </div>
           ) : (
             <button
-              onClick={() => openAuth('login')}
+              onClick={openAuth}
               className="ml-2 px-4 py-1.5 bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant/20 rounded-lg text-on-surface text-sm font-semibold transition-all font-body"
             >
               {t('nav_signin')}
@@ -283,7 +277,6 @@ export default function Navbar({ savePanelOpen, onToggleSavePanel }: NavbarProps
       <AuthModal
         isOpen={authOpen}
         onClose={() => setAuthOpen(false)}
-        initialView={authView}
       />
 
 
