@@ -199,7 +199,7 @@ export default function App() {
     devLog.info(`[Auth] 頁面初始 href (boot): ${bootHref ? bootHref.slice(0, 200) : '(未記錄)'}`);
     const bootHadCode = bootHref?.includes('?code=') || bootHref?.includes('&code=');
     const bootHadToken = bootHref?.includes('access_token');
-    if (bootHadCode)  devLog.info('[Auth] ✅ Boot URL 含 ?code= → SDK 應處理 PKCE exchange');
+    if (bootHadCode) devLog.info('[Auth] ✅ Boot URL 含 ?code= → SDK 應處理 PKCE exchange');
     if (bootHadToken) devLog.info('[Auth] ✅ Boot URL 含 access_token → SDK 應處理 implicit flow');
     if (!bootHadCode && !bootHadToken && bootHref && bootHref !== window.location.origin + '/') {
       devLog.warn('[Auth] ⚠️ Boot URL 無 auth 參數 → Supabase 未將 token 帶回 redirect，確認 Redirect URL 設定');
@@ -304,7 +304,7 @@ export default function App() {
         <Sidebar
           dbUser={currentUser ?? undefined}
           isOpen={sidebarOpen}
-          onToggle={() => setSidebarOpen(false)}
+          onToggle={() => setSidebarOpen(p => !p)}
         />
         <main className="flex-1 pb-16 md:pb-0 relative" data-scroll-root>
           {routeContent}
