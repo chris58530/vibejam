@@ -221,7 +221,7 @@ export default function Sidebar({ dbUser, isOpen = true, onToggle }: SidebarProp
         >
           <span className="material-symbols-outlined text-[22px]">menu</span>
         </button>
-        {isOpen ? (
+        {isOpen && (
           <div
             className="flex items-center gap-2 cursor-pointer min-w-0"
             onClick={() => navigate('/')}
@@ -231,13 +231,6 @@ export default function Sidebar({ dbUser, isOpen = true, onToggle }: SidebarProp
               BeaverKit
             </span>
           </div>
-        ) : (
-          <img
-            src="/Icon.png"
-            alt="BeaverKit"
-            className="w-8 h-8 shrink-0 cursor-pointer"
-            onClick={() => navigate('/')}
-          />
         )}
       </div>
       <div className={`h-px bg-outline-variant/10 shrink-0 mb-2 ${isOpen ? 'mx-3' : 'mx-2'}`} />
