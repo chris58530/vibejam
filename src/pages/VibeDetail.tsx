@@ -4,6 +4,7 @@ import { api, Vibe, Version, Comment, User, VibeChild, VibeAncestor, AccessDenie
 import { supabase } from '../lib/supabase';
 import { useI18n } from '../lib/i18n';
 import AuthModal from '../components/AuthModal';
+import VibeComments from '../components/VibeComments';
 
 interface VibeDetailProps {
   currentUser?: User;
@@ -207,15 +208,10 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
 
   const [vibe, setVibe] = useState<Vibe | null>(null);
   const [selectedVersion, setSelectedVersion] = useState<Version | null>(null);
-  const [commentText, setCommentText] = useState('');
-  const [commentCode, setCommentCode] = useState('');
-  const [showCodeInput, setShowCodeInput] = useState(false);
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
   const isSending = useRef(false);
 
-  const [chatSortOrder, setChatSortOrder] = useState<'newest' | 'oldest'>('oldest');
-  const [showChatSortDropdown, setShowChatSortDropdown] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
@@ -305,13 +301,11 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
 
   const ancestorChain = ancestors.slice(0, -1); // remove last (current)
 
-  const handleAddComment = async () => {
-    if (!commentText.trim() || !selectedVersion || !currentUser || !vibe) return;
+  const handleAddComment = async (content: string) => {
+    if (!content.trim() || !selectedVersion || !currentUser || !vibe) return;
     if (isSending.current) return;
     isSending.current = true;
-    const content = commentText.trim();
-    const codeSnippet = commentCode;
-    setCommentText(''); setCommentCode(''); setShowCodeInput(false);
+    const codeSnippet = '';
     const tempId = -Date.now();
     const optimistic: Comment = {
       id: tempId, vibe_id: vibe.id, version_id: selectedVersion.id,
@@ -394,11 +388,6 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
   const parsedTags = vibe?.tags ? vibe.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
   const commentCount = vibe?.comment_count ?? vibe?.comments?.length ?? 0;
   const remixCount = vibe?.remix_count ?? 0;
-  const sortedComments = [...(vibe?.comments ?? [])].sort((a, b) =>
-    chatSortOrder === 'newest'
-      ? new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      : new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-  );
 
   if (loading) return (
     <div className="md:ml-56 h-screen flex items-center justify-center bg-surface text-on-surface/35 text-sm">
@@ -585,83 +574,15 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
             </div>
 
             {/* ── Comments section ── */}
-            <div className="px-5 py-4">
-              <div className="flex items-center gap-3 mb-4">
-                <h3 className="text-sm font-semibold text-on-surface">
-                  {commentCount} Comment{commentCount !== 1 ? 's' : ''}
-                </h3>
-                <div className="relative">
-                  <button onClick={() => setShowChatSortDropdown(v => !v)} className="flex items-center gap-1 text-xs text-on-surface/45 hover:text-on-surface/75 transition-colors cursor-pointer">
-                    <span className="material-symbols-outlined text-[14px]">sort</span>
-                    Sort by {chatSortOrder === 'oldest' ? 'Oldest' : 'Newest'}
-                    <span className="material-symbols-outlined text-[13px]">expand_more</span>
-                  </button>
-                  {showChatSortDropdown && (
-                    <>
-                      <div className="fixed inset-0 z-20" onClick={() => setShowChatSortDropdown(false)} />
-                      <div className="absolute left-0 top-full mt-1 z-30 bg-surface-container-highest border border-outline-variant/20 rounded-lg shadow-xl overflow-hidden min-w-[150px]">
-                        {(['oldest', 'newest'] as const).map(order => (
-                          <button key={order} onClick={() => { setChatSortOrder(order); setShowChatSortDropdown(false); }} className={`w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-surface-container-high transition-colors cursor-pointer ${chatSortOrder === order ? 'text-primary' : 'text-on-surface/65'}`}>
-                            <span className="material-symbols-outlined text-[13px]">{order === 'oldest' ? 'arrow_downward' : 'arrow_upward'}</span>
-                            {order === 'oldest' ? 'Oldest first' : 'Newest first'}
-                            {chatSortOrder === order && <span className="ml-auto material-symbols-outlined text-[12px]">check</span>}
-                          </button>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {currentUser ? (
-                <div className="flex gap-2 items-center pb-3 mb-3 border-b border-outline-variant/10">
-                  <img src={currentUser.avatar} className="w-7 h-7 rounded-full shrink-0" alt="" />
-                  <div className="flex-1 bg-surface-container-high rounded-xl px-3 py-1.5 flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={commentText}
-                      onChange={e => setCommentText(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddComment(); } }}
-                      placeholder="留言這個 Vibe…"
-                      className="flex-1 bg-transparent text-sm text-on-surface placeholder:text-on-surface/30 outline-none"
-                    />
-                    {commentText.trim() && (
-                      <button onClick={handleAddComment} className="px-2.5 py-1 bg-primary text-on-primary text-xs font-semibold rounded-lg cursor-pointer hover:bg-primary/90 transition-colors shrink-0">送出</button>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <button onClick={() => setShowAuthModal(true)} className="w-full flex items-center justify-center gap-2 px-3 py-3 mb-4 bg-surface-container-high/60 border border-outline-variant/15 rounded-xl text-on-surface/55 text-sm cursor-pointer hover:bg-surface-container-high transition-colors">
-                  <span className="material-symbols-outlined text-[15px]">login</span>
-                  登入後留言
-                </button>
-              )}
-
-              <div className="space-y-5 min-h-[420px]">
-                {sortedComments.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center gap-2 py-8">
-                    <span className="material-symbols-outlined text-[32px] text-on-surface/10">forum</span>
-                    <p className="text-xs text-on-surface/25">Be the first to comment</p>
-                  </div>
-                ) : sortedComments.map(comment => (
-                  <div key={comment.id} className={`flex gap-3 ${comment.optimistic ? 'opacity-50' : ''}`}>
-                    <img src={comment.author_avatar} className="w-8 h-8 rounded-full shrink-0 border border-outline-variant/10" alt="" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                        <span className="text-xs font-semibold text-on-surface">@{comment.author_name}</span>
-                        {comment.author_id === vibe.author_id && (
-                          <span className="text-[9px] px-1.5 py-0.5 rounded border border-primary/25 text-primary bg-primary/8 uppercase tracking-widest">Creator</span>
-                        )}
-                        {comment.optimistic
-                          ? <span className="text-[10px] text-on-surface/25 italic">Sending…</span>
-                          : <span className="text-[10px] text-on-surface/25">{timeAgo(comment.created_at)}</span>}
-                      </div>
-                      <p className="text-[13px] text-on-surface/75 leading-relaxed whitespace-pre-wrap">{comment.content}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <VibeComments
+              currentUser={currentUser}
+              comments={vibe.comments ?? []}
+              commentCount={commentCount}
+              vibeAuthorId={vibe.author_id}
+              onAddComment={handleAddComment}
+              onRequireAuth={() => setShowAuthModal(true)}
+              timeAgo={timeAgo}
+            />
 
           </div>
 
