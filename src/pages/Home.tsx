@@ -130,9 +130,9 @@ function SideRailCard({ vibe, label, onSelect }: { vibe: Vibe; label: string; on
       onClick={() => onSelect(vibe)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="group grid cursor-pointer gap-4 rounded-3xl border border-outline-variant/15 bg-surface-container-low p-4 transition-colors duration-200 hover:border-primary/25 hover:bg-surface-container sm:grid-cols-[160px_minmax(0,1fr)]"
+      className="group grid cursor-pointer gap-4 rounded-3xl border border-outline-variant/15 bg-surface-container-low p-4 transition-colors duration-200 hover:border-primary/25 hover:bg-surface-container sm:grid-cols-[200px_minmax(0,1fr)] sm:items-stretch"
     >
-      <div className="relative w-full overflow-hidden rounded-2xl bg-surface-container-lowest aspect-[4/3]">
+      <div className="relative w-full overflow-hidden rounded-2xl bg-surface-container-lowest aspect-[4/3] sm:aspect-auto sm:h-full sm:min-h-[140px]">
         <div className={`absolute inset-0 z-10 pointer-events-none transition-opacity duration-200 ${isHovered ? 'opacity-0' : 'opacity-100 bg-black/25'}`} />
         <iframe
           srcDoc={getPreviewCode(vibe.latest_code || '', isHovered)}
@@ -229,7 +229,7 @@ function FeaturedShowcase({
         className="group relative overflow-hidden rounded-3xl border border-outline-variant/15 bg-surface-container-low cursor-pointer"
       >
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-tertiary/8" />
-        <div className="grid min-h-[480px] xl:grid-cols-2 xl:min-h-[540px]">
+        <div className="grid min-h-[480px] xl:grid-cols-[1.2fr_1fr] xl:min-h-[540px]">
           <div className="relative min-h-[280px] overflow-hidden bg-surface-container-lowest xl:min-h-full">
             <div className={`absolute inset-0 z-10 pointer-events-none transition-opacity duration-200 ${isHovered ? 'opacity-0' : 'opacity-100 bg-black/22'}`} />
             <iframe
@@ -253,10 +253,10 @@ function FeaturedShowcase({
             <div className="space-y-5">
               <div className="space-y-3">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-primary/85">{feedCopy.eyebrow}</p>
-                <h1 className="text-4xl font-black tracking-tight text-on-surface xl:text-5xl xl:leading-[1.08]">
+                <h1 className="text-3xl font-black tracking-tight text-on-surface xl:text-4xl xl:leading-[1.1]">
                   {featured.title}
                 </h1>
-                <p className="max-w-[34rem] text-sm leading-relaxed text-on-surface/65">
+                <p className="text-sm leading-relaxed text-on-surface/65">
                   {featured.description || feedCopy.description}
                 </p>
               </div>
@@ -384,8 +384,6 @@ function HomeCard({ vibe, onSelect }: { vibe: Vibe; onSelect: (v: Vibe) => void 
       </div>
 
       <div className="space-y-3 border-t border-outline-variant/12 p-5 pt-4">
-        <ProjectMetaRow vibe={vibe} />
-
         <div className="space-y-2">
           <h3 className="line-clamp-2 text-lg font-bold tracking-tight text-on-surface transition-colors duration-200 group-hover:text-primary">
             {vibe.title}
@@ -394,6 +392,8 @@ function HomeCard({ vibe, onSelect }: { vibe: Vibe; onSelect: (v: Vibe) => void 
             {vibe.description || 'Open the project to inspect the interaction, code structure, and version history.'}
           </p>
         </div>
+
+        <ProjectMetaRow vibe={vibe} />
 
         <div className="flex items-center justify-between border-t border-outline-variant/12 pt-4 text-on-surface/50">
           <div className="flex flex-wrap items-center gap-4 text-xs font-medium">
@@ -481,7 +481,7 @@ export default function Home() {
   const totalRemixes = vibes.reduce((sum, vibe) => sum + (vibe.remix_count ?? 0), 0);
 
   return (
-    <section className="md:ml-56 min-h-screen bg-surface overflow-x-hidden">
+    <section className="md:ml-[var(--app-sidebar-width)] min-h-screen bg-surface overflow-x-hidden transition-[margin] duration-300">
       <div className="space-y-10 px-4 pb-16 pt-24 md:px-6 lg:px-8">
         {loading ? (
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.58fr)]">
