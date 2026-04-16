@@ -212,36 +212,25 @@ export default function Sidebar({ dbUser, isOpen = true, onToggle }: SidebarProp
       className={`fixed left-0 top-0 h-screen bg-surface-container-low flex flex-col pb-2 hidden md:flex z-50 border-r border-outline-variant/5 overflow-hidden transition-[width] duration-300 ease-out ${isOpen ? 'w-56' : 'w-16'}`}
     >
       {/* Logo area */}
-      <div className={`h-16 flex items-center shrink-0 ${isOpen ? 'px-3 gap-2' : 'justify-center px-2'}`}>
-        {isOpen ? (
-          <>
-            <div
-              className="flex items-center gap-3 cursor-pointer min-w-0 flex-1"
-              onClick={() => navigate('/')}
-            >
-              <img src="/Icon.png" alt="BeaverKit" className="w-8 h-8 shrink-0" />
-              <span className="text-lg font-bold tracking-tighter text-on-surface font-headline whitespace-nowrap">
-                BeaverKit
-              </span>
-            </div>
-            <button
-              onClick={onToggle}
-              title="收合側邊欄"
-              aria-label="收合側邊欄"
-              className="shrink-0 p-1.5 rounded-lg text-on-surface/50 hover:text-on-surface hover:bg-surface-container-high transition-colors"
-            >
-              <span className="material-symbols-outlined text-[20px]">menu_open</span>
-            </button>
-          </>
-        ) : (
-          <button
-            onClick={onToggle}
-            title="展開側邊欄"
-            aria-label="展開側邊欄"
-            className="flex h-10 w-10 items-center justify-center rounded-xl text-on-surface/55 hover:text-on-surface hover:bg-surface-container-high transition-colors"
+      <div className="h-16 flex items-center shrink-0 px-3 gap-3">
+        <button
+          onClick={onToggle}
+          title={isOpen ? '收合側邊欄' : '展開側邊欄'}
+          aria-label={isOpen ? '收合側邊欄' : '展開側邊欄'}
+          className="shrink-0 flex h-9 w-9 items-center justify-center rounded-lg text-on-surface/50 hover:text-on-surface hover:bg-surface-container-high transition-colors"
+        >
+          <span className="material-symbols-outlined text-[22px]">menu</span>
+        </button>
+        {isOpen && (
+          <div
+            className="flex items-center gap-2 cursor-pointer min-w-0"
+            onClick={() => navigate('/')}
           >
-            <span className="material-symbols-outlined text-[20px]">menu</span>
-          </button>
+            <img src="/Icon.png" alt="BeaverKit" className="w-8 h-8 shrink-0" />
+            <span className="text-lg font-bold tracking-tighter text-on-surface font-headline whitespace-nowrap">
+              BeaverKit
+            </span>
+          </div>
         )}
       </div>
       <div className={`h-px bg-outline-variant/10 shrink-0 mb-2 ${isOpen ? 'mx-3' : 'mx-2'}`} />
