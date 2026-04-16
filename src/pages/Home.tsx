@@ -203,7 +203,7 @@ function FeaturedShowcase({
         className="group relative cursor-pointer overflow-hidden rounded-3xl border border-outline-variant/15"
       >
         {/* Full-bleed iframe preview */}
-        <div className="relative min-h-[420px] overflow-hidden bg-surface-container-lowest xl:min-h-[520px]">
+        <div className="relative min-h-[520px] overflow-hidden bg-surface-container-lowest md:min-h-[620px] xl:min-h-[75vh]">
           <div className={`absolute inset-0 z-10 pointer-events-none transition-opacity duration-200 ${isHovered ? 'opacity-0' : 'opacity-100 bg-black/18'}`} />
           <iframe
             srcDoc={getPreviewCode(featured.latest_code || '', isHovered)}
@@ -452,7 +452,7 @@ export default function Home() {
       <div className="space-y-10 px-4 pb-16 pt-24 md:px-6 lg:px-8">
         {loading ? (
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(340px,0.5fr)]">
-            <div className="min-h-[420px] rounded-3xl border border-outline-variant/15 bg-surface-container-highest animate-pulse xl:min-h-[520px]" />
+            <div className="min-h-[520px] rounded-3xl border border-outline-variant/15 bg-surface-container-highest animate-pulse md:min-h-[620px] xl:min-h-[75vh]" />
             <div className="grid gap-5">
               <div className="aspect-[16/10] rounded-3xl bg-surface-container-highest animate-pulse" />
               <div className="aspect-[16/10] rounded-3xl bg-surface-container-highest animate-pulse" />
