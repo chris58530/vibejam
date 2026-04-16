@@ -133,7 +133,7 @@ export default function YourLibrary({ currentUser }: YourLibraryProps) {
     const grouped = groupByDate(sorted, language === 'zh-TW' ? 'zh-TW' : 'en');
 
     return (
-      <main className="md:ml-56 min-h-screen bg-surface overflow-x-hidden">
+      <main className="md:ml-[var(--app-sidebar-width)] min-h-screen bg-surface overflow-x-hidden transition-[margin] duration-300">
         {/* Header */}
         <div className="sticky top-16 z-30 bg-surface/95 backdrop-blur-md border-b border-outline-variant/10">
           <div className="max-w-4xl mx-auto px-4 md:px-8 py-3 flex items-center justify-between">
@@ -204,7 +204,7 @@ export default function YourLibrary({ currentUser }: YourLibraryProps) {
      ═══════════════════════════════════════════ */
   if (activeTab === 'saved') {
     return (
-      <main className="md:ml-56 min-h-screen bg-surface overflow-x-hidden">
+      <main className="md:ml-[var(--app-sidebar-width)] min-h-screen bg-surface overflow-x-hidden transition-[margin] duration-300">
         {/* Header */}
         <div className="border-b border-outline-variant/10">
           <div className="max-w-6xl mx-auto px-4 md:px-8 pt-8 pb-6">
@@ -294,7 +294,7 @@ export default function YourLibrary({ currentUser }: YourLibraryProps) {
      Grid of liked items as cards
      ═══════════════════════════════════════════ */
   return (
-    <main className="md:ml-56 min-h-screen bg-surface overflow-x-hidden">
+    <main className="md:ml-[var(--app-sidebar-width)] min-h-screen bg-surface overflow-x-hidden transition-[margin] duration-300">
       {/* Header */}
       <div className="border-b border-outline-variant/10">
         <div className="max-w-6xl mx-auto px-4 md:px-8 pt-8 pb-6">

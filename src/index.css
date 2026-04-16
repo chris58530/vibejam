@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --app-sidebar-width: 14rem; /* sidebar open default (w-56) */
+}
+
 html,
 body,
 #root,

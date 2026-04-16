@@ -147,19 +147,25 @@ function SideRailCard({ vibe, label, onSelect }: { vibe: Vibe; label: string; on
       </div>
 
       {/* Overlay text content */}
-      <div className="absolute inset-x-0 bottom-0 z-20 space-y-2 p-5">
+      <div className="absolute inset-x-0 bottom-0 z-20 space-y-2 p-4">
         <div className="flex items-center gap-2">
           <span className="rounded-full bg-primary/90 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-on-primary">
             {label}
           </span>
           <span className="text-[11px] font-medium text-white/60">{formatViews(vibe.views)} views</span>
         </div>
-        <h3 className="line-clamp-2 text-lg font-bold tracking-tight text-white transition-colors duration-200 group-hover:text-primary-container">
+        <h3 className="line-clamp-1 text-base font-bold tracking-tight text-white transition-colors duration-200 group-hover:text-primary-container">
           {vibe.title}
         </h3>
-        <p className="line-clamp-1 text-sm text-white/65">
-          {vibe.description || 'Open to explore code and interaction.'}
-        </p>
+        <div className="flex items-center gap-2">
+          <img
+            src={getAvatarSrc(vibe)}
+            alt={vibe.author_name}
+            className="h-5 w-5 rounded-full object-cover border border-white/20 flex-shrink-0"
+          />
+          <span className="text-[11px] text-white/65 truncate">{vibe.author_name}</span>
+          <span className="text-[10px] text-white/35 flex-shrink-0">{timeAgo(vibe.created_at)}</span>
+        </div>
       </div>
     </article>
   );
@@ -345,16 +351,16 @@ function HomeCard({ vibe, onSelect }: { vibe: Vibe; onSelect: (v: Vibe) => void 
       </div>
 
       <div className="space-y-3 border-t border-outline-variant/12 p-5 pt-4">
-        <div className="space-y-2">
-          <h3 className="line-clamp-2 text-lg font-bold tracking-tight text-on-surface transition-colors duration-200 group-hover:text-primary">
+        <ProjectMetaRow vibe={vibe} />
+
+        <div className="space-y-1.5">
+          <h3 className="line-clamp-2 text-base font-bold tracking-tight text-on-surface transition-colors duration-200 group-hover:text-primary">
             {vibe.title}
           </h3>
-          <p className="line-clamp-2 text-sm leading-relaxed text-on-surface/60">
+          <p className="line-clamp-2 text-sm leading-relaxed text-on-surface/55">
             {vibe.description || 'Open the project to inspect the interaction, code structure, and version history.'}
           </p>
         </div>
-
-        <ProjectMetaRow vibe={vibe} />
 
         <div className="flex items-center justify-between border-t border-outline-variant/12 pt-4 text-on-surface/50">
           <div className="flex flex-wrap items-center gap-4 text-xs font-medium">

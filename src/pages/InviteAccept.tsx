@@ -48,7 +48,7 @@ export default function InviteAccept() {
 
   if (loading || supabaseUser === undefined) {
     return (
-      <div className="md:ml-56 pt-20 flex items-center justify-center min-h-screen bg-surface text-on-surface/40 font-mono text-lg tracking-widest uppercase">
+      <div className="md:ml-[var(--app-sidebar-width)] pt-20 flex items-center justify-center min-h-screen bg-surface text-on-surface/40 font-mono text-lg tracking-widest uppercase transition-[margin] duration-300">
         Loading...
       </div>
     );
@@ -56,7 +56,7 @@ export default function InviteAccept() {
 
   if (invalid) {
     return (
-      <div className="md:ml-56 pt-20 flex flex-col items-center justify-center min-h-screen bg-surface gap-6">
+      <div className="md:ml-[var(--app-sidebar-width)] pt-20 flex flex-col items-center justify-center min-h-screen bg-surface gap-6 transition-[margin] duration-300">
         <div className="w-20 h-20 rounded-full bg-surface-container-high flex items-center justify-center">
           <span className="material-symbols-outlined text-[40px] text-error/60">link_off</span>
         </div>
@@ -73,7 +73,7 @@ export default function InviteAccept() {
 
   if (accepted) {
     return (
-      <div className="md:ml-56 pt-20 flex flex-col items-center justify-center min-h-screen bg-surface gap-6">
+      <div className="md:ml-[var(--app-sidebar-width)] pt-20 flex flex-col items-center justify-center min-h-screen bg-surface gap-6 transition-[margin] duration-300">
         <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
           <span className="material-symbols-outlined text-[40px] text-primary">check_circle</span>
         </div>
@@ -86,7 +86,7 @@ export default function InviteAccept() {
   }
 
   return (
-    <div className="md:ml-56 pt-20 flex flex-col items-center justify-center min-h-screen bg-surface gap-6">
+    <div className="md:ml-[var(--app-sidebar-width)] pt-20 flex flex-col items-center justify-center min-h-screen bg-surface gap-6 transition-[margin] duration-300">
       <div className="w-20 h-20 rounded-full bg-surface-container-high flex items-center justify-center">
         <span className="material-symbols-outlined text-[40px] text-primary">group_add</span>
       </div>

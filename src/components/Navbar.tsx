@@ -65,49 +65,49 @@ export default function Navbar({ savePanelOpen, onToggleSavePanel, sidebarOpen =
       <header className={`fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl flex items-center justify-between pr-6 h-16 pl-6 transition-[padding] duration-300 ${sidebarOpen ? 'md:pl-60' : 'md:pl-20'} ${!isWorkspace ? 'border-b border-transparent' : 'border-b border-outline-variant/10'}`}>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-8">
-          {isWorkspace ? (
-            <div
-              className="text-xl font-bold tracking-tighter text-on-surface flex items-center gap-2 cursor-pointer font-headline"
-              onClick={() => navigate('/')}
-            >
-              <img src="/Icon.png" alt="BeaverKit" className="w-8 h-8" />
-              BeaverKit Studio
-            </div>
-          ) : (
-            /* Mobile only — hidden on desktop to avoid ghost gap-8 space */
-            <div className="flex items-center gap-4 md:hidden">
-              <span className="material-symbols-outlined text-on-surface/60 cursor-pointer hover:bg-surface-container-high p-2 rounded-lg transition-colors">menu</span>
-              <h1
-                className="text-xl font-bold tracking-tighter text-on-surface font-headline cursor-pointer flex items-center gap-2"
+            {isWorkspace ? (
+              <div
+                className="text-xl font-bold tracking-tighter text-on-surface flex items-center gap-2 cursor-pointer font-headline"
                 onClick={() => navigate('/')}
               >
                 <img src="/Icon.png" alt="BeaverKit" className="w-8 h-8" />
-                BeaverKit
-              </h1>
-            </div>
-          )}
-
-          {!isWorkspace && (
-            <div className="hidden md:flex items-center gap-2">
-              {!isHome && (
-                <button
-                  onClick={() => navigate(-1)}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface-container-low hover:bg-surface-container-high transition-colors ring-1 ring-black/[0.06]"
-                  aria-label="Go back"
-                >
-                  <span className="material-symbols-outlined text-on-surface/70 text-[20px]">chevron_left</span>
-                </button>
-              )}
-              <div className="flex items-center bg-surface-container-low px-4 py-2 rounded-xl gap-3 w-48 lg:w-72 xl:w-96 group transition-all duration-300 ring-1 ring-black/[0.06] focus-within:ring-primary/30 h-10">
-                <span className="material-symbols-outlined text-on-surface-variant text-sm">search</span>
-                <input
-                  className="bg-transparent border-none focus:ring-0 text-sm w-full font-body placeholder:text-on-surface-variant/50 outline-none"
-                  placeholder={t('nav_search_placeholder')}
-                  type="text"
-                />
+                BeaverKit Studio
               </div>
-            </div>
-          )}
+            ) : (
+              /* Mobile only — hidden on desktop to avoid ghost gap-8 space */
+              <div className="flex items-center gap-4 md:hidden">
+                <span className="material-symbols-outlined text-on-surface/60 cursor-pointer hover:bg-surface-container-high p-2 rounded-lg transition-colors">menu</span>
+                <h1
+                  className="text-xl font-bold tracking-tighter text-on-surface font-headline cursor-pointer flex items-center gap-2"
+                  onClick={() => navigate('/')}
+                >
+                  <img src="/Icon.png" alt="BeaverKit" className="w-8 h-8" />
+                  BeaverKit
+                </h1>
+              </div>
+            )}
+
+            {!isWorkspace && (
+              <div className="hidden md:flex items-center gap-2">
+                {!isHome && (
+                  <button
+                    onClick={() => navigate(-1)}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface-container-low hover:bg-surface-container-high transition-colors ring-1 ring-black/[0.06]"
+                    aria-label="Go back"
+                  >
+                    <span className="material-symbols-outlined text-on-surface/70 text-[20px]">chevron_left</span>
+                  </button>
+                )}
+                <div className="flex items-center bg-surface-container-low px-4 py-2 rounded-xl gap-3 w-48 lg:w-72 xl:w-96 group transition-all duration-300 ring-1 ring-black/[0.06] focus-within:ring-primary/30 h-10">
+                  <span className="material-symbols-outlined text-on-surface-variant text-sm">search</span>
+                  <input
+                    className="bg-transparent border-none focus:ring-0 text-sm w-full font-body placeholder:text-on-surface-variant/50 outline-none"
+                    placeholder={t('nav_search_placeholder')}
+                    type="text"
+                  />
+                </div>
+              </div>
+            )}
 
 
           </div>
@@ -124,13 +124,12 @@ export default function Navbar({ savePanelOpen, onToggleSavePanel, sidebarOpen =
                 <span className="material-symbols-outlined text-[20px]" style={savePanelOpen ? { fontVariationSettings: "'FILL' 1" } : {}}>folder</span>
               </button>
               <div className="h-6 w-px bg-outline-variant/20 mx-2"></div>
-              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-mono transition-colors ${
-                saveStatus === 'unsaved'
+              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-mono transition-colors ${saveStatus === 'unsaved'
                   ? 'bg-amber-500/10 text-amber-400'
                   : saveStatus === 'saving'
-                  ? 'bg-surface-container-low text-on-surface/50'
-                  : 'bg-surface-container-low text-tertiary'
-              }`}>
+                    ? 'bg-surface-container-low text-on-surface/50'
+                    : 'bg-surface-container-low text-tertiary'
+                }`}>
                 {saveStatus === 'unsaved' ? (
                   <span className="w-2 h-2 rounded-full bg-amber-400"></span>
                 ) : saveStatus === 'saving' ? (
@@ -171,11 +170,10 @@ export default function Navbar({ savePanelOpen, onToggleSavePanel, sidebarOpen =
                   <button
                     key={lang.code}
                     onClick={() => { setLanguage(lang.code); setLangMenuOpen(false); }}
-                    className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-body transition-colors ${
-                      language === lang.code
+                    className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-body transition-colors ${language === lang.code
                         ? 'text-primary bg-primary/10'
                         : 'text-on-surface/70 hover:bg-surface-container-high hover:text-on-surface'
-                    }`}
+                      }`}
                   >
                     <span>{lang.flag}</span>
                     <span>{lang.label}</span>

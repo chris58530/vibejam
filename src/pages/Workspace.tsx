@@ -718,7 +718,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
 
   // ── Render ────────────────────────────────────────────────────────
   return (
-    <main className={`${savePanelOpen ? 'md:ml-[28rem]' : 'md:ml-56'} flex-1 flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-background transition-[margin] duration-300`}>
+    <main className={`${savePanelOpen ? 'md:ml-[calc(var(--app-sidebar-width)+14rem)]' : 'md:ml-[var(--app-sidebar-width)]'} flex-1 flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-background transition-[margin] duration-300`}>
       {/* ── Header ── */}
       <div className="bg-surface px-4 py-1.5 flex items-center gap-3 border-b border-outline-variant/10 shrink-0 relative">
         {/* Center: Title — inline edit on click */}
@@ -1285,7 +1285,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
 
       {/* ── 我的專案面板 ── */}
       {savePanelOpen && (
-        <aside className="fixed left-56 top-16 h-[calc(100vh-64px)] w-56 bg-[#1a1a1c] border-r border-white/[0.06] z-30 flex-col hidden md:flex overflow-hidden">
+        <aside className="fixed md:left-[var(--app-sidebar-width)] top-16 h-[calc(100vh-64px)] w-56 bg-[#1a1a1c] border-r border-white/[0.06] z-30 flex-col hidden md:flex overflow-hidden transition-[left] duration-300">
           {/* Header */}
           <div className="px-4 py-3 border-b border-white/5 shrink-0">
             <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-[#dae2fd]/40">我的專案</span>

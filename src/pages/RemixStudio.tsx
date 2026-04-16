@@ -291,7 +291,7 @@ ${code}
   if (!remixFrom) return null;
 
   return (
-    <main className="md:ml-56 flex-1 flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-background">
+    <main className="md:ml-[var(--app-sidebar-width)] flex-1 flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-background transition-[margin] duration-300">
       <div className="bg-surface px-4 py-1.5 flex items-center gap-3 border-b border-outline-variant/10 shrink-0 relative">
         <div className="absolute left-1/2 -translate-x-1/2 flex items-center">
           {isTitleEditing ? (

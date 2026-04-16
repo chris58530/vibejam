@@ -405,13 +405,13 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
   const remixCount = vibe?.remix_count ?? 0;
 
   if (loading) return (
-    <div className="md:ml-56 h-screen flex items-center justify-center bg-surface text-on-surface/35 text-sm">
+    <div className="md:ml-[var(--app-sidebar-width)] h-screen flex items-center justify-center bg-surface text-on-surface/35 text-sm transition-[margin] duration-300">
       Loading…
     </div>
   );
 
   if (accessDenied) return (
-    <div className="md:ml-56 h-screen flex flex-col items-center justify-center bg-surface gap-5">
+    <div className="md:ml-[var(--app-sidebar-width)] h-screen flex flex-col items-center justify-center bg-surface gap-5 transition-[margin] duration-300">
       <div className="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center">
         <span className="material-symbols-outlined text-[32px] text-on-surface/30">lock</span>
       </div>
@@ -434,7 +434,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
   };
 
   return (
-    <div className="md:ml-56 h-[calc(100vh-64px)] flex overflow-hidden bg-black">
+    <div className="md:ml-[var(--app-sidebar-width)] h-[calc(100vh-64px)] flex overflow-hidden bg-black transition-[margin] duration-300">
 
       {/* Fullscreen overlay */}
       {isFullscreen && (

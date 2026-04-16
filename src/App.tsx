@@ -167,8 +167,13 @@ export default function App() {
 
   useEffect(() => {
     const root = document.documentElement;
-    if (sidebarOpen) root.classList.remove('sidebar-collapsed');
-    else root.classList.add('sidebar-collapsed');
+    if (sidebarOpen) {
+      root.classList.remove('sidebar-collapsed');
+      root.style.setProperty('--app-sidebar-width', '14rem');
+    } else {
+      root.classList.add('sidebar-collapsed');
+      root.style.setProperty('--app-sidebar-width', '4rem');
+    }
   }, [sidebarOpen]);
 
   useEffect(() => {
