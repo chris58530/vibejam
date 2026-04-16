@@ -374,6 +374,21 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
     });
   };
 
+  const handleEdit = () => {
+    if (!vibe) return;
+    const slot = {
+      id: `vibe-${vibe.id}`,
+      title: vibe.title,
+      tags: vibe.tags || '',
+      editorMode: 'single',
+      code: { html: selectedVersion?.code || '', css: '', js: '' },
+      savedAt: new Date().toISOString(),
+      vibeId: vibe.id,
+    };
+    sessionStorage.setItem('beaverkit_pending_load', JSON.stringify(slot));
+    navigate('/workspace');
+  };
+
   const timeAgo = (dateStr: string) => {
     if (!dateStr) return '';
     const days = Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
@@ -609,13 +624,23 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
               </div>
               {/* Action buttons */}
               <div className="px-4 pb-4 flex gap-2">
-                <button
-                  onClick={handleRemix}
-                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-primary hover:bg-primary/90 text-on-primary text-xs font-bold rounded-lg shadow-sm shadow-primary/20 transition-all cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-[14px]">repeat</span>
-                  Remix
-                </button>
+                {isOwner ? (
+                  <button
+                    onClick={handleEdit}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-primary hover:bg-primary/90 text-on-primary text-xs font-bold rounded-lg shadow-sm shadow-primary/20 transition-all cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[14px]">edit</span>
+                    Edit
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleRemix}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-primary hover:bg-primary/90 text-on-primary text-xs font-bold rounded-lg shadow-sm shadow-primary/20 transition-all cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[14px]">repeat</span>
+                    Remix
+                  </button>
+                )}
                 <button
                   onClick={handleToggleLike}
                   disabled={isLiking}
@@ -627,14 +652,12 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                 </button>
                 {isOwner && (
                   <button
-                    onClick={() => {
-                      const slot = { id: `vibe-${vibe.id}`, title: vibe.title, tags: vibe.tags || '', editorMode: 'single', code: { html: selectedVersion?.code || '', css: '', js: '' }, savedAt: new Date().toISOString(), vibeId: vibe.id };
-                      sessionStorage.setItem('beaverkit_pending_load', JSON.stringify(slot));
-                      navigate('/workspace');
-                    }}
+                    onClick={handleRemix}
+                    title="Remix 自己的作品（建立實驗分支）"
+                    aria-label="Remix this vibe as an experimental branch"
                     className="flex items-center gap-1 px-3 py-2.5 bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-xs font-bold rounded-lg ring-1 ring-outline-variant/15 transition-colors cursor-pointer"
                   >
-                    <span className="material-symbols-outlined text-[14px]">edit</span>
+                    <span className="material-symbols-outlined text-[14px]">repeat</span>
                   </button>
                 )}
               </div>
