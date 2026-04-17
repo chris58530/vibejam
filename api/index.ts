@@ -95,6 +95,27 @@ app.put('/api/users/:username', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
 
+// VIP list
+app.get('/api/users/vip-list', async (_req, res) => {
+  try {
+    await ensureDb();
+    const users = await db.query('SELECT * FROM users WHERE is_vip = TRUE ORDER BY username', []);
+    res.json(users);
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+// Set/revoke VIP
+app.patch('/api/users/:username/vip', async (req, res) => {
+  const username = decodeURIComponent(req.params.username);
+  const { is_vip } = req.body;
+  try {
+    await ensureDb();
+    const user = await db.get('UPDATE users SET is_vip = $1 WHERE username = $2 RETURNING *', [is_vip ? 'true' : 'false', username]);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json(user);
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
 // Toggle follow/unfollow user
 app.post('/api/users/:username/follow', async (req, res) => {
   const targetUsername = decodeURIComponent(req.params.username);

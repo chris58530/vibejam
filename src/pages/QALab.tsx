@@ -18,7 +18,7 @@ interface GeneratedAccount {
   note?: string;
 }
 
-type Tab = 'data' | 'interact' | 'cleanup' | 'system';
+type Tab = 'data' | 'interact' | 'cleanup' | 'system' | 'vip';
 
 // ─── Sample vibe templates ────────────────────────────────────────────────────
 const VIBE_TEMPLATES = [
@@ -138,6 +138,7 @@ const TABS: { id: Tab; label: string; icon: string; accent: string }[] = [
   { id: 'interact', label: '互動測試', icon: 'bolt',          accent: 'cyan'   },
   { id: 'cleanup',  label: '清理中心', icon: 'delete_sweep',  accent: 'red'    },
   { id: 'system',   label: '系統健診', icon: 'monitor_heart', accent: 'emerald'},
+  { id: 'vip',      label: 'VIP 管理', icon: 'workspace_premium', accent: 'amber'  },
 ];
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -183,6 +184,13 @@ export default function QALab() {
   const [cleanupAuthor, setCleanupAuthor]         = useState('all');
   const [selectedDeleteIds, setSelectedDeleteIds] = useState<number[]>([]);
   const [cleanupDeleting, setCleanupDeleting]     = useState(false);
+
+  // VIP management state
+  const [vipInput, setVipInput]             = useState('');
+  const [vipSearchResult, setVipSearchResult] = useState<User | null | 'not_found'>(null);
+  const [vipLoading, setVipLoading]         = useState(false);
+  const [vipList, setVipList]               = useState<User[]>([]);
+  const [vipListLoading, setVipListLoading] = useState(false);
 
   // System health state
   const [pingLoading, setPingLoading]       = useState(false);
@@ -509,6 +517,61 @@ export default function QALab() {
       addLog('err', `取得統計失敗：${e.message}`);
     }
     setDbStatsLoading(false);
+  };
+
+  // ─── VIP handlers ─────────────────────────────────────────────────────────
+  const searchVipUser = async () => {
+    if (!vipInput.trim()) return;
+    setVipLoading(true);
+    setVipSearchResult(null);
+    addLog('info', `搜尋使用者：${vipInput.trim()}`);
+    try {
+      const user = await api.getUserProfile(vipInput.trim());
+      setVipSearchResult(user);
+      addLog('ok', `找到使用者：@${user.username}（VIP: ${user.is_vip ? '✅' : '❌'}）`);
+    } catch {
+      setVipSearchResult('not_found');
+      addLog('warn', `找不到使用者：${vipInput.trim()}`);
+    }
+    setVipLoading(false);
+  };
+
+  const toggleVip = async (username: string, grantVip: boolean) => {
+    setVipLoading(true);
+    addLog('info', `${grantVip ? '授予' : '撤銷'} VIP：@${username}`);
+    try {
+      const res = await apiFetch(`/users/${encodeURIComponent(username)}/vip`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_vip: grantVip }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed');
+      setVipSearchResult(data);
+      setVipList(prev => grantVip
+        ? (prev.find(u => u.username === username) ? prev : [...prev, data])
+        : prev.filter(u => u.username !== username)
+      );
+      addLog('ok', `@${username} VIP 狀態已更新為：${grantVip ? '✅ 是' : '❌ 否'}`);
+    } catch (e: any) {
+      addLog('err', `VIP 更新失敗：${e.message}`);
+    }
+    setVipLoading(false);
+  };
+
+  const loadVipList = async () => {
+    setVipListLoading(true);
+    addLog('info', '載入 VIP 列表...');
+    try {
+      const res = await apiFetch('/users/vip-list');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed');
+      setVipList(data);
+      addLog('ok', `共 ${data.length} 位 VIP 使用者`);
+    } catch (e: any) {
+      addLog('err', `載入 VIP 列表失敗：${e.message}`);
+    }
+    setVipListLoading(false);
   };
 
   // ─── Render helpers ────────────────────────────────────────────────────────
@@ -1170,6 +1233,122 @@ export default function QALab() {
                       </div>
                     ))}
                   </div>
+                </Section>
+              </>
+            )}
+
+            {/* ── Tab: VIP 管理 ── */}
+            {activeTab === 'vip' && (
+              <>
+                {/* Search & toggle */}
+                <Section title="搜尋使用者" icon="manage_accounts" accent="amber">
+                  <p className="text-white/35 text-xs leading-relaxed mb-3">
+                    輸入使用者名稱查詢，然後授予或撤銷 VIP 權限。
+                  </p>
+                  <div className="flex gap-2 mb-4">
+                    <input
+                      type="text"
+                      value={vipInput}
+                      onChange={e => setVipInput(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && searchVipUser()}
+                      placeholder="username"
+                      className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-amber-500/50"
+                    />
+                    <button
+                      onClick={searchVipUser}
+                      disabled={vipLoading || !vipInput.trim()}
+                      className="px-4 py-2 bg-amber-600 hover:bg-amber-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-white text-xs font-semibold transition-all cursor-pointer"
+                    >
+                      <span className={`material-symbols-outlined text-[14px] ${vipLoading ? 'animate-spin' : ''}`}>
+                        {vipLoading ? 'sync' : 'search'}
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* Search result */}
+                  {vipSearchResult === 'not_found' && (
+                    <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-red-500/20 bg-red-500/10 text-xs text-red-300">
+                      <span className="material-symbols-outlined text-[14px]">person_off</span>
+                      找不到此使用者
+                    </div>
+                  )}
+
+                  {vipSearchResult && vipSearchResult !== 'not_found' && (
+                    <div className="flex items-center gap-3 px-3 py-3 rounded-xl border border-amber-500/20 bg-amber-500/5">
+                      <img
+                        src={vipSearchResult.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${vipSearchResult.username}`}
+                        alt=""
+                        className="w-9 h-9 rounded-full bg-white/10 shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-white">@{vipSearchResult.username}</p>
+                        <p className="text-[11px] text-white/40 mt-0.5">
+                          {vipSearchResult.is_vip
+                            ? <span className="text-amber-400 font-medium">✅ 目前是 VIP</span>
+                            : <span className="text-white/30">❌ 非 VIP</span>}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => toggleVip((vipSearchResult as User).username, !(vipSearchResult as User).is_vip)}
+                        disabled={vipLoading}
+                        className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer ${
+                          vipSearchResult.is_vip
+                            ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30'
+                            : 'bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-[14px] align-middle mr-1">
+                          {vipSearchResult.is_vip ? 'remove_moderator' : 'workspace_premium'}
+                        </span>
+                        {vipSearchResult.is_vip ? '撤銷 VIP' : '授予 VIP'}
+                      </button>
+                    </div>
+                  )}
+                </Section>
+
+                {/* VIP list */}
+                <Section title="目前 VIP 清單" icon="workspace_premium" accent="amber">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-white/35 text-xs">所有已授予 VIP 的使用者</p>
+                    <button
+                      onClick={loadVipList}
+                      disabled={vipListLoading}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-white text-xs font-semibold transition-all cursor-pointer"
+                    >
+                      <span className={`material-symbols-outlined text-[13px] ${vipListLoading ? 'animate-spin' : ''}`}>
+                        {vipListLoading ? 'sync' : 'refresh'}
+                      </span>
+                      載入清單
+                    </button>
+                  </div>
+
+                  {vipList.length > 0 && (
+                    <div className="space-y-2">
+                      {vipList.map(u => (
+                        <div key={u.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] transition-colors">
+                          <img
+                            src={u.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.username}`}
+                            alt=""
+                            className="w-7 h-7 rounded-full bg-white/10 shrink-0"
+                          />
+                          <span className="flex-1 text-sm text-white/80">@{u.username}</span>
+                          <span className="text-[11px] text-amber-400 font-medium">VIP</span>
+                          <button
+                            onClick={() => toggleVip(u.username, false)}
+                            disabled={vipLoading}
+                            className="p-1 rounded-md hover:bg-red-500/10 hover:text-red-400 text-white/20 transition-colors disabled:opacity-30 cursor-pointer"
+                            title="撤銷 VIP"
+                          >
+                            <span className="material-symbols-outlined text-[14px]">close</span>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {vipList.length === 0 && !vipListLoading && (
+                    <p className="text-white/20 text-xs text-center py-4">點擊「載入清單」查看</p>
+                  )}
                 </Section>
               </>
             )}
