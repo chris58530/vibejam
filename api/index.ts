@@ -907,6 +907,63 @@ app.post('/api/ai/chat/stream', async (req, res) => {
   }
 });
 
+// ── Assets (Warehouse) ───────────────────────────────────────────────────────
+
+app.get('/api/assets', async (req, res) => {
+  const { supabase_id } = req.query as { supabase_id?: string };
+  if (!supabase_id) return res.status(400).json({ error: 'supabase_id required' });
+  try {
+    await ensureDb();
+    const user = await db.get('SELECT id FROM users WHERE supabase_id = $1', [supabase_id]);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    const assets = await db.query('SELECT * FROM assets WHERE owner_id = $1 ORDER BY created_at DESC', [user.id]);
+    res.json(assets);
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/assets/dedup', async (req, res) => {
+  const { supabase_id, sha256 } = req.body;
+  if (!supabase_id || !sha256) return res.status(400).json({ error: 'supabase_id and sha256 required' });
+  try {
+    await ensureDb();
+    const user = await db.get('SELECT id FROM users WHERE supabase_id = $1', [supabase_id]);
+    if (!user) return res.json({ exists: false });
+    const asset = await db.get('SELECT * FROM assets WHERE owner_id = $1 AND sha256 = $2', [user.id, sha256]);
+    res.json({ exists: !!asset, asset: asset || null });
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/assets', async (req, res) => {
+  const { supabase_id, supabase_path, public_url, sha256, filename, original_name, mime_type, file_size, category } = req.body;
+  if (!supabase_id || !supabase_path || !public_url || !sha256) return res.status(400).json({ error: 'Missing required fields' });
+  try {
+    await ensureDb();
+    const user = await db.get('SELECT id, is_vip FROM users WHERE supabase_id = $1', [supabase_id]);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (!user.is_vip) return res.status(403).json({ error: 'VIP required' });
+    const asset = await db.get(
+      'INSERT INTO assets (owner_id, supabase_path, public_url, sha256, filename, original_name, mime_type, file_size, category) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT (owner_id, sha256) DO UPDATE SET public_url = EXCLUDED.public_url RETURNING *',
+      [user.id, supabase_path, public_url, sha256, filename, original_name, mime_type, file_size, category]
+    );
+    res.json(asset);
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete('/api/assets/:id', async (req, res) => {
+  const { supabase_id } = req.body;
+  const assetId = req.params.id;
+  if (!supabase_id) return res.status(400).json({ error: 'supabase_id required' });
+  try {
+    await ensureDb();
+    const user = await db.get('SELECT id FROM users WHERE supabase_id = $1', [supabase_id]);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    const asset = await db.get('SELECT id FROM assets WHERE id = $1 AND owner_id = $2', [assetId, user.id]);
+    if (!asset) return res.status(404).json({ error: 'Asset not found' });
+    await db.run('DELETE FROM assets WHERE id = $1', [assetId]);
+    res.json({ success: true });
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
 export const BOT_UA_RE = /bot|crawler|spider|facebookexternalhit|twitterbot|linkedinbot|slackbot|discordbot|telegrambot|line|whatsapp/i;
 
 function escapeHtml(str: string): string {

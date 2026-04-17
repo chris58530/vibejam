@@ -6,6 +6,21 @@ export interface User {
   motto?: string;
   followers_count?: number;
   likes_count?: number;
+  is_vip?: boolean;
+}
+
+export interface Asset {
+  id: number;
+  owner_id: number;
+  supabase_path: string;
+  public_url: string;
+  sha256: string;
+  filename: string;
+  original_name: string;
+  mime_type: string;
+  file_size: number;
+  category: string;
+  created_at: string;
 }
 
 export interface Version {
@@ -317,6 +332,36 @@ export const api = {
   async getFollowStatus(username: string, supabaseId?: string): Promise<{ following: boolean; followers_count: number }> {
     const params = supabaseId ? `?supabase_id=${encodeURIComponent(supabaseId)}` : '';
     return apiJson<{ following: boolean; followers_count: number }>(`/users/${encodeURIComponent(username)}/follow${params}`, {}, 'Failed to get follow status');
+  },
+  assets: {
+    async listAssets(supabaseId: string): Promise<Asset[]> {
+      const data = await apiJson<unknown>(`/assets?supabase_id=${encodeURIComponent(supabaseId)}`, {}, 'Failed to fetch assets');
+      return Array.isArray(data) ? data as Asset[] : [];
+    },
+    async checkDedup(supabaseId: string, sha256: string): Promise<{ exists: boolean; asset?: Asset }> {
+      return apiJson<{ exists: boolean; asset?: Asset }>('/assets/dedup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ supabase_id: supabaseId, sha256 }),
+      }, 'Dedup check failed');
+    },
+    async saveAssetMetadata(data: {
+      supabase_id: string; supabase_path: string; public_url: string; sha256: string;
+      filename: string; original_name: string; mime_type: string; file_size: number; category: string;
+    }): Promise<Asset> {
+      return apiJson<Asset>('/assets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      }, 'Failed to save asset');
+    },
+    async deleteAsset(assetId: number, supabaseId: string): Promise<{ success: boolean }> {
+      return apiJson<{ success: boolean }>(`/assets/${assetId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ supabase_id: supabaseId }),
+      }, 'Failed to delete asset');
+    },
   },
   ai: {
     async testKey(provider: string, apiKey: string): Promise<{ ok: boolean; provider: string }> {

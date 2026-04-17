@@ -182,6 +182,7 @@ export default function Sidebar({ dbUser, isOpen = true, onToggle }: SidebarProp
     { key: 'home', label: t('sidebar_home'), icon: 'home', path: '/' },
     { key: 'following', label: t('sidebar_following'), icon: 'subscriptions', path: '/?feed=following' },
     { key: 'workspace', label: t('sidebar_workspace'), icon: 'terminal', path: '/workspace' },
+    { key: 'warehouse', label: t('sidebar_warehouse'), icon: 'warehouse', path: '/warehouse' },
     { key: 'settings', label: t('sidebar_settings'), icon: 'settings', path: '/settings' },
   ];
 
@@ -247,6 +248,7 @@ export default function Sidebar({ dbUser, isOpen = true, onToggle }: SidebarProp
               (key === 'following' && location.search.includes('feed=following')) ||
               (key === 'home' && location.pathname === '/' && !location.search) ||
               (key === 'workspace' && location.pathname.includes('/workspace')) ||
+              (key === 'warehouse' && location.pathname === '/warehouse') ||
               (key === 'settings' && location.pathname === '/settings');
 
             return (

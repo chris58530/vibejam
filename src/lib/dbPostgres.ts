@@ -115,6 +115,24 @@ export async function initializeDatabase() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(follower_id, following_id)
       );
+
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS is_vip BOOLEAN DEFAULT FALSE;
+
+      CREATE TABLE IF NOT EXISTS assets (
+        id             SERIAL PRIMARY KEY,
+        owner_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        supabase_path  TEXT NOT NULL,
+        public_url     TEXT NOT NULL,
+        sha256         TEXT NOT NULL,
+        filename       TEXT NOT NULL,
+        original_name  TEXT NOT NULL,
+        mime_type      TEXT NOT NULL,
+        file_size      INTEGER NOT NULL,
+        category       TEXT NOT NULL DEFAULT 'other',
+        created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(owner_id, sha256)
+      );
+      CREATE INDEX IF NOT EXISTS idx_assets_owner ON assets(owner_id);
     `);
     console.log('Database schema initialized');
   } catch (err: any) {
