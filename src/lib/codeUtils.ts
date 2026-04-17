@@ -113,8 +113,8 @@ export function wrapReactForPreview(rawCode: string): string {
   code = code.replace(/^export\s+default\s+\w+\s*;?\s*\n?/gm, '');
   code = code.replace(/^export\s+(?=function|class|const|let|var)/gm, '');
 
-  // 找出根元件名稱
-  const match = code.match(/^(?:function|class)\s+(\w+)/m) || code.match(/^const\s+(\w+)\s*=/m);
+  // 找出根元件名稱（僅匹配大寫開頭，避免誤抓常數如 HEAD_URL）
+  const match = code.match(/^(?:function|class)\s+([A-Z]\w*)/m) || code.match(/^const\s+([A-Z]\w*)\s*=/m);
   const componentName = match?.[1] || 'App';
 
   // 建立解構行
