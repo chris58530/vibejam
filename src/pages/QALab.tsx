@@ -191,6 +191,8 @@ export default function QALab() {
   const [vipLoading, setVipLoading]         = useState(false);
   const [vipList, setVipList]               = useState<User[]>([]);
   const [vipListLoading, setVipListLoading] = useState(false);
+  const [vipDropdownOpen, setVipDropdownOpen] = useState(false);
+  const vipInputRef = useRef<HTMLDivElement>(null);
 
   // System health state
   const [pingLoading, setPingLoading]       = useState(false);
@@ -232,6 +234,26 @@ export default function QALab() {
       setVibes(all.slice(0, 120));
     } catch (e: any) { addLog('err', `載入 Vibe 失敗：${e.message}`); }
   };
+
+  // VIP dropdown: derive unique users from loaded vibes, sorted by vibe count
+  const allUserOptions = useMemo(() => {
+    const map = new Map<string, { username: string; avatar: string; count: number }>();
+    for (const vibe of vibes) {
+      const existing = map.get(vibe.author_name);
+      map.set(vibe.author_name, {
+        username: vibe.author_name,
+        avatar: vibe.author_avatar,
+        count: (existing?.count ?? 0) + 1,
+      });
+    }
+    return [...map.values()].sort((a, b) => b.count - a.count);
+  }, [vibes]);
+
+  const filteredUserOptions = useMemo(() => {
+    const q = vipInput.trim().toLowerCase();
+    if (!q) return allUserOptions;
+    return allUserOptions.filter(u => u.username.toLowerCase().includes(q));
+  }, [allUserOptions, vipInput]);
 
   const authorOptions = useMemo(() => {
     const map = new Map<string, number>();
@@ -520,18 +542,19 @@ export default function QALab() {
   };
 
   // ─── VIP handlers ─────────────────────────────────────────────────────────
-  const searchVipUser = async () => {
-    if (!vipInput.trim()) return;
+  const searchVipUser = async (overrideName?: string) => {
+    const name = (overrideName ?? vipInput).trim();
+    if (!name) return;
     setVipLoading(true);
     setVipSearchResult(null);
-    addLog('info', `搜尋使用者：${vipInput.trim()}`);
+    addLog('info', `搜尋使用者：${name}`);
     try {
-      const user = await api.getUserProfile(vipInput.trim());
+      const user = await api.getUserProfile(name);
       setVipSearchResult(user);
       addLog('ok', `找到使用者：@${user.username}（VIP: ${user.is_vip ? '✅' : '❌'}）`);
     } catch {
       setVipSearchResult('not_found');
-      addLog('warn', `找不到使用者：${vipInput.trim()}`);
+      addLog('warn', `找不到使用者：${name}`);
     }
     setVipLoading(false);
   };
@@ -1243,26 +1266,61 @@ export default function QALab() {
                 {/* Search & toggle */}
                 <Section title="搜尋使用者" icon="manage_accounts" accent="amber">
                   <p className="text-white/35 text-xs leading-relaxed mb-3">
-                    輸入使用者名稱查詢，然後授予或撤銷 VIP 權限。
+                    從下拉選單選擇現有使用者，或直接輸入名稱查詢。
                   </p>
-                  <div className="flex gap-2 mb-4">
-                    <input
-                      type="text"
-                      value={vipInput}
-                      onChange={e => setVipInput(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && searchVipUser()}
-                      placeholder="username"
-                      className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-amber-500/50"
-                    />
-                    <button
-                      onClick={searchVipUser}
-                      disabled={vipLoading || !vipInput.trim()}
-                      className="px-4 py-2 bg-amber-600 hover:bg-amber-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-white text-xs font-semibold transition-all cursor-pointer"
-                    >
-                      <span className={`material-symbols-outlined text-[14px] ${vipLoading ? 'animate-spin' : ''}`}>
-                        {vipLoading ? 'sync' : 'search'}
-                      </span>
-                    </button>
+                  <div className="relative mb-4" ref={vipInputRef}>
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <input
+                          type="text"
+                          value={vipInput}
+                          onChange={e => { setVipInput(e.target.value); setVipDropdownOpen(true); setVipSearchResult(null); }}
+                          onFocus={() => setVipDropdownOpen(true)}
+                          onBlur={() => setTimeout(() => setVipDropdownOpen(false), 150)}
+                          onKeyDown={e => { if (e.key === 'Enter') { setVipDropdownOpen(false); searchVipUser(); } if (e.key === 'Escape') setVipDropdownOpen(false); }}
+                          placeholder="選擇或輸入使用者名稱..."
+                          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 pr-8 text-sm text-white placeholder-white/20 focus:outline-none focus:border-amber-500/50"
+                        />
+                        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 material-symbols-outlined text-[16px] text-white/20 pointer-events-none">
+                          arrow_drop_down
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => { setVipDropdownOpen(false); searchVipUser(); }}
+                        disabled={vipLoading || !vipInput.trim()}
+                        className="px-4 py-2 bg-amber-600 hover:bg-amber-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-white text-xs font-semibold transition-all cursor-pointer"
+                      >
+                        <span className={`material-symbols-outlined text-[14px] ${vipLoading ? 'animate-spin' : ''}`}>
+                          {vipLoading ? 'sync' : 'search'}
+                        </span>
+                      </button>
+                    </div>
+
+                    {/* Dropdown */}
+                    {vipDropdownOpen && filteredUserOptions.length > 0 && (
+                      <div className="absolute z-20 top-full left-0 right-10 mt-1 bg-[#111420] border border-white/10 rounded-xl shadow-2xl overflow-hidden max-h-52 overflow-y-auto">
+                        {filteredUserOptions.map(u => (
+                          <button
+                            key={u.username}
+                            onMouseDown={() => {
+                              setVipInput(u.username);
+                              setVipDropdownOpen(false);
+                              setVipSearchResult(null);
+                              setTimeout(() => searchVipUser(u.username), 0);
+                            }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/5 transition-colors text-left"
+                          >
+                            <img
+                              src={u.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.username}`}
+                              alt=""
+                              className="w-6 h-6 rounded-full bg-white/10 shrink-0"
+                            />
+                            <span className="text-sm text-white/80 flex-1">@{u.username}</span>
+                            <span className="text-[10px] text-white/25 tabular-nums">{u.count} vibes</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Search result */}
