@@ -1264,7 +1264,7 @@ export default function QALab() {
             {activeTab === 'vip' && (
               <>
                 {/* Search & toggle */}
-                <Section title="搜尋使用者" icon="manage_accounts" accent="amber">
+                <Section title="搜尋使用者" icon="manage_accounts" accent="amber" overflowVisible>
                   <p className="text-white/35 text-xs leading-relaxed mb-3">
                     從下拉選單選擇現有使用者，或直接輸入名稱查詢。
                   </p>
@@ -1298,7 +1298,7 @@ export default function QALab() {
 
                     {/* Dropdown */}
                     {vipDropdownOpen && filteredUserOptions.length > 0 && (
-                      <div className="absolute z-20 top-full left-0 right-10 mt-1 bg-[#111420] border border-white/10 rounded-xl shadow-2xl overflow-hidden max-h-52 overflow-y-auto">
+                      <div className="absolute z-50 top-full left-0 right-10 mt-1 bg-[#111420] border border-white/10 rounded-xl shadow-2xl overflow-hidden max-h-64 overflow-y-auto">
                         {filteredUserOptions.map(u => (
                           <button
                             key={u.username}
@@ -1532,13 +1532,13 @@ function StatBadge({ label, value, tone }: { label: string; value: string; tone:
 
 // ─── Section card ─────────────────────────────────────────────────────────────
 function Section({
-  title, icon, accent = 'violet', children
+  title, icon, accent = 'violet', overflowVisible, children
 }: {
-  title: string; icon: string; accent?: string; children: React.ReactNode;
+  title: string; icon: string; accent?: string; overflowVisible?: boolean; children: React.ReactNode;
 }) {
   const cfg = accentConfig[accent] ?? accentConfig.violet;
   return (
-    <div className={`rounded-xl border ${cfg.border} bg-black/20 shadow-[0_8px_30px_rgba(0,0,0,0.18)] overflow-hidden`}>
+    <div className={`rounded-xl border ${cfg.border} bg-black/20 shadow-[0_8px_30px_rgba(0,0,0,0.18)] ${overflowVisible ? 'overflow-visible' : 'overflow-hidden'}`}>
       <div className="flex items-center gap-2.5 px-4 py-2.5 border-b border-white/[0.07] bg-white/[0.02]">
         <span className={`material-symbols-outlined text-[15px] ${cfg.icon}`}>{icon}</span>
         <span className="text-white/78 font-semibold text-xs tracking-wide">{title}</span>
