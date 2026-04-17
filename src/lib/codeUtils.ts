@@ -114,8 +114,13 @@ export function wrapReactForPreview(rawCode: string): string {
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script>window.react = window.React;</script>
-  <script src="https://unpkg.com/lucide-react/dist/umd/lucide-react.min.js"></script>
-  <script>window.LucideReact = window.LucideReact || window.lucideReact || {};</script>
+  <script src="https://unpkg.com/lucide-react@latest/dist/umd/lucide-react.js"></script>
+  <script>
+    window.LucideReact = window.LucideReact || window.lucideReact || {};
+    if (Object.keys(window.LucideReact).length === 0) {
+      window.LucideReact = new Proxy({}, { get: function(_, k) { return function() { return null; }; } });
+    }
+  </script>
   <script src="https://unpkg.com/@babel/standalone@7.26.4/babel.min.js"></script>
   <style>
     html, body { width: 1280px; height: 720px; margin: 0; transform-origin: top left; transform: scale(calc(100vw / 1280)); }
