@@ -282,6 +282,9 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
 
   // ── iframe ref + BeaverKit API postMessage bridge ────────────────────
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [consoleLogs, setConsoleLogs] = useState<Array<{ level: string; message: string; time: string }>>([]);
+  const [showConsole, setShowConsole] = useState(false);
+  const consoleEndRef = useRef<HTMLDivElement>(null);
   const { keys, validated, initialized: aiInitialized, initialize: initializeAI, getUsage, dailyLimits, getKey } = useAIKeyStore();
 
   useEffect(() => {
@@ -293,6 +296,13 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
     const handleMsg = (e: MessageEvent) => {
       const d = e.data;
       if (typeof d?.type !== 'string' || !d.type.startsWith('beaverkit:')) return;
+      if (d.type === 'beaverkit:console') {
+        const t = new Date();
+        const time = [t.getHours(), t.getMinutes(), t.getSeconds()].map(n => String(n).padStart(2, '0')).join(':');
+        setConsoleLogs(prev => [...prev.slice(-199), { level: String(d.level), message: String(d.message), time }]);
+        if (d.level === 'error') setShowConsole(true);
+        return;
+      }
       const win = iframeRef.current?.contentWindow;
       if (!win) return;
 
@@ -325,6 +335,9 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
     if (isVueMode) return wrapVueForPreview(htmlCode);
     return mergeCode(htmlCode, cssCode, jsCode);
   }, [isReactMode, isVueMode, htmlCode, cssCode, jsCode]);
+
+  useEffect(() => { setConsoleLogs([]); }, [previewDoc]);
+  useEffect(() => { consoleEndRef.current?.scrollIntoView({ behavior: 'auto' }); }, [consoleLogs]);
 
   // ── 編輯器 onChange ────────────────────────────────────────────────
   const handleEditorChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -1242,6 +1255,14 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
                       <span className="material-symbols-outlined text-[12px] text-on-surface/30">lock</span>
                       <span className="text-[11px] text-on-surface/40 font-mono">preview</span>
                     </div>
+                    <button
+                      onClick={() => setShowConsole(s => !s)}
+                      title="Console"
+                      className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] transition-colors ${showConsole ? 'text-primary bg-primary/10' : consoleLogs.some(l => l.level === 'error') ? 'text-red-400 hover:text-red-300' : 'text-on-surface/30 hover:text-on-surface/60'}`}
+                    >
+                      <span className="material-symbols-outlined text-[13px]">terminal</span>
+                      {consoleLogs.length > 0 && <span className="text-[10px] font-mono">{consoleLogs.length}</span>}
+                    </button>
                   </div>
                   <div className="flex-1 relative bg-white overflow-hidden">
                     {previewDoc ? (
@@ -1251,6 +1272,34 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
                         <div className="text-center">
                           <span className="material-symbols-outlined text-on-surface/10 text-5xl">preview</span>
                           <p className="text-[11px] text-on-surface/20 mt-2">尚無預覽內容</p>
+                        </div>
+                      </div>
+                    )}
+                    {showConsole && (
+                      <div className="absolute bottom-0 left-0 right-0 h-1/2 flex flex-col bg-[#0d0d0d]/95 backdrop-blur-sm border-t border-white/10 z-10 font-mono text-xs">
+                        <div className="flex items-center gap-2 px-3 py-1.5 border-b border-white/[0.06] shrink-0">
+                          <span className="material-symbols-outlined text-[12px] text-on-surface/40">terminal</span>
+                          <span className="text-[10px] uppercase tracking-widest text-on-surface/30 font-bold flex-1">Console</span>
+                          <button onClick={() => setConsoleLogs([])} className="text-[10px] text-on-surface/20 hover:text-on-surface/50 px-1.5 py-0.5 rounded transition-colors">清除</button>
+                          <button onClick={() => setShowConsole(false)} className="text-on-surface/20 hover:text-on-surface/50 transition-colors ml-1">
+                            <span className="material-symbols-outlined text-[14px]">close</span>
+                          </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
+                          {consoleLogs.length === 0 ? (
+                            <p className="text-on-surface/15 text-[10px] text-center mt-4">尚無訊息</p>
+                          ) : (
+                            consoleLogs.map((log, i) => (
+                              <div key={i} className={`flex items-start gap-2 px-1 py-0.5 rounded ${log.level === 'error' ? 'text-red-400 bg-red-500/5' : log.level === 'warn' ? 'text-yellow-400 bg-yellow-500/5' : log.level === 'info' ? 'text-blue-400' : 'text-on-surface/50'}`}>
+                                <span className="text-[9px] text-on-surface/20 shrink-0 mt-0.5 w-14">{log.time}</span>
+                                <span className={`material-symbols-outlined text-[11px] shrink-0 mt-0.5 ${log.level === 'error' ? 'text-red-500' : log.level === 'warn' ? 'text-yellow-500' : log.level === 'info' ? 'text-blue-400' : 'text-on-surface/20'}`}>
+                                  {log.level === 'error' ? 'error' : log.level === 'warn' ? 'warning' : 'chevron_right'}
+                                </span>
+                                <span className="break-all whitespace-pre-wrap leading-relaxed">{log.message}</span>
+                              </div>
+                            ))
+                          )}
+                          <div ref={consoleEndRef} />
                         </div>
                       </div>
                     )}

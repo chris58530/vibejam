@@ -33,6 +33,26 @@ window.BeaverKit = (function () {
     },
   };
 })();
+(function () {
+  var fns = ['log', 'info', 'warn', 'error'];
+  function send(level, args) {
+    var parts = [];
+    for (var i = 0; i < args.length; i++) {
+      try { parts.push(typeof args[i] === 'object' ? JSON.stringify(args[i]) : String(args[i])); } catch (e) { parts.push('[object]'); }
+    }
+    try { window.parent.postMessage({ type: 'beaverkit:console', level: level, message: parts.join(' ') }, '*'); } catch (e) {}
+  }
+  fns.forEach(function (fn) {
+    var orig = console[fn].bind(console);
+    console[fn] = function () { send(fn, arguments); orig.apply(console, arguments); };
+  });
+  window.addEventListener('error', function (e) {
+    send('error', [e.message + (e.lineno ? ' (line ' + e.lineno + ')' : '')]);
+  });
+  window.addEventListener('unhandledrejection', function (e) {
+    send('error', ['Unhandled: ' + (e.reason && e.reason.message ? e.reason.message : String(e.reason))]);
+  });
+})();
 `.trim();
 
 // ── 框架偵測 ─────────────────────────────────────────────────────────
