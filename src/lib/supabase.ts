@@ -36,6 +36,26 @@ function getSupabase(): SupabaseClient {
   return supabase;
 }
 
+export async function signInWithGoogle() {
+  let client: SupabaseClient;
+  try {
+    client = getSupabase();
+  } catch (e: any) {
+    throw e;
+  }
+
+  let error: any;
+  try {
+    ({ error } = await client.auth.signInWithOAuth({
+      provider: 'google',
+    }));
+  } catch (e: any) {
+    throw e;
+  }
+
+  if (error) throw error;
+}
+
 export async function signInWithGitHub() {
   devLog.info('[GitHub OAuth] ① 開始登入流程');
   devLog.info(`[GitHub OAuth] ② env: SUPABASE_URL=${supabaseUrl ? supabaseUrl.slice(0, 35) + '…' : '(空！)'} | KEY=${supabaseAnonKey ? '已設定' : '(空！)'}`);
