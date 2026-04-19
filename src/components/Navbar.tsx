@@ -66,12 +66,21 @@ export default function Navbar({ savePanelOpen, onToggleSavePanel, sidebarOpen =
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-8">
             {isWorkspace ? (
-              <div
-                className="text-xl font-bold tracking-tighter text-on-surface flex items-center gap-2 cursor-pointer font-headline"
-                onClick={() => navigate('/')}
-              >
-                <img src="/Icon.png" alt="BeaverKit" className="w-8 h-8" />
-                BeaverKit Studio
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => navigate('/studio')}
+                  className="flex items-center gap-1.5 text-on-surface/50 hover:text-on-surface transition-colors cursor-pointer rounded-lg px-2 py-1 hover:bg-surface-container-high"
+                  title="Back to Studio"
+                >
+                  <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+                </button>
+                <div
+                  className="text-xl font-bold tracking-tighter text-on-surface flex items-center gap-2 cursor-pointer font-headline"
+                  onClick={() => navigate('/studio')}
+                >
+                  <img src="/Icon.png" alt="BeaverKit" className="w-8 h-8" />
+                  BeaverKit Studio
+                </div>
               </div>
             ) : (
               /* Mobile only — hidden on desktop to avoid ghost gap-8 space */

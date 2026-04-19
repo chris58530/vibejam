@@ -181,7 +181,7 @@ export default function Sidebar({ dbUser, isOpen = true, onToggle }: SidebarProp
   const navItems = [
     { key: 'home', label: t('sidebar_home'), icon: 'home', path: '/' },
     { key: 'following', label: t('sidebar_following'), icon: 'subscriptions', path: '/?feed=following' },
-    { key: 'workspace', label: t('sidebar_workspace'), icon: 'terminal', path: '/workspace' },
+    { key: 'studio', label: t('sidebar_studio'), icon: 'dashboard', path: '/studio' },
     { key: 'warehouse', label: t('sidebar_warehouse'), icon: 'warehouse', path: '/warehouse' },
     { key: 'settings', label: t('sidebar_settings'), icon: 'settings', path: '/settings' },
   ];
@@ -247,7 +247,7 @@ export default function Sidebar({ dbUser, isOpen = true, onToggle }: SidebarProp
             const isActive =
               (key === 'following' && location.search.includes('feed=following')) ||
               (key === 'home' && location.pathname === '/' && !location.search) ||
-              (key === 'workspace' && location.pathname.includes('/workspace')) ||
+              (key === 'studio' && location.pathname === '/studio') ||
               (key === 'warehouse' && location.pathname === '/warehouse') ||
               (key === 'settings' && location.pathname === '/settings');
 

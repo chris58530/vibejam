@@ -22,6 +22,7 @@ export const translations = {
     sidebar_trending: 'Trending',
     sidebar_following: 'Following',
     sidebar_workspace: 'Workspace',
+    sidebar_studio: 'Studio',
     sidebar_ai_chat: 'AI Chat',
     sidebar_settings: 'Settings',
     sidebar_your_library: 'Your Library',
@@ -60,6 +61,7 @@ export const translations = {
     sidebar_copyright: '© 2024 BEAVERKIT EDITORIAL',
     // Bottom Tab Bar
     tab_home: 'Home',
+    tab_studio: 'Studio',
     tab_ai_chat: 'AI Chat',
     tab_create: 'Create',
     tab_subs: 'Subs',
@@ -200,6 +202,7 @@ export const translations = {
     sidebar_trending: '趨勢',
     sidebar_following: '追蹤中',
     sidebar_workspace: '工作區',
+    sidebar_studio: '工作室',
     sidebar_ai_chat: 'AI 聊天',
     sidebar_settings: '設定',
     sidebar_your_library: '我的收藏',
@@ -238,6 +241,7 @@ export const translations = {
     sidebar_copyright: '© 2024 BEAVERKIT 編輯部',
     // Bottom Tab Bar
     tab_home: '首頁',
+    tab_studio: '工作室',
     tab_ai_chat: 'AI 聊天',
     tab_create: '創建',
     tab_subs: '訂閱',
