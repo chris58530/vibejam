@@ -181,6 +181,14 @@ export default function App() {
     useAIKeyStore.getState().initialize();
   }, []);
 
+  // OAuth 失敗時（?error=access_denied …），清除 URL 並停在首頁
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('error')) {
+      window.history.replaceState(null, '', '/');
+    }
+  }, []);
+
   useEffect(() => {
     if (!supabase) {
       devLog.warn('[Auth] Supabase 未初始化（env 未設定），跳過 auth 監聽');
