@@ -68,8 +68,11 @@ beaverkit/
 ├── tailwind.config.js  # Tailwind CSS 設定（含 MD3 顏色）
 ├── tsconfig.json       # TypeScript 設定
 ├── vercel.json         # Vercel 部署設定
-├── DEPLOYMENT.md       # 部署指南（繁體中文）
-└── CLAUDE_UI_DESIGN_GUIDE.md  # UI 設計規範（繁體中文）
+└── docs/
+    ├── DEPLOYMENT.md          # 部署指南（繁體中文）
+    ├── CLAUDE_UI_DESIGN_GUIDE.md  # UI 設計規範（繁體中文）
+    ├── COFOUNDER.md           # AI 共同創辦人角色設定
+    └── DESIGN.md              # Design System 規範
 ```
 
 ---
@@ -196,7 +199,7 @@ npm run clean     # 清除 dist 目錄
 
 - 使用 `server.ts` 作為 Express 伺服器
 - 需要 PostgreSQL 資料庫（可本地或雲端）
-- 詳見 `DEPLOYMENT.md`
+- 詳見 `docs/DEPLOYMENT.md`
 
 ---
 
@@ -273,4 +276,4 @@ npm run clean     # 清除 dist 目錄
 - **雙端 API：** 任何 API 變更必須同時修改 `server.ts` 和 `api/index.ts`
 - **金鑰安全：** 使用者 AI 金鑰僅存客戶端，伺服器端金鑰透過環境變數傳入，切勿提交 `.env` 檔案
 - **資料庫初始化：** Schema 在 `dbPostgres.ts` 中自動執行建表，新增欄位需加入遷移邏輯
-- **UI 設計規範：** 詳見 `CLAUDE_UI_DESIGN_GUIDE.md`，修改 UI 前請先閱讀
+- **UI 設計規範：** 詳見 `docs/CLAUDE_UI_DESIGN_GUIDE.md`，修改 UI 前請先閱讀
