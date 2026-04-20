@@ -112,11 +112,11 @@ export default function VibeCard({ vibe, onClick, compact = false, maxViews = 1 
               src={avatarSrc}
               alt={vibe.author_name}
               className="w-3.5 h-3.5 rounded-full object-cover flex-shrink-0"
-              onClick={(e) => { e.stopPropagation(); navigate(`/@${encodeURIComponent(vibe.author_name)}`); }}
+              onClick={(e) => { e.stopPropagation(); navigate(`/u/${encodeURIComponent(vibe.author_name)}`); }}
             />
             <span
               className="text-[10px] text-on-surface/40 hover:text-on-surface/70 transition-colors truncate cursor-pointer"
-              onClick={(e) => { e.stopPropagation(); navigate(`/@${encodeURIComponent(vibe.author_name)}`); }}
+              onClick={(e) => { e.stopPropagation(); navigate(`/u/${encodeURIComponent(vibe.author_name)}`); }}
             >
               {vibe.author_name}
             </span>
@@ -197,12 +197,8 @@ export default function VibeCard({ vibe, onClick, compact = false, maxViews = 1 
             className="w-full h-full object-cover"
             onClick={(e) => {
               e.stopPropagation();
-              navigate(`/@${encodeURIComponent(vibe.author_name)}`);
+              navigate(`/u/${encodeURIComponent(vibe.author_name)}`);
             }}
-          />
-        </div>
-        
-        {/* Text */}
         <div className="flex flex-col flex-1 min-w-0">
           <h3 className="font-mono font-bold text-sm text-on-surface leading-tight group-hover:text-primary transition-colors line-clamp-2">
             {vibe.title}
@@ -214,7 +210,7 @@ export default function VibeCard({ vibe, onClick, compact = false, maxViews = 1 
             className="text-xs text-on-surface/60 mt-1 hover:text-on-surface transition-colors truncate"
             onClick={(e) => {
               e.stopPropagation();
-              navigate(`/@${encodeURIComponent(vibe.author_name)}`);
+              navigate(`/u/${encodeURIComponent(vibe.author_name)}`);
             }}
           >
             @{vibe.author_name}

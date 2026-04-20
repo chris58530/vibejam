@@ -106,7 +106,7 @@ function ProjectMetaRow({ vibe }: { vibe: Vibe }) {
         aria-label={`Open ${vibe.author_name} profile`}
         onClick={(e) => {
           e.stopPropagation();
-          navigate(`/@${encodeURIComponent(vibe.author_name)}`);
+          navigate(`/u/${encodeURIComponent(vibe.author_name)}`);
         }}
         className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-outline-variant/20 bg-surface-container-high transition-colors duration-200 hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
       >
@@ -267,7 +267,7 @@ function FeaturedShowcase({
                   aria-label={`Open ${featured.author_name} profile`}
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigate(`/@${encodeURIComponent(featured.author_name)}`);
+                    navigate(`/u/${encodeURIComponent(featured.author_name)}`);
                   }}
                   className="flex items-center gap-3 transition-opacity duration-200 hover:opacity-80"
                 >

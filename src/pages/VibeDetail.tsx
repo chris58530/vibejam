@@ -464,7 +464,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
               {/* Author */}
               <div
                 className="flex items-center gap-3 cursor-pointer hover:bg-surface-container-high/40 transition-colors rounded-lg p-2 -mx-2"
-                onClick={() => navigate(`/@${encodeURIComponent(vibe.author_name)}`)}
+                onClick={() => navigate(`/u/${encodeURIComponent(vibe.author_name)}`)}
               >
                 <div className="w-9 h-9 rounded-full bg-primary-container flex items-center justify-center overflow-hidden ring-1 ring-black/[0.06] shrink-0">
                   {vibe.author_avatar
@@ -609,7 +609,7 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
               {/* Author */}
               <div
                 className="flex items-center gap-3 px-4 pt-4 pb-3 cursor-pointer hover:bg-surface-container-high/30 transition-colors"
-                onClick={() => navigate(`/@${encodeURIComponent(vibe.author_name)}`)}
+                onClick={() => navigate(`/u/${encodeURIComponent(vibe.author_name)}`)}
               >
                 <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center overflow-hidden ring-2 ring-primary/20 shrink-0">
                   {vibe.author_avatar

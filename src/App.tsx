@@ -299,7 +299,7 @@ export default function App() {
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/invite/:token" element={<InviteAccept />} />
         <Route path="/p/:id" element={<VibeDetail currentUser={currentUser ?? undefined} />} />
-        <Route path="/@:username" element={<Profile />} />
+        <Route path="/u/:username" element={<Profile />} />
         <Route path="*" element={
           <div className="flex items-center justify-center h-full text-white/50">
             {t('app_not_found')}
