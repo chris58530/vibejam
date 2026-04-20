@@ -288,7 +288,7 @@ export default function App() {
     ? <YourLibrary currentUser={currentUser ?? undefined} />
     : (
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<Home currentUser={currentUser ?? undefined} />} />
         <Route path="/workspace" element={<Workspace currentUser={currentUser ?? undefined} savePanelOpen={savePanelOpen} />} />
         <Route path="/studio" element={<Studio currentUser={currentUser ?? undefined} />} />
         <Route path="/remix" element={<RemixStudio currentUser={currentUser ?? undefined} />} />

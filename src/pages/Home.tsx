@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { api, Vibe } from '../lib/api';
+import { api, User, Vibe } from '../lib/api';
 import Footer from '../components/Footer';
+import { isVibeSaved, saveVibe, unsaveVibe } from '../lib/savedVibes';
 
 type FeedTab = 'movers' | 'new' | 'market-cap' | 'oldest';
 
@@ -327,8 +328,19 @@ function FeaturedShowcase({
   );
 }
 
-function HomeCard({ vibe, onSelect }: { vibe: Vibe; onSelect: (v: Vibe) => void }) {
+function HomeCard({ vibe, onSelect, userId }: { vibe: Vibe; onSelect: (v: Vibe) => void; userId?: number }) {
   const [isHovered, setIsHovered] = useState(false);
+  const [saved, setSaved] = useState(() => isVibeSaved(vibe.id, userId));
+
+  const handleToggleSave = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (saved) {
+      unsaveVibe(vibe.id, userId);
+    } else {
+      saveVibe(vibe, userId);
+    }
+    setSaved(!saved);
+  };
 
   return (
     <article
@@ -378,14 +390,21 @@ function HomeCard({ vibe, onSelect }: { vibe: Vibe; onSelect: (v: Vibe) => void 
               {vibe.remix_count ?? 0}
             </span>
           </div>
-          <span className="material-symbols-outlined text-[20px] transition-colors duration-200 group-hover:text-primary">more_horiz</span>
+          <button
+            type="button"
+            onClick={handleToggleSave}
+            className={`flex items-center justify-center w-8 h-8 rounded-full transition-colors duration-200 ${saved ? 'text-primary bg-primary/10' : 'text-on-surface/40 hover:text-primary hover:bg-primary/10'}`}
+            title={saved ? '取消收藏' : '收藏'}
+          >
+            <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: saved ? "'FILL' 1" : "'FILL' 0" }}>bookmark</span>
+          </button>
         </div>
       </div>
     </article>
   );
 }
 
-export default function Home() {
+export default function Home({ currentUser }: { currentUser?: User }) {
   const [vibes, setVibes] = useState<Vibe[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -555,6 +574,7 @@ export default function Home() {
                       key={vibe.id}
                       vibe={vibe}
                       onSelect={handleSelectVibe}
+                      userId={currentUser?.id}
                     />
                   ))}
             </div>
