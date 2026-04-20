@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'motion/react';
 import { api, Vibe } from '../lib/api';
 import Footer from '../components/Footer';
 
@@ -484,20 +485,29 @@ export default function Home() {
                     key={tab.key}
                     type="button"
                     onClick={() => setActiveFeed(tab.key)}
-                    className={`flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-semibold tracking-wide transition-colors duration-200 ${
+                    className={`relative flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition-colors duration-150 ${
                       activeFeed === tab.key
-                        ? 'bg-primary text-on-primary'
-                        : 'text-on-surface/65 hover:bg-surface-container hover:text-on-surface'
+                        ? 'text-on-primary'
+                        : 'text-on-surface/65 hover:text-on-surface'
                     }`}
                   >
-                    {tab.dotClass && <span className={`h-2 w-2 rounded-full ${tab.dotClass}`} />}
-                    {tab.label}
+                    {activeFeed === tab.key && (
+                      <motion.div
+                        layoutId="activeTabBg"
+                        className="absolute inset-0 rounded-full bg-primary"
+                        transition={{ type: 'spring', bounce: 0.15, duration: 0.35 }}
+                      />
+                    )}
+                    <span className="relative z-10 flex items-center gap-2">
+                      {tab.dotClass && <span className={`h-2 w-2 rounded-full ${tab.dotClass}`} />}
+                      {tab.label}
+                    </span>
                   </button>
                 ))}
               </div>
 
-              <div className="hidden rounded-full bg-surface-container-low px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.18em] text-on-surface/45 xl:flex">
-                {filteredVibes.length} visible
+              <div className="hidden rounded-full bg-surface-container-low px-4 py-2.5 text-sm font-medium text-on-surface/45 xl:flex">
+                {filteredVibes.length} results
               </div>
             </div>
           </div>
