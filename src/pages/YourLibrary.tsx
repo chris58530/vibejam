@@ -19,6 +19,8 @@ interface SaveSlot {
   description: string;
   savedAt: string;
   vibeId?: number;
+  editorMode?: string;
+  code?: { html: string; css: string; js: string };
 }
 
 interface YourLibraryProps {
@@ -253,7 +255,10 @@ export default function YourLibrary({ currentUser }: YourLibraryProps) {
               {savedKits.map(kit => (
                 <article
                   key={kit.id}
-                  onClick={() => navigate('/workspace')}
+                  onClick={() => {
+                    sessionStorage.setItem('beaverkit_pending_load', JSON.stringify(kit));
+                    navigate('/workspace');
+                  }}
                   className="group rounded-xl overflow-hidden border border-outline-variant/10 bg-surface-container-low hover:border-outline-variant/25 hover:bg-surface-container transition-colors cursor-pointer"
                 >
                   {/* Thumbnail */}
