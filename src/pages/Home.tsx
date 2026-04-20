@@ -134,7 +134,7 @@ function SideRailCard({ vibe, label, onSelect }: { vibe: Vibe; label: string; on
       className="group relative cursor-pointer overflow-hidden rounded-3xl border border-outline-variant/15 transition-colors duration-200 hover:border-primary/25"
     >
       {/* Full-bleed preview background */}
-      <div className="relative aspect-[16/10] overflow-hidden bg-surface-container-lowest">
+      <div className="relative aspect-video overflow-hidden bg-surface-container-lowest">
         <div className={`absolute inset-0 z-10 pointer-events-none transition-opacity duration-200 ${isHovered ? 'opacity-0' : 'opacity-100 bg-black/20'}`} />
         <iframe
           srcDoc={getPreviewCode(vibe.latest_code || '', isHovered)}
@@ -337,7 +337,7 @@ function HomeCard({ vibe, onSelect }: { vibe: Vibe; onSelect: (v: Vibe) => void 
       onMouseLeave={() => setIsHovered(false)}
       className="group cursor-pointer overflow-hidden rounded-3xl border border-outline-variant/15 bg-surface-container-low transition-colors duration-200 hover:border-primary/25 hover:bg-surface-container"
     >
-      <div className="relative aspect-[16/10] overflow-hidden rounded-t-3xl bg-surface-container-lowest">
+      <div className="relative aspect-video overflow-hidden rounded-t-3xl bg-surface-container-lowest">
         <div className={`absolute inset-0 z-10 pointer-events-none transition-opacity duration-200 ${isHovered ? 'opacity-0' : 'opacity-100 bg-black/24'}`} />
         <iframe
           srcDoc={getPreviewCode(vibe.latest_code || '', isHovered)}
@@ -455,8 +455,8 @@ export default function Home() {
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(340px,0.5fr)]">
             <div className="min-h-[520px] rounded-3xl border border-outline-variant/15 bg-surface-container-highest animate-pulse md:min-h-[620px] xl:min-h-[75vh]" />
             <div className="grid gap-5">
-              <div className="aspect-[16/10] rounded-3xl bg-surface-container-highest animate-pulse" />
-              <div className="aspect-[16/10] rounded-3xl bg-surface-container-highest animate-pulse" />
+              <div className="aspect-video rounded-3xl bg-surface-container-highest animate-pulse" />
+              <div className="aspect-video rounded-3xl bg-surface-container-highest animate-pulse" />
             </div>
           </div>
         ) : featuredVibe ? (

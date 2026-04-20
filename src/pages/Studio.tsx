@@ -388,7 +388,7 @@ export default function Studio({ currentUser }: StudioProps) {
                 >
                   {/* Thumbnail */}
                   <div
-                    className={`h-36 bg-gradient-to-br ${titleColorClass(row.title)} relative overflow-hidden`}
+                    className={`aspect-video bg-gradient-to-br ${titleColorClass(row.title)} relative overflow-hidden`}
                     onClick={() => handleEdit(row)}
                   >
                     <div className="absolute inset-0 flex items-center justify-center">
