@@ -100,6 +100,7 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
   const [mobileTab, setMobileTab] = useState<MobileTab>('chat');
   // Right panel tab (code / preview)
   const [rightTab, setRightTab] = useState<RightTab>('code');
+  const [editorReady, setEditorReady] = useState(() => !!sessionStorage.getItem('beaverkit_pending_load'));
 
   // Draggable splitter
   const splitPercentRef = useRef(40);
@@ -1149,49 +1150,82 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
           {/* ── Code Editor ── */}
           {rightTab === 'code' && (
             <div className="flex-1 flex flex-col overflow-hidden bg-background">
-              <div className="flex items-center justify-between bg-[#1e1e1e] border-b border-outline-variant/10 px-4 h-10 shrink-0 select-none mt-14 mx-4 md:mx-6 rounded-t-xl overflow-hidden shadow-sm">
-                <div className="flex bg-[#1e1e1e] text-xs h-full">
-                  {!isSplitMode ? (
-                    <div className="px-4 h-full flex items-center gap-2 border-b-2 border-primary bg-[#1e1e1e] text-on-surface font-medium">
-                      <span className="material-symbols-outlined text-[14px] text-primary">{isReactMode ? 'code' : isVueMode ? 'code' : 'html'}</span>
-                      {isReactMode ? 'App.jsx' : isVueMode ? 'App.vue' : 'index.html'}
+              {!htmlCode && !cssCode && !jsCode && !editorReady ? (
+                /* Welcome / Mode Select */
+                <div className="flex-1 flex items-center justify-center p-6">
+                  <div className="w-full max-w-md">
+                    <div className="text-center mb-8">
+                      <span className="material-symbols-outlined text-[40px] text-primary/25 mb-3 block">code_blocks</span>
+                      <h2 className="text-xl font-bold text-on-surface mb-2">開始建立你的 Kit</h2>
+                      <p className="text-sm text-on-surface/40">選擇一個模式，或在左側 AI 對話框輸入需求</p>
                     </div>
-                  ) : tabs.map(tab => (
-                    <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`px-4 h-full flex items-center gap-1.5 transition-colors border-b-2 ${activeTab === tab.id ? 'border-primary text-on-surface font-medium bg-[#252526]' : 'border-transparent text-on-surface-variant hover:bg-[#252526]'}`}><span className="material-symbols-outlined text-[13px]">{tab.icon}</span>{tab.label}</button>
-                  ))}
+                    <div className="grid grid-cols-2 gap-3 mb-5">
+                      {MODE_OPTIONS.map(opt => (
+                        <button
+                          key={opt.id}
+                          onClick={() => { handleModeChange(opt.id); setEditorReady(true); }}
+                          className="flex flex-col items-start gap-2.5 p-4 rounded-2xl border border-outline-variant/15 bg-surface-container-low text-left transition-all hover:border-primary/40 hover:bg-primary/5 active:scale-[0.98] cursor-pointer"
+                        >
+                          <span className="text-2xl">{opt.emoji}</span>
+                          <div>
+                            <div className="text-sm font-semibold text-on-surface">{opt.label}</div>
+                            <div className="text-[11px] text-on-surface/40 mt-0.5 leading-relaxed">{opt.desc}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => setEditorReady(true)}
+                      className="w-full py-2.5 text-sm text-on-surface/30 hover:text-on-surface/60 transition-colors cursor-pointer"
+                    >
+                      直接開啟編輯器 →
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => { setIsManualEditMode(!isManualEditMode); setHighlightEditBtn(false); }} className={`flex items-center gap-1 px-2.5 py-1 rounded transition-all duration-300 ${isManualEditMode ? 'bg-primary/20 text-primary font-bold shadow-sm' : 'text-on-surface-variant hover:text-on-surface hover:bg-white/5'} ${highlightEditBtn ? 'bg-yellow-500/20 text-yellow-300 ring-2 ring-yellow-500/50 scale-105' : ''}`} title={isManualEditMode ? '切換回保護模式' : '開啟手動編輯 (防呆)'}><span className="material-symbols-outlined text-[14px]">{isManualEditMode ? 'edit' : 'edit_off'}</span><span className="text-[11px]">{isManualEditMode ? '編輯中' : '唯讀保護'}</span></button>
-                </div>
-              </div>
-              {/* Filename label (non-split mode only) */}
-
-
-              {/* Textarea */}
-              <div className="flex-1 font-mono text-sm leading-relaxed editor-well overflow-hidden flex relative group cursor-text mb-4 mx-4 md:mx-6 rounded-b-xl border border-outline-variant/10 bg-[#1e1e1e] shadow-lg" onClick={handleEditorClick}>
-                <div className="absolute left-0 top-0 bottom-0 w-8 bg-surface-container-lowest border-r border-outline-variant/5 text-right py-4 pr-2 text-on-surface/20 select-none hidden sm:block">
-                  {currentCode.split('\n').map((_, i) => (
-                    <div key={i}>{i + 1}</div>
-                  ))}
-                </div>
-                <textarea
-                  value={currentCode}
-                  readOnly={!isManualEditMode}
-                  onChange={handleEditorChange}
-                  onPaste={handlePaste}
-                  placeholder={
-                    isSplitMode
-                      ? activeTab === 'html'
-                        ? '<div>Your HTML here</div>'
-                        : activeTab === 'css'
-                          ? 'body { font-family: sans-serif; }'
-                          : 'console.log("hello!");'
-                      : '把 AI 生成的程式碼貼在這裡 ✨\n\n💡 小提示：\n• 跟 AI 說「請輸出成一個完整的 HTML 檔案」效果最好\n• 也支援 React 和 Vue 元件，貼上後會自動偵測'
-                  }
-                  className="flex-1 w-full bg-transparent p-4 sm:pl-12 py-4 font-mono text-sm text-on-surface outline-none resize-none hide-scrollbar placeholder:text-on-surface/20 whitespace-pre"
-                  spellCheck={false}
-                />
-              </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between bg-[#1e1e1e] border-b border-outline-variant/10 px-4 h-10 shrink-0 select-none mt-14 mx-4 md:mx-6 rounded-t-xl overflow-hidden shadow-sm">
+                    <div className="flex bg-[#1e1e1e] text-xs h-full">
+                      {!isSplitMode ? (
+                        <div className="px-4 h-full flex items-center gap-2 border-b-2 border-primary bg-[#1e1e1e] text-on-surface font-medium">
+                          <span className="material-symbols-outlined text-[14px] text-primary">{isReactMode ? 'code' : isVueMode ? 'code' : 'html'}</span>
+                          {isReactMode ? 'App.jsx' : isVueMode ? 'App.vue' : 'index.html'}
+                        </div>
+                      ) : tabs.map(tab => (
+                        <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`px-4 h-full flex items-center gap-1.5 transition-colors border-b-2 ${activeTab === tab.id ? 'border-primary text-on-surface font-medium bg-[#252526]' : 'border-transparent text-on-surface-variant hover:bg-[#252526]'}`}><span className="material-symbols-outlined text-[13px]">{tab.icon}</span>{tab.label}</button>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => { setIsManualEditMode(!isManualEditMode); setHighlightEditBtn(false); }} className={`flex items-center gap-1 px-2.5 py-1 rounded transition-all duration-300 ${isManualEditMode ? 'bg-primary/20 text-primary font-bold shadow-sm' : 'text-on-surface-variant hover:text-on-surface hover:bg-white/5'} ${highlightEditBtn ? 'bg-yellow-500/20 text-yellow-300 ring-2 ring-yellow-500/50 scale-105' : ''}`} title={isManualEditMode ? '切換回保護模式' : '開啟手動編輯 (防呆)'}><span className="material-symbols-outlined text-[14px]">{isManualEditMode ? 'edit' : 'edit_off'}</span><span className="text-[11px]">{isManualEditMode ? '編輯中' : '唯讀保護'}</span></button>
+                    </div>
+                  </div>
+                  {/* Textarea */}
+                  <div className="flex-1 font-mono text-sm leading-relaxed editor-well overflow-hidden flex relative group cursor-text mb-4 mx-4 md:mx-6 rounded-b-xl border border-outline-variant/10 bg-[#1e1e1e] shadow-lg" onClick={handleEditorClick}>
+                    <div className="absolute left-0 top-0 bottom-0 w-8 bg-surface-container-lowest border-r border-outline-variant/5 text-right py-4 pr-2 text-on-surface/20 select-none hidden sm:block">
+                      {currentCode.split('\n').map((_, i) => (
+                        <div key={i}>{i + 1}</div>
+                      ))}
+                    </div>
+                    <textarea
+                      value={currentCode}
+                      readOnly={!isManualEditMode}
+                      onChange={handleEditorChange}
+                      onPaste={handlePaste}
+                      placeholder={
+                        isSplitMode
+                          ? activeTab === 'html'
+                            ? '<div>Your HTML here</div>'
+                            : activeTab === 'css'
+                              ? 'body { font-family: sans-serif; }'
+                              : 'console.log("hello!");'
+                          : '把 AI 生成的程式碼貼在這裡 ✨\n\n💡 小提示：\n• 跟 AI 說「請輸出成一個完整的 HTML 檔案」效果最好\n• 也支援 React 和 Vue 元件，貼上後會自動偵測'
+                      }
+                      className="flex-1 w-full bg-transparent p-4 sm:pl-12 py-4 font-mono text-sm text-on-surface outline-none resize-none hide-scrollbar placeholder:text-on-surface/20 whitespace-pre"
+                      spellCheck={false}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           )}
 
