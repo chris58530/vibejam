@@ -234,7 +234,7 @@ export default function Studio({ currentUser }: StudioProps) {
   ];
 
   return (
-    <div className="min-h-screen px-4 md:px-8 py-6">
+    <div className="md:ml-[var(--app-sidebar-width)] transition-[margin] duration-300 min-h-screen px-4 md:px-8 py-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
