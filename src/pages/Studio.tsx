@@ -63,6 +63,21 @@ function formatNumber(n: number): string {
   return String(n);
 }
 
+function titleColorClass(title: string): string {
+  const palettes = [
+    'from-violet-600/40 via-purple-600/20 to-indigo-800/40',
+    'from-blue-600/40 via-cyan-500/20 to-sky-700/40',
+    'from-emerald-600/40 via-teal-500/20 to-green-700/40',
+    'from-rose-600/40 via-pink-500/20 to-red-700/40',
+    'from-amber-600/40 via-orange-500/20 to-yellow-700/40',
+    'from-indigo-600/40 via-blue-500/20 to-violet-800/40',
+    'from-fuchsia-600/40 via-violet-500/20 to-purple-700/40',
+    'from-sky-600/40 via-blue-500/20 to-cyan-700/40',
+  ];
+  const hash = [...title].reduce((a, c) => a + c.charCodeAt(0), 0);
+  return palettes[hash % palettes.length];
+}
+
 interface StudioProps {
   currentUser?: User;
 }
@@ -226,6 +241,13 @@ export default function Studio({ currentUser }: StudioProps) {
     }
   };
 
+  const handleDeleteDraft = (draftId: string) => {
+    const key = `beaverkit_saves_${currentUser?.id ?? 'guest'}`;
+    const updated = drafts.filter(d => d.id !== draftId);
+    setDrafts(updated);
+    localStorage.setItem(key, JSON.stringify(updated));
+  };
+
   const tabs: { key: StudioTab; label: string; count: number }[] = [
     { key: 'all', label: isZh ? '全部' : 'All', count: rows.length },
     { key: 'published', label: isZh ? '已發布' : 'Published', count: rows.filter(r => r.kind === 'vibe' && !r.isRemix).length },
@@ -315,7 +337,6 @@ export default function Studio({ currentUser }: StudioProps) {
           <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
         </div>
       ) : !supabaseUserId ? (
-        /* Not logged in */
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <span className="material-symbols-outlined text-[56px] text-on-surface/15 mb-4">login</span>
           <h2 className="text-lg font-semibold text-on-surface/60 mb-2">
@@ -326,7 +347,6 @@ export default function Studio({ currentUser }: StudioProps) {
           </p>
         </div>
       ) : filteredRows.length === 0 ? (
-        /* Empty state */
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <span className="material-symbols-outlined text-[56px] text-on-surface/15 mb-4">
             {tab === 'drafts' ? 'edit_note' : 'dashboard'}
@@ -353,113 +373,103 @@ export default function Studio({ currentUser }: StudioProps) {
           </button>
         </div>
       ) : (
-        /* Content table */
-        <div className="space-y-0">
-          {/* Table header */}
-          <div className="hidden md:grid md:grid-cols-[1fr_120px_120px_100px_100px_80px] items-center px-4 py-2.5 text-xs text-on-surface/30 uppercase tracking-wider font-medium border-b border-outline-variant/10">
-            <span>{isZh ? '作品' : 'Kit'}</span>
-            <span>{isZh ? '可見性' : 'Visibility'}</span>
-            <span>{isZh ? '日期' : 'Date'}</span>
-            <span className="text-right">{isZh ? '瀏覽' : 'Views'}</span>
-            <span className="text-right">{isZh ? '留言' : 'Comments'}</span>
-            <span className="text-right">{isZh ? '喜歡' : 'Likes'}</span>
-          </div>
-
-          {/* Rows */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           <AnimatePresence mode="popLayout">
             {filteredRows.map((row, idx) => {
               const vis = VISIBILITY_CONFIG[row.visibility] ?? VISIBILITY_CONFIG.public;
               return (
                 <motion.div
                   key={row.id}
-                  initial={{ opacity: 0, y: 8 }}
+                  initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ delay: idx * 0.02, duration: 0.2 }}
-                  className="group grid grid-cols-1 md:grid-cols-[1fr_120px_120px_100px_100px_80px] items-center px-4 py-3 border-b border-outline-variant/5 hover:bg-surface-container/50 rounded-lg transition-colors cursor-pointer"
-                  onClick={() => handleEdit(row)}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ delay: idx * 0.03, duration: 0.22 }}
+                  className="bg-surface-container-low rounded-2xl overflow-hidden border border-outline-variant/[0.08] hover:border-outline-variant/25 transition-all hover:shadow-lg group cursor-pointer"
                 >
-                  {/* Kit info */}
-                  <div className="flex items-center gap-3 min-w-0">
-                    {/* Thumbnail placeholder */}
-                    <div className="w-28 h-16 shrink-0 rounded-lg bg-surface-container-high overflow-hidden flex items-center justify-center">
-                      {row.code ? (
-                        <div className="w-full h-full relative">
-                          <div className="absolute inset-0 flex items-center justify-center text-on-surface/10">
-                            <span className="material-symbols-outlined text-[24px]">code</span>
-                          </div>
-                        </div>
-                      ) : (
-                        <span className="material-symbols-outlined text-[24px] text-on-surface/10">
-                          {row.kind === 'draft' ? 'edit_note' : 'code'}
-                        </span>
-                      )}
+                  {/* Thumbnail */}
+                  <div
+                    className={`h-36 bg-gradient-to-br ${titleColorClass(row.title)} relative overflow-hidden`}
+                    onClick={() => handleEdit(row)}
+                  >
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-[52px] text-white/10 select-none">
+                        {row.kind === 'draft' ? 'edit_note' : row.isRemix ? 'fork_right' : 'code_blocks'}
+                      </span>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-sm font-semibold text-on-surface truncate">{row.title}</h3>
-                        {row.isRemix && (
-                          <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-tertiary/10 text-tertiary font-medium">Remix</span>
-                        )}
-                      </div>
-                      {row.description && (
-                        <p className="text-xs text-on-surface/30 truncate mt-0.5 max-w-md">{row.description}</p>
-                      )}
-                      {/* Mobile-only meta */}
-                      <div className="flex items-center gap-3 mt-1.5 md:hidden text-xs text-on-surface/30">
-                        <span className={`flex items-center gap-1 ${vis.color}`}>
-                          <span className="material-symbols-outlined text-[14px]">{vis.icon}</span>
-                          {isZh ? vis.labelZh : vis.label}
-                        </span>
-                        <span>{formatDate(row.date, language)}</span>
-                        <span>{formatNumber(row.views)} {isZh ? '次' : 'views'}</span>
-                      </div>
+                    <div className="absolute bottom-0 left-0 right-0 px-3 pb-2.5 pt-8 bg-gradient-to-t from-black/50 to-transparent">
+                      <p className="text-white/90 text-[11px] font-medium truncate">{row.title}</p>
                     </div>
-                    {/* Action buttons — desktop only, shown on hover */}
-                    <div className="hidden md:flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                    {/* Hover actions */}
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                      <button
+                        onClick={e => { e.stopPropagation(); handleEdit(row); }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-lg text-white text-xs font-semibold hover:bg-white/30 transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-[15px]">edit</span>
+                        {isZh ? '編輯' : 'Edit'}
+                      </button>
                       {row.kind === 'vibe' && (
                         <button
                           onClick={e => { e.stopPropagation(); handleView(row); }}
-                          title={isZh ? '查看' : 'View'}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container-high text-on-surface/40 hover:text-on-surface transition-colors cursor-pointer"
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-lg text-white text-xs font-semibold hover:bg-white/30 transition-colors"
                         >
-                          <span className="material-symbols-outlined text-[18px]">visibility</span>
+                          <span className="material-symbols-outlined text-[15px]">visibility</span>
+                          {isZh ? '查看' : 'View'}
                         </button>
                       )}
-                      <button
-                        onClick={e => { e.stopPropagation(); handleEdit(row); }}
-                        title={isZh ? '編輯' : 'Edit'}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container-high text-on-surface/40 hover:text-on-surface transition-colors cursor-pointer"
-                      >
-                        <span className="material-symbols-outlined text-[18px]">edit</span>
-                      </button>
+                      {row.kind === 'draft' && row.saveSlot && (
+                        <button
+                          onClick={e => { e.stopPropagation(); handleDeleteDraft(row.saveSlot!.id); }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/50 backdrop-blur-sm rounded-lg text-white text-xs font-semibold hover:bg-red-500/70 transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[15px]">delete</span>
+                          {isZh ? '刪除' : 'Delete'}
+                        </button>
+                      )}
+                    </div>
+                    {/* Badges */}
+                    <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+                      {row.isRemix && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-tertiary/70 backdrop-blur-sm text-white font-medium">Remix</span>
+                      )}
+                      {row.kind === 'draft' && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-black/50 backdrop-blur-sm text-white/80 font-medium">
+                          {isZh ? '草稿' : 'Draft'}
+                        </span>
+                      )}
+                    </div>
+                    <div className="absolute top-2.5 right-2.5">
+                      <span className={`material-symbols-outlined text-[16px] drop-shadow ${vis.color}`}>{vis.icon}</span>
                     </div>
                   </div>
 
-                  {/* Visibility — desktop */}
-                  <div className="hidden md:flex items-center gap-1.5">
-                    <span className={`material-symbols-outlined text-[16px] ${vis.color}`}>{vis.icon}</span>
-                    <span className={`text-xs ${vis.color}`}>{isZh ? vis.labelZh : vis.label}</span>
-                  </div>
-
-                  {/* Date — desktop */}
-                  <div className="hidden md:block text-xs text-on-surface/40">
-                    {formatDate(row.date, language)}
-                  </div>
-
-                  {/* Views — desktop */}
-                  <div className="hidden md:block text-xs text-on-surface/40 text-right">
-                    {row.kind === 'draft' ? '—' : formatNumber(row.views)}
-                  </div>
-
-                  {/* Comments — desktop */}
-                  <div className="hidden md:block text-xs text-on-surface/40 text-right">
-                    {row.kind === 'draft' ? '—' : formatNumber(row.commentCount)}
-                  </div>
-
-                  {/* Likes — desktop */}
-                  <div className="hidden md:block text-xs text-on-surface/40 text-right">
-                    {row.kind === 'draft' ? '—' : formatNumber(row.likeCount)}
+                  {/* Card Body */}
+                  <div className="p-3.5" onClick={() => handleEdit(row)}>
+                    <h3 className="text-sm font-semibold text-on-surface leading-snug line-clamp-1 mb-1">{row.title}</h3>
+                    {row.description ? (
+                      <p className="text-xs text-on-surface/40 line-clamp-2 leading-relaxed mb-3">{row.description}</p>
+                    ) : (
+                      <div className="mb-3" />
+                    )}
+                    <div className="flex items-center justify-between text-[11px] text-on-surface/30">
+                      <span>{formatDate(row.date, language)}</span>
+                      {row.kind === 'vibe' && (
+                        <div className="flex items-center gap-2.5">
+                          <span className="flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[12px]">visibility</span>
+                            {formatNumber(row.views)}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[12px]">favorite</span>
+                            {formatNumber(row.likeCount)}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[12px]">comment</span>
+                            {formatNumber(row.commentCount)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </motion.div>
               );
@@ -468,15 +478,12 @@ export default function Studio({ currentUser }: StudioProps) {
         </div>
       )}
 
-      {/* Footer stats */}
       {filteredRows.length > 0 && (
-        <div className="flex items-center justify-between mt-4 px-4 py-3 text-xs text-on-surface/30">
-          <span>
-            {isZh
-              ? `共 ${filteredRows.length} 項`
-              : `${filteredRows.length} item${filteredRows.length !== 1 ? 's' : ''}`
-            }
-          </span>
+        <div className="mt-8 pb-4 text-xs text-on-surface/20 text-center">
+          {isZh
+            ? `共 ${filteredRows.length} 項`
+            : `${filteredRows.length} item${filteredRows.length !== 1 ? 's' : ''}`
+          }
         </div>
       )}
     </div>
