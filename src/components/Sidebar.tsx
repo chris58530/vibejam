@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { supabase } from '../lib/supabase';
 import { User } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 
@@ -175,7 +174,6 @@ export default function Sidebar({ dbUser, isOpen = true, onToggle }: SidebarProp
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useI18n();
-  const [currentUser, setCurrentUser] = useState<any>(null);
   const [helpOpen, setHelpOpen] = useState(false);
 
   const navItems = [
@@ -186,21 +184,7 @@ export default function Sidebar({ dbUser, isOpen = true, onToggle }: SidebarProp
     { key: 'settings', label: t('sidebar_settings'), icon: 'settings', path: '/settings' },
   ];
 
-  useEffect(() => {
-    if (!supabase) return;
-    supabase.auth.getSession().then(({ data }) => setCurrentUser(data.session?.user ?? null));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setCurrentUser(session?.user ?? null);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const handleNavClick = (key: string, path: string | null) => {
-    if (key === 'profile') {
-      const username = currentUser?.user_metadata?.user_name || currentUser?.user_metadata?.name;
-      if (username) navigate(`/@${username}`);
-      return;
-    }
+  const handleNavClick = (_key: string, path: string | null) => {
     if (path) navigate(path);
   };
 

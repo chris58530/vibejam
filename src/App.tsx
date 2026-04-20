@@ -11,7 +11,6 @@ import Home from './pages/Home';
 import Workspace from './pages/Workspace';
 import RemixStudio from './pages/RemixStudio';
 import VibeDetail from './pages/VibeDetail';
-import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import InviteAccept from './pages/InviteAccept';
 import Warehouse from './pages/Warehouse';
@@ -299,7 +298,6 @@ export default function App() {
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/invite/:token" element={<InviteAccept />} />
         <Route path="/p/:id" element={<VibeDetail currentUser={currentUser ?? undefined} />} />
-        <Route path="/@:username" element={<Profile />} />
         <Route path="*" element={
           <div className="flex items-center justify-center h-full text-white/50">
             {t('app_not_found')}

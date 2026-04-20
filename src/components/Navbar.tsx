@@ -228,16 +228,6 @@ export default function Navbar({ savePanelOpen, onToggleSavePanel, sidebarOpen =
                         <p className="text-[11px] text-on-surface-variant truncate">
                           @{user.user_metadata?.user_name || user.user_metadata?.name || user.email}
                         </p>
-                        <button
-                          onClick={() => {
-                            const username = user.user_metadata?.user_name || user.user_metadata?.name || user.email || 'anonymous';
-                            navigate(`/@${encodeURIComponent(username)}`);
-                            setUserMenuOpen(false);
-                          }}
-                          className="text-[11px] text-primary hover:text-primary/80 transition-colors mt-0.5"
-                        >
-                          查看個人頁面 →
-                        </button>
                       </div>
                     </div>
                   </div>

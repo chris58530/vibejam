@@ -25,12 +25,7 @@ export default function BottomTabBar() {
       setAuthOpen(true);
       return;
     }
-    const username = currentUser?.user_metadata?.user_name || currentUser?.user_metadata?.name;
-    if (username) {
-      navigate(`/@${username}`);
-    } else {
-      navigate('/');
-    }
+    navigate('/settings');
   };
 
   const isActive = (path: string) => location.pathname === path;
