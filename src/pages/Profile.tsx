@@ -6,6 +6,7 @@ import { EditorMode } from '../lib/codeUtils';
 import VibeCard from '../components/VibeCard';
 import Footer from '../components/Footer';
 import { supabase } from '../lib/supabase';
+import { devLog } from '../lib/devLog';
 
 interface SaveSlot {
   id: string;
@@ -35,9 +36,20 @@ export default function Profile() {
   const rawUsername = username?.startsWith('@') ? username.substring(1) : username;
   const decodedUsername = rawUsername ? decodeURIComponent(rawUsername) : 'Guest Creator';
 
+  devLog.info(`[Profile] render | path=${window.location.pathname} | param=${username ?? '(undefined)'} | decoded=${decodedUsername} | loading=${loading} | hasProfile=${!!userProfile} | vibes=${userVibes.length}`);
+
   useEffect(() => {
-    if (!supabase) return;
-    supabase.auth.getSession().then(({ data }) => setCurrentUser(data.session?.user ?? null));
+    devLog.info(`[Profile] mount effect — getSession start`);
+    if (!supabase) {
+      devLog.warn(`[Profile] supabase client is null (env not configured)`);
+      return;
+    }
+    supabase.auth.getSession().then(({ data }) => {
+      devLog.info(`[Profile] getSession → ${data.session?.user ? `user=${data.session.user.email ?? data.session.user.id.slice(0,8)}` : 'no session'}`);
+      setCurrentUser(data.session?.user ?? null);
+    }).catch((e: any) => {
+      devLog.error(`[Profile] getSession failed: ${e?.message ?? e}`);
+    });
   }, []);
 
   const isOwner = currentUser && (
@@ -65,9 +77,15 @@ export default function Profile() {
 
   useEffect(() => {
     const supabaseId = currentUser?.id;
+    devLog.info(`[Profile] data effect fired | decodedUsername=${decodedUsername} | supabaseId=${supabaseId ? supabaseId.slice(0,8) : '(none)'}`);
+    const t0 = Date.now();
     Promise.all([
-      api.getUserProfile(decodedUsername).catch(() => null),
-      api.getVibes(supabaseId).catch(() => [])
+      api.getUserProfile(decodedUsername)
+        .then(p => { devLog.info(`[Profile] getUserProfile ok | id=${p?.id} | motto=${(p?.motto ?? '').slice(0,30)}`); return p; })
+        .catch(e => { devLog.error(`[Profile] getUserProfile failed: ${e?.message ?? e}`); return null; }),
+      api.getVibes(supabaseId)
+        .then(v => { devLog.info(`[Profile] getVibes ok | count=${Array.isArray(v) ? v.length : 'not-array'} | elapsed=${Date.now()-t0}ms`); return v; })
+        .catch(e => { devLog.error(`[Profile] getVibes failed: ${e?.message ?? e}`); return []; })
     ]).then(([profile, allVibes]) => {
       setUserProfile(profile);
       setMottoDraft(profile?.motto || 'INIT. DEV. VIBE. System online.');
@@ -75,9 +93,14 @@ export default function Profile() {
       const filtered = Array.isArray(allVibes)
         ? allVibes.filter(v => v.author_name === decodedUsername)
         : [];
+      devLog.info(`[Profile] filter vibes | total=${Array.isArray(allVibes) ? allVibes.length : 0} | filtered=${filtered.length} | authors=${Array.isArray(allVibes) ? [...new Set(allVibes.slice(0,5).map(v => v.author_name))].join(',') : ''}`);
       setUserVibes(filtered);
       setLoading(false);
-    }).catch(() => setLoading(false));
+      devLog.info(`[Profile] data effect done | total=${Date.now()-t0}ms`);
+    }).catch((e: any) => {
+      devLog.error(`[Profile] data effect Promise.all failed: ${e?.message ?? e}`);
+      setLoading(false);
+    });
   }, [decodedUsername, currentUser]);
 
   // 切回分頁時自動刷新個人作品列表
