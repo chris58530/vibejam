@@ -199,6 +199,8 @@ export default function VibeCard({ vibe, onClick, compact = false, maxViews = 1 
               e.stopPropagation();
               navigate(`/u/${encodeURIComponent(vibe.author_name)}`);
             }}
+          />
+        </div>
         <div className="flex flex-col flex-1 min-w-0">
           <h3 className="font-mono font-bold text-sm text-on-surface leading-tight group-hover:text-primary transition-colors line-clamp-2">
             {vibe.title}
