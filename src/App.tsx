@@ -18,6 +18,7 @@ import Studio from './pages/Studio';
 import QALab from './pages/QALab';
 import YourLibrary from './pages/YourLibrary';
 import AuthCallback from './pages/AuthCallback';
+import Profile from './pages/Profile';
 import { api, User } from './lib/api';
 import { supabase } from './lib/supabase';
 import { useAIKeyStore } from './lib/aiKeyStore';
@@ -298,6 +299,7 @@ export default function App() {
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/invite/:token" element={<InviteAccept />} />
         <Route path="/p/:id" element={<VibeDetail currentUser={currentUser ?? undefined} />} />
+        <Route path="/@:username" element={<Profile />} />
         <Route path="*" element={
           <div className="flex items-center justify-center h-full text-white/50">
             {t('app_not_found')}
