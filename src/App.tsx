@@ -21,6 +21,7 @@ import AuthCallback from './pages/AuthCallback';
 import Profile from './pages/Profile';
 import Whitelist from './pages/Whitelist';
 import { api, User } from './lib/api';
+import { buildAuthSyncPayload } from './lib/authIdentity';
 import { supabase } from './lib/supabase';
 import { useAIKeyStore } from './lib/aiKeyStore';
 import { devLog } from './lib/devLog';
@@ -274,11 +275,7 @@ export default function App() {
     const email = supabaseUser.email ?? '(no email)';
     devLog.info(`[Auth] syncUser 開始 → id=${uid}… email=${email}`);
     try {
-      const user = await api.syncUser({
-        supabase_id: supabaseUser.id,
-        username: supabaseUser.user_metadata?.user_name || supabaseUser.user_metadata?.name || supabaseUser.email || 'anonymous',
-        avatar: supabaseUser.user_metadata?.avatar_url || '',
-      });
+      const user = await api.syncUser(buildAuthSyncPayload(supabaseUser));
       devLog.info(`[Auth] syncUser 成功 → username=${user.username}`);
       setCurrentUser(user);
     } catch (e: any) {

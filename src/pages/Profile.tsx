@@ -52,11 +52,7 @@ export default function Profile() {
     });
   }, []);
 
-  const isOwner = currentUser && (
-    currentUser.user_metadata?.user_name === decodedUsername ||
-    currentUser.user_metadata?.name === decodedUsername ||
-    currentUser.email === decodedUsername
-  );
+  const isOwner = !!(currentUser?.id && userProfile?.supabase_id && currentUser.id === userProfile.supabase_id);
 
   // ?tab=saves 自動切換
   useEffect(() => {
@@ -90,8 +86,9 @@ export default function Profile() {
       setUserProfile(profile);
       setMottoDraft(profile?.motto || 'INIT. DEV. VIBE. System online.');
 
+      const profileHandle = profile?.username || decodedUsername;
       const filtered = Array.isArray(allVibes)
-        ? allVibes.filter(v => v.author_name === decodedUsername)
+        ? allVibes.filter(v => v.author_name === profileHandle)
         : [];
       devLog.info(`[Profile] filter vibes | total=${Array.isArray(allVibes) ? allVibes.length : 0} | filtered=${filtered.length} | authors=${Array.isArray(allVibes) ? [...new Set(allVibes.slice(0,5).map(v => v.author_name))].join(',') : ''}`);
       setUserVibes(filtered);
@@ -109,8 +106,9 @@ export default function Profile() {
       if (document.visibilityState === 'visible') {
         const supabaseId = currentUser?.id;
         api.getVibes(supabaseId).then(allVibes => {
+          const profileHandle = userProfile?.username || decodedUsername;
           const filtered = Array.isArray(allVibes)
-            ? allVibes.filter(v => v.author_name === decodedUsername)
+            ? allVibes.filter(v => v.author_name === profileHandle)
             : [];
           setUserVibes(filtered);
         }).catch(() => { });
@@ -119,7 +117,7 @@ export default function Profile() {
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [decodedUsername, currentUser]);
+  }, [decodedUsername, currentUser, userProfile?.username]);
 
   const handleSaveMotto = async () => {
     try {
@@ -228,7 +226,12 @@ export default function Profile() {
                     <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                     <span className="text-[11px] font-semibold tracking-widest uppercase text-primary/80">Creator</span>
                   </div>
-                  <h1 className="text-3xl md:text-5xl font-black text-on-surface tracking-tight leading-none">{decodedUsername}</h1>
+                  <h1 className="text-3xl md:text-5xl font-black text-on-surface tracking-tight leading-none">
+                    {userProfile?.display_name || userProfile?.username || decodedUsername}
+                  </h1>
+                  <p className="mt-2 text-sm text-on-surface/45 font-medium">
+                    @{userProfile?.username || decodedUsername}
+                  </p>
 
                   {/* Motto inline */}
                   <div className="mt-3 group flex items-start gap-2">

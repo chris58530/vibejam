@@ -30,15 +30,46 @@ export async function initializeDatabase() {
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         username TEXT UNIQUE NOT NULL,
+        display_name TEXT,
         avatar TEXT,
         credit INTEGER DEFAULT 0,
+        email TEXT,
         supabase_id TEXT,
+        auth_provider TEXT,
+        provider_account_id TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS display_name TEXT;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS supabase_id TEXT;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_provider TEXT;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS provider_account_id TEXT;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS motto TEXT DEFAULT 'Keep it simple, make it vibe. Exploring the intersection between minimal design and raw code.';
       ALTER TABLE users ADD COLUMN IF NOT EXISTS followers_count INTEGER DEFAULT 0;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS likes_count INTEGER DEFAULT 0;
+      UPDATE users SET display_name = username WHERE display_name IS NULL OR btrim(display_name) = '';
+      CREATE INDEX IF NOT EXISTS idx_users_supabase_id ON users(supabase_id);
+      CREATE INDEX IF NOT EXISTS idx_users_provider_account ON users(auth_provider, provider_account_id);
+      CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_indexes
+          WHERE schemaname = 'public' AND indexname = 'ux_users_supabase_id'
+        ) THEN
+          IF EXISTS (
+            SELECT supabase_id
+            FROM users
+            WHERE supabase_id IS NOT NULL AND btrim(supabase_id) <> ''
+            GROUP BY supabase_id
+            HAVING COUNT(*) > 1
+          ) THEN
+            RAISE NOTICE 'Skipping ux_users_supabase_id due to duplicate supabase_id values';
+          ELSE
+            EXECUTE 'CREATE UNIQUE INDEX ux_users_supabase_id ON users(supabase_id) WHERE supabase_id IS NOT NULL';
+          END IF;
+        END IF;
+      END $$;
 
       CREATE TABLE IF NOT EXISTS vibes (
         id SERIAL PRIMARY KEY,
@@ -161,17 +192,17 @@ export async function initializeDatabase() {
 
 // Database query wrapper
 export const db = {
-  async query(text: string, params?: (string | number | null)[]) {
+  async query(text: string, params?: (string | number | boolean | null)[]) {
     const res = await pool.query(text, params);
     return res.rows;
   },
 
-  async get(text: string, params?: (string | number | null)[]) {
+  async get(text: string, params?: (string | number | boolean | null)[]) {
     const res = await pool.query(text, params);
     return res.rows[0];
   },
 
-  async run(text: string, params?: (string | number | null)[]) {
+  async run(text: string, params?: (string | number | boolean | null)[]) {
     const res = await pool.query(text, params);
     return res;
   }

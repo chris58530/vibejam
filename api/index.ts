@@ -24,6 +24,37 @@ export async function ensureDb() {
   }
 }
 
+function asNonEmptyString(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
+function slugifyHandle(value: string) {
+  const normalized = value
+    .normalize('NFKD')
+    .replace(/[^\x00-\x7F]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return normalized || 'user';
+}
+
+async function generateUniqueUsername(seed: string) {
+  const base = slugifyHandle(seed);
+  let candidate = base;
+  let suffix = 1;
+
+  while (await db.get('SELECT id FROM users WHERE username = $1', [candidate])) {
+    suffix += 1;
+    candidate = `${base}-${suffix}`;
+  }
+
+  return candidate;
+}
+
+function defaultAvatarForHandle(username: string) {
+  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(username)}`;
+}
+
 // Access control helper
 async function checkVibeAccess(vibeId: number | string, supabaseId: string | null): Promise<{ allowed: boolean; role: 'owner' | 'collaborator' | 'viewer' | 'none'; vibe: any }> {
   const vibe = await db.get(`
@@ -46,24 +77,62 @@ async function checkVibeAccess(vibeId: number | string, supabaseId: string | nul
 
 // Sync GitHub/Supabase user to PostgreSQL users table
 app.post('/api/auth/sync', async (req, res) => {
-  const { supabase_id, username, avatar } = req.body;
-  if (!supabase_id || !username) {
-    return res.status(400).json({ error: 'supabase_id and username are required' });
+  const supabaseId = asNonEmptyString(req.body.supabase_id);
+  const displayName = asNonEmptyString(req.body.display_name);
+  const email = asNonEmptyString(req.body.email);
+  const provider = asNonEmptyString(req.body.provider);
+  const providerAccountId = asNonEmptyString(req.body.provider_account_id);
+  const avatar = asNonEmptyString(req.body.avatar);
+
+  if (!supabaseId) {
+    return res.status(400).json({ error: 'supabase_id is required' });
   }
+
   try {
     await ensureDb();
-    let user = await db.get('SELECT * FROM users WHERE supabase_id = $1', [supabase_id]);
-    if (!user) {
-      user = await db.get('SELECT * FROM users WHERE username = $1', [username]);
-      if (user) {
-        user = await db.get('UPDATE users SET supabase_id = $1, avatar = $2 WHERE id = $3 RETURNING *', [supabase_id, avatar, user.id]);
-      } else {
-        user = await db.get(
-          'INSERT INTO users (username, avatar, supabase_id, is_approved) VALUES ($1, $2, $3, FALSE) RETURNING *',
-          [username, avatar, supabase_id]
-        );
-      }
+
+    // A-strategy: one platform account per supabase user id, no username/email merge.
+    let user = await db.get('SELECT * FROM users WHERE supabase_id = $1 ORDER BY id ASC LIMIT 1', [supabaseId]);
+
+    if (user) {
+      user = await db.get(
+        `UPDATE users
+         SET avatar = $1,
+             display_name = $2,
+             email = COALESCE($3, email),
+             auth_provider = COALESCE($4, auth_provider),
+             provider_account_id = COALESCE($5, provider_account_id)
+         WHERE id = $6
+         RETURNING *`,
+        [
+          avatar || user.avatar || defaultAvatarForHandle(user.username),
+          displayName || user.display_name || user.username,
+          email,
+          provider,
+          providerAccountId,
+          user.id
+        ]
+      );
+    } else {
+      const handleSeed = displayName || email?.split('@')[0] || providerAccountId || `user-${supabaseId.slice(0, 8)}`;
+      const username = await generateUniqueUsername(handleSeed);
+      user = await db.get(
+        `INSERT INTO users (
+          username, display_name, avatar, email, supabase_id, auth_provider, provider_account_id, is_approved
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, FALSE)
+        RETURNING *`,
+        [
+          username,
+          displayName || username,
+          avatar || defaultAvatarForHandle(username),
+          email,
+          supabaseId,
+          provider,
+          providerAccountId
+        ]
+      );
     }
+
     res.json(user);
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
@@ -959,7 +1028,7 @@ app.post('/api/ai/chat/stream', async (req, res) => {
             const obj = JSON.parse(data);
             const text = obj.candidates?.[0]?.content?.parts?.[0]?.text || '';
             if (text) send(text);
-          } catch {}
+          } catch { }
         }
       }
       return finish();
@@ -993,7 +1062,7 @@ app.post('/api/ai/chat/stream', async (req, res) => {
             const obj = JSON.parse(data);
             const text = obj.choices?.[0]?.delta?.content || '';
             if (text) send(text);
-          } catch {}
+          } catch { }
         }
       }
       return finish();
@@ -1028,7 +1097,7 @@ app.post('/api/ai/chat/stream', async (req, res) => {
             const obj = JSON.parse(data);
             const text = obj.choices?.[0]?.delta?.content || '';
             if (text) send(text);
-          } catch {}
+          } catch { }
         }
       }
       return finish();

@@ -1,14 +1,28 @@
 export interface User {
   id: number;
   username: string;
+  display_name?: string;
   avatar: string;
   credit: number;
+  email?: string;
+  supabase_id?: string;
+  auth_provider?: string;
+  provider_account_id?: string;
   motto?: string;
   followers_count?: number;
   likes_count?: number;
   is_vip?: boolean;
   is_approved?: boolean;
   created_at?: string;
+}
+
+export interface AuthSyncPayload {
+  supabase_id: string;
+  email?: string;
+  avatar: string;
+  display_name: string;
+  provider?: string;
+  provider_account_id?: string;
 }
 
 export interface Asset {
@@ -199,7 +213,7 @@ export async function apiJson<T>(path: string, options: ApiFetchOptions = {}, fa
 }
 
 export const api = {
-  async syncUser(data: { supabase_id: string; username: string; avatar: string }): Promise<User> {
+  async syncUser(data: AuthSyncPayload): Promise<User> {
     return apiJson<User>('/auth/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
