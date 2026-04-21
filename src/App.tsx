@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { useI18n } from './lib/i18n';
 import './lib/themeStore'; // bootstrap: apply dark palette CSS vars on load
 import Navbar from './components/Navbar';
@@ -20,7 +20,6 @@ import YourLibrary from './pages/YourLibrary';
 import AuthCallback from './pages/AuthCallback';
 import Profile from './pages/Profile';
 import Whitelist from './pages/Whitelist';
-import AccessGate from './pages/AccessGate';
 import { api, User } from './lib/api';
 import { supabase } from './lib/supabase';
 import { useAIKeyStore } from './lib/aiKeyStore';
@@ -314,9 +313,14 @@ export default function App() {
     );
   }
 
-  // Auth gate: any unapproved visitor sees the access gate page
+  // /whitelist is always public
+  if (location.pathname === '/whitelist') {
+    return <Whitelist />;
+  }
+
+  // Auth gate: redirect unapproved visitors to /whitelist
   if (!currentUser || currentUser.is_approved === false) {
-    return <AccessGate currentUser={currentUser} />;
+    return <Navigate to="/whitelist" replace />;
   }
 
   const routeContent = location.pathname === '/library'

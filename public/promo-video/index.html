@@ -412,7 +412,7 @@
 
     <script>
         window.__timelines = window.__timelines || {};
-        var tl = gsap.timeline({ paused: true });
+        var tl = gsap.timeline({ paused: false, onComplete: function() { tl.restart(); } });
 
         // ─────────────────────────────────────────────────────
         // SCENE 1  Hero  0 – 7s
