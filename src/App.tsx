@@ -304,6 +304,11 @@ export default function App() {
     );
   }
 
+  // /whitelist is always public
+  if (location.pathname === '/whitelist') {
+    return <Whitelist currentUser={currentUser ?? undefined} authLoading={authLoading} />;
+  }
+
   // Loading splash while resolving auth
   if (authLoading) {
     return (
@@ -311,11 +316,6 @@ export default function App() {
         <span className="material-symbols-outlined text-[32px] text-white/20 animate-spin">sync</span>
       </div>
     );
-  }
-
-  // /whitelist is always public
-  if (location.pathname === '/whitelist') {
-    return <Whitelist />;
   }
 
   // Auth gate: redirect unapproved visitors to /whitelist
@@ -337,7 +337,7 @@ export default function App() {
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/invite/:token" element={<InviteAccept />} />
         <Route path="/p/:id" element={<VibeDetail currentUser={currentUser ?? undefined} />} />
-        <Route path="/whitelist" element={<Whitelist />} />
+        <Route path="/whitelist" element={<Whitelist currentUser={currentUser ?? undefined} authLoading={authLoading} />} />
         <Route path="/u/:username" element={<Profile />} />
         <Route path="*" element={
           <div className="flex items-center justify-center h-full text-white/50">
