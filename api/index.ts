@@ -152,6 +152,43 @@ app.delete('/api/whitelist/:id', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
 
+// List approved users
+app.get('/api/whitelist/approved', async (_req, res) => {
+  try {
+    await ensureDb();
+    const users = await db.query(
+      'SELECT * FROM users WHERE is_approved = TRUE ORDER BY created_at DESC',
+      []
+    );
+    res.json(users);
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+// Revoke approval
+app.patch('/api/whitelist/:id/revoke', async (req, res) => {
+  try {
+    await ensureDb();
+    const user = await db.get(
+      'UPDATE users SET is_approved = FALSE WHERE id = $1 RETURNING *',
+      [req.params.id]
+    );
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json(user);
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+// Approve all pending users at once
+app.post('/api/whitelist/approve-all', async (_req, res) => {
+  try {
+    await ensureDb();
+    const result = await db.run(
+      'UPDATE users SET is_approved = TRUE WHERE is_approved = FALSE',
+      []
+    );
+    res.json({ count: result.rowCount ?? 0 });
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
 // Toggle follow/unfollow user
 app.post('/api/users/:username/follow', async (req, res) => {
   const targetUsername = decodeURIComponent(req.params.username);

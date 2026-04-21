@@ -196,9 +196,12 @@ export default function QALab() {
   const vipInputRef = useRef<HTMLDivElement>(null);
 
   // Whitelist management state
-  const [whitelistPending, setWhitelistPending] = useState<User[]>([]);
-  const [whitelistLoading, setWhitelistLoading] = useState(false);
+  const [whitelistPending, setWhitelistPending]   = useState<User[]>([]);
+  const [whitelistApproved, setWhitelistApproved] = useState<User[]>([]);
+  const [whitelistLoading, setWhitelistLoading]   = useState(false);
+  const [approvedLoading, setApprovedLoading]     = useState(false);
   const [whitelistActionId, setWhitelistActionId] = useState<number | null>(null);
+  const [approveAllLoading, setApproveAllLoading] = useState(false);
 
   // System health state
   const [pingLoading, setPingLoading]       = useState(false);
@@ -642,6 +645,47 @@ export default function QALab() {
       addLog('err', `拒絕失敗：${e.message}`);
     }
     setWhitelistActionId(null);
+  };
+
+  const loadApproved = async () => {
+    setApprovedLoading(true);
+    addLog('info', '載入已核准成員...');
+    try {
+      const users = await api.whitelist.getApproved();
+      setWhitelistApproved(users);
+      addLog('ok', `共 ${users.length} 位已核准成員`);
+    } catch (e: any) {
+      addLog('err', `載入失敗：${e.message}`);
+    }
+    setApprovedLoading(false);
+  };
+
+  const revokeUser = async (user: User) => {
+    if (!confirm(`確定撤銷 @${user.username} 的白名單資格？他們將無法登入平台。`)) return;
+    setWhitelistActionId(user.id);
+    addLog('info', `撤銷 @${user.username}...`);
+    try {
+      await api.whitelist.revoke(user.id);
+      setWhitelistApproved(prev => prev.filter(u => u.id !== user.id));
+      addLog('ok', `@${user.username} 白名單資格已撤銷`);
+    } catch (e: any) {
+      addLog('err', `撤銷失敗：${e.message}`);
+    }
+    setWhitelistActionId(null);
+  };
+
+  const approveAll = async () => {
+    if (!confirm('確定一鍵核准所有待審核申請？')) return;
+    setApproveAllLoading(true);
+    addLog('info', '批量核准中...');
+    try {
+      const { count } = await api.whitelist.approveAll();
+      setWhitelistPending([]);
+      addLog('ok', `已核准 ${count} 位使用者`);
+    } catch (e: any) {
+      addLog('err', `批量核准失敗：${e.message}`);
+    }
+    setApproveAllLoading(false);
   };
 
   // ─── Render helpers ────────────────────────────────────────────────────────
@@ -1465,16 +1509,30 @@ export default function QALab() {
                   <p className="text-white/35 text-xs leading-relaxed mb-3">
                     以下為已透過 OAuth 登入但尚未核准的使用者。核准後即可進入平台。
                   </p>
-                  <button
-                    onClick={loadWhitelistPending}
-                    disabled={whitelistLoading}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-white text-xs font-semibold transition-all duration-200 cursor-pointer mb-4"
-                  >
-                    <span className={`material-symbols-outlined text-[14px] ${whitelistLoading ? 'animate-spin' : ''}`}>
-                      {whitelistLoading ? 'sync' : 'refresh'}
-                    </span>
-                    {whitelistLoading ? '載入中…' : '載入申請清單'}
-                  </button>
+                  <div className="flex flex-wrap items-center gap-2 mb-4">
+                    <button
+                      onClick={loadWhitelistPending}
+                      disabled={whitelistLoading}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-white text-xs font-semibold transition-all duration-200 cursor-pointer"
+                    >
+                      <span className={`material-symbols-outlined text-[14px] ${whitelistLoading ? 'animate-spin' : ''}`}>
+                        {whitelistLoading ? 'sync' : 'refresh'}
+                      </span>
+                      {whitelistLoading ? '載入中…' : '載入申請清單'}
+                    </button>
+                    {whitelistPending.length > 0 && (
+                      <button
+                        onClick={approveAll}
+                        disabled={approveAllLoading}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-white text-xs font-semibold transition-all duration-200 cursor-pointer"
+                      >
+                        <span className={`material-symbols-outlined text-[14px] ${approveAllLoading ? 'animate-spin' : ''}`}>
+                          {approveAllLoading ? 'sync' : 'done_all'}
+                        </span>
+                        一鍵核准全部 ({whitelistPending.length})
+                      </button>
+                    )}
+                  </div>
 
                   {whitelistPending.length === 0 && !whitelistLoading && (
                     <div className="flex flex-col items-center py-8 text-white/20 text-xs gap-2">
@@ -1520,6 +1578,61 @@ export default function QALab() {
                                 拒絕
                               </button>
                             </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </Section>
+
+                {/* ── Approved members ── */}
+                <Section title="已核准成員" icon="shield_person" accent="emerald">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-white/35 text-xs">目前擁有平台存取權限的使用者</p>
+                    <button
+                      onClick={loadApproved}
+                      disabled={approvedLoading}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-white text-xs font-semibold transition-all cursor-pointer"
+                    >
+                      <span className={`material-symbols-outlined text-[13px] ${approvedLoading ? 'animate-spin' : ''}`}>
+                        {approvedLoading ? 'sync' : 'refresh'}
+                      </span>
+                      載入清單
+                    </button>
+                  </div>
+
+                  {whitelistApproved.length === 0 && !approvedLoading && (
+                    <p className="text-white/20 text-xs text-center py-4">點擊「載入清單」查看</p>
+                  )}
+
+                  {whitelistApproved.length > 0 && (
+                    <div className="space-y-2">
+                      {whitelistApproved.map(u => {
+                        const busy = whitelistActionId === u.id;
+                        return (
+                          <div key={u.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] transition-colors">
+                            <img
+                              src={u.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.username}`}
+                              alt=""
+                              className="w-8 h-8 rounded-full bg-white/10 shrink-0"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-white/85 truncate">@{u.username}</p>
+                              <p className="text-[11px] text-white/30 mt-0.5">
+                                加入於 {u.created_at ? new Date(u.created_at).toLocaleDateString('zh-TW') : '—'}
+                              </p>
+                            </div>
+                            <span className="text-[10px] text-emerald-400 font-medium shrink-0">核准</span>
+                            <button
+                              onClick={() => revokeUser(u)}
+                              disabled={busy}
+                              title="撤銷白名單"
+                              className="shrink-0 p-1.5 rounded-lg hover:bg-red-500/15 border border-transparent hover:border-red-500/25 text-white/20 hover:text-red-400 transition-all disabled:opacity-30 cursor-pointer"
+                            >
+                              <span className={`material-symbols-outlined text-[15px] block ${busy ? 'animate-spin' : ''}`}>
+                                {busy ? 'sync' : 'person_remove'}
+                              </span>
+                            </button>
                           </div>
                         );
                       })}

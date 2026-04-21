@@ -396,11 +396,20 @@ export const api = {
     async getPending(): Promise<User[]> {
       return apiJson<User[]>('/whitelist/pending', {}, 'Failed to fetch pending users');
     },
+    async getApproved(): Promise<User[]> {
+      return apiJson<User[]>('/whitelist/approved', {}, 'Failed to fetch approved users');
+    },
     async approve(id: number): Promise<User> {
       return apiJson<User>(`/whitelist/${id}/approve`, { method: 'PATCH' }, 'Approve failed');
     },
+    async revoke(id: number): Promise<User> {
+      return apiJson<User>(`/whitelist/${id}/revoke`, { method: 'PATCH' }, 'Revoke failed');
+    },
     async reject(id: number): Promise<{ ok: boolean }> {
       return apiJson<{ ok: boolean }>(`/whitelist/${id}`, { method: 'DELETE' }, 'Reject failed');
+    },
+    async approveAll(): Promise<{ count: number }> {
+      return apiJson<{ count: number }>('/whitelist/approve-all', { method: 'POST' }, 'Approve all failed');
     },
   },
 };

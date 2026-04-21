@@ -118,6 +118,7 @@ export async function initializeDatabase() {
 
       ALTER TABLE users ADD COLUMN IF NOT EXISTS is_vip BOOLEAN DEFAULT FALSE;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS is_approved BOOLEAN DEFAULT TRUE;
+      UPDATE users SET is_approved = TRUE WHERE is_approved IS NULL;
 
       CREATE TABLE IF NOT EXISTS assets (
         id             SERIAL PRIMARY KEY,
