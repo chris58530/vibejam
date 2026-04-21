@@ -135,6 +135,21 @@ export async function initializeDatabase() {
         UNIQUE(owner_id, sha256)
       );
       CREATE INDEX IF NOT EXISTS idx_assets_owner ON assets(owner_id);
+
+      CREATE TABLE IF NOT EXISTS access_logs (
+        id          SERIAL PRIMARY KEY,
+        path        TEXT NOT NULL,
+        ip          TEXT,
+        country     TEXT,
+        user_agent  TEXT,
+        referer     TEXT,
+        supabase_id TEXT,
+        username    TEXT,
+        is_approved BOOLEAN,
+        created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_access_logs_path ON access_logs(path);
+      CREATE INDEX IF NOT EXISTS idx_access_logs_created ON access_logs(created_at DESC);
     `);
     console.log('Database schema initialized');
   } catch (err: any) {

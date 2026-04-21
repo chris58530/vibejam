@@ -291,7 +291,18 @@ export default function App() {
 
   const location = useLocation();
 
+  // QA Lab: only for approved users
   if (location.pathname === '/qa-lab') {
+    if (authLoading) {
+      return (
+        <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+          <span className="material-symbols-outlined text-[32px] text-gray-600 animate-spin">sync</span>
+        </div>
+      );
+    }
+    if (!currentUser || currentUser.is_approved === false) {
+      return <Navigate to="/whitelist" replace />;
+    }
     return <QALab />;
   }
 

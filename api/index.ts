@@ -116,6 +116,45 @@ app.patch('/api/users/:username/vip', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
 
+// ── Access Logs ───────────────────────────────────────────────────────────────
+
+// Record a page access (called from frontend on mount)
+app.post('/api/access-logs', async (req, res) => {
+  try {
+    await ensureDb();
+    const ip =
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+      req.headers['x-real-ip'] as string ||
+      req.socket.remoteAddress ||
+      null;
+    const country = (req.headers['x-vercel-ip-country'] as string) || null;
+    const { path, supabase_id, username, is_approved } = req.body;
+    const user_agent = req.headers['user-agent'] || null;
+    const referer = req.headers['referer'] || null;
+    await db.run(
+      `INSERT INTO access_logs (path, ip, country, user_agent, referer, supabase_id, username, is_approved)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [path || '/', ip, country, user_agent, referer, supabase_id || null, username || null, is_approved ?? null]
+    );
+    res.json({ ok: true, ip, country });
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+// Get access logs (paginated)
+app.get('/api/access-logs', async (req, res) => {
+  try {
+    await ensureDb();
+    const limit = Math.min(Number(req.query.limit) || 100, 500);
+    const offset = Number(req.query.offset) || 0;
+    const path = req.query.path as string | undefined;
+    const rows = await db.query(
+      `SELECT * FROM access_logs ${path ? 'WHERE path = $3' : ''} ORDER BY created_at DESC LIMIT $1 OFFSET $2`,
+      path ? [limit, offset, path] : [limit, offset]
+    );
+    res.json(rows);
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
 // ── Whitelist management ──────────────────────────────────────────────────────
 
 // List pending users (is_approved = false)

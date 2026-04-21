@@ -69,6 +69,19 @@ export interface InviteLink {
   created_at: string;
 }
 
+export interface AccessLog {
+  id: number;
+  path: string;
+  ip: string | null;
+  country: string | null;
+  user_agent: string | null;
+  referer: string | null;
+  supabase_id: string | null;
+  username: string | null;
+  is_approved: boolean | null;
+  created_at: string;
+}
+
 export interface Vibe {
   id: number;
   title: string;
@@ -410,6 +423,19 @@ export const api = {
     },
     async approveAll(): Promise<{ count: number }> {
       return apiJson<{ count: number }>('/whitelist/approve-all', { method: 'POST' }, 'Approve all failed');
+    },
+  },
+
+  accessLogs: {
+    async record(data: { path: string; supabase_id?: string; username?: string; is_approved?: boolean }): Promise<{ ok: boolean; ip?: string; country?: string }> {
+      return apiJson<{ ok: boolean; ip?: string; country?: string }>('/access-logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      }, 'Failed to record access log');
+    },
+    async getAll(limit = 100, offset = 0): Promise<AccessLog[]> {
+      return apiJson<AccessLog[]>(`/access-logs?limit=${limit}&offset=${offset}`, {}, 'Failed to fetch access logs');
     },
   },
 };

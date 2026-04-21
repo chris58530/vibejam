@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { api, apiFetch, Vibe, User } from '../lib/api';
+﻿import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { api, apiFetch, Vibe, User, AccessLog } from '../lib/api';
 import { supabase, signUpWithEmail, signInWithEmail, signOut } from '../lib/supabase';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -18,7 +18,7 @@ interface GeneratedAccount {
   note?: string;
 }
 
-type Tab = 'data' | 'interact' | 'cleanup' | 'system' | 'vip' | 'whitelist';
+type Tab = 'data' | 'interact' | 'cleanup' | 'system' | 'vip' | 'whitelist' | 'access';
 
 // ─── Sample vibe templates ────────────────────────────────────────────────────
 const VIBE_TEMPLATES = [
@@ -134,12 +134,13 @@ function formatRelativeTime(value?: string) {
 
 // ─── Tab config ───────────────────────────────────────────────────────────────
 const TABS: { id: Tab; label: string; icon: string; accent: string }[] = [
-  { id: 'data',     label: '資料建立', icon: 'database',      accent: 'violet' },
-  { id: 'interact', label: '互動測試', icon: 'bolt',          accent: 'cyan'   },
-  { id: 'cleanup',  label: '清理中心', icon: 'delete_sweep',  accent: 'red'    },
-  { id: 'system',   label: '系統健診', icon: 'monitor_heart', accent: 'emerald'},
-  { id: 'vip',       label: 'VIP 管理', icon: 'workspace_premium', accent: 'amber'     },
-  { id: 'whitelist', label: '白名單',   icon: 'verified_user',    accent: 'indigo'    },
+  { id: 'data',      label: '資料建立', icon: 'database',         accent: 'violet'  },
+  { id: 'interact',  label: '互動測試', icon: 'bolt',             accent: 'cyan'    },
+  { id: 'cleanup',   label: '清理中心', icon: 'delete_sweep',     accent: 'red'     },
+  { id: 'system',    label: '系統健診', icon: 'monitor_heart',    accent: 'emerald' },
+  { id: 'vip',       label: 'VIP 管理', icon: 'workspace_premium',accent: 'amber'   },
+  { id: 'whitelist', label: '白名單',   icon: 'verified_user',    accent: 'indigo'  },
+  { id: 'access',    label: '訪問紀錄', icon: 'footprint',        accent: 'rose'    },
 ];
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -203,6 +204,12 @@ export default function QALab() {
   const [whitelistActionId, setWhitelistActionId] = useState<number | null>(null);
   const [approveAllLoading, setApproveAllLoading] = useState(false);
 
+  // Access log state
+  const [accessLogs, setAccessLogs]             = useState<AccessLog[]>([]);
+  const [accessLogsLoading, setAccessLogsLoading] = useState(false);
+  const [myIp, setMyIp]                         = useState<string | null>(null);
+  const [myCountry, setMyCountry]               = useState<string | null>(null);
+
   // System health state
   const [pingLoading, setPingLoading]       = useState(false);
   const [pingResult, setPingResult]         = useState<{ ms: number; ok: boolean; msg: string } | null>(null);
@@ -236,6 +243,41 @@ export default function QALab() {
 
   // ── Load vibes ─────────────────────────────────────────────────────────────
   useEffect(() => { loadVibes(); }, []);
+
+  // Record this page access on mount
+  useEffect(() => {
+    let cancelled = false;
+    const record = async () => {
+      try {
+        const result = await api.accessLogs.record({
+          path: '/qa-lab',
+          supabase_id: undefined, // will be populated after auth sync
+          username: undefined,
+          is_approved: undefined,
+        });
+        if (!cancelled && result.ip) {
+          setMyIp(result.ip);
+          setMyCountry(result.country ?? null);
+        }
+      } catch {}
+    };
+    record();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Re-record with user info once auth resolves
+  useEffect(() => {
+    if (!supabaseId) return;
+    api.accessLogs.record({
+      path: '/qa-lab',
+      supabase_id: supabaseId,
+      username: dbUser?.username,
+      is_approved: dbUser?.is_approved ?? undefined,
+    }).then(r => {
+      if (r.ip) { setMyIp(r.ip); setMyCountry(r.country ?? null); }
+    }).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabaseId]);
 
   const loadVibes = async () => {
     try {
@@ -606,6 +648,20 @@ export default function QALab() {
     setVipListLoading(false);
   };
 
+  // ─── Access log handlers ───────────────────────────────────────────────────
+  const loadAccessLogs = async () => {
+    setAccessLogsLoading(true);
+    addLog('info', '載入訪問紀錄...');
+    try {
+      const logs = await api.accessLogs.getAll(200);
+      setAccessLogs(logs);
+      addLog('ok', `共 ${logs.length} 筆訪問紀錄`);
+    } catch (e: any) {
+      addLog('err', `載入失敗：${e.message}`);
+    }
+    setAccessLogsLoading(false);
+  };
+
   // ─── Whitelist handlers ────────────────────────────────────────────────────
   const loadWhitelistPending = async () => {
     setWhitelistLoading(true);
@@ -712,10 +768,10 @@ export default function QALab() {
   const errCount  = logs.filter(l => l.level === 'err').length;
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 font-sans text-sm flex flex-col">
+    <div className="min-h-screen bg-[#020617] text-slate-200 font-sans text-sm flex flex-col">
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-20 bg-gray-950 border-b border-gray-800">
+      <div className="sticky top-0 z-20 bg-[#020617]/95 backdrop-blur-sm border-b border-slate-800">
         <div className="flex items-center justify-between px-4 md:px-5 py-3">
           {/* Brand */}
           <div className="flex items-center gap-3">
@@ -724,15 +780,15 @@ export default function QALab() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-gray-100 font-semibold text-sm">QA 控制台</span>
-                <span className="px-1.5 py-0.5 bg-gray-800 border border-gray-700 rounded text-gray-500 text-[10px] font-medium">Internal</span>
+                <span className="text-slate-100 font-semibold text-sm">QA 控制台</span>
+                <span className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-slate-500 text-[10px] font-medium">Internal</span>
                 {errCount > 0 && (
                   <span className="px-1.5 py-0.5 bg-red-500/15 border border-red-500/30 rounded text-red-300 text-[10px] font-semibold">
                     {errCount} 錯誤
                   </span>
                 )}
               </div>
-              <div className="text-gray-500 text-[11px] mt-0.5 hidden sm:block">壓測、資料建立、互動驗證、專案清理、系統健診</div>
+              <div className="text-slate-600 text-[11px] mt-0.5 hidden sm:block">壓測、資料建立、互動驗證、專案清理、系統健診</div>
             </div>
           </div>
 
@@ -741,7 +797,7 @@ export default function QALab() {
             {/* Mobile log toggle */}
             <button
               onClick={() => setShowLog(v => !v)}
-              className="xl:hidden relative inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gray-800 border border-gray-700 text-gray-400 text-xs transition-colors hover:bg-gray-700 cursor-pointer"
+              className="xl:hidden relative inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 text-xs transition-colors hover:bg-slate-700 cursor-pointer"
             >
               <span className="material-symbols-outlined text-[13px]">terminal</span>
               <span>紀錄</span>
@@ -754,10 +810,10 @@ export default function QALab() {
 
             {dbUser ? (
               <div className="flex items-center gap-2">
-                {dbUser.avatar && <img src={dbUser.avatar} className="w-7 h-7 rounded-full ring-1 ring-white/10 hidden sm:block" alt={dbUser.username} />}
+                {dbUser.avatar && <img src={dbUser.avatar} className="w-7 h-7 rounded-full ring-1 ring-slate-700 hidden sm:block" alt={dbUser.username} />}
                 <div className="text-right hidden sm:block">
-                  <div className="text-gray-300 text-xs font-medium">@{dbUser.username}</div>
-                  <div className="text-gray-600 text-[10px]">{supabaseId?.slice(0, 12)}…</div>
+                  <div className="text-slate-300 text-xs font-medium">@{dbUser.username}</div>
+                  <div className="text-slate-600 text-[10px]">{supabaseId?.slice(0, 12)}…</div>
                 </div>
                 <button
                   onClick={async () => { await signOut(); addLog('info', '已登出'); }}
@@ -794,7 +850,7 @@ export default function QALab() {
 
           {/* Tab Bar */}
           <div className="px-4 md:px-5 shrink-0">
-            <div className="flex border-b border-gray-800 overflow-x-auto">
+            <div className="flex border-b border-slate-800 overflow-x-auto">
               {TABS.map(tab => {
                 const active = activeTab === tab.id;
                 const cfg = accentConfig[tab.accent];
@@ -804,8 +860,8 @@ export default function QALab() {
                     onClick={() => setActiveTab(tab.id)}
                     className={`flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-medium transition-colors duration-150 cursor-pointer whitespace-nowrap border-b-2 -mb-px ${
                       active
-                        ? `border-blue-500 ${cfg.icon}`
-                        : 'border-transparent text-gray-500 hover:text-gray-300'
+                        ? `border-blue-500 ${cfg.icon} bg-slate-900/60`
+                        : 'border-transparent text-slate-600 hover:text-slate-300 hover:bg-slate-900/40'
                     }`}
                   >
                     <span className="material-symbols-outlined text-[13px]">{tab.icon}</span>
@@ -824,7 +880,7 @@ export default function QALab() {
               <>
                 {/* Account Factory */}
                 <Section title="帳號工廠" icon="person_add" accent="violet">
-                  <p className="text-white/35 text-xs leading-relaxed mb-3">
+                  <p className="text-slate-500 text-xs leading-relaxed mb-3">
                     透過 Supabase Auth 產生隨機 Email 帳號。若啟用自動驗證可立即使用。
                   </p>
                   <button
@@ -842,7 +898,7 @@ export default function QALab() {
                         <div key={i} className={`rounded-lg border p-2.5 transition-colors ${
                           acc.status === 'created' ? 'border-emerald-500/25 bg-emerald-500/5' :
                           acc.status === 'error'   ? 'border-red-500/25 bg-red-500/5' :
-                          'border-white/8 bg-white/[0.02]'
+                          'border-slate-800 bg-slate-900/30'
                         }`}>
                           <div className="flex justify-between items-start gap-3">
                             <div className="space-y-0.5 min-w-0 flex-1">
@@ -851,21 +907,21 @@ export default function QALab() {
                                   acc.status === 'created' ? 'bg-emerald-400' :
                                   acc.status === 'error'   ? 'bg-red-400' : 'bg-white/20'
                                 }`} />
-                                <span className="text-white/70 text-xs truncate font-medium">{acc.username}</span>
+                                <span className="text-slate-300 text-xs truncate font-medium">{acc.username}</span>
                                 <span className={`text-[10px] px-1 py-px rounded font-semibold ${
                                   acc.status === 'created' ? 'text-emerald-400 bg-emerald-400/10' :
                                   acc.status === 'error'   ? 'text-red-400 bg-red-400/10' :
-                                  'text-white/30 bg-white/5'
+                                  'text-slate-500 bg-slate-800/40'
                                 }`}>{acc.status === 'created' ? '已建立' : acc.status === 'error' ? '錯誤' : '等待中'}</span>
                               </div>
-                              <div className="text-white/35 text-[11px] truncate pl-3">{acc.email}</div>
-                              <div className="text-white/35 text-[11px] pl-3 font-mono tracking-tight">{acc.password}</div>
+                              <div className="text-slate-500 text-[11px] truncate pl-3">{acc.email}</div>
+                              <div className="text-slate-500 text-[11px] pl-3 font-mono tracking-tight">{acc.password}</div>
                               {acc.note && <div className="text-amber-400/60 text-[10px] pl-3 mt-0.5">{acc.note}</div>}
                             </div>
                             <div className="flex flex-col gap-1 shrink-0">
                               <button
                                 onClick={() => navigator.clipboard.writeText(`${acc.email}\n${acc.password}`)}
-                                className="px-2 py-1 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded text-[10px] text-white/50 hover:text-white/80 transition-all cursor-pointer"
+                                className="px-2 py-1 bg-slate-800/40 hover:bg-slate-800/60 border border-slate-700 hover:border-slate-600 rounded text-[10px] text-slate-400 hover:text-white/80 transition-all cursor-pointer"
                               >
                                 複製
                               </button>
@@ -890,7 +946,7 @@ export default function QALab() {
                   {!dbUser && <AuthWarning />}
                   <div className="space-y-3">
                     <div className="flex items-center gap-3 flex-wrap">
-                      <span className="text-white/35 text-xs">數量</span>
+                      <span className="text-slate-500 text-xs">數量</span>
                       <div className="flex gap-1 flex-wrap">
                         {[1, 5, 10, 50, 100].map(n => (
                           <button
@@ -899,7 +955,7 @@ export default function QALab() {
                             className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-all duration-150 cursor-pointer ${
                               vibeCount === n
                                 ? 'bg-emerald-600 border-emerald-500 text-white shadow-[0_0_12px_rgba(16,185,129,0.25)]'
-                                : 'border-white/10 text-white/40 hover:border-white/20 hover:text-white/60'
+                                : 'border-slate-700 text-white/40 hover:border-slate-600 hover:text-slate-400'
                             }`}
                           >
                             {n}
@@ -911,7 +967,7 @@ export default function QALab() {
                           min={1}
                           max={500}
                           onChange={e => setVibeCount(Math.max(1, Math.min(500, Number(e.target.value))))}
-                          className="w-16 px-2 py-1 bg-white/5 border border-white/10 focus:border-emerald-500/50 rounded-md text-xs text-white outline-none transition-colors"
+                          className="w-16 px-2 py-1 bg-slate-800/40 border border-slate-700 focus:border-emerald-500/50 rounded-md text-xs text-white outline-none transition-colors"
                         />
                       </div>
                     </div>
@@ -929,11 +985,11 @@ export default function QALab() {
                     </button>
                     {vibeLoading && vibeProgress && (
                       <div className="space-y-1">
-                        <div className="flex justify-between text-[10px] text-white/30">
+                        <div className="flex justify-between text-[10px] text-slate-500">
                           <span>進度</span>
                           <span>{Math.round((vibeProgress.done / vibeProgress.total) * 100)}%</span>
                         </div>
-                        <div className="h-1.5 bg-white/8 rounded-full overflow-hidden">
+                        <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
                           <div
                             className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 rounded-full transition-all duration-300 shadow-[0_0_8px_rgba(52,211,153,0.5)]"
                             style={{ width: `${(vibeProgress.done / vibeProgress.total) * 100}%` }}
@@ -956,7 +1012,7 @@ export default function QALab() {
                     <select
                       value={remixTarget}
                       onChange={e => setRemixTarget(e.target.value ? Number(e.target.value) : '')}
-                      className="flex-1 bg-white/5 border border-white/10 focus:border-cyan-500/50 rounded-lg px-3 py-2 text-xs text-white min-w-0 outline-none transition-colors cursor-pointer"
+                      className="flex-1 bg-slate-800/40 border border-slate-700 focus:border-cyan-500/50 rounded-lg px-3 py-2 text-xs text-white min-w-0 outline-none transition-colors cursor-pointer"
                     >
                       <option value="">選擇要 Remix 的 Vibe…</option>
                       {vibes.map(v => (
@@ -978,11 +1034,11 @@ export default function QALab() {
                 <Section title="按讚測試" icon="favorite" accent="pink">
                   {!supabaseId && <AuthWarning />}
                   <div className="flex justify-between items-center mb-2.5">
-                    <span className="text-white/30 text-xs">已載入 {vibes.length} 個 Vibe</span>
+                    <span className="text-slate-500 text-xs">已載入 {vibes.length} 個 Vibe</span>
                     <div className="flex gap-1.5">
                       <button
                         onClick={loadVibes}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-md text-xs text-white/50 hover:text-white/80 transition-all cursor-pointer"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-800/40 hover:bg-slate-800/60 border border-slate-700 hover:border-slate-600 rounded-md text-xs text-slate-400 hover:text-white/80 transition-all cursor-pointer"
                       >
                         <span className="material-symbols-outlined text-[12px]">refresh</span>
                         重新整理
@@ -999,11 +1055,11 @@ export default function QALab() {
                   </div>
                   <div className="max-h-48 overflow-y-auto space-y-0.5">
                     {vibes.slice(0, 15).map(v => (
-                      <div key={v.id} className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md bg-white/[0.02] hover:bg-white/[0.05] transition-colors group">
+                      <div key={v.id} className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md bg-slate-900/30 hover:bg-white/[0.05] transition-colors group">
                         <div className="min-w-0 flex items-center gap-1.5">
-                          <span className="text-white/20 text-[10px] tabular-nums shrink-0">#{v.id}</span>
-                          <span className="text-white/60 truncate text-xs">{v.title}</span>
-                          <span className="text-white/25 text-[10px] shrink-0">@{v.author_name}</span>
+                          <span className="text-slate-600 text-[10px] tabular-nums shrink-0">#{v.id}</span>
+                          <span className="text-slate-400 truncate text-xs">{v.title}</span>
+                          <span className="text-slate-600 text-[10px] shrink-0">@{v.author_name}</span>
                         </div>
                         <button
                           onClick={() => toggleLike(v)}
@@ -1011,7 +1067,7 @@ export default function QALab() {
                           className={`shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] border disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150 cursor-pointer ${
                             likeMap[v.id]
                               ? 'bg-pink-500/20 border-pink-500/35 text-pink-300'
-                              : 'border-white/10 text-white/30 hover:border-pink-500/30 hover:text-pink-400 hover:bg-pink-500/10'
+                              : 'border-slate-700 text-slate-500 hover:border-pink-500/30 hover:text-pink-400 hover:bg-pink-500/10'
                           }`}
                         >
                           <span className="material-symbols-outlined text-[11px]">{likeMap[v.id] ? 'favorite' : 'favorite_border'}</span>
@@ -1032,7 +1088,7 @@ export default function QALab() {
                       value={followUsername}
                       onChange={e => setFollowUsername(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && toggleFollow(followUsername)}
-                      className="flex-1 bg-white/5 border border-white/10 focus:border-blue-500/50 rounded-lg px-3 py-2 text-xs text-white placeholder-white/20 outline-none transition-colors"
+                      className="flex-1 bg-slate-800/40 border border-slate-700 focus:border-blue-500/50 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-600 outline-none transition-colors"
                     />
                     <button
                       onClick={() => toggleFollow(followUsername)}
@@ -1044,15 +1100,15 @@ export default function QALab() {
                   </div>
                   <div className="space-y-0.5 max-h-36 overflow-y-auto">
                     {Array.from(new Map(vibes.map(v => [v.author_name, v])).values()).slice(0, 8).map(v => (
-                      <div key={v.author_name} className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md bg-white/[0.02] hover:bg-white/[0.04] transition-colors">
-                        <span className="text-white/50 text-xs">@{v.author_name}</span>
+                      <div key={v.author_name} className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md bg-slate-900/30 hover:bg-white/[0.04] transition-colors">
+                        <span className="text-slate-400 text-xs">@{v.author_name}</span>
                         <button
                           onClick={() => { setFollowUsername(v.author_name); toggleFollow(v.author_name); }}
                           disabled={!supabaseId}
                           className={`px-2.5 py-1 rounded-md text-[10px] border disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer ${
                             followStatus[v.author_name]
                               ? 'bg-blue-500/20 border-blue-500/35 text-blue-300'
-                              : 'border-white/10 text-white/30 hover:border-blue-500/30 hover:text-blue-400 hover:bg-blue-500/10'
+                              : 'border-slate-700 text-slate-500 hover:border-blue-500/30 hover:text-blue-400 hover:bg-blue-500/10'
                           }`}
                         >
                           {followStatus[v.author_name] ? '追蹤中' : '+ 追蹤'}
@@ -1069,7 +1125,7 @@ export default function QALab() {
                     <select
                       value={commentVibeId}
                       onChange={e => setCommentVibeId(e.target.value ? Number(e.target.value) : '')}
-                      className="w-full bg-white/5 border border-white/10 focus:border-amber-500/50 rounded-lg px-3 py-2 text-xs text-white outline-none transition-colors cursor-pointer"
+                      className="w-full bg-slate-800/40 border border-slate-700 focus:border-amber-500/50 rounded-lg px-3 py-2 text-xs text-white outline-none transition-colors cursor-pointer"
                     >
                       <option value="">選擇目標 Vibe…</option>
                       {vibes.map(v => (
@@ -1083,7 +1139,7 @@ export default function QALab() {
                         value={commentText}
                         onChange={e => setCommentText(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && postComment()}
-                        className="flex-1 bg-white/5 border border-white/10 focus:border-amber-500/50 rounded-lg px-3 py-2 text-xs text-white placeholder-white/20 outline-none transition-colors"
+                        className="flex-1 bg-slate-800/40 border border-slate-700 focus:border-amber-500/50 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-600 outline-none transition-colors"
                       />
                       <button
                         onClick={postComment}
@@ -1094,7 +1150,7 @@ export default function QALab() {
                         {commentLoading ? '…' : '送出'}
                       </button>
                     </div>
-                    <p className="text-white/25 text-[11px]">按 Enter 或點送出，留言會出現在該 Vibe 的詳情頁。</p>
+                    <p className="text-slate-600 text-[11px]">按 Enter 或點送出，留言會出現在該 Vibe 的詳情頁。</p>
                   </div>
                 </Section>
               </>
@@ -1111,12 +1167,12 @@ export default function QALab() {
                       value={cleanupQuery}
                       onChange={e => setCleanupQuery(e.target.value)}
                       placeholder="搜尋 ID / 標題 / 作者…"
-                      className="bg-white/5 border border-white/10 focus:border-red-400/50 rounded-lg px-3 py-2 text-xs text-white placeholder-white/20 outline-none transition-colors"
+                      className="bg-slate-800/40 border border-slate-700 focus:border-red-400/50 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-600 outline-none transition-colors"
                     />
                     <select
                       value={cleanupAuthor}
                       onChange={e => setCleanupAuthor(e.target.value)}
-                      className="bg-white/5 border border-white/10 focus:border-red-400/50 rounded-lg px-3 py-2 text-xs text-white outline-none cursor-pointer"
+                      className="bg-slate-800/40 border border-slate-700 focus:border-red-400/50 rounded-lg px-3 py-2 text-xs text-white outline-none cursor-pointer"
                     >
                       <option value="all">所有作者</option>
                       {authorOptions.map(opt => (
@@ -1127,7 +1183,7 @@ export default function QALab() {
                     </select>
                     <button
                       onClick={loadVibes}
-                      className="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white/70 text-xs transition-colors cursor-pointer"
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-800/40 hover:bg-slate-800/60 border border-slate-700 rounded-lg text-slate-300 text-xs transition-colors cursor-pointer"
                     >
                       <span className="material-symbols-outlined text-[13px]">refresh</span>
                       更新
@@ -1138,7 +1194,7 @@ export default function QALab() {
                     <button
                       onClick={selectAllVisible}
                       disabled={filteredCleanupVibes.length === 0}
-                      className="px-2.5 py-1 rounded-md border border-white/12 text-white/70 hover:text-white hover:border-white/25 disabled:opacity-35 disabled:cursor-not-allowed text-[11px] transition-colors cursor-pointer"
+                      className="px-2.5 py-1 rounded-md border border-white/12 text-slate-300 hover:text-white hover:border-white/25 disabled:opacity-35 disabled:cursor-not-allowed text-[11px] transition-colors cursor-pointer"
                     >
                       全選目前結果 ({filteredCleanupVibes.length})
                     </button>
@@ -1157,15 +1213,15 @@ export default function QALab() {
                         只看我的專案
                       </button>
                     )}
-                    <span className="text-[11px] text-white/35">
+                    <span className="text-[11px] text-slate-500">
                       已勾選 {selectedDeleteIds.length} 筆（可見 {selectedVisibleCount} 筆）
                     </span>
                   </div>
 
-                  <div className="rounded-lg border border-white/[0.08] bg-black/15 overflow-hidden">
+                  <div className="rounded-lg border border-slate-800 bg-black/15 overflow-hidden">
                     <div className="max-h-72 overflow-y-auto divide-y divide-white/[0.04]">
                       {filteredCleanupVibes.length === 0 && (
-                        <div className="px-3 py-6 text-center text-white/30 text-xs">沒有符合條件的專案</div>
+                        <div className="px-3 py-6 text-center text-slate-500 text-xs">沒有符合條件的專案</div>
                       )}
                       {filteredCleanupVibes.map(v => {
                         const selected = selectedDeleteIds.includes(v.id);
@@ -1179,10 +1235,10 @@ export default function QALab() {
                             />
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-1.5 min-w-0">
-                                <span className="text-white/25 text-[10px] shrink-0">#{v.id}</span>
+                                <span className="text-slate-600 text-[10px] shrink-0">#{v.id}</span>
                                 <span className="text-white/75 text-xs truncate">{v.title}</span>
                               </div>
-                              <div className="text-[10px] text-white/30 mt-0.5">
+                              <div className="text-[10px] text-slate-500 mt-0.5">
                                 @{v.author_name} · {formatRelativeTime(v.created_at)}
                               </div>
                             </div>
@@ -1226,7 +1282,7 @@ export default function QALab() {
                         await loadVibes();
                       }}
                       disabled={!dbUser || cleanupDeleting}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white/6 hover:bg-white/10 border border-white/12 text-white/70 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-xs transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white/6 hover:bg-slate-800/60 border border-white/12 text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-xs transition-colors cursor-pointer"
                     >
                       <span className="material-symbols-outlined text-[13px]">auto_delete</span>
                       一鍵刪除我的全部
@@ -1241,7 +1297,7 @@ export default function QALab() {
               <>
                 {/* API Ping */}
                 <Section title="API 連線測試" icon="wifi_tethering" accent="emerald">
-                  <p className="text-white/35 text-xs leading-relaxed mb-3">
+                  <p className="text-slate-500 text-xs leading-relaxed mb-3">
                     測試後端 API 端點回應速度，確認服務正常運作中。
                   </p>
                   <div className="flex items-center gap-3 flex-wrap">
@@ -1272,7 +1328,7 @@ export default function QALab() {
                   {/* Response time indicator */}
                   {pingResult?.ok && (
                     <div className="mt-3 space-y-1">
-                      <div className="flex justify-between text-[10px] text-white/35">
+                      <div className="flex justify-between text-[10px] text-slate-500">
                         <span>回應速度</span>
                         <span className={
                           pingResult.ms < 200 ? 'text-emerald-400' :
@@ -1281,7 +1337,7 @@ export default function QALab() {
                           {pingResult.ms < 200 ? '極快' : pingResult.ms < 500 ? '正常' : '偏慢'}
                         </span>
                       </div>
-                      <div className="h-1.5 bg-white/8 rounded-full overflow-hidden">
+                      <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
                         <div
                           className={`h-full rounded-full transition-all duration-500 ${
                             pingResult.ms < 200 ? 'bg-emerald-500' :
@@ -1296,7 +1352,7 @@ export default function QALab() {
 
                 {/* DB Stats */}
                 <Section title="資料庫統計" icon="storage" accent="cyan">
-                  <p className="text-white/35 text-xs leading-relaxed mb-3">
+                  <p className="text-slate-500 text-xs leading-relaxed mb-3">
                     查看目前資料庫中的 Vibe 數量與使用者分佈。
                   </p>
                   <button
@@ -1335,9 +1391,9 @@ export default function QALab() {
                       { label: 'DB User',   value: dbUser ? `@${dbUser.username} (id:${dbUser.id})` : '—' },
                     ].map(row => (
                       <div key={row.label} className="flex gap-2 items-start px-2.5 py-1.5 rounded-md bg-white/[0.025] hover:bg-white/[0.04] transition-colors group">
-                        <span className="text-white/30 shrink-0 w-20 text-[11px]">{row.label}</span>
+                        <span className="text-slate-500 shrink-0 w-20 text-[11px]">{row.label}</span>
                         <span
-                          className="text-white/60 break-all leading-snug text-[11px] flex-1 cursor-pointer group-hover:text-white/80 transition-colors"
+                          className="text-slate-400 break-all leading-snug text-[11px] flex-1 cursor-pointer group-hover:text-white/80 transition-colors"
                           onClick={() => { navigator.clipboard.writeText(row.value); addLog('ok', `已複製：${row.label}`); }}
                           title="點擊複製"
                         >
@@ -1355,7 +1411,7 @@ export default function QALab() {
               <>
                 {/* Search & toggle */}
                 <Section title="搜尋使用者" icon="manage_accounts" accent="amber" overflowVisible>
-                  <p className="text-white/35 text-xs leading-relaxed mb-3">
+                  <p className="text-slate-500 text-xs leading-relaxed mb-3">
                     從下拉選單選擇現有使用者，或直接輸入名稱查詢。
                   </p>
                   <div className="relative mb-4" ref={vipInputRef}>
@@ -1369,9 +1425,9 @@ export default function QALab() {
                           onBlur={() => setTimeout(() => setVipDropdownOpen(false), 150)}
                           onKeyDown={e => { if (e.key === 'Enter') { setVipDropdownOpen(false); searchVipUser(); } if (e.key === 'Escape') setVipDropdownOpen(false); }}
                           placeholder="選擇或輸入使用者名稱..."
-                          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 pr-8 text-sm text-white placeholder-white/20 focus:outline-none focus:border-amber-500/50"
+                          className="w-full bg-slate-800/40 border border-slate-700 rounded-lg px-3 py-2 pr-8 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500/50"
                         />
-                        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 material-symbols-outlined text-[16px] text-white/20 pointer-events-none">
+                        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 material-symbols-outlined text-[16px] text-slate-600 pointer-events-none">
                           arrow_drop_down
                         </span>
                       </div>
@@ -1388,7 +1444,7 @@ export default function QALab() {
 
                     {/* Dropdown */}
                     {vipDropdownOpen && filteredUserOptions.length > 0 && (
-                      <div className="absolute z-50 top-full left-0 right-10 mt-1 bg-[#111420] border border-white/10 rounded-xl shadow-2xl overflow-hidden max-h-64 overflow-y-auto">
+                      <div className="absolute z-50 top-full left-0 right-10 mt-1 bg-[#111420] border border-slate-700 rounded-xl shadow-2xl overflow-hidden max-h-64 overflow-y-auto">
                         {filteredUserOptions.map(u => (
                           <button
                             key={u.username}
@@ -1398,15 +1454,15 @@ export default function QALab() {
                               setVipSearchResult(null);
                               setTimeout(() => searchVipUser(u.username), 0);
                             }}
-                            className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/5 transition-colors text-left"
+                            className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-slate-800/40 transition-colors text-left"
                           >
                             <img
                               src={u.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.username}`}
                               alt=""
-                              className="w-6 h-6 rounded-full bg-white/10 shrink-0"
+                              className="w-6 h-6 rounded-full bg-slate-800/60 shrink-0"
                             />
                             <span className="text-sm text-white/80 flex-1">@{u.username}</span>
-                            <span className="text-[10px] text-white/25 tabular-nums">{u.count} vibes</span>
+                            <span className="text-[10px] text-slate-600 tabular-nums">{u.count} vibes</span>
                           </button>
                         ))}
                       </div>
@@ -1426,14 +1482,14 @@ export default function QALab() {
                       <img
                         src={vipSearchResult.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${vipSearchResult.username}`}
                         alt=""
-                        className="w-9 h-9 rounded-full bg-white/10 shrink-0"
+                        className="w-9 h-9 rounded-full bg-slate-800/60 shrink-0"
                       />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-white">@{vipSearchResult.username}</p>
                         <p className="text-[11px] text-white/40 mt-0.5">
                           {vipSearchResult.is_vip
                             ? <span className="text-amber-400 font-medium">✅ 目前是 VIP</span>
-                            : <span className="text-white/30">❌ 非 VIP</span>}
+                            : <span className="text-slate-500">❌ 非 VIP</span>}
                         </p>
                       </div>
                       <button
@@ -1457,7 +1513,7 @@ export default function QALab() {
                 {/* VIP list */}
                 <Section title="目前 VIP 清單" icon="workspace_premium" accent="amber">
                   <div className="flex items-center justify-between mb-3">
-                    <p className="text-white/35 text-xs">所有已授予 VIP 的使用者</p>
+                    <p className="text-slate-500 text-xs">所有已授予 VIP 的使用者</p>
                     <button
                       onClick={loadVipList}
                       disabled={vipListLoading}
@@ -1473,18 +1529,18 @@ export default function QALab() {
                   {vipList.length > 0 && (
                     <div className="space-y-2">
                       {vipList.map(u => (
-                        <div key={u.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] transition-colors">
+                        <div key={u.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-white/[0.06] bg-slate-900/30 hover:bg-white/[0.04] transition-colors">
                           <img
                             src={u.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.username}`}
                             alt=""
-                            className="w-7 h-7 rounded-full bg-white/10 shrink-0"
+                            className="w-7 h-7 rounded-full bg-slate-800/60 shrink-0"
                           />
                           <span className="flex-1 text-sm text-white/80">@{u.username}</span>
                           <span className="text-[11px] text-amber-400 font-medium">VIP</span>
                           <button
                             onClick={() => toggleVip(u.username, false)}
                             disabled={vipLoading}
-                            className="p-1 rounded-md hover:bg-red-500/10 hover:text-red-400 text-white/20 transition-colors disabled:opacity-30 cursor-pointer"
+                            className="p-1 rounded-md hover:bg-red-500/10 hover:text-red-400 text-slate-600 transition-colors disabled:opacity-30 cursor-pointer"
                             title="撤銷 VIP"
                           >
                             <span className="material-symbols-outlined text-[14px]">close</span>
@@ -1495,7 +1551,7 @@ export default function QALab() {
                   )}
 
                   {vipList.length === 0 && !vipListLoading && (
-                    <p className="text-white/20 text-xs text-center py-4">點擊「載入清單」查看</p>
+                    <p className="text-slate-600 text-xs text-center py-4">點擊「載入清單」查看</p>
                   )}
                 </Section>
               </>
@@ -1505,7 +1561,7 @@ export default function QALab() {
             {activeTab === 'whitelist' && (
               <>
                 <Section title="待審核申請" icon="verified_user" accent="indigo">
-                  <p className="text-white/35 text-xs leading-relaxed mb-3">
+                  <p className="text-slate-500 text-xs leading-relaxed mb-3">
                     以下為已透過 OAuth 登入但尚未核准的使用者。核准後即可進入平台。
                   </p>
                   <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -1534,7 +1590,7 @@ export default function QALab() {
                   </div>
 
                   {whitelistPending.length === 0 && !whitelistLoading && (
-                    <div className="flex flex-col items-center py-8 text-white/20 text-xs gap-2">
+                    <div className="flex flex-col items-center py-8 text-slate-600 text-xs gap-2">
                       <span className="material-symbols-outlined text-[28px]">inbox</span>
                       沒有待審核的申請
                     </div>
@@ -1545,15 +1601,15 @@ export default function QALab() {
                       {whitelistPending.map(u => {
                         const busy = whitelistActionId === u.id;
                         return (
-                          <div key={u.id} className="flex items-center gap-3 px-3 py-3 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.04] transition-colors">
+                          <div key={u.id} className="flex items-center gap-3 px-3 py-3 rounded-xl border border-slate-800 bg-slate-900/30 hover:bg-white/[0.04] transition-colors">
                             <img
                               src={u.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.username}`}
                               alt=""
-                              className="w-9 h-9 rounded-full bg-white/10 shrink-0"
+                              className="w-9 h-9 rounded-full bg-slate-800/60 shrink-0"
                             />
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-white/85 truncate">@{u.username}</p>
-                              <p className="text-[11px] text-white/30 mt-0.5">
+                              <p className="text-sm font-medium text-slate-200 truncate">@{u.username}</p>
+                              <p className="text-[11px] text-slate-500 mt-0.5">
                                 申請於 {u.created_at ? new Date(u.created_at).toLocaleDateString('zh-TW') : '—'}
                               </p>
                             </div>
@@ -1587,7 +1643,7 @@ export default function QALab() {
                 {/* ── Approved members ── */}
                 <Section title="已核准成員" icon="shield_person" accent="emerald">
                   <div className="flex items-center justify-between mb-3">
-                    <p className="text-white/35 text-xs">目前擁有平台存取權限的使用者</p>
+                    <p className="text-slate-500 text-xs">目前擁有平台存取權限的使用者</p>
                     <button
                       onClick={loadApproved}
                       disabled={approvedLoading}
@@ -1601,7 +1657,7 @@ export default function QALab() {
                   </div>
 
                   {whitelistApproved.length === 0 && !approvedLoading && (
-                    <p className="text-white/20 text-xs text-center py-4">點擊「載入清單」查看</p>
+                    <p className="text-slate-600 text-xs text-center py-4">點擊「載入清單」查看</p>
                   )}
 
                   {whitelistApproved.length > 0 && (
@@ -1609,15 +1665,15 @@ export default function QALab() {
                       {whitelistApproved.map(u => {
                         const busy = whitelistActionId === u.id;
                         return (
-                          <div key={u.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] transition-colors">
+                          <div key={u.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-white/[0.06] bg-slate-900/30 hover:bg-white/[0.04] transition-colors">
                             <img
                               src={u.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.username}`}
                               alt=""
-                              className="w-8 h-8 rounded-full bg-white/10 shrink-0"
+                              className="w-8 h-8 rounded-full bg-slate-800/60 shrink-0"
                             />
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm text-white/85 truncate">@{u.username}</p>
-                              <p className="text-[11px] text-white/30 mt-0.5">
+                              <p className="text-sm text-slate-200 truncate">@{u.username}</p>
+                              <p className="text-[11px] text-slate-500 mt-0.5">
                                 加入於 {u.created_at ? new Date(u.created_at).toLocaleDateString('zh-TW') : '—'}
                               </p>
                             </div>
@@ -1626,7 +1682,7 @@ export default function QALab() {
                               onClick={() => revokeUser(u)}
                               disabled={busy}
                               title="撤銷白名單"
-                              className="shrink-0 p-1.5 rounded-lg hover:bg-red-500/15 border border-transparent hover:border-red-500/25 text-white/20 hover:text-red-400 transition-all disabled:opacity-30 cursor-pointer"
+                              className="shrink-0 p-1.5 rounded-lg hover:bg-red-500/15 border border-transparent hover:border-red-500/25 text-slate-600 hover:text-red-400 transition-all disabled:opacity-30 cursor-pointer"
                             >
                               <span className={`material-symbols-outlined text-[15px] block ${busy ? 'animate-spin' : ''}`}>
                                 {busy ? 'sync' : 'person_remove'}
@@ -1641,41 +1697,156 @@ export default function QALab() {
               </>
             )}
 
+            {/* ── Tab: 訪問紀錄 ── */}
+            {activeTab === 'access' && (
+              <>
+                {/* My IP info */}
+                <Section title="我的連線資訊" icon="my_location" accent="rose">
+                  <div className="grid grid-cols-2 gap-2 text-xs mb-1">
+                    <div className="rounded-lg border border-slate-800 bg-slate-900 px-3 py-2.5">
+                      <div className="text-slate-500 text-[10px] mb-1">你的 IP</div>
+                      <div className="text-rose-400 font-mono font-medium text-sm">{myIp ?? '偵測中…'}</div>
+                    </div>
+                    <div className="rounded-lg border border-slate-800 bg-slate-900 px-3 py-2.5">
+                      <div className="text-slate-500 text-[10px] mb-1">國家</div>
+                      <div className="text-rose-400 font-mono font-medium text-sm">{myCountry ?? '—'}</div>
+                    </div>
+                  </div>
+                  <p className="text-slate-600 text-[11px]">每次有人造訪 /qa-lab，伺服器自動記錄。</p>
+                </Section>
+
+                {/* Access log list */}
+                <Section title="訪問紀錄" icon="footprint" accent="rose">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-slate-500 text-xs">最近 200 筆，包含 IP、UA、登入狀態</p>
+                    <button
+                      onClick={loadAccessLogs}
+                      disabled={accessLogsLoading}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-white text-xs font-medium transition-colors cursor-pointer"
+                    >
+                      <span className={`material-symbols-outlined text-[13px] ${accessLogsLoading ? 'animate-spin' : ''}`}>
+                        {accessLogsLoading ? 'sync' : 'refresh'}
+                      </span>
+                      載入紀錄
+                    </button>
+                  </div>
+
+                  {accessLogs.length === 0 && !accessLogsLoading && (
+                    <div className="flex flex-col items-center py-8 text-slate-700 text-xs gap-2">
+                      <span className="material-symbols-outlined text-[28px]">footprint</span>
+                      點擊「載入紀錄」查看
+                    </div>
+                  )}
+
+                  {accessLogs.length > 0 && (
+                    <div className="rounded-lg border border-slate-800 overflow-hidden">
+                      <div className="max-h-[480px] overflow-y-auto divide-y divide-slate-800/60">
+                        {accessLogs.map(log => {
+                          const isAuthed = !!log.supabase_id;
+                          const isApproved = log.is_approved;
+                          const statusColor = !isAuthed
+                            ? 'text-yellow-500'
+                            : isApproved === false
+                            ? 'text-red-400'
+                            : 'text-emerald-400';
+                          const statusLabel = !isAuthed ? '未登入' : isApproved === false ? '未核准 ⚠️' : '核准';
+                          const ua = log.user_agent || '';
+                          const isMobile = /mobile|android|iphone|ipad/i.test(ua);
+                          const browser = ua.match(/(Chrome|Firefox|Safari|Edge|OPR|Opera)\/[\d.]+/)?.[0]?.split('/')?.[0] || '未知';
+                          return (
+                            <div key={log.id} className="px-3 py-2.5 hover:bg-slate-800/40 transition-colors">
+                              <div className="flex items-start gap-2.5">
+                                <span className={`material-symbols-outlined text-[15px] shrink-0 mt-0.5 ${statusColor}`}>
+                                  {!isAuthed ? 'person_off' : isApproved === false ? 'gpp_bad' : 'verified_user'}
+                                </span>
+                                <div className="flex-1 min-w-0 space-y-0.5">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="font-mono text-xs text-rose-300 font-medium">{log.ip ?? '—'}</span>
+                                    {log.country && (
+                                      <span className="text-[10px] px-1.5 py-px bg-slate-800 border border-slate-700 rounded text-slate-400 font-mono">{log.country}</span>
+                                    )}
+                                    <span className={`text-[10px] font-medium ${statusColor}`}>{statusLabel}</span>
+                                    {log.username && <span className="text-[10px] text-slate-400">@{log.username}</span>}
+                                    <span className="text-[10px] text-slate-600 ml-auto tabular-nums">
+                                      {new Date(log.created_at).toLocaleString('zh-TW', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit' })}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-2 text-[10px] text-slate-600">
+                                    <span className="material-symbols-outlined text-[11px]">{isMobile ? 'smartphone' : 'computer'}</span>
+                                    <span className="truncate">{browser} · {ua.slice(0, 60)}{ua.length > 60 ? '…' : ''}</span>
+                                  </div>
+                                  {log.referer && (
+                                    <div className="text-[10px] text-slate-600 truncate">
+                                      ↩ {log.referer}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div className="px-3 py-2 border-t border-slate-800 bg-slate-900/50 flex items-center justify-between">
+                        <span className="text-[10px] text-slate-600">共 {accessLogs.length} 筆</span>
+                        <button
+                          onClick={() => {
+                            const csv = ['id,time,ip,country,status,username,browser,referer',
+                              ...accessLogs.map(l => [
+                                l.id, l.created_at, l.ip ?? '', l.country ?? '',
+                                !l.supabase_id ? 'anonymous' : l.is_approved === false ? 'blocked' : 'approved',
+                                l.username ?? '', (l.user_agent ?? '').slice(0, 60), l.referer ?? '',
+                              ].join(','))
+                            ].join('\n');
+                            navigator.clipboard.writeText(csv);
+                            addLog('ok', '已複製 CSV 到剪貼簿');
+                          }}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded bg-slate-800 hover:bg-gray-700 border border-slate-700 text-slate-400 text-[10px] transition-colors cursor-pointer"
+                        >
+                          <span className="material-symbols-outlined text-[11px]">content_copy</span>
+                          匯出 CSV
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </Section>
+              </>
+            )}
+
           </div>
         </div>
 
         {/* ── Right: Activity Log ── */}
         <div className={`
-          xl:flex xl:flex-col xl:w-72 xl:shrink-0 xl:border-l xl:border-gray-800 xl:bg-gray-900
+          xl:flex xl:flex-col xl:w-72 xl:shrink-0 xl:border-l xl:border-slate-800 xl:bg-[#030712]
           ${showLog
-            ? 'fixed inset-0 z-30 flex flex-col bg-gray-950 pt-[57px]'
+            ? 'fixed inset-0 z-30 flex flex-col bg-[#020617] pt-[57px]'
             : 'hidden xl:flex'}
         `}>
           {/* Log header */}
-          <div className="px-4 py-2.5 border-b border-gray-800 flex items-center justify-between shrink-0">
+          <div className="px-4 py-2.5 border-b border-slate-800 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-[13px] text-gray-600">terminal</span>
-              <span className="text-gray-500 text-xs font-medium">活動紀錄</span>
+              <span className="material-symbols-outlined text-[13px] text-slate-600">terminal</span>
+              <span className="text-slate-500 text-xs font-medium">活動紀錄</span>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={exportLog}
                 disabled={logs.length === 0}
-                className="text-white/20 hover:text-white/50 text-[10px] transition-colors disabled:opacity-30 cursor-pointer"
+                className="text-slate-600 hover:text-slate-400 text-[10px] transition-colors disabled:opacity-30 cursor-pointer"
                 title="複製全部記錄"
               >
                 <span className="material-symbols-outlined text-[13px]">content_copy</span>
               </button>
               <button
                 onClick={() => setLogs([])}
-                className="text-white/20 hover:text-white/50 text-[10px] transition-colors cursor-pointer"
+                className="text-slate-600 hover:text-slate-400 text-[10px] transition-colors cursor-pointer"
               >
                 清空
               </button>
               {/* Mobile close */}
               <button
                 onClick={() => setShowLog(false)}
-                className="xl:hidden text-white/30 hover:text-white/70 transition-colors cursor-pointer ml-1"
+                className="xl:hidden text-slate-500 hover:text-slate-300 transition-colors cursor-pointer ml-1"
               >
                 <span className="material-symbols-outlined text-[16px]">close</span>
               </button>
@@ -1683,17 +1854,17 @@ export default function QALab() {
           </div>
 
           {/* Log level filter */}
-          <div className="px-3 py-2 border-b border-gray-800/60 flex gap-1 shrink-0 font-mono">
+          <div className="px-3 py-2 border-b border-slate-800/60 flex gap-1 shrink-0 font-mono">
             {(['all', 'ok', 'err', 'warn', 'info'] as const).map(lvl => {
               const count = lvl === 'all' ? logs.length : logs.filter(l => l.level === lvl).length;
               const active = logFilter === lvl;
-              const color = lvl === 'all' ? 'text-white/50' : logColor[lvl as LogEntry['level']];
+              const color = lvl === 'all' ? 'text-slate-400' : logColor[lvl as LogEntry['level']];
               return (
                 <button
                   key={lvl}
                   onClick={() => setLogFilter(lvl)}
                   className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-all cursor-pointer ${
-                    active ? 'bg-white/10 ' + color : 'text-white/25 hover:text-white/40'
+                    active ? 'bg-slate-800/60 ' + color : 'text-slate-600 hover:text-white/40'
                   }`}
                 >
                   {lvl === 'all' ? 'ALL' : lvl.toUpperCase()}
@@ -1713,7 +1884,7 @@ export default function QALab() {
             )}
             {filteredLogs.map(l => (
               <div key={l.id} className={`flex gap-2 px-2 py-1 rounded ${logBg[l.level]}`}>
-                <span className="text-white/20 shrink-0 tabular-nums w-14">{l.ts}</span>
+                <span className="text-slate-600 shrink-0 tabular-nums w-14">{l.ts}</span>
                 <span className={`material-symbols-outlined text-[12px] shrink-0 ${logColor[l.level]}`}>
                   {logIcon[l.level]}
                 </span>
@@ -1723,9 +1894,9 @@ export default function QALab() {
           </div>
 
           {/* Bottom status */}
-          <div className="px-4 py-2 border-t border-gray-800 flex items-center gap-1.5 shrink-0">
-            <div className={`w-1.5 h-1.5 rounded-full ${dbUser ? 'bg-emerald-500' : 'bg-gray-700'}`} />
-            <span className="text-gray-600 text-[10px]">
+          <div className="px-4 py-2 border-t border-slate-800 flex items-center gap-1.5 shrink-0">
+            <div className={`w-1.5 h-1.5 rounded-full ${dbUser ? 'bg-emerald-500' : 'bg-slate-700'}`} />
+            <span className="text-slate-600 text-[10px]">
               {dbUser ? `已驗證身分：@${dbUser.username}` : '目前沒有有效工作階段'}
             </span>
           </div>
@@ -1740,22 +1911,23 @@ export default function QALab() {
 const accentConfig: Record<string, {
   border: string; icon: string; label: string; tabActive: string;
 }> = {
-  violet:  { border: 'border-gray-700/60', icon: 'text-violet-400',  label: 'text-violet-400',  tabActive: 'text-violet-400'  },
-  emerald: { border: 'border-gray-700/60', icon: 'text-emerald-400', label: 'text-emerald-400', tabActive: 'text-emerald-400' },
-  cyan:    { border: 'border-gray-700/60', icon: 'text-cyan-400',    label: 'text-cyan-400',    tabActive: 'text-cyan-400'    },
-  pink:    { border: 'border-gray-700/60', icon: 'text-pink-400',    label: 'text-pink-400',    tabActive: 'text-pink-400'    },
-  blue:    { border: 'border-gray-700/60', icon: 'text-blue-400',    label: 'text-blue-400',    tabActive: 'text-blue-400'    },
-  red:     { border: 'border-gray-700/60', icon: 'text-red-400',     label: 'text-red-400',     tabActive: 'text-red-400'     },
-  amber:   { border: 'border-gray-700/60', icon: 'text-amber-400',   label: 'text-amber-400',   tabActive: 'text-amber-400'   },
-  indigo:  { border: 'border-gray-700/60', icon: 'text-indigo-400',  label: 'text-indigo-400',  tabActive: 'text-indigo-400'  },
+  violet:  { border: 'border-slate-700/60', icon: 'text-violet-400',  label: 'text-violet-400',  tabActive: 'text-violet-400'  },
+  emerald: { border: 'border-slate-700/60', icon: 'text-emerald-400', label: 'text-emerald-400', tabActive: 'text-emerald-400' },
+  cyan:    { border: 'border-slate-700/60', icon: 'text-cyan-400',    label: 'text-cyan-400',    tabActive: 'text-cyan-400'    },
+  pink:    { border: 'border-slate-700/60', icon: 'text-pink-400',    label: 'text-pink-400',    tabActive: 'text-pink-400'    },
+  blue:    { border: 'border-slate-700/60', icon: 'text-blue-400',    label: 'text-blue-400',    tabActive: 'text-blue-400'    },
+  red:     { border: 'border-slate-700/60', icon: 'text-red-400',     label: 'text-red-400',     tabActive: 'text-red-400'     },
+  amber:   { border: 'border-slate-700/60', icon: 'text-amber-400',   label: 'text-amber-400',   tabActive: 'text-amber-400'   },
+  indigo:  { border: 'border-slate-700/60', icon: 'text-indigo-400',  label: 'text-indigo-400',  tabActive: 'text-indigo-400'  },
+  rose:    { border: 'border-slate-700/60', icon: 'text-rose-400',    label: 'text-rose-400',    tabActive: 'text-rose-400'    },
 };
 
 // ─── StatBadge ────────────────────────────────────────────────────────────────
 function StatBadge({ label, value, tone }: { label: string; value: string; tone: string }) {
   const cfg = accentConfig[tone] ?? accentConfig.blue;
   return (
-    <div className="rounded-lg border border-gray-800 bg-gray-900 px-3 py-2.5 text-center">
-      <div className="text-[10px] text-gray-500 truncate">{label}</div>
+    <div className="rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2.5 text-center">
+      <div className="text-[10px] text-slate-600 truncate">{label}</div>
       <div className={`mt-1 text-lg font-bold leading-none tabular-nums ${cfg.icon}`}>{value}</div>
     </div>
   );
@@ -1769,10 +1941,10 @@ function Section({
 }) {
   const cfg = accentConfig[accent] ?? accentConfig.violet;
   return (
-    <div className={`rounded-lg border border-gray-800 bg-gray-900/40 ${overflowVisible ? 'overflow-visible' : 'overflow-hidden'}`}>
-      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-800 bg-gray-900/60">
+    <div className={`rounded-lg border border-slate-800 bg-slate-900/30 ${overflowVisible ? 'overflow-visible' : 'overflow-hidden'}`}>
+      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-slate-800 bg-slate-900/60">
         <span className={`material-symbols-outlined text-[15px] ${cfg.icon}`}>{icon}</span>
-        <span className="text-gray-300 font-medium text-xs">{title}</span>
+        <span className="text-slate-300 font-medium text-xs">{title}</span>
       </div>
       <div className="p-4">{children}</div>
     </div>
