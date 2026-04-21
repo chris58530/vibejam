@@ -255,7 +255,31 @@ app.patch('/api/whitelist/:id/approve', async (req, res) => {
 app.delete('/api/whitelist/:id', async (req, res) => {
   try {
     await ensureDb();
-    await db.run('DELETE FROM users WHERE id = $1 AND is_approved = FALSE', [req.params.id]);
+    const userId = Number(req.params.id);
+    if (!Number.isFinite(userId)) return res.status(400).json({ error: 'Invalid user id' });
+
+    const existing = await db.get('SELECT id, is_approved FROM users WHERE id = $1', [userId]);
+    if (!existing) return res.status(404).json({ error: 'User not found' });
+
+    const content = await db.get(
+      `SELECT
+        (SELECT COUNT(*) FROM vibes WHERE author_id = $1)::int AS vibe_count,
+        (SELECT COUNT(*) FROM versions WHERE author_id = $1)::int AS version_count,
+        (SELECT COUNT(*) FROM comments WHERE author_id = $1)::int AS comment_count`,
+      [userId]
+    );
+
+    const hasContent = (content?.vibe_count || 0) > 0 || (content?.version_count || 0) > 0 || (content?.comment_count || 0) > 0;
+    if (hasContent) {
+      return res.status(409).json({
+        error: 'Cannot delete user with existing content. Revoke approval instead to keep authored data.',
+        vibe_count: content.vibe_count || 0,
+        version_count: content.version_count || 0,
+        comment_count: content.comment_count || 0,
+      });
+    }
+
+    await db.run('DELETE FROM users WHERE id = $1 AND is_approved = FALSE', [userId]);
     res.json({ ok: true });
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
