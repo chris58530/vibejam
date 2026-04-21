@@ -59,7 +59,7 @@ app.post('/api/auth/sync', async (req, res) => {
         user = await db.get('UPDATE users SET supabase_id = $1, avatar = $2 WHERE id = $3 RETURNING *', [supabase_id, avatar, user.id]);
       } else {
         user = await db.get(
-          'INSERT INTO users (username, avatar, supabase_id) VALUES ($1, $2, $3) RETURNING *',
+          'INSERT INTO users (username, avatar, supabase_id, is_approved) VALUES ($1, $2, $3, FALSE) RETURNING *',
           [username, avatar, supabase_id]
         );
       }
@@ -113,6 +113,42 @@ app.patch('/api/users/:username/vip', async (req, res) => {
     const user = await db.get('UPDATE users SET is_vip = $1 WHERE username = $2 RETURNING *', [is_vip ? 'true' : 'false', username]);
     if (!user) return res.status(404).json({ error: 'User not found' });
     res.json(user);
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+// ── Whitelist management ──────────────────────────────────────────────────────
+
+// List pending users (is_approved = false)
+app.get('/api/whitelist/pending', async (_req, res) => {
+  try {
+    await ensureDb();
+    const users = await db.query(
+      'SELECT * FROM users WHERE is_approved = FALSE ORDER BY created_at DESC',
+      []
+    );
+    res.json(users);
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+// Approve user
+app.patch('/api/whitelist/:id/approve', async (req, res) => {
+  try {
+    await ensureDb();
+    const user = await db.get(
+      'UPDATE users SET is_approved = TRUE WHERE id = $1 RETURNING *',
+      [req.params.id]
+    );
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json(user);
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+// Reject (delete) user from pending list
+app.delete('/api/whitelist/:id', async (req, res) => {
+  try {
+    await ensureDb();
+    await db.run('DELETE FROM users WHERE id = $1 AND is_approved = FALSE', [req.params.id]);
+    res.json({ ok: true });
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
 

@@ -7,6 +7,8 @@ export interface User {
   followers_count?: number;
   likes_count?: number;
   is_vip?: boolean;
+  is_approved?: boolean;
+  created_at?: string;
 }
 
 export interface Asset {
@@ -387,6 +389,18 @@ export const api = {
         signal,
         timeoutMs: 0,
       });
+    },
+  },
+
+  whitelist: {
+    async getPending(): Promise<User[]> {
+      return apiJson<User[]>('/whitelist/pending', {}, 'Failed to fetch pending users');
+    },
+    async approve(id: number): Promise<User> {
+      return apiJson<User>(`/whitelist/${id}/approve`, { method: 'PATCH' }, 'Approve failed');
+    },
+    async reject(id: number): Promise<{ ok: boolean }> {
+      return apiJson<{ ok: boolean }>(`/whitelist/${id}`, { method: 'DELETE' }, 'Reject failed');
     },
   },
 };
