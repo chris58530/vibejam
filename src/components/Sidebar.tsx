@@ -181,6 +181,7 @@ export default function Sidebar({ dbUser, isOpen = true, onToggle }: SidebarProp
     { key: 'following', label: t('sidebar_following'), icon: 'subscriptions', path: '/?feed=following' },
     { key: 'studio', label: t('sidebar_studio'), icon: 'dashboard', path: '/studio' },
     { key: 'warehouse', label: t('sidebar_warehouse'), icon: 'warehouse', path: '/warehouse' },
+    ...(dbUser ? [{ key: 'profile', label: t('sidebar_profile'), icon: 'person', path: `/u/${dbUser.username}` }] : []),
     { key: 'settings', label: t('sidebar_settings'), icon: 'settings', path: '/settings' },
   ];
 
@@ -233,6 +234,7 @@ export default function Sidebar({ dbUser, isOpen = true, onToggle }: SidebarProp
               (key === 'home' && location.pathname === '/' && !location.search) ||
               (key === 'studio' && location.pathname === '/studio') ||
               (key === 'warehouse' && location.pathname === '/warehouse') ||
+              (key === 'profile' && dbUser && location.pathname === `/u/${dbUser.username}`) ||
               (key === 'settings' && location.pathname === '/settings');
 
             return (

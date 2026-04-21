@@ -232,25 +232,7 @@ export default function Navbar({ savePanelOpen, onToggleSavePanel, sidebarOpen =
                     </div>
                   </div>
 
-                  {/* Menu items */}
-                  <div className="py-1.5">
-                    {[
-                      { icon: 'settings', label: t('nav_settings'), action: () => { navigate('/settings'); setUserMenuOpen(false); } },
-                      { icon: 'terminal', label: 'Workspace', action: () => { navigate('/workspace'); setUserMenuOpen(false); } },
-                      { icon: 'smart_toy', label: 'AI Chat', action: () => { navigate('/ai-chat'); setUserMenuOpen(false); } },
-                    ].map(({ icon, label, action }) => (
-                      <button
-                        key={icon}
-                        onClick={action}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface/70 hover:bg-surface-container-high hover:text-on-surface transition-colors"
-                      >
-                        <span className="material-symbols-outlined text-[18px] text-on-surface-variant">{icon}</span>
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Divider + Sign out */}
+                  {/* Sign out */}
                   <div className="border-t border-outline-variant/10 py-1.5">
                     <button
                       onClick={() => { signOut(); setUserMenuOpen(false); }}
