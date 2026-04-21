@@ -18,7 +18,7 @@ interface GeneratedAccount {
   note?: string;
 }
 
-type Tab = 'data' | 'interact' | 'cleanup' | 'system' | 'vip';
+type Tab = 'data' | 'interact' | 'cleanup' | 'system' | 'vip' | 'whitelist';
 
 // ─── Sample vibe templates ────────────────────────────────────────────────────
 const VIBE_TEMPLATES = [
@@ -138,7 +138,8 @@ const TABS: { id: Tab; label: string; icon: string; accent: string }[] = [
   { id: 'interact', label: '互動測試', icon: 'bolt',          accent: 'cyan'   },
   { id: 'cleanup',  label: '清理中心', icon: 'delete_sweep',  accent: 'red'    },
   { id: 'system',   label: '系統健診', icon: 'monitor_heart', accent: 'emerald'},
-  { id: 'vip',      label: 'VIP 管理', icon: 'workspace_premium', accent: 'amber'  },
+  { id: 'vip',       label: 'VIP 管理', icon: 'workspace_premium', accent: 'amber'     },
+  { id: 'whitelist', label: '白名單',   icon: 'verified_user',    accent: 'indigo'    },
 ];
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -193,6 +194,11 @@ export default function QALab() {
   const [vipListLoading, setVipListLoading] = useState(false);
   const [vipDropdownOpen, setVipDropdownOpen] = useState(false);
   const vipInputRef = useRef<HTMLDivElement>(null);
+
+  // Whitelist management state
+  const [whitelistPending, setWhitelistPending] = useState<User[]>([]);
+  const [whitelistLoading, setWhitelistLoading] = useState(false);
+  const [whitelistActionId, setWhitelistActionId] = useState<number | null>(null);
 
   // System health state
   const [pingLoading, setPingLoading]       = useState(false);
@@ -595,6 +601,47 @@ export default function QALab() {
       addLog('err', `載入 VIP 列表失敗：${e.message}`);
     }
     setVipListLoading(false);
+  };
+
+  // ─── Whitelist handlers ────────────────────────────────────────────────────
+  const loadWhitelistPending = async () => {
+    setWhitelistLoading(true);
+    addLog('info', '載入白名單申請...');
+    try {
+      const users = await api.whitelist.getPending();
+      setWhitelistPending(users);
+      addLog('ok', `共 ${users.length} 筆待審核申請`);
+    } catch (e: any) {
+      addLog('err', `載入申請失敗：${e.message}`);
+    }
+    setWhitelistLoading(false);
+  };
+
+  const approveUser = async (user: User) => {
+    setWhitelistActionId(user.id);
+    addLog('info', `核准 @${user.username}...`);
+    try {
+      await api.whitelist.approve(user.id);
+      setWhitelistPending(prev => prev.filter(u => u.id !== user.id));
+      addLog('ok', `@${user.username} 已核准`);
+    } catch (e: any) {
+      addLog('err', `核准失敗：${e.message}`);
+    }
+    setWhitelistActionId(null);
+  };
+
+  const rejectUser = async (user: User) => {
+    if (!confirm(`確定拒絕並刪除 @${user.username} 的申請？`)) return;
+    setWhitelistActionId(user.id);
+    addLog('info', `拒絕 @${user.username}...`);
+    try {
+      await api.whitelist.reject(user.id);
+      setWhitelistPending(prev => prev.filter(u => u.id !== user.id));
+      addLog('ok', `@${user.username} 申請已拒絕`);
+    } catch (e: any) {
+      addLog('err', `拒絕失敗：${e.message}`);
+    }
+    setWhitelistActionId(null);
   };
 
   // ─── Render helpers ────────────────────────────────────────────────────────
@@ -1411,6 +1458,77 @@ export default function QALab() {
               </>
             )}
 
+            {/* ── Tab: 白名單 ── */}
+            {activeTab === 'whitelist' && (
+              <>
+                <Section title="待審核申請" icon="verified_user" accent="indigo">
+                  <p className="text-white/35 text-xs leading-relaxed mb-3">
+                    以下為已透過 OAuth 登入但尚未核准的使用者。核准後即可進入平台。
+                  </p>
+                  <button
+                    onClick={loadWhitelistPending}
+                    disabled={whitelistLoading}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-white text-xs font-semibold transition-all duration-200 cursor-pointer mb-4"
+                  >
+                    <span className={`material-symbols-outlined text-[14px] ${whitelistLoading ? 'animate-spin' : ''}`}>
+                      {whitelistLoading ? 'sync' : 'refresh'}
+                    </span>
+                    {whitelistLoading ? '載入中…' : '載入申請清單'}
+                  </button>
+
+                  {whitelistPending.length === 0 && !whitelistLoading && (
+                    <div className="flex flex-col items-center py-8 text-white/20 text-xs gap-2">
+                      <span className="material-symbols-outlined text-[28px]">inbox</span>
+                      沒有待審核的申請
+                    </div>
+                  )}
+
+                  {whitelistPending.length > 0 && (
+                    <div className="space-y-2">
+                      {whitelistPending.map(u => {
+                        const busy = whitelistActionId === u.id;
+                        return (
+                          <div key={u.id} className="flex items-center gap-3 px-3 py-3 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.04] transition-colors">
+                            <img
+                              src={u.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.username}`}
+                              alt=""
+                              className="w-9 h-9 rounded-full bg-white/10 shrink-0"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-white/85 truncate">@{u.username}</p>
+                              <p className="text-[11px] text-white/30 mt-0.5">
+                                申請於 {u.created_at ? new Date(u.created_at).toLocaleDateString('zh-TW') : '—'}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <button
+                                onClick={() => approveUser(u)}
+                                disabled={busy}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/25 text-emerald-300 text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                              >
+                                <span className={`material-symbols-outlined text-[13px] ${busy ? 'animate-spin' : ''}`}>
+                                  {busy ? 'sync' : 'check_circle'}
+                                </span>
+                                核准
+                              </button>
+                              <button
+                                onClick={() => rejectUser(u)}
+                                disabled={busy}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 text-xs transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                              >
+                                <span className="material-symbols-outlined text-[13px]">close</span>
+                                拒絕
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </Section>
+              </>
+            )}
+
           </div>
         </div>
 
@@ -1517,6 +1635,7 @@ const accentConfig: Record<string, {
   blue:    { border: 'border-blue-500/22',    glow: 'bg-blue-500',    icon: 'text-blue-300',    label: 'bg-blue-500/10 text-blue-300',    tabActive: 'bg-blue-500/15 text-blue-200'    },
   red:     { border: 'border-red-500/22',     glow: 'bg-red-500',     icon: 'text-red-300',     label: 'bg-red-500/10 text-red-300',     tabActive: 'bg-red-500/15 text-red-200'     },
   amber:   { border: 'border-amber-500/22',   glow: 'bg-amber-500',   icon: 'text-amber-300',   label: 'bg-amber-500/10 text-amber-300',   tabActive: 'bg-amber-500/15 text-amber-200'   },
+  indigo:  { border: 'border-indigo-500/22',  glow: 'bg-indigo-500',  icon: 'text-indigo-300',  label: 'bg-indigo-500/10 text-indigo-300',  tabActive: 'bg-indigo-500/15 text-indigo-200'  },
 };
 
 // ─── StatBadge ────────────────────────────────────────────────────────────────

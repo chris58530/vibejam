@@ -19,6 +19,7 @@ import QALab from './pages/QALab';
 import YourLibrary from './pages/YourLibrary';
 import AuthCallback from './pages/AuthCallback';
 import Profile from './pages/Profile';
+import AccessGate from './pages/AccessGate';
 import { api, User } from './lib/api';
 import { supabase } from './lib/supabase';
 import { useAIKeyStore } from './lib/aiKeyStore';
@@ -163,6 +164,7 @@ function ScrollToTop() {
 export default function App() {
   const { t } = useI18n();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [debugMode, setDebugMode] = useState(false);
   const [savePanelOpen, setSavePanelOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -193,6 +195,7 @@ export default function App() {
   useEffect(() => {
     if (!supabase) {
       devLog.warn('[Auth] Supabase 未初始化（env 未設定），跳過 auth 監聽');
+      setAuthLoading(false);
       return;
     }
 
@@ -244,9 +247,14 @@ export default function App() {
     supabase.auth.getSession().then(({ data }) => {
       const u = data.session?.user;
       devLog.info(`[Auth] getSession → ${u ? `有 session (${u.email ?? u.id.slice(0, 8)})` : '無 session'}`);
-      if (u) syncUser(u);
+      if (u) {
+        syncUser(u); // sets authLoading=false in finally
+      } else {
+        setAuthLoading(false);
+      }
     }).catch((e: any) => {
       devLog.error(`[Auth] getSession 失敗: ${e.message}`);
+      setAuthLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -276,6 +284,8 @@ export default function App() {
     } catch (e: any) {
       devLog.error(`[Auth] syncUser 失敗: ${e?.message ?? e}`);
       console.error('Failed to sync user:', e);
+    } finally {
+      setAuthLoading(false);
     }
   };
 
@@ -283,6 +293,29 @@ export default function App() {
 
   if (location.pathname === '/qa-lab') {
     return <QALab />;
+  }
+
+  // Auth callback must always be reachable (handles OAuth redirects)
+  if (location.pathname === '/auth/callback') {
+    return (
+      <Routes>
+        <Route path="/auth/callback" element={<AuthCallback />} />
+      </Routes>
+    );
+  }
+
+  // Loading splash while resolving auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-surface flex items-center justify-center">
+        <span className="material-symbols-outlined text-[32px] text-white/20 animate-spin">sync</span>
+      </div>
+    );
+  }
+
+  // Auth gate: any unapproved visitor sees the access gate page
+  if (!currentUser || currentUser.is_approved === false) {
+    return <AccessGate currentUser={currentUser} />;
   }
 
   const routeContent = location.pathname === '/library'
