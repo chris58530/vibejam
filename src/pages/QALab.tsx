@@ -712,28 +712,27 @@ export default function QALab() {
   const errCount  = logs.filter(l => l.level === 'err').length;
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#162238_0%,_#090d18_45%,_#060810_100%)] text-white font-mono text-sm flex flex-col">
+    <div className="min-h-screen bg-gray-950 text-gray-100 font-sans text-sm flex flex-col">
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-20 bg-[#070a13]/92 backdrop-blur-xl border-b border-white/[0.08]">
+      <div className="sticky top-0 z-20 bg-gray-950 border-b border-gray-800">
         <div className="flex items-center justify-between px-4 md:px-5 py-3">
           {/* Brand */}
           <div className="flex items-center gap-3">
-            <div className="relative flex items-center justify-center w-7 h-7 shrink-0">
-              <div className="absolute w-7 h-7 rounded-full bg-cyan-500/20 animate-ping" />
-              <div className="relative w-3.5 h-3.5 rounded-full bg-cyan-400" />
+            <div className="flex items-center justify-center w-6 h-6 shrink-0">
+              <div className="w-2 h-2 rounded-full bg-emerald-500" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-white font-semibold text-sm tracking-tight">QA 控制台</span>
-                <span className="px-1.5 py-0.5 bg-cyan-500/15 border border-cyan-500/30 rounded text-cyan-300 text-[10px] font-semibold tracking-widest uppercase">Internal</span>
+                <span className="text-gray-100 font-semibold text-sm">QA 控制台</span>
+                <span className="px-1.5 py-0.5 bg-gray-800 border border-gray-700 rounded text-gray-500 text-[10px] font-medium">Internal</span>
                 {errCount > 0 && (
                   <span className="px-1.5 py-0.5 bg-red-500/15 border border-red-500/30 rounded text-red-300 text-[10px] font-semibold">
                     {errCount} 錯誤
                   </span>
                 )}
               </div>
-              <div className="text-white/35 text-[10px] mt-0.5 hidden sm:block">壓測、資料建立、互動驗證、專案清理、系統健診</div>
+              <div className="text-gray-500 text-[11px] mt-0.5 hidden sm:block">壓測、資料建立、互動驗證、專案清理、系統健診</div>
             </div>
           </div>
 
@@ -742,7 +741,7 @@ export default function QALab() {
             {/* Mobile log toggle */}
             <button
               onClick={() => setShowLog(v => !v)}
-              className="xl:hidden relative inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white/50 text-xs transition-all hover:bg-white/10 cursor-pointer"
+              className="xl:hidden relative inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gray-800 border border-gray-700 text-gray-400 text-xs transition-colors hover:bg-gray-700 cursor-pointer"
             >
               <span className="material-symbols-outlined text-[13px]">terminal</span>
               <span>紀錄</span>
@@ -757,8 +756,8 @@ export default function QALab() {
               <div className="flex items-center gap-2">
                 {dbUser.avatar && <img src={dbUser.avatar} className="w-7 h-7 rounded-full ring-1 ring-white/10 hidden sm:block" alt={dbUser.username} />}
                 <div className="text-right hidden sm:block">
-                  <div className="text-white/80 text-xs font-medium">@{dbUser.username}</div>
-                  <div className="text-white/25 text-[10px]">{supabaseId?.slice(0, 12)}…</div>
+                  <div className="text-gray-300 text-xs font-medium">@{dbUser.username}</div>
+                  <div className="text-gray-600 text-[10px]">{supabaseId?.slice(0, 12)}…</div>
                 </div>
                 <button
                   onClick={async () => { await signOut(); addLog('info', '已登出'); }}
@@ -795,7 +794,7 @@ export default function QALab() {
 
           {/* Tab Bar */}
           <div className="px-4 md:px-5 shrink-0">
-            <div className="flex gap-1 p-1 bg-white/[0.04] rounded-xl border border-white/[0.07]">
+            <div className="flex border-b border-gray-800 overflow-x-auto">
               {TABS.map(tab => {
                 const active = activeTab === tab.id;
                 const cfg = accentConfig[tab.accent];
@@ -803,13 +802,13 @@ export default function QALab() {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-semibold transition-all duration-200 cursor-pointer ${
+                    className={`flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-medium transition-colors duration-150 cursor-pointer whitespace-nowrap border-b-2 -mb-px ${
                       active
-                        ? `${cfg.tabActive} shadow-[0_2px_12px_rgba(0,0,0,0.3)]`
-                        : 'text-white/35 hover:text-white/60 hover:bg-white/[0.04]'
+                        ? `border-blue-500 ${cfg.icon}`
+                        : 'border-transparent text-gray-500 hover:text-gray-300'
                     }`}
                   >
-                    <span className={`material-symbols-outlined text-[13px] ${active ? cfg.icon : ''}`}>{tab.icon}</span>
+                    <span className="material-symbols-outlined text-[13px]">{tab.icon}</span>
                     <span className="hidden sm:inline">{tab.label}</span>
                   </button>
                 );
@@ -1647,16 +1646,16 @@ export default function QALab() {
 
         {/* ── Right: Activity Log ── */}
         <div className={`
-          xl:flex xl:flex-col xl:w-[300px] xl:shrink-0 xl:border-l xl:border-white/[0.08] xl:bg-[#060810]/90
+          xl:flex xl:flex-col xl:w-72 xl:shrink-0 xl:border-l xl:border-gray-800 xl:bg-gray-900
           ${showLog
-            ? 'fixed inset-0 z-30 flex flex-col bg-[#060810] pt-[57px]'
+            ? 'fixed inset-0 z-30 flex flex-col bg-gray-950 pt-[57px]'
             : 'hidden xl:flex'}
         `}>
           {/* Log header */}
-          <div className="px-4 py-2.5 border-b border-white/[0.06] flex items-center justify-between shrink-0">
+          <div className="px-4 py-2.5 border-b border-gray-800 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-[13px] text-white/25">terminal</span>
-              <span className="text-white/40 text-[10px] uppercase tracking-widest font-semibold">活動紀錄</span>
+              <span className="material-symbols-outlined text-[13px] text-gray-600">terminal</span>
+              <span className="text-gray-500 text-xs font-medium">活動紀錄</span>
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -1684,7 +1683,7 @@ export default function QALab() {
           </div>
 
           {/* Log level filter */}
-          <div className="px-3 py-2 border-b border-white/[0.04] flex gap-1 shrink-0">
+          <div className="px-3 py-2 border-b border-gray-800/60 flex gap-1 shrink-0 font-mono">
             {(['all', 'ok', 'err', 'warn', 'info'] as const).map(lvl => {
               const count = lvl === 'all' ? logs.length : logs.filter(l => l.level === lvl).length;
               const active = logFilter === lvl;
@@ -1705,7 +1704,7 @@ export default function QALab() {
           </div>
 
           {/* Log entries */}
-          <div ref={logRef} className="flex-1 overflow-y-auto p-3 space-y-px text-[11px]">
+          <div ref={logRef} className="flex-1 overflow-y-auto p-3 space-y-px text-[11px] font-mono">
             {filteredLogs.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full text-center pb-8">
                 <span className="material-symbols-outlined text-white/10 text-[32px] mb-2">terminal</span>
@@ -1724,9 +1723,9 @@ export default function QALab() {
           </div>
 
           {/* Bottom status */}
-          <div className="px-4 py-2 border-t border-white/[0.06] flex items-center gap-1.5 shrink-0">
-            <div className={`w-1.5 h-1.5 rounded-full ${dbUser ? 'bg-emerald-400' : 'bg-white/20'}`} />
-            <span className="text-white/25 text-[10px]">
+          <div className="px-4 py-2 border-t border-gray-800 flex items-center gap-1.5 shrink-0">
+            <div className={`w-1.5 h-1.5 rounded-full ${dbUser ? 'bg-emerald-500' : 'bg-gray-700'}`} />
+            <span className="text-gray-600 text-[10px]">
               {dbUser ? `已驗證身分：@${dbUser.username}` : '目前沒有有效工作階段'}
             </span>
           </div>
@@ -1739,24 +1738,24 @@ export default function QALab() {
 
 // ─── Accent config ────────────────────────────────────────────────────────────
 const accentConfig: Record<string, {
-  border: string; glow: string; icon: string; label: string; tabActive: string;
+  border: string; icon: string; label: string; tabActive: string;
 }> = {
-  violet:  { border: 'border-violet-500/22',  glow: 'bg-violet-500',  icon: 'text-violet-300',  label: 'bg-violet-500/10 text-violet-300',  tabActive: 'bg-violet-500/15 text-violet-200'  },
-  emerald: { border: 'border-emerald-500/22', glow: 'bg-emerald-500', icon: 'text-emerald-300', label: 'bg-emerald-500/10 text-emerald-300', tabActive: 'bg-emerald-500/15 text-emerald-200' },
-  cyan:    { border: 'border-cyan-500/22',    glow: 'bg-cyan-500',    icon: 'text-cyan-300',    label: 'bg-cyan-500/10 text-cyan-300',    tabActive: 'bg-cyan-500/15 text-cyan-200'    },
-  pink:    { border: 'border-pink-500/22',    glow: 'bg-pink-500',    icon: 'text-pink-300',    label: 'bg-pink-500/10 text-pink-300',    tabActive: 'bg-pink-500/15 text-pink-200'    },
-  blue:    { border: 'border-blue-500/22',    glow: 'bg-blue-500',    icon: 'text-blue-300',    label: 'bg-blue-500/10 text-blue-300',    tabActive: 'bg-blue-500/15 text-blue-200'    },
-  red:     { border: 'border-red-500/22',     glow: 'bg-red-500',     icon: 'text-red-300',     label: 'bg-red-500/10 text-red-300',     tabActive: 'bg-red-500/15 text-red-200'     },
-  amber:   { border: 'border-amber-500/22',   glow: 'bg-amber-500',   icon: 'text-amber-300',   label: 'bg-amber-500/10 text-amber-300',   tabActive: 'bg-amber-500/15 text-amber-200'   },
-  indigo:  { border: 'border-indigo-500/22',  glow: 'bg-indigo-500',  icon: 'text-indigo-300',  label: 'bg-indigo-500/10 text-indigo-300',  tabActive: 'bg-indigo-500/15 text-indigo-200'  },
+  violet:  { border: 'border-gray-700/60', icon: 'text-violet-400',  label: 'text-violet-400',  tabActive: 'text-violet-400'  },
+  emerald: { border: 'border-gray-700/60', icon: 'text-emerald-400', label: 'text-emerald-400', tabActive: 'text-emerald-400' },
+  cyan:    { border: 'border-gray-700/60', icon: 'text-cyan-400',    label: 'text-cyan-400',    tabActive: 'text-cyan-400'    },
+  pink:    { border: 'border-gray-700/60', icon: 'text-pink-400',    label: 'text-pink-400',    tabActive: 'text-pink-400'    },
+  blue:    { border: 'border-gray-700/60', icon: 'text-blue-400',    label: 'text-blue-400',    tabActive: 'text-blue-400'    },
+  red:     { border: 'border-gray-700/60', icon: 'text-red-400',     label: 'text-red-400',     tabActive: 'text-red-400'     },
+  amber:   { border: 'border-gray-700/60', icon: 'text-amber-400',   label: 'text-amber-400',   tabActive: 'text-amber-400'   },
+  indigo:  { border: 'border-gray-700/60', icon: 'text-indigo-400',  label: 'text-indigo-400',  tabActive: 'text-indigo-400'  },
 };
 
 // ─── StatBadge ────────────────────────────────────────────────────────────────
 function StatBadge({ label, value, tone }: { label: string; value: string; tone: string }) {
   const cfg = accentConfig[tone] ?? accentConfig.blue;
   return (
-    <div className={`rounded-xl border ${cfg.border} bg-black/20 px-3 py-2.5 text-center`}>
-      <div className="text-[10px] text-white/30 uppercase tracking-[0.12em] truncate">{label}</div>
+    <div className="rounded-lg border border-gray-800 bg-gray-900 px-3 py-2.5 text-center">
+      <div className="text-[10px] text-gray-500 truncate">{label}</div>
       <div className={`mt-1 text-lg font-bold leading-none tabular-nums ${cfg.icon}`}>{value}</div>
     </div>
   );
@@ -1770,10 +1769,10 @@ function Section({
 }) {
   const cfg = accentConfig[accent] ?? accentConfig.violet;
   return (
-    <div className={`rounded-xl border ${cfg.border} bg-black/20 shadow-[0_8px_30px_rgba(0,0,0,0.18)] ${overflowVisible ? 'overflow-visible' : 'overflow-hidden'}`}>
-      <div className="flex items-center gap-2.5 px-4 py-2.5 border-b border-white/[0.07] bg-white/[0.02]">
+    <div className={`rounded-lg border border-gray-800 bg-gray-900/40 ${overflowVisible ? 'overflow-visible' : 'overflow-hidden'}`}>
+      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-800 bg-gray-900/60">
         <span className={`material-symbols-outlined text-[15px] ${cfg.icon}`}>{icon}</span>
-        <span className="text-white/78 font-semibold text-xs tracking-wide">{title}</span>
+        <span className="text-gray-300 font-medium text-xs">{title}</span>
       </div>
       <div className="p-4">{children}</div>
     </div>
@@ -1783,9 +1782,9 @@ function Section({
 // ─── Auth warning ─────────────────────────────────────────────────────────────
 function AuthWarning({ text = '使用此工具需要登入' }: { text?: string }) {
   return (
-    <div className="flex items-center gap-1.5 mb-3 px-2.5 py-1.5 rounded-md bg-amber-500/8 border border-amber-500/20">
+    <div className="flex items-center gap-1.5 mb-3 px-2.5 py-1.5 rounded-md bg-amber-500/10 border border-amber-500/25">
       <span className="material-symbols-outlined text-[13px] text-amber-400">lock</span>
-      <span className="text-amber-400/70 text-[11px]">{text}</span>
+      <span className="text-amber-400 text-[11px]">{text}</span>
     </div>
   );
 }
