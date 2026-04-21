@@ -164,20 +164,28 @@ export default function Profile() {
     <main className="md:ml-[var(--app-sidebar-width)] min-h-screen bg-surface flex flex-col transition-[margin] duration-300">
 
       {/* ── Hero Banner ── */}
-      <div className="relative w-full h-44 md:h-64 overflow-hidden shrink-0">
-        {/* gradient mesh background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-secondary/10 to-tertiary/15" />
-        {/* animated glow orbs */}
-        <div className="absolute -top-12 -left-12 w-64 h-64 rounded-full bg-primary/20 blur-3xl animate-pulse" />
-        <div className="absolute -bottom-16 right-8 w-80 h-80 rounded-full bg-tertiary/15 blur-3xl animate-pulse [animation-delay:1.5s]" />
-        <div className="absolute top-4 right-1/3 w-48 h-48 rounded-full bg-secondary/10 blur-2xl animate-pulse [animation-delay:0.7s]" />
-        {/* subtle grid pattern */}
+      <div className="relative w-full h-64 md:h-80 overflow-hidden shrink-0">
+        {/* base dark gradient */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0d1a38] via-surface to-surface" />
+        {/* large glow orb — top-left (promo scene 1) */}
+        <div className="absolute -top-24 -left-16 w-[560px] h-[560px] rounded-full bg-primary/10 blur-[120px]" />
+        {/* small glow — bottom-right */}
+        <div className="absolute -bottom-10 right-20 w-72 h-72 rounded-full bg-primary/8 blur-[80px]" />
+        {/* mid accent glow */}
+        <div className="absolute top-6 right-1/3 w-56 h-56 rounded-full bg-secondary/8 blur-[60px]" />
+        {/* hairlines — horizontal & vertical (promo scene 1 style) */}
+        <div className="absolute left-0 right-0 top-1/2 h-px" style={{ background: 'rgba(38,101,253,0.07)' }} />
+        <div className="absolute top-0 bottom-0 left-1/2 w-px" style={{ background: 'rgba(38,101,253,0.07)' }} />
+        {/* dot grid overlay */}
         <div
-          className="absolute inset-0 opacity-[0.04]"
-          style={{ backgroundImage: 'linear-gradient(rgb(var(--md-on-surface)) 1px, transparent 1px), linear-gradient(90deg, rgb(var(--md-on-surface)) 1px, transparent 1px)', backgroundSize: '40px 40px' }}
+          className="absolute inset-0 opacity-[0.035]"
+          style={{
+            backgroundImage: 'radial-gradient(circle, rgba(38,101,253,1) 1px, transparent 1px)',
+            backgroundSize: '36px 36px',
+          }}
         />
         {/* fade to surface at bottom */}
-        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-surface to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-36 bg-gradient-to-t from-surface to-transparent" />
       </div>
 
       <div className="max-w-[68rem] mx-auto px-4 md:px-8 lg:px-12 relative z-10 w-full flex-1">
@@ -187,13 +195,15 @@ export default function Profile() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="-mt-16 md:-mt-20 mb-8"
+          className="-mt-20 md:-mt-24 mb-8"
         >
           <div className="flex flex-col md:flex-row md:items-end gap-5 md:gap-7">
 
             {/* Avatar */}
             <div className="relative shrink-0 self-center md:self-auto">
-              <div className="w-28 h-28 md:w-36 md:h-36 rounded-2xl ring-4 ring-surface shadow-2xl overflow-hidden bg-surface-container relative">
+              {/* glow bloom behind avatar */}
+              <div className="absolute inset-0 rounded-2xl bg-primary/20 blur-2xl scale-125 -z-10" />
+              <div className="w-28 h-28 md:w-36 md:h-36 rounded-2xl ring-2 ring-primary/30 shadow-2xl shadow-primary/20 overflow-hidden bg-surface-container relative">
                 <img
                   src={userProfile?.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${decodedUsername}`}
                   alt="Profile Avatar"
@@ -213,7 +223,12 @@ export default function Profile() {
             <div className="flex-1 min-w-0 text-center md:text-left">
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
-                  <h1 className="text-2xl md:text-3xl font-bold text-on-surface tracking-tight leading-none">{decodedUsername}</h1>
+                  {/* creator badge pill (promo scene 1 badge style) */}
+                  <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-3 py-1 mb-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                    <span className="text-[11px] font-semibold tracking-widest uppercase text-primary/80">Creator</span>
+                  </div>
+                  <h1 className="text-3xl md:text-5xl font-black text-on-surface tracking-tight leading-none">{decodedUsername}</h1>
 
                   {/* Motto inline */}
                   <div className="mt-3 group flex items-start gap-2">
@@ -278,33 +293,33 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* ── Stats Strip ── */}
-          <div className="mt-7 grid grid-cols-3 md:grid-cols-4 gap-3">
-            {[
-              { label: 'Vibes', value: userVibes.length, icon: 'grid_view', color: 'text-on-surface' },
-              { label: 'Views', value: totalViews >= 1000 ? `${(totalViews / 1000).toFixed(1)}k` : totalViews, icon: 'visibility', color: 'text-secondary' },
-              { label: 'Followers', value: followersCount, icon: 'group', color: 'text-primary' },
-              { label: 'Likes', value: likesCount, icon: 'favorite', color: 'text-tertiary' },
-            ].map(stat => (
-              <div key={stat.label} className="bg-surface-container-low border border-outline-variant/10 rounded-2xl px-4 py-3 flex items-center gap-3 hover:border-outline-variant/25 transition-colors">
-                <span className={`material-symbols-outlined text-[20px] ${stat.color} opacity-70`}>{stat.icon}</span>
-                <div>
-                  <p className={`font-mono font-bold text-base leading-none ${stat.color}`}>{stat.value}</p>
-                  <p className="font-mono text-[10px] text-on-surface/35 uppercase tracking-wider mt-0.5">{stat.label}</p>
-                </div>
+          {/* ── Stats Strip (promo scene 4 style: large numbers + dividers) ── */}
+          <div className="mt-8 flex flex-wrap md:flex-nowrap items-stretch bg-surface-container-low border border-outline-variant/10 rounded-2xl overflow-hidden">
+            {([
+              { label: 'Vibes', value: userVibes.length, color: 'text-on-surface' },
+              { label: 'Views', value: totalViews >= 1000 ? `${(totalViews / 1000).toFixed(1)}k` : totalViews, color: 'text-secondary' },
+              { label: 'Followers', value: followersCount, color: 'text-primary' },
+              { label: 'Likes', value: likesCount, color: 'text-tertiary' },
+            ] as const).map((stat, i, arr) => (
+              <div
+                key={stat.label}
+                className={`flex-1 basis-1/2 md:basis-auto flex flex-col items-center justify-center py-5 px-6 gap-1.5 ${i < arr.length - 1 ? 'border-b border-r-0 md:border-b-0 md:border-r border-outline-variant/10' : ''}`}
+              >
+                <p className={`font-mono font-black text-3xl md:text-4xl leading-none tabular-nums ${stat.color}`}>{stat.value}</p>
+                <p className="font-mono text-[10px] text-on-surface/35 uppercase tracking-widest">{stat.label}</p>
               </div>
             ))}
           </div>
         </motion.div>
 
         {/* ── Tabs ── */}
-        <div className="relative border-b border-outline-variant/10 mb-8 flex gap-1">
-          {['Published', 'Remixes', ...(isOwner ? ['Saves'] : [])].map(tab => (
+        <div className="relative border-b border-outline-variant/10 mb-8 flex gap-0.5">
+          {(['Published', 'Remixes', ...(isOwner ? ['Saves'] : [])] as string[]).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`relative px-4 py-3 text-xs font-mono font-bold uppercase tracking-widest transition-all duration-200 rounded-t-lg cursor-pointer ${activeTab === tab
-                ? 'text-primary'
+              className={`relative px-5 py-3 text-[11px] font-mono font-bold uppercase tracking-widest transition-all duration-200 rounded-t-xl cursor-pointer ${activeTab === tab
+                ? 'text-primary bg-primary/5'
                 : 'text-on-surface/30 hover:text-on-surface/60 hover:bg-surface-container-low'
               }`}
             >
@@ -315,8 +330,8 @@ export default function Profile() {
               {activeTab === tab && (
                 <motion.div
                   layoutId="profile-tab-indicator"
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full"
-                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  className="absolute bottom-0 left-3 right-3 h-0.5 bg-primary rounded-full"
+                  transition={{ type: 'spring', stiffness: 500, damping: 35 }}
                 />
               )}
             </button>
