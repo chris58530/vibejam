@@ -166,7 +166,6 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [debugMode, setDebugMode] = useState(false);
-  const [savePanelOpen, setSavePanelOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
@@ -335,7 +334,7 @@ export default function App() {
     : (
       <Routes>
         <Route path="/" element={<Home currentUser={currentUser ?? undefined} />} />
-        <Route path="/workspace" element={<Workspace currentUser={currentUser ?? undefined} savePanelOpen={savePanelOpen} />} />
+        <Route path="/workspace" element={<Workspace currentUser={currentUser ?? undefined} />} />
         <Route path="/studio" element={<Studio currentUser={currentUser ?? undefined} />} />
         <Route path="/remix" element={<RemixStudio currentUser={currentUser ?? undefined} />} />
         <Route path="/library" element={<YourLibrary currentUser={currentUser ?? undefined} />} />
@@ -357,8 +356,6 @@ export default function App() {
     <div className="min-h-screen bg-surface text-on-surface font-sans selection:bg-primary/30">
       <ScrollToTop />
       <Navbar
-        savePanelOpen={savePanelOpen}
-        onToggleSavePanel={() => setSavePanelOpen(p => !p)}
         sidebarOpen={sidebarOpen}
         onToggleSidebar={() => setSidebarOpen(p => !p)}
       />

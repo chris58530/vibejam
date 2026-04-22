@@ -28,11 +28,10 @@ const MAX_SAVES = 5;
 // ─────────────────────────────────────────────────────────────────────
 interface WorkspaceProps {
   currentUser?: User;
-  savePanelOpen?: boolean;
 }
 
 type EditorTab = 'html' | 'css' | 'js';
-type MobileTab = 'code' | 'chat' | 'preview';
+type MobileTab = 'code' | 'preview';
 type RightTab = 'code' | 'preview';
 type ChatProvider = 'gemini' | 'openai' | 'minimax';
 
@@ -68,7 +67,7 @@ function randomVibeName(): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────
-export default function Workspace({ currentUser, savePanelOpen = false }: WorkspaceProps) {
+export default function Workspace({ currentUser }: WorkspaceProps) {
   const navigate = useNavigate();
   const { setPublishFn, setIsPublishing: setStoreIsPublishing, setSaveStatus } = useWorkspaceStore();
 
@@ -97,10 +96,10 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
   const [visibility, setVisibility] = useState<'public' | 'unlisted' | 'private'>('public');
 
   // Mobile tab
-  const [mobileTab, setMobileTab] = useState<MobileTab>('chat');
+  const [mobileTab, setMobileTab] = useState<MobileTab>('code');
   // Right panel tab (code / preview)
   const [rightTab, setRightTab] = useState<RightTab>('code');
-  const [editorReady, setEditorReady] = useState(() => !!sessionStorage.getItem('beaverkit_pending_load'));
+  const [editorReady, setEditorReady] = useState(true);
 
   // Draggable splitter
   const splitPercentRef = useRef(40);
@@ -182,19 +181,6 @@ export default function Workspace({ currentUser, savePanelOpen = false }: Worksp
     return () => subscription.unsubscribe();
   }, []);
 
-  // 面板開啟時 fetch 使用者已發布 / Remix 的 Vibes
-  useEffect(() => {
-    if (!savePanelOpen || !supabaseUserId) return;
-    setVibesLoading(true);
-    api.getVibes(supabaseUserId)
-      .then(all => {
-        const own = all.filter(v => v.author_name === currentUser?.username);
-        setPublishedVibes(own.filter(v => !v.parent_vibe_id));
-        setRemixVibes(own.filter(v => !!v.parent_vibe_id));
-      })
-      .catch(() => { })
-      .finally(() => setVibesLoading(false));
-  }, [savePanelOpen, supabaseUserId, currentUser?.username]);
 
   // 從已發布 / Remix 載入 Vibe 到編輯器
   const handleLoadFromVibe = (vibe: Vibe) => {
@@ -732,7 +718,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
 
   // ── Render ────────────────────────────────────────────────────────
   return (
-    <main className={`${savePanelOpen ? 'md:ml-[calc(var(--app-sidebar-width)+14rem)]' : 'md:ml-[var(--app-sidebar-width)]'} flex-1 flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-background transition-[margin] duration-300`}>
+    <main className="md:ml-[var(--app-sidebar-width)] flex-1 flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-background">
       {/* ── Header ── */}
       <div className="bg-surface px-4 py-1.5 flex items-center gap-3 border-b border-outline-variant/10 shrink-0 relative">
         {/* Center: Title — inline edit on click */}
@@ -765,43 +751,6 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
 
         {/* Right controls */}
         <div className="ml-auto flex items-center gap-1.5">
-          {/* Mode dropdown (code tab) */}
-          {rightTab === 'code' && (
-            <div className="relative hidden md:flex items-center" ref={dropdownRef}>
-              <button
-                onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center gap-1.5 bg-surface-container-low text-on-surface text-[11px] font-bold uppercase tracking-wider rounded px-2.5 py-1 border border-outline-variant/20 hover:border-outline-variant/40 transition-colors"
-              >
-                <span className="text-sm">{MODE_OPTIONS.find(m => m.id === editorMode)?.emoji}</span>
-                {MODE_OPTIONS.find(m => m.id === editorMode)?.label}
-                <span className="material-symbols-outlined text-[12px] text-on-surface/40 ml-0.5">expand_more</span>
-              </button>
-
-              {dropdownOpen && (
-                <div className="absolute top-full right-0 mt-1 w-64 bg-surface border border-white/5 rounded-xl shadow-2xl overflow-hidden z-50">
-                  {MODE_OPTIONS.map(opt => (
-                    <button
-                      key={opt.id}
-                      onClick={() => handleModeChange(opt.id)}
-                      className={`w-full text-left px-4 py-3 hover:bg-surface-container transition-colors flex items-start gap-3 ${editorMode === opt.id ? 'bg-primary/5' : ''}`}
-                    >
-                      <span className="text-lg mt-0.5">{opt.emoji}</span>
-                      <div>
-                        <div className={`text-sm font-bold ${editorMode === opt.id ? 'text-primary' : 'text-on-surface'}`}>
-                          {opt.label}
-                        </div>
-                        <div className="text-[11px] text-on-surface-variant leading-tight mt-0.5">{opt.desc}</div>
-                      </div>
-                      {editorMode === opt.id && (
-                        <span className="material-symbols-outlined text-primary text-[16px] ml-auto mt-1">check</span>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
           {/* View mode buttons (preview tab) */}
           {rightTab === 'preview' && (
             <div className="hidden md:flex items-center gap-0.5">
@@ -884,13 +833,6 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
       {/* ── Mobile Tab Switcher ── */}
       <div className="flex md:hidden border-b border-outline-variant/10 bg-surface-container-lowest shrink-0">
         <button
-          onClick={() => setMobileTab('chat')}
-          className={`flex-1 py-3 text-center text-[10px] font-mono font-bold uppercase tracking-widest transition-colors ${mobileTab === 'chat' ? 'border-b-2 border-primary text-primary bg-surface-container-high' : 'text-on-surface/40'}`}
-        >
-          <span className="material-symbols-outlined text-[14px] mr-1 align-middle">smart_toy</span>
-          AI Chat
-        </button>
-        <button
           onClick={() => { setMobileTab('code'); setRightTab('code'); }}
           className={`flex-1 py-3 text-center text-[10px] font-mono font-bold uppercase tracking-widest transition-colors ${mobileTab === 'code' ? 'border-b-2 border-primary text-primary bg-surface-container-high' : 'text-on-surface/40'}`}
         >
@@ -909,11 +851,10 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
       {/* ── Split Pane ── */}
       <div ref={splitContainerRef} className="flex-1 flex overflow-hidden flex-col md:flex-row relative md:p-3 md:gap-3">
 
-        {/* ── Left Column: AI Chat (full height) ── */}
+        {/* ── Left Column: AI Chat (hidden) ── */}
         <div
           ref={leftPanelRef}
-          className={`${mobileTab !== 'chat' ? 'hidden' : 'flex'} md:flex w-full flex-col bg-surface-container-low shrink-0 relative group transition-all duration-300 md:rounded-xl md:shadow-lg ${!isAiSidebarOpen ? 'md:hidden' : ''}`}
-          style={{ width: `${splitPercentRef.current}%`, minWidth: '280px' }}
+          className="hidden"
         >
 
           {/* Close Sidebar Button */}
@@ -1094,27 +1035,8 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
           )}
         </div>
 
-        {/* ── Draggable Splitter ── */}
-        <div
-          className="hidden md:flex w-1.5 cursor-col-resize items-center justify-center hover:bg-primary/10 active:bg-primary/20 transition-colors group shrink-0 select-none"
-          onMouseDown={() => { isDraggingRef.current = true; document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none'; }}
-        >
-          <div className="w-0.5 h-8 bg-outline-variant/20 rounded-full group-hover:bg-primary/40 group-active:bg-primary/60 transition-colors"></div>
-        </div>
-
-        {/* ── AI Sidebar Reopen Button (when collapsed) ── */}
-        {!isAiSidebarOpen && (
-          <button
-            onClick={() => setIsAiSidebarOpen(true)}
-            className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-20 w-6 h-12 bg-surface-container border border-white/10 rounded-r-lg items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-variant transition-all shadow-md ml-0"
-            title="展開 AI 助手"
-          >
-            <span className="material-symbols-outlined text-[14px]">chevron_right</span>
-          </button>
-        )}
-
         {/* ── Right Column: Code + Preview ── */}
-        <section className={`${mobileTab === 'chat' ? 'hidden' : 'flex'} md:flex flex-1 flex-col bg-background overflow-hidden relative md:rounded-xl md:shadow-lg`}>
+        <section className="flex flex-1 flex-col bg-background overflow-hidden relative md:rounded-xl md:shadow-lg">
 
           {/* ── Floating Tab Toggle (Canvas Style) ── */}
           <div className="hidden md:flex absolute top-4 left-1/2 -translate-x-1/2 z-20 items-center gap-1.5 bg-surface-container p-1 rounded-lg shadow-lg">
@@ -1366,9 +1288,9 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
       )}
 
 
-      {/* ── 我的專案面板 ── */}
-      {savePanelOpen && (
-        <aside className="fixed md:left-[var(--app-sidebar-width)] top-16 h-[calc(100vh-64px)] w-56 bg-[#1a1a1c] border-r border-white/[0.06] z-30 flex-col hidden md:flex overflow-hidden transition-[left] duration-300">
+      {/* ── (folder panel removed) ── */}
+      {false && (
+        <aside className="hidden">
           {/* Header */}
           <div className="px-4 py-3 border-b border-white/5 shrink-0">
             <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-[#dae2fd]/40">我的專案</span>

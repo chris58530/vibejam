@@ -6,8 +6,6 @@ import { useI18n, Language } from '../lib/i18n';
 import { useWorkspaceStore } from '../lib/workspaceStore';
 
 interface NavbarProps {
-  savePanelOpen?: boolean;
-  onToggleSavePanel?: () => void;
   sidebarOpen?: boolean;
   onToggleSidebar?: () => void;
 }
@@ -17,7 +15,7 @@ const LANGUAGES: { code: Language; label: string; flag: string }[] = [
   { code: 'zh-TW', label: '繁體中文', flag: '🇹🇼' },
 ];
 
-export default function Navbar({ savePanelOpen, onToggleSavePanel, sidebarOpen = true, onToggleSidebar }: NavbarProps) {
+export default function Navbar({ sidebarOpen = true, onToggleSidebar }: NavbarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { t, language, setLanguage } = useI18n();
@@ -125,14 +123,6 @@ export default function Navbar({ savePanelOpen, onToggleSavePanel, sidebarOpen =
         <div className="flex items-center gap-4">
           {isWorkspace ? (
             <>
-              <button
-                onClick={onToggleSavePanel}
-                className={`p-2 rounded-lg transition-colors ${savePanelOpen ? 'text-primary bg-surface-container-high' : 'text-on-surface/60 hover:bg-surface-container-high hover:text-on-surface'}`}
-                title="我的專案"
-              >
-                <span className="material-symbols-outlined text-[20px]" style={savePanelOpen ? { fontVariationSettings: "'FILL' 1" } : {}}>folder</span>
-              </button>
-              <div className="h-6 w-px bg-outline-variant/20 mx-2"></div>
               <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-mono transition-colors ${saveStatus === 'unsaved'
                   ? 'bg-amber-500/10 text-amber-400'
                   : saveStatus === 'saving'
