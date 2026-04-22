@@ -32,7 +32,6 @@ interface WorkspaceProps {
 
 type EditorTab = 'html' | 'css' | 'js';
 type MobileTab = 'code' | 'preview';
-type RightTab = 'code' | 'preview';
 type ChatProvider = 'gemini' | 'openai' | 'minimax';
 
 const CHAT_PROVIDER_LABEL: Record<ChatProvider, string> = {
@@ -97,8 +96,7 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
 
   // Mobile tab
   const [mobileTab, setMobileTab] = useState<MobileTab>('code');
-  // Right panel tab (code / preview)
-  const [rightTab, setRightTab] = useState<RightTab>('code');
+
   const [editorReady, setEditorReady] = useState(true);
 
   // Draggable splitter
@@ -751,9 +749,8 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
 
         {/* Right controls */}
         <div className="ml-auto flex items-center gap-1.5">
-          {/* View mode buttons (preview tab) */}
-          {rightTab === 'preview' && (
-            <div className="hidden md:flex items-center gap-0.5">
+          {/* View mode buttons */}
+          <div className="hidden md:flex items-center gap-0.5">
               <button
                 onClick={() => setViewMode('desktop')}
                 title="桌面"
@@ -764,8 +761,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
                 title="手機"
                 className={`material-symbols-outlined text-[16px] p-1 rounded transition-colors ${viewMode === 'mobile' ? 'text-primary' : 'text-on-surface/40 hover:text-primary'}`}
               >smartphone</button>
-            </div>
-          )}
+          </div>
 
           {/* Save button */}
           <button
@@ -833,14 +829,14 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
       {/* ── Mobile Tab Switcher ── */}
       <div className="flex md:hidden border-b border-outline-variant/10 bg-surface-container-lowest shrink-0">
         <button
-          onClick={() => { setMobileTab('code'); setRightTab('code'); }}
+          onClick={() => setMobileTab('code')}
           className={`flex-1 py-3 text-center text-[10px] font-mono font-bold uppercase tracking-widest transition-colors ${mobileTab === 'code' ? 'border-b-2 border-primary text-primary bg-surface-container-high' : 'text-on-surface/40'}`}
         >
           <span className="material-symbols-outlined text-[14px] mr-1 align-middle">code</span>
           Code
         </button>
         <button
-          onClick={() => { setMobileTab('preview'); setRightTab('preview'); }}
+          onClick={() => setMobileTab('preview')}
           className={`flex-1 py-3 text-center text-[10px] font-mono font-bold uppercase tracking-widest transition-colors ${mobileTab === 'preview' ? 'border-b-2 border-primary text-primary bg-surface-container-high' : 'text-on-surface/40'}`}
         >
           <span className="material-symbols-outlined text-[14px] mr-1 align-middle">preview</span>
@@ -1035,43 +1031,11 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
           )}
         </div>
 
-        {/* ── Right Column: Code + Preview ── */}
-        <section className="flex flex-1 flex-col bg-background overflow-hidden relative md:rounded-xl md:shadow-lg">
+        {/* ── Right Column: Code | Preview (side-by-side on desktop) ── */}
+        <section className="flex flex-1 flex-col md:flex-row bg-background overflow-hidden relative md:rounded-xl md:shadow-lg">
 
-          {/* ── Floating Tab Toggle (Canvas Style) ── */}
-          <div className="hidden md:flex absolute top-4 left-1/2 -translate-x-1/2 z-20 items-center gap-1.5 bg-surface-container p-1 rounded-lg shadow-lg">
-            <button
-              onClick={() => setRightTab('code')}
-              className={`px-6 py-1.5 rounded-md font-medium text-sm flex items-center gap-2 transition-colors ${rightTab === 'code'
-                ? 'bg-white/10 text-on-surface shadow-sm'
-                : 'text-on-surface/40 hover:text-on-surface/70'
-                }`}
-            >
-              <span className="material-symbols-outlined text-[16px]">code</span>
-              Code
-            </button>
-            <button
-              onClick={() => setRightTab('preview')}
-              className={`px-6 py-1.5 rounded-md font-medium text-sm flex items-center gap-2 transition-colors ${rightTab === 'preview'
-                ? 'bg-white/10 text-on-surface shadow-sm'
-                : 'text-on-surface/40 hover:text-on-surface/70'
-                }`}
-            >
-              <span className="material-symbols-outlined text-[16px]">visibility</span>
-              Preview
-            </button>
-            <button
-              onClick={() => setShowApiGuidePopup(!showApiGuidePopup)}
-              title="BeaverKit API 說明"
-              className="flex items-center justify-center w-7 h-7 rounded-md text-on-surface/30 hover:text-on-surface hover:bg-white/10 transition-colors"
-            >
-              <span className="material-symbols-outlined text-[16px]">info</span>
-            </button>
-          </div>
-
-          {/* ── Code Editor ── */}
-          {rightTab === 'code' && (
-            <div className="flex-1 flex flex-col overflow-hidden bg-background">
+          {/* ── Code Editor Panel ── */}
+          <div className={`${mobileTab === 'preview' ? 'hidden' : 'flex'} md:flex flex-col flex-1 overflow-hidden bg-background`}>
               {!htmlCode && !cssCode && !jsCode && !editorReady ? (
                 /* Welcome / Mode Select */
                 <div className="flex-1 flex items-center justify-center p-6">
@@ -1106,7 +1070,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
                 </div>
               ) : (
                 <>
-                  <div className="flex items-center justify-between bg-[#1e1e1e] border-b border-outline-variant/10 px-4 h-10 shrink-0 select-none mt-14 mx-4 md:mx-6 rounded-t-xl overflow-hidden shadow-sm">
+                  <div className="flex items-center justify-between bg-[#1e1e1e] border-b border-outline-variant/10 px-4 h-10 shrink-0 select-none mx-4 md:mx-6 rounded-t-xl overflow-hidden shadow-sm">
                     <div className="flex bg-[#1e1e1e] text-xs h-full">
                       {!isSplitMode ? (
                         <div className="px-4 h-full flex items-center gap-2 border-b-2 border-primary bg-[#1e1e1e] text-on-surface font-medium">
@@ -1148,12 +1112,13 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
                   </div>
                 </>
               )}
-            </div>
-          )}
+          </div>
 
-          {/* ── Preview ── */}
-          {rightTab === 'preview' && (
-            <div className="flex-1 px-4 pb-4 md:px-6 md:pb-6 bg-background flex items-center justify-center overflow-hidden mt-14">
+          {/* Vertical divider (desktop only) */}
+          <div className="hidden md:block w-px bg-outline-variant/10 shrink-0" />
+
+          {/* ── Preview Panel ── */}
+          <div className={`${mobileTab === 'code' ? 'hidden' : 'flex'} md:flex flex-1 bg-background flex-col items-center justify-center overflow-hidden p-3 md:p-4`}>
               {viewMode === 'round' ? (
                 <div className="flex items-center justify-center w-full h-full">
                   <div className="relative" style={{ width: '320px', height: '320px' }}>
@@ -1263,7 +1228,6 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
                 </div>
               )}
             </div>
-          )}
         </section>
       </div>
 
