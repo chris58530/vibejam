@@ -97,7 +97,7 @@ app.post('/api/auth/sync', async (req, res) => {
     if (user) {
       user = await db.get(
         `UPDATE users
-         SET avatar = $1,
+         SET avatar = CASE WHEN (avatar IS NULL OR avatar = '') THEN $1 ELSE avatar END,
              display_name = $2,
              email = COALESCE($3, email),
              auth_provider = COALESCE($4, auth_provider),
@@ -105,7 +105,7 @@ app.post('/api/auth/sync', async (req, res) => {
          WHERE id = $6
          RETURNING *`,
         [
-          avatar || user.avatar || defaultAvatarForHandle(user.username),
+          avatar || defaultAvatarForHandle(user.username),
           displayName || user.display_name || user.username,
           email,
           provider,
