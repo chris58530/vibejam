@@ -1035,7 +1035,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
         <section className="flex flex-1 flex-col md:flex-row bg-background overflow-hidden relative md:rounded-xl md:shadow-lg">
 
           {/* ── Code Editor Panel ── */}
-          <div className={`${mobileTab === 'preview' ? 'hidden' : 'flex'} md:flex flex-col flex-1 overflow-hidden bg-background`}>
+          <div className={`${mobileTab === 'preview' ? 'hidden' : 'flex'} md:flex flex-col md:w-[30%] md:flex-none overflow-hidden bg-background`}>
               {!htmlCode && !cssCode && !jsCode && !editorReady ? (
                 /* Welcome / Mode Select */
                 <div className="flex-1 flex items-center justify-center p-6">
@@ -1118,7 +1118,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
           <div className="hidden md:block w-px bg-outline-variant/10 shrink-0" />
 
           {/* ── Preview Panel ── */}
-          <div className={`${mobileTab === 'code' ? 'hidden' : 'flex'} md:flex flex-1 bg-background flex-col items-center justify-center overflow-hidden p-3 md:p-4`}>
+          <div className={`${mobileTab === 'code' ? 'hidden' : 'flex'} md:flex md:w-[70%] md:flex-none bg-background flex-col items-center justify-center overflow-hidden p-3 md:p-4`}>
               {viewMode === 'round' ? (
                 <div className="flex items-center justify-center w-full h-full">
                   <div className="relative" style={{ width: '320px', height: '320px' }}>
@@ -1165,7 +1165,8 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
                   </div>
                 </div>
               ) : (
-                <div className="w-full h-full flex flex-col rounded-xl shadow-xl overflow-hidden border border-white/5 transition-all duration-500">
+                <div className="w-full h-full flex items-center justify-center">
+                  <div className="flex flex-col rounded-xl shadow-xl overflow-hidden border border-white/5 transition-all duration-500 h-full" style={{aspectRatio: '16/9', maxWidth: '100%'}}>
                   <div className="bg-[#242424] px-4 py-2 flex items-center gap-3 shrink-0 border-b border-white/5">
                     <div className="flex gap-1.5">
                       <div className="w-3 h-3 rounded-full bg-[#FF5F57]"></div>
@@ -1226,6 +1227,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
                     )}
                   </div>
                 </div>
+                  </div>
               )}
             </div>
         </section>
