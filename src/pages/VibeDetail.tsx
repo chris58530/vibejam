@@ -222,6 +222,9 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
   const [liked, setLiked] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
 
+  const [coverUploading, setCoverUploading] = useState(false);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+
   // Lineage state (lifted from RemixTree)
   const [ancestors, setAncestors] = useState<VibeAncestor[]>([]);
   const [vibeChildren, setVibeChildren] = useState<VibeChild[]>([]);
@@ -372,6 +375,25 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
         parentVisibility: vibe.visibility || 'public',
       },
     });
+  };
+
+  const handleCoverUpload = async (file: File) => {
+    if (!vibe || !supabase || !supabaseUser) return;
+    if (!file.type.startsWith('image/')) return;
+    setCoverUploading(true);
+    try {
+      const ext = file.name.split('.').pop() ?? 'jpg';
+      const path = `covers/${vibe.id}_${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from('assets').upload(path, file, { upsert: true, contentType: file.type });
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from('assets').getPublicUrl(path);
+      await api.updateCoverImage(vibe.id, supabaseUser.id, urlData.publicUrl);
+      setVibe(v => v ? { ...v, cover_image: urlData.publicUrl } : v);
+    } catch (err: any) {
+      console.error('Cover upload failed:', err);
+    } finally {
+      setCoverUploading(false);
+    }
   };
 
   const handleEdit = () => {
@@ -623,42 +645,71 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                 <span className="material-symbols-outlined text-[16px] text-on-surface/25 shrink-0">chevron_right</span>
               </div>
               {/* Action buttons */}
-              <div className="px-4 pb-4 flex gap-2">
-                {isOwner ? (
+              <div className="px-4 pb-4 flex flex-col gap-2">
+                <div className="flex gap-2">
+                  {isOwner ? (
+                    <button
+                      onClick={handleEdit}
+                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-primary hover:bg-primary/90 text-on-primary text-xs font-bold rounded-lg shadow-sm shadow-primary/20 transition-all cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">edit</span>
+                      Edit
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleRemix}
+                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-primary hover:bg-primary/90 text-on-primary text-xs font-bold rounded-lg shadow-sm shadow-primary/20 transition-all cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">repeat</span>
+                      Remix
+                    </button>
+                  )}
                   <button
-                    onClick={handleEdit}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-primary hover:bg-primary/90 text-on-primary text-xs font-bold rounded-lg shadow-sm shadow-primary/20 transition-all cursor-pointer"
+                    onClick={handleToggleLike}
+                    disabled={isLiking}
+                    className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${liked ? 'bg-pink-500/15 text-pink-400 ring-1 ring-pink-500/30 hover:bg-pink-500/20' : 'bg-surface-container-high hover:bg-surface-container-highest text-on-surface/55 ring-1 ring-outline-variant/15'}`}
                   >
-                    <span className="material-symbols-outlined text-[14px]">edit</span>
-                    Edit
+                    <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: liked ? "'FILL' 1" : "'FILL' 0" }}>favorite</span>
+                    {likeCount > 0 ? likeCount : 'Like'}
                   </button>
-                ) : (
-                  <button
-                    onClick={handleRemix}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-primary hover:bg-primary/90 text-on-primary text-xs font-bold rounded-lg shadow-sm shadow-primary/20 transition-all cursor-pointer"
-                  >
-                    <span className="material-symbols-outlined text-[14px]">repeat</span>
-                    Remix
-                  </button>
-                )}
-                <button
-                  onClick={handleToggleLike}
-                  disabled={isLiking}
-                  className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${liked ? 'bg-pink-500/15 text-pink-400 ring-1 ring-pink-500/30 hover:bg-pink-500/20' : 'bg-surface-container-high hover:bg-surface-container-highest text-on-surface/55 ring-1 ring-outline-variant/15'
-                    }`}
-                >
-                  <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: liked ? "'FILL' 1" : "'FILL' 0" }}>favorite</span>
-                  {likeCount > 0 ? likeCount : 'Like'}
-                </button>
+                  {isOwner && (
+                    <button
+                      onClick={handleRemix}
+                      title="Remix 自己的作品（建立實驗分支）"
+                      aria-label="Remix this vibe as an experimental branch"
+                      className="flex items-center gap-1 px-3 py-2.5 bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-xs font-bold rounded-lg ring-1 ring-outline-variant/15 transition-colors cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">repeat</span>
+                    </button>
+                  )}
+                </div>
+                {/* Cover image upload (owner only) */}
                 {isOwner && (
-                  <button
-                    onClick={handleRemix}
-                    title="Remix 自己的作品（建立實驗分支）"
-                    aria-label="Remix this vibe as an experimental branch"
-                    className="flex items-center gap-1 px-3 py-2.5 bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-xs font-bold rounded-lg ring-1 ring-outline-variant/15 transition-colors cursor-pointer"
-                  >
-                    <span className="material-symbols-outlined text-[14px]">repeat</span>
-                  </button>
+                  <>
+                    <input
+                      ref={coverInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={e => { const f = e.target.files?.[0]; if (f) handleCoverUpload(f); e.target.value = ''; }}
+                    />
+                    <button
+                      onClick={() => coverInputRef.current?.click()}
+                      disabled={coverUploading}
+                      className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-surface-container-high hover:bg-surface-container-highest text-on-surface/60 hover:text-on-surface text-xs font-medium rounded-lg ring-1 ring-outline-variant/15 transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      {coverUploading
+                        ? <span className="material-symbols-outlined text-[14px] animate-spin">sync</span>
+                        : <span className="material-symbols-outlined text-[14px]">add_photo_alternate</span>
+                      }
+                      {vibe.cover_image ? '更換封面圖' : '設定封面圖'}
+                    </button>
+                    {vibe.cover_image && (
+                      <div className="relative rounded-lg overflow-hidden ring-1 ring-outline-variant/15 aspect-video">
+                        <img src={vibe.cover_image} alt="cover" className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>

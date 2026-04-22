@@ -664,6 +664,22 @@ app.patch('/api/vibes/:id/description', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
 
+// Update vibe cover image (owner only)
+app.patch('/api/vibes/:id/cover-image', async (req, res) => {
+  const { supabase_id, cover_image } = req.body;
+  if (!supabase_id) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    await ensureDb();
+    const user = await db.get('SELECT id FROM users WHERE supabase_id = $1', [supabase_id]);
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+    const vibe = await db.get('SELECT author_id FROM vibes WHERE id = $1', [req.params.id]);
+    if (!vibe) return res.status(404).json({ error: 'Vibe not found' });
+    if (vibe.author_id !== user.id) return res.status(403).json({ error: 'Forbidden' });
+    await db.run('UPDATE vibes SET cover_image = $1 WHERE id = $2', [cover_image || null, req.params.id]);
+    res.json({ success: true });
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
 // Delete vibe (owner only, verified by supabase_id)
 app.delete('/api/vibes/:id', async (req, res) => {
   const { supabase_id } = req.body;
@@ -1166,7 +1182,11 @@ app.post('/api/assets', async (req, res) => {
     await ensureDb();
     const user = await db.get('SELECT id, is_vip FROM users WHERE supabase_id = $1', [supabase_id]);
     if (!user) return res.status(404).json({ error: 'User not found' });
-    if (!user.is_vip) return res.status(403).json({ error: 'VIP required' });
+    const QUOTA_BYTES = user.is_vip ? 1073741824 : 104857600; // VIP: 1GB, general: 100MB
+    const usage = await db.get('SELECT COALESCE(SUM(file_size), 0)::bigint as total FROM assets WHERE owner_id = $1', [user.id]);
+    if (Number(usage.total) + Number(file_size) > QUOTA_BYTES) {
+      return res.status(413).json({ error: 'Storage quota exceeded', quota: QUOTA_BYTES, used: Number(usage.total) });
+    }
     const asset = await db.get(
       'INSERT INTO assets (owner_id, supabase_path, public_url, sha256, filename, original_name, mime_type, file_size, category) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT (owner_id, sha256) DO UPDATE SET public_url = EXCLUDED.public_url RETURNING *',
       [user.id, supabase_path, public_url, sha256, filename, original_name, mime_type, file_size, category]

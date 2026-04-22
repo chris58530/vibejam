@@ -166,13 +166,21 @@ export default function VibeCard({ vibe, onClick, compact = false, maxViews = 1 
       <div className="relative aspect-video bg-surface-container-lowest rounded-xl overflow-hidden ring-1 ring-black/[0.07] group-hover:ring-primary/25 transition-all duration-300 w-full">
         <div className={`absolute inset-0 z-10 transition-opacity duration-300 pointer-events-none ${isHovered ? 'bg-transparent' : 'bg-black/20 backdrop-grayscale-[0.5]'}`} />
 
-        <iframe
-          srcDoc={previewCode}
-          className="absolute top-0 left-0 w-[200%] h-[200%] scale-50 origin-top-left border-none pointer-events-none bg-white opacity-80 group-hover:scale-[0.52] group-hover:opacity-100 transition-all duration-500 rounded-[10px]"
-          title={vibe.title}
-          sandbox="allow-scripts allow-pointer-lock"
-          loading="lazy"
-        />
+        {vibe.cover_image ? (
+          <img
+            src={vibe.cover_image}
+            alt={vibe.title}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        ) : (
+          <iframe
+            srcDoc={previewCode}
+            className="absolute top-0 left-0 w-[200%] h-[200%] scale-50 origin-top-left border-none pointer-events-none bg-white opacity-80 group-hover:scale-[0.52] group-hover:opacity-100 transition-all duration-500 rounded-[10px]"
+            title={vibe.title}
+            sandbox="allow-scripts allow-pointer-lock"
+            loading="lazy"
+          />
+        )}
 
         {/* Version badge - bottom right */}
         <div className="absolute bottom-2 right-2 bg-black/80 px-1.5 py-0.5 rounded text-[10px] font-mono text-white z-20 pointer-events-none">

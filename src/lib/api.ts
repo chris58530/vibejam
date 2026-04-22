@@ -107,6 +107,7 @@ export interface Vibe {
   created_at: string;
   visibility?: 'public' | 'unlisted' | 'private';
   description?: string;
+  cover_image?: string;
   user_role?: 'owner' | 'collaborator' | 'viewer' | 'none';
   collaborators?: Collaborator[];
   latest_code?: string;
@@ -275,6 +276,13 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ supabase_id: supabaseId, description }),
     }, 'Failed to update description');
+  },
+  async updateCoverImage(vibeId: number, supabaseId: string, coverImageUrl: string): Promise<{ success: boolean }> {
+    return apiJson<{ success: boolean }>(`/vibes/${vibeId}/cover-image`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ supabase_id: supabaseId, cover_image: coverImageUrl }),
+    }, 'Failed to update cover image');
   },
   async addCollaborator(vibeId: number, supabaseId: string, username: string): Promise<Collaborator> {
     return apiJson<Collaborator>(`/vibes/${vibeId}/collaborators`, {

@@ -62,6 +62,7 @@ export default function Warehouse({ currentUser }: { currentUser?: User }) {
   const { t } = useI18n();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [uploads, setUploads] = useState<UploadState[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [supabaseUserId, setSupabaseUserId] = useState<string | null>(null);
@@ -78,16 +79,20 @@ export default function Warehouse({ currentUser }: { currentUser?: User }) {
   }, []);
 
   useEffect(() => {
-    if (!supabaseUserId || !currentUser?.is_vip) return;
+    if (!supabaseUserId) return;
     setLoading(true);
+    setFetchError(null);
     api.assets.listAssets(supabaseUserId)
       .then(setAssets)
-      .catch(console.error)
+      .catch((err: any) => {
+        console.error(err);
+        setFetchError(err?.message ?? 'Unknown error');
+      })
       .finally(() => setLoading(false));
-  }, [supabaseUserId, currentUser?.is_vip]);
+  }, [supabaseUserId]);
 
   const handleFiles = useCallback(async (files: File[]) => {
-    if (!supabase || !supabaseUserId || !currentUser?.is_vip) return;
+    if (!supabase || !supabaseUserId) return;
 
     for (const file of files) {
       const uid = `${Date.now()}-${Math.random()}`;
@@ -137,7 +142,7 @@ export default function Warehouse({ currentUser }: { currentUser?: User }) {
         setTimeout(() => setUploads(prev => prev.filter(u => u.id !== uid)), 6000);
       }
     }
-  }, [supabase, supabaseUserId, currentUser?.is_vip]);
+  }, [supabase, supabaseUserId]);
 
   const handleDragEnter = (e: React.DragEvent) => {
     e.preventDefault();
@@ -179,7 +184,7 @@ export default function Warehouse({ currentUser }: { currentUser?: User }) {
   };
 
   const totalBytes = assets.reduce((sum, a) => sum + a.file_size, 0);
-  const QUOTA_BYTES = 1024 * 1024 * 1024;
+  const QUOTA_BYTES = currentUser?.is_vip ? 1073741824 : 104857600; // VIP: 1GB, general: 100MB
   const quotaPct = Math.min(100, (totalBytes / QUOTA_BYTES) * 100);
 
   // Not logged in
@@ -190,23 +195,6 @@ export default function Warehouse({ currentUser }: { currentUser?: User }) {
           <span className="material-symbols-outlined text-[52px] text-on-surface/20 mb-4 block" style={{ fontVariationSettings: "'FILL' 1" }}>warehouse</span>
           <p className="text-on-surface/50">{t('warehouse_login_required')}</p>
         </div>
-      </div>
-    );
-  }
-
-  // Not VIP
-  if (currentUser && !currentUser.is_vip) {
-    return (
-      <div className="md:ml-[var(--app-sidebar-width)] transition-[margin] duration-300 flex items-center justify-center min-h-[calc(100vh-64px)] px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-md w-full bg-surface-container border border-outline-variant/20 rounded-2xl p-10 text-center"
-        >
-          <span className="material-symbols-outlined text-[56px] text-amber-400 mb-4 block" style={{ fontVariationSettings: "'FILL' 1" }}>lock</span>
-          <h2 className="text-xl font-bold text-on-surface mb-3">{t('warehouse_vip_locked_title')}</h2>
-          <p className="text-sm text-on-surface/50 leading-relaxed">{t('warehouse_vip_locked_desc')}</p>
-        </motion.div>
       </div>
     );
   }
@@ -226,7 +214,7 @@ export default function Warehouse({ currentUser }: { currentUser?: User }) {
             <div className="flex items-center gap-3">
               <span className="material-symbols-outlined text-primary text-[26px]" style={{ fontVariationSettings: "'FILL' 1" }}>warehouse</span>
               <h1 className="text-2xl font-bold text-on-surface font-headline">{t('warehouse_title')}</h1>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-400/15 text-amber-400">VIP</span>
+              {currentUser?.is_vip && <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-400/15 text-amber-400">VIP</span>}
             </div>
             <p className="text-sm text-on-surface/40 mt-1 ml-[38px]">{t('warehouse_subtitle')}</p>
           </div>
@@ -252,7 +240,10 @@ export default function Warehouse({ currentUser }: { currentUser?: User }) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-xs text-on-surface/50">{t('warehouse_storage_used')}</span>
-              <span className="text-xs text-on-surface/50 tabular-nums">{formatBytes(totalBytes)} / 1 GB</span>
+              <span className="text-xs text-on-surface/50 tabular-nums">
+                {formatBytes(totalBytes)} / {currentUser?.is_vip ? '1 GB' : '100 MB'}
+                {currentUser?.is_vip && <span className="ml-1.5 text-[10px] text-amber-400 font-semibold">VIP</span>}
+              </span>
             </div>
             <div className="h-1.5 bg-outline-variant/20 rounded-full overflow-hidden">
               <div
@@ -332,13 +323,24 @@ export default function Warehouse({ currentUser }: { currentUser?: User }) {
             ))}
           </div>
         ) : assets.length === 0 ? (
-          <div
+          <div className="space-y-4">
+            {fetchError && (
+              <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 flex items-start gap-3">
+                <span className="material-symbols-outlined text-red-400 text-[18px] shrink-0 mt-0.5">error</span>
+                <div>
+                  <p className="text-sm text-red-400 font-semibold">載入失敗</p>
+                  <p className="text-xs text-red-400/70 mt-0.5 font-mono break-all">{fetchError}</p>
+                </div>
+              </div>
+            )}
+            <div
             className="border-2 border-dashed border-outline-variant/30 rounded-2xl p-16 text-center cursor-pointer hover:border-primary/40 hover:bg-primary/3 transition-colors"
             onClick={() => fileInputRef.current?.click()}
           >
             <span className="material-symbols-outlined text-[56px] text-on-surface/20 mb-4 block">cloud_upload</span>
             <p className="text-on-surface/50 font-medium mb-1">{t('warehouse_drop_hint')}</p>
             <p className="text-sm text-on-surface/30">{t('warehouse_drop_sub')}</p>
+          </div>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
