@@ -13,6 +13,7 @@ import RemixStudio from './pages/RemixStudio';
 import VibeDetail from './pages/VibeDetail';
 import InviteAccept from './pages/InviteAccept';
 import Warehouse from './pages/Warehouse';
+import Studio from './pages/Studio';
 import QALab from './pages/QALab';
 import YourLibrary from './pages/YourLibrary';
 import AuthCallback from './pages/AuthCallback';
@@ -335,6 +336,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home currentUser={currentUser ?? undefined} />} />
         <Route path="/workspace" element={<Workspace currentUser={currentUser ?? undefined} savePanelOpen={savePanelOpen} />} />
+        <Route path="/studio" element={<Studio currentUser={currentUser ?? undefined} />} />
         <Route path="/remix" element={<RemixStudio currentUser={currentUser ?? undefined} />} />
         <Route path="/library" element={<YourLibrary currentUser={currentUser ?? undefined} />} />
         <Route path="/warehouse" element={<Warehouse currentUser={currentUser ?? undefined} />} />

@@ -41,6 +41,14 @@ export default function BottomTabBar() {
       </button>
 
       <button
+        onClick={() => navigate('/studio')}
+        className={`flex flex-col items-center gap-1 transition-colors ${isActive('/studio') ? 'text-primary' : 'text-on-surface/60 hover:text-on-surface'}`}
+      >
+        <span className="material-symbols-outlined" style={isActive('/studio') ? { fontVariationSettings: "'FILL' 1" } : {}}>dashboard</span>
+        <span className="text-[10px] font-medium font-body">{t('tab_studio')}</span>
+      </button>
+
+      <button
         onClick={() => navigate('/workspace')}
         className={`flex flex-col items-center gap-1 transition-colors ${isActive('/workspace') ? 'text-primary' : 'text-on-surface/60 hover:text-on-surface'}`}
       >
