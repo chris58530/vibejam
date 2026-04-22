@@ -1070,7 +1070,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
                 </div>
               ) : (
                 <>
-                  <div className="flex items-center justify-between bg-[#1e1e1e] border-b border-outline-variant/10 px-4 h-10 shrink-0 select-none mx-4 md:mx-6 rounded-t-xl overflow-hidden shadow-sm">
+                  <div className="flex items-center justify-between bg-[#1e1e1e] border-b border-outline-variant/10 px-4 h-10 shrink-0 select-none mt-3 mx-4 md:mt-4 md:mx-4 rounded-t-xl overflow-hidden shadow-sm">
                     <div className="flex bg-[#1e1e1e] text-xs h-full">
                       {!isSplitMode ? (
                         <div className="px-4 h-full flex items-center gap-2 border-b-2 border-primary bg-[#1e1e1e] text-on-surface font-medium">
@@ -1086,7 +1086,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
                     </div>
                   </div>
                   {/* Textarea */}
-                  <div className="flex-1 font-mono text-sm leading-relaxed editor-well overflow-hidden flex relative group cursor-text mb-4 mx-4 md:mx-6 rounded-b-xl border border-outline-variant/10 bg-[#1e1e1e] shadow-lg" onClick={handleEditorClick}>
+                  <div className="flex-1 font-mono text-sm leading-relaxed editor-well overflow-hidden flex relative group cursor-text mb-3 mx-4 md:mb-4 md:mx-4 rounded-b-xl border border-outline-variant/10 bg-[#1e1e1e] shadow-lg" onClick={handleEditorClick}>
                     <div className="absolute left-0 top-0 bottom-0 w-8 bg-surface-container-lowest border-r border-outline-variant/5 text-right py-4 pr-2 text-on-surface/20 select-none hidden sm:block">
                       {currentCode.split('\n').map((_, i) => (
                         <div key={i}>{i + 1}</div>
