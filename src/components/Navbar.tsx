@@ -95,7 +95,7 @@ export default function Navbar({ sidebarOpen = true, onToggleSidebar }: NavbarPr
             )}
 
             {!isWorkspace && (
-              <div className="hidden md:flex items-center gap-2">
+              <div className="hidden md:flex items-center gap-2 ml-2">
                 {!isHome && (
                   <button
                     onClick={() => navigate(-1)}
