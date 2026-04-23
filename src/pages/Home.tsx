@@ -469,7 +469,7 @@ export default function Home({ currentUser }: { currentUser?: User }) {
 
   return (
     <section className="md:ml-[var(--app-sidebar-width)] min-h-screen bg-surface overflow-x-hidden transition-[margin] duration-300">
-      <div className="space-y-10 px-4 pb-16 pt-24 md:px-6 lg:px-8">
+      <div className="space-y-10 px-4 pb-16 pt-20 md:px-6 lg:px-8">
         {loading ? (
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(340px,0.5fr)]">
             <div className="min-h-[520px] rounded-3xl border border-outline-variant/15 bg-surface-container-highest animate-pulse md:min-h-[620px] xl:min-h-[75vh]" />
