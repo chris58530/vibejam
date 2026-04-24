@@ -18,21 +18,23 @@ interface ProjectSettingsModalProps {
   title: string;
   description: string;
   tags: string;
-  visibility: 'public' | 'unlisted' | 'private';
+  visibility: 'public' | 'private';
   coverImage?: string;
   onSave: (data: {
     title: string;
     description: string;
     tags: string;
-    visibility: 'public' | 'unlisted' | 'private';
+    visibility: 'public' | 'private';
     coverImage?: string;
+    password?: string;
   }) => void;
   onSaveLocal?: (data: {
     title: string;
     description: string;
     tags: string;
-    visibility: 'public' | 'unlisted' | 'private';
+    visibility: 'public' | 'private';
     coverImage?: string;
+    password?: string;
   }) => void;
   isPublishing?: boolean;
   hasPublished?: boolean;
@@ -88,8 +90,10 @@ export default function ProjectSettingsModal({
   const [tagList, setTagList] = useState<string[]>([]);
   const [tagDraft, setTagDraft] = useState('');
   const [tagInputFocused, setTagInputFocused] = useState(false);
-  const [visibility, setVisibility] = useState<'public' | 'unlisted' | 'private'>(initialVisibility);
+  const [visibility, setVisibility] = useState<'public' | 'private'>(initialVisibility);
   const [coverImage, setCoverImage] = useState<string | undefined>(initialCoverImage);
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const tagInputRef = useRef<HTMLInputElement>(null);
 
@@ -99,8 +103,10 @@ export default function ProjectSettingsModal({
       setDescription(initialDescription || '');
       setTagList(parseTags(initialTags));
       setTagDraft('');
-      setVisibility(initialVisibility || 'public');
+      setVisibility((initialVisibility === 'private' ? 'private' : 'public') as 'public' | 'private');
       setCoverImage(initialCoverImage);
+      setPassword('');
+      setShowPassword(false);
     }
   }, [isOpen, initialTitle, initialDescription, initialTags, initialVisibility, initialCoverImage]);
 
@@ -195,6 +201,7 @@ export default function ProjectSettingsModal({
     tags: tagList.join(' '),
     visibility,
     coverImage,
+    password: visibility === 'private' ? password : undefined,
   });
 
   if (!isOpen) return null;
@@ -314,11 +321,10 @@ export default function ProjectSettingsModal({
               value={description}
               onChange={e => setDescription(e.target.value)}
               placeholder="描述一下這個專案的用途、使用的技術、靈感來源..."
-              className={`w-full bg-zinc-900/40 border rounded-xl px-4 py-3 text-sm text-zinc-100 placeholder:text-zinc-600 resize-none h-24 focus:outline-none transition-all ${
-                descOver
+              className={`w-full bg-zinc-900/40 border rounded-xl px-4 py-3 text-sm text-zinc-100 placeholder:text-zinc-600 resize-none h-24 focus:outline-none transition-all ${descOver
                   ? 'border-red-500/70 focus:border-red-500 focus:ring-2 focus:ring-red-500/20'
                   : 'border-zinc-800 focus:border-indigo-500/70 focus:bg-zinc-900/70 focus:ring-2 focus:ring-indigo-500/20'
-              }`}
+                }`}
             />
             <span className="text-[11px] text-zinc-500">
               好的描述能讓別人更快找到並愛上你的作品。
@@ -357,17 +363,15 @@ export default function ProjectSettingsModal({
 
                 {tagList.length < MAX_TAGS && (
                   <div
-                    className={`flex items-center gap-1 pl-2.5 pr-2 py-1 rounded-full border border-dashed transition-all cursor-text ${
-                      tagInputFocused
+                    className={`flex items-center gap-1 pl-2.5 pr-2 py-1 rounded-full border border-dashed transition-all cursor-text ${tagInputFocused
                         ? 'border-indigo-500 bg-indigo-500/10 shadow-[0_0_0_3px_rgba(99,102,241,0.15)]'
                         : 'border-zinc-700 hover:border-zinc-600'
-                    }`}
+                      }`}
                     onClick={() => tagInputRef.current?.focus()}
                   >
                     <Plus
-                      className={`w-3 h-3 transition-colors ${
-                        tagInputFocused ? 'text-indigo-400' : 'text-zinc-500'
-                      }`}
+                      className={`w-3 h-3 transition-colors ${tagInputFocused ? 'text-indigo-400' : 'text-zinc-500'
+                        }`}
                       strokeWidth={2.5}
                     />
                     <input
@@ -443,11 +447,10 @@ export default function ProjectSettingsModal({
                       type="button"
                       disabled={disabled}
                       onClick={() => toggleTag(tag)}
-                      className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 ${
-                        active
+                      className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 ${active
                           ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-200'
                           : 'bg-transparent border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
-                      }`}
+                        }`}
                     >
                       {tag}
                     </button>
@@ -473,11 +476,39 @@ export default function ProjectSettingsModal({
               <VisibilityCard
                 icon={<Lock className="w-4 h-4" />}
                 title="私人專案"
-                description="僅你本人可檢視此專案"
+                description="僅你本人及知道密碼的人可檢視"
                 active={visibility === 'private'}
                 onClick={() => setVisibility('private')}
               />
             </div>
+
+            {/* Password (private only) */}
+            {visibility === 'private' && (
+              <div className="flex flex-col gap-2 mt-3">
+                <label className="text-xs font-medium text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <Lock className="w-3 h-3" />
+                  密碼保護（選填）
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    maxLength={100}
+                    placeholder="設定密碼（留空表示不設密碼）"
+                    className="w-full bg-zinc-900/40 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-indigo-500/70 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">{showPassword ? 'visibility_off' : 'visibility'}</span>
+                  </button>
+                </div>
+                <p className="text-[11px] text-zinc-500">設定密碼後，知道連結的人輸入正確密碼才可查看。</p>
+              </div>
+            )}
           </section>
         </div>
 
@@ -538,11 +569,10 @@ function VisibilityCard({ icon, title, description, active, onClick }: Visibilit
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`relative text-left p-4 rounded-xl border transition-all cursor-pointer ${
-        active
+      className={`relative text-left p-4 rounded-xl border transition-all cursor-pointer ${active
           ? 'border-indigo-500/60 bg-indigo-500/10 shadow-[0_0_0_1px_rgba(99,102,241,0.3),0_8px_24px_-12px_rgba(99,102,241,0.4)]'
           : 'border-zinc-800 bg-zinc-900/30 hover:border-zinc-700 hover:bg-zinc-900/60'
-      }`}
+        }`}
     >
       {active && (
         <div className="absolute top-3 right-3 flex items-center justify-center w-5 h-5 rounded-full bg-indigo-500 text-white">
@@ -551,9 +581,8 @@ function VisibilityCard({ icon, title, description, active, onClick }: Visibilit
       )}
       <div className="flex flex-col gap-1.5">
         <div
-          className={`flex items-center gap-2 text-sm font-semibold ${
-            active ? 'text-indigo-100' : 'text-zinc-200'
-          }`}
+          className={`flex items-center gap-2 text-sm font-semibold ${active ? 'text-indigo-100' : 'text-zinc-200'
+            }`}
         >
           <span className={active ? 'text-indigo-300' : 'text-zinc-500'}>{icon}</span>
           {title}

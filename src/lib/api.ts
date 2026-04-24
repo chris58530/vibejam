@@ -105,9 +105,10 @@ export interface Vibe {
   tags: string;
   views: number;
   created_at: string;
-  visibility?: 'public' | 'unlisted' | 'private';
+  visibility?: 'public' | 'private';
   description?: string;
   cover_image?: string;
+  has_password?: boolean;
   user_role?: 'owner' | 'collaborator' | 'viewer' | 'none';
   collaborators?: Collaborator[];
   latest_code?: string;
@@ -236,20 +237,28 @@ export const api = {
     const data = await apiJson<unknown>(`/vibes${params}`, { timeoutMs: 15000 }, 'Failed to fetch vibes');
     return Array.isArray(data) ? data as Vibe[] : [];
   },
-  async getVibeBySlug(username: string, slug: string, supabaseId?: string): Promise<Vibe> {
-    const params = supabaseId ? `?supabase_id=${encodeURIComponent(supabaseId)}` : '';
+  async getVibeBySlug(username: string, slug: string, supabaseId?: string, password?: string): Promise<Vibe> {
+    let params = supabaseId ? `?supabase_id=${encodeURIComponent(supabaseId)}` : '';
+    if (password) params += `${params ? '&' : '?'}password=${encodeURIComponent(password)}`;
     const res = await apiFetch(`/vibes/by-slug/${encodeURIComponent(username)}/${encodeURIComponent(slug)}${params}`);
-    if (res.status === 403) throw new AccessDeniedError();
+    if (res.status === 403) {
+      const data = await res.json().catch(() => ({}));
+      throw new AccessDeniedError(data.code || 'PRIVATE_VIBE');
+    }
     if (!res.ok) throw new Error('Vibe not found');
     return res.json();
   },
-  async getVibe(id: string | number, supabaseId?: string): Promise<Vibe> {
-    const params = supabaseId ? `?supabase_id=${encodeURIComponent(supabaseId)}` : '';
+  async getVibe(id: string | number, supabaseId?: string, password?: string): Promise<Vibe> {
+    let params = supabaseId ? `?supabase_id=${encodeURIComponent(supabaseId)}` : '';
+    if (password) params += `${params ? '&' : '?'}password=${encodeURIComponent(password)}`;
     const res = await apiFetch(`/vibes/${id}${params}`);
-    if (res.status === 403) throw new AccessDeniedError();
+    if (res.status === 403) {
+      const data = await res.json().catch(() => ({}));
+      throw new AccessDeniedError(data.code || 'PRIVATE_VIBE');
+    }
     return res.json();
   },
-  async createVibe(data: { title: string; tags: string; code: string; description?: string; author_id?: number; parent_vibe_id?: number; parent_version_number?: number; visibility?: 'public' | 'unlisted' | 'private' }): Promise<{ id: number }> {
+  async createVibe(data: { title: string; tags: string; code: string; description?: string; author_id?: number; parent_vibe_id?: number; parent_version_number?: number; visibility?: 'public' | 'private' }): Promise<{ id: number }> {
     return apiJson<{ id: number }>('/vibes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -263,12 +272,26 @@ export const api = {
       body: JSON.stringify({ supabase_id: supabaseId, title }),
     }, 'Failed to update title');
   },
-  async updateVisibility(vibeId: number, supabaseId: string, visibility: 'public' | 'unlisted' | 'private'): Promise<{ success: boolean }> {
+  async updateVisibility(vibeId: number, supabaseId: string, visibility: 'public' | 'private'): Promise<{ success: boolean }> {
     return apiJson<{ success: boolean }>(`/vibes/${vibeId}/visibility`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ supabase_id: supabaseId, visibility }),
     }, 'Failed to update visibility');
+  },
+  async setVibePassword(vibeId: number, supabaseId: string, password: string | null): Promise<{ success: boolean; has_password: boolean }> {
+    return apiJson<{ success: boolean; has_password: boolean }>(`/vibes/${vibeId}/password`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ supabase_id: supabaseId, password }),
+    }, 'Failed to set password');
+  },
+  async verifyVibePassword(vibeId: number, password: string): Promise<{ valid: boolean }> {
+    return apiJson<{ valid: boolean }>(`/vibes/${vibeId}/verify-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    }, 'Failed to verify password');
   },
   async updateDescription(vibeId: number, supabaseId: string, description: string): Promise<{ success: boolean }> {
     return apiJson<{ success: boolean }>(`/vibes/${vibeId}/description`, {

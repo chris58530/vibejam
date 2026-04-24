@@ -92,7 +92,7 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
   const [descRowOpen, setDescRowOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile' | 'round'>('desktop');
   const [isPublishing, setIsPublishing] = useState(false);
-  const [visibility, setVisibility] = useState<'public' | 'unlisted' | 'private'>('public');
+  const [visibility, setVisibility] = useState<'public' | 'private'>('public');
 
   // Mobile tab
   const [mobileTab, setMobileTab] = useState<MobileTab>('code');
@@ -363,7 +363,7 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
   };
 
   // ── 發布 / 更新 ────────────────────────────────────────────────────
-  const handlePublish = async (modalData?: { title: string; description: string; tags: string; visibility: 'public' | 'unlisted' | 'private' }) => {
+  const handlePublish = async (modalData?: { title: string; description: string; tags: string; visibility: 'public' | 'private'; password?: string }) => {
     const pTitle = modalData?.title || title;
     const pDesc = modalData?.description || description;
     const pVis = modalData?.visibility || visibility;
@@ -398,6 +398,10 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
           author_id: currentUser?.id,
           visibility: pVis,
         });
+        // 設定密碼（如有）
+        if (modalData?.password && result.id && currentUser?.supabase_id) {
+          await api.setVibePassword(result.id, currentUser.supabase_id, modalData.password).catch(() => { });
+        }
         if (currentUser) {
           navigate(`/p/${result.id}`);
         } else {
@@ -455,7 +459,7 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
   };
 
   // 從設定 Modal 儲存草稿（套用 modal 資料再存本機）
-  const handleSaveFromModal = (modalData: { title: string; description: string; tags: string; visibility: 'public' | 'unlisted' | 'private' }) => {
+  const handleSaveFromModal = (modalData: { title: string; description: string; tags: string; visibility: 'public' | 'private'; password?: string }) => {
     setTitle(modalData.title);
     setDescription(modalData.description);
     setTags(modalData.tags);
@@ -751,16 +755,16 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
         <div className="ml-auto flex items-center gap-1.5">
           {/* View mode buttons */}
           <div className="hidden md:flex items-center gap-0.5">
-              <button
-                onClick={() => setViewMode('desktop')}
-                title="桌面"
-                className={`material-symbols-outlined text-[16px] p-1 rounded transition-colors ${viewMode === 'desktop' ? 'text-primary' : 'text-on-surface/40 hover:text-primary'}`}
-              >desktop_windows</button>
-              <button
-                onClick={() => setViewMode('mobile')}
-                title="手機"
-                className={`material-symbols-outlined text-[16px] p-1 rounded transition-colors ${viewMode === 'mobile' ? 'text-primary' : 'text-on-surface/40 hover:text-primary'}`}
-              >smartphone</button>
+            <button
+              onClick={() => setViewMode('desktop')}
+              title="桌面"
+              className={`material-symbols-outlined text-[16px] p-1 rounded transition-colors ${viewMode === 'desktop' ? 'text-primary' : 'text-on-surface/40 hover:text-primary'}`}
+            >desktop_windows</button>
+            <button
+              onClick={() => setViewMode('mobile')}
+              title="手機"
+              className={`material-symbols-outlined text-[16px] p-1 rounded transition-colors ${viewMode === 'mobile' ? 'text-primary' : 'text-on-surface/40 hover:text-primary'}`}
+            >smartphone</button>
           </div>
 
           {/* Save button */}
@@ -1036,82 +1040,82 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
 
           {/* ── Code Editor Panel ── */}
           <div className={`${mobileTab === 'preview' ? 'hidden' : 'flex'} md:flex flex-col md:w-[30%] md:flex-none overflow-hidden bg-background`}>
-              {!htmlCode && !cssCode && !jsCode && !editorReady ? (
-                /* Welcome / Mode Select */
-                <div className="flex-1 flex items-center justify-center p-6">
-                  <div className="w-full max-w-md">
-                    <div className="text-center mb-8">
-                      <span className="material-symbols-outlined text-[40px] text-primary/25 mb-3 block">code_blocks</span>
-                      <h2 className="text-xl font-bold text-on-surface mb-2">開始建立你的 Kit</h2>
-                      <p className="text-sm text-on-surface/40">選擇一個模式，或在左側 AI 對話框輸入需求</p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3 mb-5">
-                      {MODE_OPTIONS.map(opt => (
-                        <button
-                          key={opt.id}
-                          onClick={() => { handleModeChange(opt.id); setEditorReady(true); }}
-                          className="flex flex-col items-start gap-2.5 p-4 rounded-2xl border border-outline-variant/15 bg-surface-container-low text-left transition-all hover:border-primary/40 hover:bg-primary/5 active:scale-[0.98] cursor-pointer"
-                        >
-                          <span className="text-2xl">{opt.emoji}</span>
-                          <div>
-                            <div className="text-sm font-semibold text-on-surface">{opt.label}</div>
-                            <div className="text-[11px] text-on-surface/40 mt-0.5 leading-relaxed">{opt.desc}</div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                    <button
-                      onClick={() => setEditorReady(true)}
-                      className="w-full py-2.5 text-sm text-on-surface/30 hover:text-on-surface/60 transition-colors cursor-pointer"
-                    >
-                      直接開啟編輯器 →
-                    </button>
+            {!htmlCode && !cssCode && !jsCode && !editorReady ? (
+              /* Welcome / Mode Select */
+              <div className="flex-1 flex items-center justify-center p-6">
+                <div className="w-full max-w-md">
+                  <div className="text-center mb-8">
+                    <span className="material-symbols-outlined text-[40px] text-primary/25 mb-3 block">code_blocks</span>
+                    <h2 className="text-xl font-bold text-on-surface mb-2">開始建立你的 Kit</h2>
+                    <p className="text-sm text-on-surface/40">選擇一個模式，或在左側 AI 對話框輸入需求</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 mb-5">
+                    {MODE_OPTIONS.map(opt => (
+                      <button
+                        key={opt.id}
+                        onClick={() => { handleModeChange(opt.id); setEditorReady(true); }}
+                        className="flex flex-col items-start gap-2.5 p-4 rounded-2xl border border-outline-variant/15 bg-surface-container-low text-left transition-all hover:border-primary/40 hover:bg-primary/5 active:scale-[0.98] cursor-pointer"
+                      >
+                        <span className="text-2xl">{opt.emoji}</span>
+                        <div>
+                          <div className="text-sm font-semibold text-on-surface">{opt.label}</div>
+                          <div className="text-[11px] text-on-surface/40 mt-0.5 leading-relaxed">{opt.desc}</div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => setEditorReady(true)}
+                    className="w-full py-2.5 text-sm text-on-surface/30 hover:text-on-surface/60 transition-colors cursor-pointer"
+                  >
+                    直接開啟編輯器 →
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between bg-[#1e1e1e] border-b border-outline-variant/10 px-4 h-10 shrink-0 select-none mt-3 mx-4 md:mt-4 md:mx-4 rounded-t-xl overflow-hidden shadow-sm">
+                  <div className="flex bg-[#1e1e1e] text-xs h-full">
+                    {!isSplitMode ? (
+                      <div className="px-4 h-full flex items-center gap-2 border-b-2 border-primary bg-[#1e1e1e] text-on-surface font-medium">
+                        <span className="material-symbols-outlined text-[14px] text-primary">{isReactMode ? 'code' : isVueMode ? 'code' : 'html'}</span>
+                        {isReactMode ? 'App.jsx' : isVueMode ? 'App.vue' : 'index.html'}
+                      </div>
+                    ) : tabs.map(tab => (
+                      <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`px-4 h-full flex items-center gap-1.5 transition-colors border-b-2 ${activeTab === tab.id ? 'border-primary text-on-surface font-medium bg-[#252526]' : 'border-transparent text-on-surface-variant hover:bg-[#252526]'}`}><span className="material-symbols-outlined text-[13px]">{tab.icon}</span>{tab.label}</button>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => { setIsManualEditMode(!isManualEditMode); setHighlightEditBtn(false); }} className={`flex items-center gap-1 px-2.5 py-1 rounded transition-all duration-300 ${isManualEditMode ? 'bg-primary/20 text-primary font-bold shadow-sm' : 'text-on-surface-variant hover:text-on-surface hover:bg-white/5'} ${highlightEditBtn ? 'bg-yellow-500/20 text-yellow-300 ring-2 ring-yellow-500/50 scale-105' : ''}`} title={isManualEditMode ? '切換回保護模式' : '開啟手動編輯 (防呆)'}><span className="material-symbols-outlined text-[14px]">{isManualEditMode ? 'edit' : 'edit_off'}</span><span className="text-[11px]">{isManualEditMode ? '編輯中' : '唯讀保護'}</span></button>
                   </div>
                 </div>
-              ) : (
-                <>
-                  <div className="flex items-center justify-between bg-[#1e1e1e] border-b border-outline-variant/10 px-4 h-10 shrink-0 select-none mt-3 mx-4 md:mt-4 md:mx-4 rounded-t-xl overflow-hidden shadow-sm">
-                    <div className="flex bg-[#1e1e1e] text-xs h-full">
-                      {!isSplitMode ? (
-                        <div className="px-4 h-full flex items-center gap-2 border-b-2 border-primary bg-[#1e1e1e] text-on-surface font-medium">
-                          <span className="material-symbols-outlined text-[14px] text-primary">{isReactMode ? 'code' : isVueMode ? 'code' : 'html'}</span>
-                          {isReactMode ? 'App.jsx' : isVueMode ? 'App.vue' : 'index.html'}
-                        </div>
-                      ) : tabs.map(tab => (
-                        <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`px-4 h-full flex items-center gap-1.5 transition-colors border-b-2 ${activeTab === tab.id ? 'border-primary text-on-surface font-medium bg-[#252526]' : 'border-transparent text-on-surface-variant hover:bg-[#252526]'}`}><span className="material-symbols-outlined text-[13px]">{tab.icon}</span>{tab.label}</button>
-                      ))}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => { setIsManualEditMode(!isManualEditMode); setHighlightEditBtn(false); }} className={`flex items-center gap-1 px-2.5 py-1 rounded transition-all duration-300 ${isManualEditMode ? 'bg-primary/20 text-primary font-bold shadow-sm' : 'text-on-surface-variant hover:text-on-surface hover:bg-white/5'} ${highlightEditBtn ? 'bg-yellow-500/20 text-yellow-300 ring-2 ring-yellow-500/50 scale-105' : ''}`} title={isManualEditMode ? '切換回保護模式' : '開啟手動編輯 (防呆)'}><span className="material-symbols-outlined text-[14px]">{isManualEditMode ? 'edit' : 'edit_off'}</span><span className="text-[11px]">{isManualEditMode ? '編輯中' : '唯讀保護'}</span></button>
-                    </div>
+                {/* Textarea */}
+                <div className="flex-1 font-mono text-sm leading-relaxed editor-well overflow-hidden flex relative group cursor-text mb-3 mx-4 md:mb-4 md:mx-4 rounded-b-xl border border-outline-variant/10 bg-[#1e1e1e] shadow-lg" onClick={handleEditorClick}>
+                  <div className="absolute left-0 top-0 bottom-0 w-8 bg-surface-container-lowest border-r border-outline-variant/5 text-right py-4 pr-2 text-on-surface/20 select-none hidden sm:block">
+                    {currentCode.split('\n').map((_, i) => (
+                      <div key={i}>{i + 1}</div>
+                    ))}
                   </div>
-                  {/* Textarea */}
-                  <div className="flex-1 font-mono text-sm leading-relaxed editor-well overflow-hidden flex relative group cursor-text mb-3 mx-4 md:mb-4 md:mx-4 rounded-b-xl border border-outline-variant/10 bg-[#1e1e1e] shadow-lg" onClick={handleEditorClick}>
-                    <div className="absolute left-0 top-0 bottom-0 w-8 bg-surface-container-lowest border-r border-outline-variant/5 text-right py-4 pr-2 text-on-surface/20 select-none hidden sm:block">
-                      {currentCode.split('\n').map((_, i) => (
-                        <div key={i}>{i + 1}</div>
-                      ))}
-                    </div>
-                    <textarea
-                      value={currentCode}
-                      readOnly={!isManualEditMode}
-                      onChange={handleEditorChange}
-                      onPaste={handlePaste}
-                      placeholder={
-                        isSplitMode
-                          ? activeTab === 'html'
-                            ? '<div>Your HTML here</div>'
-                            : activeTab === 'css'
-                              ? 'body { font-family: sans-serif; }'
-                              : 'console.log("hello!");'
-                          : '把 AI 生成的程式碼貼在這裡 ✨\n\n💡 小提示：\n• 跟 AI 說「請輸出成一個完整的 HTML 檔案」效果最好\n• 也支援 React 和 Vue 元件，貼上後會自動偵測'
-                      }
-                      className="flex-1 w-full bg-transparent p-4 sm:pl-12 py-4 font-mono text-sm text-on-surface outline-none resize-none hide-scrollbar placeholder:text-on-surface/20 whitespace-pre"
-                      spellCheck={false}
-                    />
-                  </div>
-                </>
-              )}
+                  <textarea
+                    value={currentCode}
+                    readOnly={!isManualEditMode}
+                    onChange={handleEditorChange}
+                    onPaste={handlePaste}
+                    placeholder={
+                      isSplitMode
+                        ? activeTab === 'html'
+                          ? '<div>Your HTML here</div>'
+                          : activeTab === 'css'
+                            ? 'body { font-family: sans-serif; }'
+                            : 'console.log("hello!");'
+                        : '把 AI 生成的程式碼貼在這裡 ✨\n\n💡 小提示：\n• 跟 AI 說「請輸出成一個完整的 HTML 檔案」效果最好\n• 也支援 React 和 Vue 元件，貼上後會自動偵測'
+                    }
+                    className="flex-1 w-full bg-transparent p-4 sm:pl-12 py-4 font-mono text-sm text-on-surface outline-none resize-none hide-scrollbar placeholder:text-on-surface/20 whitespace-pre"
+                    spellCheck={false}
+                  />
+                </div>
+              </>
+            )}
           </div>
 
           {/* Vertical divider (desktop only) */}
@@ -1119,54 +1123,54 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
 
           {/* ── Preview Panel ── */}
           <div className={`${mobileTab === 'code' ? 'hidden' : 'flex'} md:flex md:w-[70%] md:flex-none bg-background flex-col items-center justify-center overflow-hidden p-3 md:p-4`}>
-              {viewMode === 'round' ? (
-                <div className="flex items-center justify-center w-full h-full">
-                  <div className="relative" style={{ width: '320px', height: '320px' }}>
-                    <div className="absolute inset-0 rounded-full shadow-2xl" style={{ background: 'linear-gradient(145deg,#3a3a3a,#1a1a1a)', padding: '10px' }}>
-                      <div className="w-full h-full rounded-full overflow-hidden relative bg-black">
-                        {previewDoc ? (
-                          <iframe ref={iframeRef} srcDoc={previewDoc} className="absolute inset-0 w-full h-full border-none" title="Round Preview" sandbox="allow-scripts allow-same-origin allow-pointer-lock" />
-                        ) : (
-                          <div className="w-full h-full bg-[#050505] flex items-center justify-center">
-                            <span className="material-symbols-outlined text-on-surface/20 text-4xl">watch</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="absolute right-[-8px] top-1/2 -translate-y-1/2 w-3 h-8 rounded-r-md bg-gradient-to-b from-[#444] to-[#222] shadow-md"></div>
-                  </div>
-                </div>
-              ) : viewMode === 'mobile' ? (
-                <div className="flex items-center justify-center w-full h-full">
-                  <div className="relative flex flex-col shadow-2xl" style={{ width: '375px', height: '667px' }}>
-                    <div className="absolute inset-0 rounded-[40px] overflow-hidden border-[10px] border-surface-container-high bg-surface-container-high flex flex-col">
-                      <div className="h-7 bg-[#1A1A1A] flex items-center justify-between px-5 shrink-0">
-                        <span className="text-[10px] text-white/60 font-mono">9:41</span>
-                        <div className="flex items-center gap-1">
-                          <span className="material-symbols-outlined text-[11px] text-white/60">signal_cellular_alt</span>
-                          <span className="material-symbols-outlined text-[11px] text-white/60">wifi</span>
-                          <span className="material-symbols-outlined text-[11px] text-white/60">battery_full</span>
+            {viewMode === 'round' ? (
+              <div className="flex items-center justify-center w-full h-full">
+                <div className="relative" style={{ width: '320px', height: '320px' }}>
+                  <div className="absolute inset-0 rounded-full shadow-2xl" style={{ background: 'linear-gradient(145deg,#3a3a3a,#1a1a1a)', padding: '10px' }}>
+                    <div className="w-full h-full rounded-full overflow-hidden relative bg-black">
+                      {previewDoc ? (
+                        <iframe ref={iframeRef} srcDoc={previewDoc} className="absolute inset-0 w-full h-full border-none" title="Round Preview" sandbox="allow-scripts allow-same-origin allow-pointer-lock" />
+                      ) : (
+                        <div className="w-full h-full bg-[#050505] flex items-center justify-center">
+                          <span className="material-symbols-outlined text-on-surface/20 text-4xl">watch</span>
                         </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="absolute right-[-8px] top-1/2 -translate-y-1/2 w-3 h-8 rounded-r-md bg-gradient-to-b from-[#444] to-[#222] shadow-md"></div>
+                </div>
+              </div>
+            ) : viewMode === 'mobile' ? (
+              <div className="flex items-center justify-center w-full h-full">
+                <div className="relative flex flex-col shadow-2xl" style={{ width: '375px', height: '667px' }}>
+                  <div className="absolute inset-0 rounded-[40px] overflow-hidden border-[10px] border-surface-container-high bg-surface-container-high flex flex-col">
+                    <div className="h-7 bg-[#1A1A1A] flex items-center justify-between px-5 shrink-0">
+                      <span className="text-[10px] text-white/60 font-mono">9:41</span>
+                      <div className="flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[11px] text-white/60">signal_cellular_alt</span>
+                        <span className="material-symbols-outlined text-[11px] text-white/60">wifi</span>
+                        <span className="material-symbols-outlined text-[11px] text-white/60">battery_full</span>
                       </div>
-                      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-[#1A1A1A] rounded-b-2xl z-10"></div>
-                      <div className="flex-1 relative overflow-hidden bg-white">
-                        {previewDoc ? (
-                          <iframe ref={iframeRef} srcDoc={previewDoc} className="absolute inset-0 w-full h-full border-none" title="Mobile Preview" sandbox="allow-scripts allow-same-origin allow-pointer-lock" />
-                        ) : (
-                          <div className="w-full h-full bg-[#050505] flex items-center justify-center">
-                            <span className="material-symbols-outlined text-on-surface/15 text-5xl">smartphone</span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="h-6 bg-[#1A1A1A] flex items-center justify-center shrink-0">
-                        <div className="w-24 h-1 rounded-full bg-white/30"></div>
-                      </div>
+                    </div>
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-[#1A1A1A] rounded-b-2xl z-10"></div>
+                    <div className="flex-1 relative overflow-hidden bg-white">
+                      {previewDoc ? (
+                        <iframe ref={iframeRef} srcDoc={previewDoc} className="absolute inset-0 w-full h-full border-none" title="Mobile Preview" sandbox="allow-scripts allow-same-origin allow-pointer-lock" />
+                      ) : (
+                        <div className="w-full h-full bg-[#050505] flex items-center justify-center">
+                          <span className="material-symbols-outlined text-on-surface/15 text-5xl">smartphone</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="h-6 bg-[#1A1A1A] flex items-center justify-center shrink-0">
+                      <div className="w-24 h-1 rounded-full bg-white/30"></div>
                     </div>
                   </div>
                 </div>
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <div className="flex flex-col rounded-xl shadow-xl overflow-hidden border border-white/5 transition-all duration-500 h-full" style={{aspectRatio: '16/9', maxWidth: '100%'}}>
+              </div>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <div className="flex flex-col rounded-xl shadow-xl overflow-hidden border border-white/5 transition-all duration-500 h-full" style={{ aspectRatio: '16/9', maxWidth: '100%' }}>
                   <div className="bg-[#242424] px-4 py-2 flex items-center gap-3 shrink-0 border-b border-white/5">
                     <div className="flex gap-1.5">
                       <div className="w-3 h-3 rounded-full bg-[#FF5F57]"></div>
@@ -1227,9 +1231,9 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
                     )}
                   </div>
                 </div>
-                  </div>
-              )}
-            </div>
+              </div>
+            )}
+          </div>
         </section>
       </div>
 

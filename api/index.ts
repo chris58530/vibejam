@@ -56,23 +56,41 @@ function defaultAvatarForHandle(username: string) {
 }
 
 // Access control helper
-async function checkVibeAccess(vibeId: number | string, supabaseId: string | null): Promise<{ allowed: boolean; role: 'owner' | 'collaborator' | 'viewer' | 'none'; vibe: any }> {
+async function checkVibeAccess(vibeId: number | string, supabaseId: string | null, password?: string | null): Promise<{ allowed: boolean; role: 'owner' | 'collaborator' | 'viewer' | 'none'; vibe: any; needsPassword?: boolean }> {
   const vibe = await db.get(`
     SELECT v.*, u.supabase_id as owner_supabase_id, u.username as author_name, u.avatar as author_avatar
     FROM vibes v JOIN users u ON v.author_id = u.id WHERE v.id = $1
   `, [vibeId]);
   if (!vibe) return { allowed: false, role: 'none', vibe: null };
   const visibility = vibe.visibility || 'public';
-  if (!supabaseId) {
-    return { allowed: visibility === 'public' || visibility === 'unlisted', role: 'viewer', vibe };
+
+  // Public and legacy unlisted vibes: anyone can access
+  if (visibility !== 'private') {
+    return { allowed: true, role: 'viewer', vibe };
   }
-  if (vibe.owner_supabase_id === supabaseId) return { allowed: true, role: 'owner', vibe };
-  const user = await db.get('SELECT id FROM users WHERE supabase_id = $1', [supabaseId]);
-  if (user) {
-    const collab = await db.get('SELECT id FROM collaborators WHERE vibe_id = $1 AND user_id = $2', [vibeId, user.id]);
-    if (collab) return { allowed: true, role: 'collaborator', vibe };
+
+  // Private vibe: check ownership first
+  if (supabaseId) {
+    if (vibe.owner_supabase_id === supabaseId) return { allowed: true, role: 'owner', vibe };
+    const user = await db.get('SELECT id FROM users WHERE supabase_id = $1', [supabaseId]);
+    if (user) {
+      const collab = await db.get('SELECT id FROM collaborators WHERE vibe_id = $1 AND user_id = $2', [vibeId, user.id]);
+      if (collab) return { allowed: true, role: 'collaborator', vibe };
+    }
   }
-  return { allowed: visibility === 'public' || visibility === 'unlisted', role: 'viewer', vibe };
+
+  // Check password for private vibes
+  if (vibe.password_hash) {
+    if (password) {
+      const inputHash = crypto.createHash('sha256').update(password).digest('hex');
+      if (inputHash === vibe.password_hash) {
+        return { allowed: true, role: 'viewer', vibe };
+      }
+    }
+    return { allowed: false, role: 'none', vibe, needsPassword: true };
+  }
+
+  return { allowed: false, role: 'none', vibe };
 }
 
 // Sync GitHub/Supabase user to PostgreSQL users table
@@ -402,6 +420,7 @@ app.get('/api/vibes/by-slug/:username/:slug', async (req, res) => {
   const username = decodeURIComponent(req.params.username);
   const slug = decodeURIComponent(req.params.slug);
   const supabaseId = req.query.supabase_id as string | null || null;
+  const password = req.query.password as string | null || null;
   try {
     await ensureDb();
     const allVibes = await db.query(`
@@ -412,8 +431,8 @@ app.get('/api/vibes/by-slug/:username/:slug', async (req, res) => {
     const found = allVibes.find((v: any) => toSlug(v.title) === slug);
     if (!found) return res.status(404).json({ error: 'Vibe not found' });
 
-    const { allowed, role, vibe } = await checkVibeAccess(found.id, supabaseId);
-    if (!allowed) return res.status(403).json({ error: 'Access denied', code: 'PRIVATE_VIBE' });
+    const { allowed, role, vibe, needsPassword } = await checkVibeAccess(found.id, supabaseId, password);
+    if (!allowed) return res.status(403).json({ error: 'Access denied', code: needsPassword ? 'PRIVATE_VIBE_PASSWORD_REQUIRED' : 'PRIVATE_VIBE' });
 
     const versions = await db.query(`
       SELECT v.*, u.username as author_name, u.avatar as author_avatar
@@ -438,6 +457,7 @@ app.get('/api/vibes/by-slug/:username/:slug', async (req, res) => {
     `, [found.id]) : [];
     res.json({
       ...vibe, versions, comments, user_role: role, collaborators,
+      has_password: !!vibe.password_hash,
       ...(remixInfo ? {
         parent_vibe_id: remixInfo.parent_vibe_id,
         parent_vibe_title: remixInfo.parent_vibe_title,
@@ -451,11 +471,12 @@ app.get('/api/vibes/by-slug/:username/:slug', async (req, res) => {
 // Get single vibe
 app.get('/api/vibes/:id', async (req, res) => {
   const supabaseId = req.query.supabase_id as string | null || null;
+  const password = req.query.password as string | null || null;
   try {
     await ensureDb();
-    const { allowed, role, vibe } = await checkVibeAccess(req.params.id, supabaseId);
+    const { allowed, role, vibe, needsPassword } = await checkVibeAccess(req.params.id, supabaseId, password);
     if (!vibe) return res.status(404).json({ error: 'Vibe not found' });
-    if (!allowed) return res.status(403).json({ error: 'Access denied', code: 'PRIVATE_VIBE' });
+    if (!allowed) return res.status(403).json({ error: 'Access denied', code: needsPassword ? 'PRIVATE_VIBE_PASSWORD_REQUIRED' : 'PRIVATE_VIBE' });
 
     const versions = await db.query(`
       SELECT v.*, u.username as author_name, u.avatar as author_avatar
@@ -489,6 +510,7 @@ app.get('/api/vibes/:id', async (req, res) => {
     }
     res.json({
       ...vibe, versions, comments, user_role: role, collaborators,
+      has_password: !!vibe.password_hash,
       like_count: Number(likeCountRow?.count || 0), user_liked: userLiked,
       ...(remixInfo ? {
         parent_vibe_id: remixInfo.parent_vibe_id,
@@ -504,14 +526,13 @@ app.get('/api/vibes/:id', async (req, res) => {
 app.post('/api/vibes', async (req, res) => {
   const { title, tags, code, author_id = 1, parent_vibe_id, parent_version_number, description = '' } = req.body;
   let { visibility = 'public' } = req.body;
-  if (!['public', 'unlisted', 'private'].includes(visibility)) visibility = 'public';
+  if (!['public', 'private'].includes(visibility)) visibility = 'public';
   try {
     await ensureDb();
     // Enforce remix visibility rules
     if (parent_vibe_id) {
       const parent = await db.get('SELECT visibility FROM vibes WHERE id = $1', [parent_vibe_id]);
       if (parent?.visibility === 'private') visibility = 'private';
-      else if (parent?.visibility === 'unlisted' && visibility === 'public') visibility = 'unlisted';
     }
     const vibe = await db.get(
       'INSERT INTO vibes (title, author_id, tags, visibility, description) VALUES ($1, $2, $3, $4, $5) RETURNING id',
@@ -560,7 +581,7 @@ app.get('/api/vibes/:id/children', async (req, res) => {
       FROM remixes r
       JOIN vibes v ON r.child_vibe_id = v.id
       JOIN users u ON v.author_id = u.id
-      WHERE r.parent_vibe_id = $1 AND (v.visibility = 'public' OR v.visibility = 'unlisted')
+      WHERE r.parent_vibe_id = $1 AND v.visibility = 'public'
       ORDER BY v.created_at ASC
       LIMIT 50
     `, [req.params.id]);
@@ -635,7 +656,7 @@ app.patch('/api/vibes/:id/title', async (req, res) => {
 app.patch('/api/vibes/:id/visibility', async (req, res) => {
   const { supabase_id, visibility } = req.body;
   if (!supabase_id) return res.status(401).json({ error: 'Unauthorized' });
-  if (!['public', 'unlisted', 'private'].includes(visibility)) return res.status(400).json({ error: 'Invalid visibility' });
+  if (!['public', 'private'].includes(visibility)) return res.status(400).json({ error: 'Invalid visibility' });
   try {
     await ensureDb();
     const user = await db.get('SELECT id FROM users WHERE supabase_id = $1', [supabase_id]);
@@ -677,6 +698,39 @@ app.patch('/api/vibes/:id/cover-image', async (req, res) => {
     if (vibe.author_id !== user.id) return res.status(403).json({ error: 'Forbidden' });
     await db.run('UPDATE vibes SET cover_image = $1 WHERE id = $2', [cover_image || null, req.params.id]);
     res.json({ success: true });
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+// Set or clear vibe password (owner only)
+app.patch('/api/vibes/:id/password', async (req, res) => {
+  const { supabase_id, password } = req.body;
+  if (!supabase_id) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    await ensureDb();
+    const user = await db.get('SELECT id FROM users WHERE supabase_id = $1', [supabase_id]);
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+    const vibe = await db.get('SELECT author_id FROM vibes WHERE id = $1', [req.params.id]);
+    if (!vibe) return res.status(404).json({ error: 'Vibe not found' });
+    if (vibe.author_id !== user.id) return res.status(403).json({ error: 'Forbidden' });
+    const passwordHash = password
+      ? crypto.createHash('sha256').update(String(password)).digest('hex')
+      : null;
+    await db.run('UPDATE vibes SET password_hash = $1 WHERE id = $2', [passwordHash, req.params.id]);
+    res.json({ success: true, has_password: !!passwordHash });
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+// Verify vibe password (anyone can call)
+app.post('/api/vibes/:id/verify-password', async (req, res) => {
+  const { password } = req.body;
+  if (!password) return res.status(400).json({ error: 'Password required' });
+  try {
+    await ensureDb();
+    const vibe = await db.get('SELECT password_hash, visibility FROM vibes WHERE id = $1', [req.params.id]);
+    if (!vibe) return res.status(404).json({ error: 'Vibe not found' });
+    if (vibe.visibility !== 'private' || !vibe.password_hash) return res.json({ valid: true });
+    const inputHash = crypto.createHash('sha256').update(String(password)).digest('hex');
+    res.json({ valid: inputHash === vibe.password_hash });
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
 

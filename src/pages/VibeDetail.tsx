@@ -210,6 +210,11 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
   const [selectedVersion, setSelectedVersion] = useState<Version | null>(null);
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
+  const [passwordRequired, setPasswordRequired] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordVerifying, setPasswordVerifying] = useState(false);
+  const [showPasswordText, setShowPasswordText] = useState(false);
   const isSending = useRef(false);
 
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -224,6 +229,12 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
 
   const [coverUploading, setCoverUploading] = useState(false);
   const coverInputRef = useRef<HTMLInputElement>(null);
+
+  // Owner password management
+  const [showPasswordMgmt, setShowPasswordMgmt] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [showNewPasswordText, setShowNewPasswordText] = useState(false);
+  const [passwordSaving, setPasswordSaving] = useState(false);
 
   // Lineage state (lifted from RemixTree)
   const [ancestors, setAncestors] = useState<VibeAncestor[]>([]);
@@ -250,14 +261,20 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
     if (supabaseUser === undefined) return;
     if (!id) { navigate('/'); return; }
     try {
-      const data = await api.getVibe(id, supabaseUser?.id);
+      const storedPassword = localStorage.getItem(`bk_pwd_${id}`) || undefined;
+      const data = await api.getVibe(id, supabaseUser?.id, storedPassword);
       setVibe(data);
       setLikeCount(data.like_count ?? 0);
       setLiked(data.user_liked ?? false);
       if (data.versions?.length) setSelectedVersion(data.versions[0]);
     } catch (err) {
-      if (err instanceof AccessDeniedError) setAccessDenied(true);
-      else navigate('/');
+      if (err instanceof AccessDeniedError) {
+        if (err.code === 'PRIVATE_VIBE_PASSWORD_REQUIRED') {
+          setPasswordRequired(true);
+        } else {
+          setAccessDenied(true);
+        }
+      } else navigate('/');
     } finally {
       setLoading(false);
     }
@@ -426,9 +443,91 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
   const commentCount = vibe?.comment_count ?? vibe?.comments?.length ?? 0;
   const remixCount = vibe?.remix_count ?? 0;
 
+  const handlePasswordSubmit = async () => {
+    if (!passwordInput.trim() || passwordVerifying || !id) return;
+    setPasswordVerifying(true);
+    setPasswordError('');
+    try {
+      const result = await api.verifyVibePassword(Number(id), passwordInput.trim());
+      if (result.valid) {
+        localStorage.setItem(`bk_pwd_${id}`, passwordInput.trim());
+        setPasswordRequired(false);
+        setLoading(true);
+        loadVibe();
+      } else {
+        setPasswordError('密碼不正確，請再試一次。');
+      }
+    } catch {
+      setPasswordError('驗證失敗，請稍後再試。');
+    } finally {
+      setPasswordVerifying(false);
+    }
+  };
+
+  const handleSavePassword = async () => {
+    if (!vibe || !supabaseUser || passwordSaving) return;
+    setPasswordSaving(true);
+    try {
+      await api.setVibePassword(vibe.id, supabaseUser.id, newPassword.trim() || null);
+      setVibe(v => v ? { ...v, has_password: !!newPassword.trim() } : v);
+      setShowPasswordMgmt(false);
+      setNewPassword('');
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setPasswordSaving(false);
+    }
+  };
+
   if (loading) return (
     <div className="md:ml-[var(--app-sidebar-width)] h-screen flex items-center justify-center bg-surface text-on-surface/35 text-sm transition-[margin] duration-300">
       Loading…
+    </div>
+  );
+
+  if (passwordRequired) return (
+    <div className="md:ml-[var(--app-sidebar-width)] h-screen flex flex-col items-center justify-center bg-surface gap-6 transition-[margin] duration-300 px-4">
+      <div className="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center">
+        <span className="material-symbols-outlined text-[32px] text-primary">lock</span>
+      </div>
+      <div className="text-center">
+        <h1 className="text-on-surface font-bold text-lg mb-1">私人 Vibe</h1>
+        <p className="text-on-surface/40 text-sm">輸入密碼以查看此作品</p>
+      </div>
+      <div className="w-full max-w-sm flex flex-col gap-3">
+        <div className="relative">
+          <input
+            type={showPasswordText ? 'text' : 'password'}
+            value={passwordInput}
+            onChange={e => { setPasswordInput(e.target.value); setPasswordError(''); }}
+            onKeyDown={e => e.key === 'Enter' && handlePasswordSubmit()}
+            placeholder="輸入密碼..."
+            autoFocus
+            className="w-full bg-surface-container-high border border-outline-variant/20 rounded-xl px-4 py-3 text-sm text-on-surface placeholder:text-on-surface/30 focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all pr-10"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPasswordText(!showPasswordText)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface/30 hover:text-on-surface/60 transition-colors"
+          >
+            <span className="material-symbols-outlined text-[16px]">{showPasswordText ? 'visibility_off' : 'visibility'}</span>
+          </button>
+        </div>
+        {passwordError && <p className="text-xs text-error text-center">{passwordError}</p>}
+        <button
+          onClick={handlePasswordSubmit}
+          disabled={!passwordInput.trim() || passwordVerifying}
+          className="w-full flex items-center justify-center gap-2 py-2.5 bg-primary text-on-primary text-sm font-semibold rounded-xl hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+        >
+          {passwordVerifying
+            ? <span className="material-symbols-outlined text-[16px] animate-spin">sync</span>
+            : <span className="material-symbols-outlined text-[16px]">key</span>}
+          {passwordVerifying ? '驗證中...' : '確認密碼'}
+        </button>
+        <button onClick={() => navigate('/')} className="text-xs text-on-surface/30 hover:text-on-surface/60 transition-colors cursor-pointer">
+          返回首頁
+        </button>
+      </div>
     </div>
   );
 
@@ -707,6 +806,45 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                     {vibe.cover_image && (
                       <div className="relative rounded-lg overflow-hidden ring-1 ring-outline-variant/15 aspect-video">
                         <img src={vibe.cover_image} alt="cover" className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                    {/* Password management */}
+                    <button
+                      onClick={() => { setShowPasswordMgmt(!showPasswordMgmt); setNewPassword(''); }}
+                      className="w-full flex items-center justify-between gap-1.5 px-3 py-2 bg-surface-container-high hover:bg-surface-container-highest text-on-surface/60 hover:text-on-surface text-xs font-medium rounded-lg ring-1 ring-outline-variant/15 transition-all cursor-pointer"
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-[14px]">{vibe.has_password ? 'lock' : 'lock_open'}</span>
+                        {vibe.has_password ? '已設密碼保護' : '設定密碼'}
+                      </span>
+                      <span className="material-symbols-outlined text-[12px]">{showPasswordMgmt ? 'expand_less' : 'expand_more'}</span>
+                    </button>
+                    {showPasswordMgmt && (
+                      <div className="flex flex-col gap-2 p-3 bg-surface-container-lowest rounded-lg ring-1 ring-outline-variant/10">
+                        <p className="text-[11px] text-on-surface/40">{vibe.has_password ? '更改密碼（留空則移除）' : '輸入新密碼'}</p>
+                        <div className="relative">
+                          <input
+                            type={showNewPasswordText ? 'text' : 'password'}
+                            value={newPassword}
+                            onChange={e => setNewPassword(e.target.value)}
+                            placeholder={vibe.has_password ? '新密碼（留空則移除密碼）' : '輸入密碼...'}
+                            className="w-full bg-surface-container-high border border-outline-variant/20 rounded-lg px-3 py-2 text-xs text-on-surface placeholder:text-on-surface/30 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all pr-8"
+                          />
+                          <button type="button" onClick={() => setShowNewPasswordText(!showNewPasswordText)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-on-surface/30 hover:text-on-surface/60">
+                            <span className="material-symbols-outlined text-[13px]">{showNewPasswordText ? 'visibility_off' : 'visibility'}</span>
+                          </button>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleSavePassword}
+                            disabled={passwordSaving}
+                            className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-primary text-on-primary text-xs font-semibold rounded-lg hover:bg-primary/90 disabled:opacity-50 cursor-pointer transition-colors"
+                          >
+                            {passwordSaving ? <span className="material-symbols-outlined text-[12px] animate-spin">sync</span> : <span className="material-symbols-outlined text-[12px]">save</span>}
+                            {passwordSaving ? '儲存中...' : '儲存'}
+                          </button>
+                          <button onClick={() => setShowPasswordMgmt(false)} className="px-3 py-1.5 text-xs text-on-surface/40 hover:text-on-surface rounded-lg transition-colors cursor-pointer">取消</button>
+                        </div>
                       </div>
                     )}
                   </>

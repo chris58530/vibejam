@@ -33,7 +33,7 @@ interface RemixState {
   title: string;
   authorName: string;
   versionNumber: number;
-  parentVisibility?: 'public' | 'unlisted' | 'private';
+  parentVisibility?: 'public' | 'private';
 }
 
 export default function RemixStudio({ currentUser }: RemixStudioProps) {
@@ -77,10 +77,9 @@ export default function RemixStudio({ currentUser }: RemixStudioProps) {
 
   const parentVisibility = remixFrom?.parentVisibility || 'public';
   const visibilityLocked = parentVisibility === 'private';
-  const defaultVisibility: 'public' | 'unlisted' | 'private' =
-    parentVisibility === 'private' ? 'private' :
-    parentVisibility === 'unlisted' ? 'unlisted' : 'public';
-  const [visibility, setVisibility] = useState<'public' | 'unlisted' | 'private'>(defaultVisibility);
+  const defaultVisibility: 'public' | 'private' =
+    parentVisibility === 'private' ? 'private' : 'public';
+  const [visibility, setVisibility] = useState<'public' | 'private'>(defaultVisibility);
 
   const activeChatProviders = (['gemini', 'openai', 'minimax'] as const).filter(
     p => !!keys[p] && !!validated[p]
