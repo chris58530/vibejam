@@ -10,6 +10,7 @@ import { chatWithAIStream, ChatMessage, AIServiceError } from '../lib/aiService'
 import BeaverKitAPIGuide from '../components/BeaverKitAPIGuide';
 import ThinkBlock from '../components/ThinkBlock';
 import ProjectSettingsModal from '../components/ProjectSettingsModal';
+import { useI18n, TranslationKey } from '../lib/i18n';
 
 // ── 存檔 ─────────────────────────────────────────────────────────────
 interface SaveSlot {
@@ -41,11 +42,11 @@ const CHAT_PROVIDER_LABEL: Record<ChatProvider, string> = {
 };
 
 // ── 模式設定 ─────────────────────────────────────────────────────────
-const MODE_OPTIONS: { id: EditorMode; emoji: string; label: string; desc: string }[] = [
-  { id: 'single', emoji: '📋', label: '直接貼上', desc: '把 AI 給你的整段程式碼貼入' },
-  { id: 'split', emoji: '🔧', label: '分開編輯', desc: '自行分開撰寫 HTML、CSS、JS' },
-  { id: 'react', emoji: '⚛️', label: 'React 元件', desc: '支援 JSX + Tailwind + lucide' },
-  { id: 'vue', emoji: '💚', label: 'Vue 元件', desc: '支援 Vue 3 SFC 單檔元件' },
+const MODE_OPTIONS: { id: EditorMode; emoji: string; labelKey: TranslationKey; descKey: TranslationKey }[] = [
+  { id: 'single', emoji: '📋', labelKey: 'workspace_mode_single_label', descKey: 'workspace_mode_single_desc' },
+  { id: 'split', emoji: '🔧', labelKey: 'workspace_mode_split_label', descKey: 'workspace_mode_split_desc' },
+  { id: 'react', emoji: '⚛️', labelKey: 'workspace_mode_react_label', descKey: 'workspace_mode_react_desc' },
+  { id: 'vue', emoji: '💚', labelKey: 'workspace_mode_vue_label', descKey: 'workspace_mode_vue_desc' },
 ];
 
 // ── 隨機預設專案名稱 ─────────────────────────────────────────────────
@@ -68,7 +69,12 @@ function randomVibeName(): string {
 // ─────────────────────────────────────────────────────────────────────
 export default function Workspace({ currentUser }: WorkspaceProps) {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const { setPublishFn, setIsPublishing: setStoreIsPublishing, setSaveStatus } = useWorkspaceStore();
+  const modeOptions = useMemo(
+    () => MODE_OPTIONS.map(opt => ({ ...opt, label: t(opt.labelKey), desc: t(opt.descKey) })),
+    [t]
+  );
 
   const [htmlCode, setHtmlCode] = useState('');
   const [cssCode, setCssCode] = useState('');
@@ -151,6 +157,7 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
   const [remixOpen, setRemixOpen] = useState(true);
   const [supabaseUserId, setSupabaseUserId] = useState<string | null>(null);
   const [confirmLoad, setConfirmLoad] = useState<Vibe | null>(null);
+  const [confirmModeChange, setConfirmModeChange] = useState<EditorMode | null>(null);
   const [editingVibeId, setEditingVibeId] = useState<number | null>(null);
 
   const saveKey = `beaverkit_saves_${currentUser?.id ?? 'guest'}`;
@@ -347,12 +354,12 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
       e.preventDefault();
       setHtmlCode(pasted);
       setEditorMode(detected);
-      const label = MODE_OPTIONS.find(m => m.id === detected)?.label || detected;
+      const label = modeOptions.find(m => m.id === detected)?.label || detected;
       showToast(`已自動切換為 ${label} 模式`, 'auto_awesome');
     }
   };
 
-  const handleModeChange = (mode: EditorMode) => {
+  const applyModeChange = (mode: EditorMode) => {
     setEditorMode(mode);
     setActiveTab('html');
     setDropdownOpen(false);
@@ -360,6 +367,16 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
       setCssCode('');
       setJsCode('');
     }
+  };
+
+  const handleModeChange = (mode: EditorMode) => {
+    const willClearCode = mode !== 'split' && mode !== editorMode && !!(cssCode.trim() || jsCode.trim());
+    if (willClearCode) {
+      setConfirmModeChange(mode);
+      setDropdownOpen(false);
+      return;
+    }
+    applyModeChange(mode);
   };
 
   // ── 發布 / 更新 ────────────────────────────────────────────────────
@@ -410,6 +427,7 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
       }
     } catch (err) {
       console.error(err);
+      showToast(t('workspace_publish_failed'), 'error');
     } finally {
       setIsPublishing(false);
       setStoreIsPublishing(false);
@@ -734,18 +752,18 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
               onBlur={() => setIsTitleEditing(false)}
               onKeyDown={e => { if (e.key === 'Enter' || e.key === 'Escape') { e.preventDefault(); setIsTitleEditing(false); } }}
               className="bg-transparent border-b border-primary text-base font-semibold text-on-surface outline-none text-center w-48 pb-0.5 placeholder:text-on-surface/30 placeholder:font-normal placeholder:italic"
-              placeholder="未命名專案"
+              placeholder={t('workspace_title_placeholder')}
               autoFocus
             />
           ) : (
             <button
               className="cursor-text group flex items-center px-3 py-1.5 rounded-lg hover:bg-surface-container-high transition-colors"
               onClick={() => { setIsTitleEditing(true); setTimeout(() => titleInputRef.current?.select(), 0); }}
-              title="點擊編輯專案名稱"
+              title={t('workspace_edit_title')}
             >
               <span className="material-symbols-outlined text-[14px] text-on-surface/30 group-hover:text-primary/60 mr-1.5 transition-colors">edit</span>
               <span className={`text-base font-semibold mb-[1px] transition-colors ${title ? 'text-on-surface group-hover:text-primary' : 'text-on-surface/30 group-hover:text-primary/50 italic font-normal'}`}>
-                {title || '點此命名專案...'}
+                {title || t('workspace_untitled_hint')}
               </span>
             </button>
           )}
@@ -757,12 +775,12 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
           <div className="hidden md:flex items-center gap-0.5">
             <button
               onClick={() => setViewMode('desktop')}
-              title="桌面"
+              title={t('workspace_view_desktop')}
               className={`material-symbols-outlined text-[16px] p-1 rounded transition-colors ${viewMode === 'desktop' ? 'text-primary' : 'text-on-surface/40 hover:text-primary'}`}
             >desktop_windows</button>
             <button
               onClick={() => setViewMode('mobile')}
-              title="手機"
+              title={t('workspace_view_mobile')}
               className={`material-symbols-outlined text-[16px] p-1 rounded transition-colors ${viewMode === 'mobile' ? 'text-primary' : 'text-on-surface/40 hover:text-primary'}`}
             >smartphone</button>
           </div>
@@ -770,7 +788,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
           {/* Save button */}
           <button
             onClick={handleSave}
-            title="儲存專案 (本機)"
+            title={t('workspace_save_local_title')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all border ${saveStatus === 'unsaved'
               ? 'border-amber-500/50 text-amber-400 bg-amber-500/10 hover:bg-amber-500/20'
               : 'border-outline-variant/20 text-on-surface/50 bg-surface-container-low hover:bg-surface-container-high hover:text-on-surface'
@@ -780,7 +798,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
               {saveStatus === 'unsaved' ? 'save' : 'check_circle'}
             </span>
             <span className="hidden sm:inline">
-              {saveStatus === 'unsaved' ? '未儲存' : '已儲存'}
+              {saveStatus === 'unsaved' ? t('workspace_status_unsaved') : t('workspace_status_saved')}
             </span>
           </button>
 
@@ -792,7 +810,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
               className="flex items-center justify-center gap-1.5 h-8 px-4 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-[11px] font-semibold rounded-lg shadow-sm hover:shadow transition-all duration-200 active:scale-95"
             >
               <span className="material-symbols-outlined text-[14px]">{isPublishing ? 'hourglass_empty' : 'save'}</span>
-              <span>{isPublishing ? '儲存中...' : '儲存編輯'}</span>
+              <span>{isPublishing ? t('workspace_update_saving') : t('workspace_update_save_edits')}</span>
             </button>
           ) : (
             <button
@@ -801,7 +819,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
               className="flex items-center justify-center gap-1.5 h-8 px-4 bg-[#2665fd] hover:bg-[#1e50cf] disabled:opacity-40 disabled:cursor-not-allowed text-white text-[11px] font-semibold rounded-lg shadow-sm hover:shadow transition-all duration-200 active:scale-95"
             >
               <span className="material-symbols-outlined text-[14px]">{isPublishing ? 'hourglass_empty' : 'rocket_launch'}</span>
-              <span>{isPublishing ? '發布中...' : '設定與發布'}</span>
+              <span>{isPublishing ? t('workspace_publish_publishing') : t('workspace_publish_settings')}</span>
             </button>
           )}
         </div>
@@ -818,7 +836,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
           <span className="text-[10px] uppercase tracking-widest text-on-surface-variant/50 font-bold shrink-0">Desc</span>
           <input
             className="bg-transparent border-none focus:ring-0 text-xs text-on-surface/50 p-0 flex-1 outline-none placeholder:text-on-surface/20"
-            placeholder="新增簡短專案描述..."
+            placeholder={t('workspace_desc_placeholder')}
             type="text"
             maxLength={200}
             value={description}
@@ -1050,7 +1068,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
                     <p className="text-sm text-on-surface/40">選擇一個模式，或在左側 AI 對話框輸入需求</p>
                   </div>
                   <div className="grid grid-cols-2 gap-3 mb-5">
-                    {MODE_OPTIONS.map(opt => (
+                    {modeOptions.map(opt => (
                       <button
                         key={opt.id}
                         onClick={() => { handleModeChange(opt.id); setEditorReady(true); }}
@@ -1413,6 +1431,28 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
             <div className="flex gap-2">
               <button onClick={() => setConfirmLoad(null)} className="flex-1 py-2 rounded-lg text-[11px] font-medium text-[#dae2fd]/40 border border-white/[0.06] hover:border-white/[0.12] hover:text-[#dae2fd]/70 transition-colors">取消</button>
               <button onClick={() => handleLoadFromVibe(confirmLoad)} className="flex-1 py-2 rounded-lg text-[11px] font-semibold text-white bg-[#2665fd] hover:bg-[#2665fd]/90 transition-colors">確認載入</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmModeChange && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4" onClick={() => setConfirmModeChange(null)}>
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+          <div className="relative bg-[#1a1a1c] border border-white/[0.08] rounded-xl shadow-2xl p-5 w-72" onClick={e => e.stopPropagation()}>
+            <p className="text-[13px] font-semibold text-[#dae2fd]/90 mb-1">{t('workspace_mode_change_title')}</p>
+            <p className="text-[11px] text-[#dae2fd]/40 mb-5 leading-relaxed">{t('workspace_mode_change_desc')}</p>
+            <div className="flex gap-2">
+              <button onClick={() => setConfirmModeChange(null)} className="flex-1 py-2 rounded-lg text-[11px] font-medium text-[#dae2fd]/40 border border-white/[0.06] hover:border-white/[0.12] hover:text-[#dae2fd]/70 transition-colors">{t('workspace_cancel')}</button>
+              <button
+                onClick={() => {
+                  applyModeChange(confirmModeChange);
+                  setConfirmModeChange(null);
+                }}
+                className="flex-1 py-2 rounded-lg text-[11px] font-semibold text-white bg-primary hover:bg-primary/90 transition-colors"
+              >
+                {t('workspace_mode_change_confirm')}
+              </button>
             </div>
           </div>
         </div>

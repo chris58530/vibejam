@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { api, User, Vibe } from '../lib/api';
 import Footer from '../components/Footer';
 import { isVibeSaved, saveVibe, unsaveVibe } from '../lib/savedVibes';
+import { useI18n } from '../lib/i18n';
 
 type FeedTab = 'movers' | 'new' | 'market-cap' | 'oldest';
 
@@ -329,6 +330,7 @@ function FeaturedShowcase({
 }
 
 function HomeCard({ vibe, onSelect, userId }: { vibe: Vibe; onSelect: (v: Vibe) => void; userId?: number }) {
+  const { t } = useI18n();
   const [isHovered, setIsHovered] = useState(false);
   const [saved, setSaved] = useState(() => isVibeSaved(vibe.id, userId));
 
@@ -371,7 +373,7 @@ function HomeCard({ vibe, onSelect, userId }: { vibe: Vibe; onSelect: (v: Vibe) 
             {vibe.title}
           </h3>
           <p className="line-clamp-2 text-sm leading-relaxed text-on-surface/55">
-            {vibe.description || 'Open the project to inspect the interaction, code structure, and version history.'}
+            {vibe.description || t('home_card_fallback_desc')}
           </p>
         </div>
 
@@ -394,7 +396,7 @@ function HomeCard({ vibe, onSelect, userId }: { vibe: Vibe; onSelect: (v: Vibe) 
             type="button"
             onClick={handleToggleSave}
             className={`flex items-center justify-center w-8 h-8 rounded-full transition-colors duration-200 ${saved ? 'text-primary bg-primary/10' : 'text-on-surface/40 hover:text-primary hover:bg-primary/10'}`}
-            title={saved ? '取消收藏' : '收藏'}
+            title={saved ? t('home_bookmark_remove') : t('home_bookmark_add')}
           >
             <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: saved ? "'FILL' 1" : "'FILL' 0" }}>bookmark</span>
           </button>
@@ -405,6 +407,7 @@ function HomeCard({ vibe, onSelect, userId }: { vibe: Vibe; onSelect: (v: Vibe) 
 }
 
 export default function Home({ currentUser }: { currentUser?: User }) {
+  const { t } = useI18n();
   const [vibes, setVibes] = useState<Vibe[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -493,8 +496,8 @@ export default function Home({ currentUser }: { currentUser?: User }) {
         <section className="space-y-6">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
             <div className="space-y-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-on-surface/45">Discover</p>
-              <h2 className="text-2xl font-bold tracking-tight text-on-surface">Community projects</h2>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-on-surface/45">{t('home_discover')}</p>
+              <h2 className="text-2xl font-bold tracking-tight text-on-surface">{t('home_community_projects')}</h2>
             </div>
 
             <div className="flex items-center gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
@@ -526,7 +529,7 @@ export default function Home({ currentUser }: { currentUser?: User }) {
               </div>
 
               <div className="hidden rounded-full bg-surface-container-low px-4 py-2.5 text-sm font-medium text-on-surface/45 xl:flex">
-                {filteredVibes.length} results
+                {filteredVibes.length} {t('home_results')}
               </div>
             </div>
           </div>
@@ -540,7 +543,7 @@ export default function Home({ currentUser }: { currentUser?: User }) {
               className="hidden items-center gap-2 rounded-full border border-outline-variant/15 bg-surface-container-low px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.18em] text-on-surface/50 transition-colors duration-200 hover:border-primary/30 hover:text-primary lg:flex"
             >
               <span className="material-symbols-outlined text-base">tune</span>
-              Filters
+              {t('home_filters')}
             </button>
           </div>
         </section>
@@ -549,19 +552,19 @@ export default function Home({ currentUser }: { currentUser?: User }) {
           {error && !loading && vibes.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-4 rounded-3xl border border-outline-variant/15 bg-surface-container-low py-20 text-center">
               <span className="material-symbols-outlined text-[48px] text-on-surface/20">cloud_off</span>
-              <p className="text-sm text-on-surface/50">無法載入內容，請檢查網路連線</p>
+              <p className="text-sm text-on-surface/50">{t('home_load_failed')}</p>
               <button
                 type="button"
                 onClick={() => fetchVibes()}
                 className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition-colors duration-200 hover:bg-primary/90"
               >
-                重新載入
+                {t('home_retry')}
               </button>
             </div>
           ) : !loading && filteredVibes.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-3 rounded-3xl border border-outline-variant/15 bg-surface-container-low py-20 text-center">
               <span className="material-symbols-outlined text-[48px] text-on-surface/20">explore</span>
-              <p className="text-sm text-on-surface/50">還沒有任何作品，去 Workspace 建立第一個吧！</p>
+              <p className="text-sm text-on-surface/50">{t('home_empty')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

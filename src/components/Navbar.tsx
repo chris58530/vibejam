@@ -23,6 +23,7 @@ export default function Navbar({ sidebarOpen = true, onToggleSidebar }: NavbarPr
   const [authOpen, setAuthOpen] = useState(false);
   const [langMenuOpen, setLangMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const langMenuRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const { saveStatus } = useWorkspaceStore();
@@ -56,6 +57,28 @@ export default function Navbar({ sidebarOpen = true, onToggleSidebar }: NavbarPr
     setAuthOpen(true);
   };
 
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname, location.search]);
+
+  const mobileProfilePath = user?.user_metadata?.user_name
+    ? `/u/${encodeURIComponent(user.user_metadata.user_name)}`
+    : '/library';
+
+  const mobileMenuItems = [
+    { key: 'home', label: t('sidebar_home'), path: '/' },
+    { key: 'studio', label: t('sidebar_studio'), path: '/studio' },
+    { key: 'workspace', label: t('nav_mobile_create'), path: '/workspace' },
+    { key: 'warehouse', label: t('sidebar_warehouse'), path: '/warehouse' },
+    { key: 'library', label: t('nav_mobile_library'), path: '/library' },
+    { key: 'profile', label: t('sidebar_profile'), path: mobileProfilePath },
+  ];
+
+  const handleMobileNavigate = (path: string) => {
+    setMobileMenuOpen(false);
+    navigate(path);
+  };
+
   const currentLang = LANGUAGES.find(l => l.code === language) ?? LANGUAGES[0];
 
   return (
@@ -83,7 +106,14 @@ export default function Navbar({ sidebarOpen = true, onToggleSidebar }: NavbarPr
             ) : (
               /* Mobile only — hidden on desktop to avoid ghost gap-8 space */
               <div className="flex items-center gap-4 md:hidden">
-                <span className="material-symbols-outlined text-on-surface/60 cursor-pointer hover:bg-surface-container-high p-2 rounded-lg transition-colors">menu</span>
+                <button
+                  onClick={() => setMobileMenuOpen(v => !v)}
+                  aria-label={t('nav_mobile_menu')}
+                  title={t('nav_mobile_menu')}
+                  className="material-symbols-outlined text-on-surface/60 cursor-pointer hover:bg-surface-container-high p-2 rounded-lg transition-colors"
+                >
+                  menu
+                </button>
                 <h1
                   className="text-xl font-bold tracking-tighter text-on-surface font-headline cursor-pointer flex items-center gap-2"
                   onClick={() => navigate('/')}
@@ -136,7 +166,11 @@ export default function Navbar({ sidebarOpen = true, onToggleSidebar }: NavbarPr
                 ) : (
                   <span className="w-2 h-2 rounded-full bg-tertiary"></span>
                 )}
-                {saveStatus === 'unsaved' ? '未儲存' : saveStatus === 'saving' ? '儲存中...' : '已儲存'}
+                {saveStatus === 'unsaved'
+                  ? t('nav_status_unsaved')
+                  : saveStatus === 'saving'
+                    ? t('nav_status_saving')
+                    : t('nav_status_saved')}
               </div>
             </>
           ) : null}
@@ -251,6 +285,36 @@ export default function Navbar({ sidebarOpen = true, onToggleSidebar }: NavbarPr
         isOpen={authOpen}
         onClose={() => setAuthOpen(false)}
       />
+
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-40 md:hidden">
+          <div className="absolute inset-0 bg-black/45" onClick={() => setMobileMenuOpen(false)} />
+          <div className="absolute left-0 top-16 w-[min(82vw,320px)] bg-surface-container-low border-r border-outline-variant/15 shadow-2xl">
+            <div className="px-4 py-3 border-b border-outline-variant/10">
+              <p className="text-[11px] uppercase tracking-[0.2em] text-on-surface/45 font-semibold">{t('nav_mobile_navigation')}</p>
+            </div>
+            <nav className="py-2">
+              {mobileMenuItems.map(item => (
+                <button
+                  key={item.key}
+                  onClick={() => handleMobileNavigate(item.path)}
+                  className="w-full text-left px-4 py-3 text-sm text-on-surface/75 hover:text-on-surface hover:bg-surface-container-high transition-colors"
+                >
+                  {item.label}
+                </button>
+              ))}
+              {!user && (
+                <button
+                  onClick={() => { setMobileMenuOpen(false); openAuth(); }}
+                  className="w-full text-left px-4 py-3 text-sm text-primary hover:bg-surface-container-high transition-colors"
+                >
+                  {t('nav_signin')}
+                </button>
+              )}
+            </nav>
+          </div>
+        </div>
+      )}
 
 
     </>

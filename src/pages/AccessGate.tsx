@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { signInWithGitHub, signInWithGoogle } from '../lib/supabase';
 import { User } from '../lib/api';
+import { useI18n } from '../lib/i18n';
 
 interface Props {
   currentUser: User | null;
 }
 
 export default function AccessGate({ currentUser }: Props) {
+  const { t } = useI18n();
   const [loading, setLoading] = useState<'github' | 'google' | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -16,7 +18,7 @@ export default function AccessGate({ currentUser }: Props) {
     try {
       await signInWithGitHub();
     } catch (e: any) {
-      setError(e.message || 'GitHub 登入失敗');
+      setError(e.message || t('accessgate_err_github'));
       setLoading(null);
     }
   };
@@ -27,7 +29,7 @@ export default function AccessGate({ currentUser }: Props) {
     try {
       await signInWithGoogle();
     } catch (e: any) {
-      setError(e.message || 'Google 登入失敗');
+      setError(e.message || t('accessgate_err_google'));
       setLoading(null);
     }
   };
@@ -72,17 +74,17 @@ export default function AccessGate({ currentUser }: Props) {
                   </div>
                 </div>
                 <h2 className="text-lg font-semibold text-white mb-1">
-                  嗨，@{currentUser.username}！
+                  {t('accessgate_pending_hi')}，@{currentUser.username}！
                 </h2>
-                <p className="text-sm text-white/50">你的申請已送出</p>
+                <p className="text-sm text-white/50">{t('accessgate_pending_submitted')}</p>
               </div>
 
               <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 mb-6">
                 <span className="material-symbols-outlined text-[18px] text-amber-400 mt-0.5 shrink-0">pending</span>
                 <div>
-                  <p className="text-sm font-medium text-amber-300 mb-1">等待審核中</p>
+                  <p className="text-sm font-medium text-amber-300 mb-1">{t('accessgate_pending_title')}</p>
                   <p className="text-xs text-white/45 leading-relaxed">
-                    管理員將盡快審核你的申請。審核通過後，你即可開始使用 BeaverKit 建立和分享互動式 Web 專案。
+                    {t('accessgate_pending_desc')}
                   </p>
                 </div>
               </div>
@@ -90,15 +92,15 @@ export default function AccessGate({ currentUser }: Props) {
               <div className="space-y-2 text-xs text-white/30">
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-[13px] text-emerald-500/60">check_circle</span>
-                  <span>已使用 OAuth 登入驗證身份</span>
+                  <span>{t('accessgate_pending_step_verified')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-[13px] text-amber-500/60">radio_button_unchecked</span>
-                  <span>等待管理員審核</span>
+                  <span>{t('accessgate_pending_step_waiting')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-[13px] text-white/20">radio_button_unchecked</span>
-                  <span>取得完整存取權限</span>
+                  <span>{t('accessgate_pending_step_access')}</span>
                 </div>
               </div>
             </>
@@ -107,20 +109,20 @@ export default function AccessGate({ currentUser }: Props) {
             <>
               <div className="text-center mb-7">
                 <h1 className="text-2xl font-bold text-white mb-2 tracking-tight">
-                  申請加入 BeaverKit
+                  {t('accessgate_apply_title')}
                 </h1>
                 <p className="text-sm text-white/45 leading-relaxed">
-                  BeaverKit 是一個協作程式碼原型平台，支援 AI 輔助程式碼生成、即時預覽與版本管理。
+                  {t('accessgate_apply_desc')}
                 </p>
               </div>
 
               {/* Feature highlights */}
               <div className="grid grid-cols-2 gap-2 mb-7">
                 {[
-                  { icon: 'smart_toy',    label: 'AI 程式碼生成' },
-                  { icon: 'preview',      label: '即時沙箱預覽' },
-                  { icon: 'history',      label: '多版本管理'   },
-                  { icon: 'share',        label: '輕鬆分享分支' },
+                  { icon: 'smart_toy', label: t('accessgate_feature_ai') },
+                  { icon: 'preview', label: t('accessgate_feature_preview') },
+                  { icon: 'history', label: t('accessgate_feature_version') },
+                  { icon: 'share', label: t('accessgate_feature_share') },
                 ].map(f => (
                   <div key={f.icon} className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.06]">
                     <span className="material-symbols-outlined text-[16px] text-primary/70">{f.icon}</span>
@@ -130,7 +132,7 @@ export default function AccessGate({ currentUser }: Props) {
               </div>
 
               <p className="text-xs text-white/35 text-center mb-4">
-                使用以下帳號登入即視為提交申請，管理員審核後即可使用
+                {t('accessgate_apply_hint')}
               </p>
 
               {/* OAuth buttons */}
@@ -147,7 +149,7 @@ export default function AccessGate({ currentUser }: Props) {
                       <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
                     </svg>
                   )}
-                  使用 GitHub 申請
+                  {t('accessgate_apply_github')}
                 </button>
 
                 <button
@@ -165,7 +167,7 @@ export default function AccessGate({ currentUser }: Props) {
                       <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                     </svg>
                   )}
-                  使用 Google 申請
+                  {t('accessgate_apply_google')}
                 </button>
               </div>
 
@@ -180,7 +182,7 @@ export default function AccessGate({ currentUser }: Props) {
         </div>
 
         <p className="text-center text-xs text-white/20 mt-6">
-          BeaverKit · 協作程式碼原型平台
+          {t('accessgate_footer')}
         </p>
       </div>
     </div>
