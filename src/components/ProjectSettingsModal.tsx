@@ -20,6 +20,7 @@ interface ProjectSettingsModalProps {
   tags: string;
   visibility: 'public' | 'private';
   coverImage?: string;
+  allowRemix?: boolean;
   onSave: (data: {
     title: string;
     description: string;
@@ -27,6 +28,7 @@ interface ProjectSettingsModalProps {
     visibility: 'public' | 'private';
     coverImage?: string;
     password?: string;
+    allowRemix: boolean;
   }) => void;
   onSaveLocal?: (data: {
     title: string;
@@ -35,6 +37,7 @@ interface ProjectSettingsModalProps {
     visibility: 'public' | 'private';
     coverImage?: string;
     password?: string;
+    allowRemix: boolean;
   }) => void;
   isPublishing?: boolean;
   hasPublished?: boolean;
@@ -80,6 +83,7 @@ export default function ProjectSettingsModal({
   tags: initialTags,
   visibility: initialVisibility,
   coverImage: initialCoverImage,
+  allowRemix: initialAllowRemix = true,
   onSave,
   onSaveLocal,
   isPublishing,
@@ -94,6 +98,7 @@ export default function ProjectSettingsModal({
   const [coverImage, setCoverImage] = useState<string | undefined>(initialCoverImage);
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [allowRemix, setAllowRemix] = useState(initialAllowRemix);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const tagInputRef = useRef<HTMLInputElement>(null);
 
@@ -107,8 +112,9 @@ export default function ProjectSettingsModal({
       setCoverImage(initialCoverImage);
       setPassword('');
       setShowPassword(false);
+      setAllowRemix(initialAllowRemix);
     }
-  }, [isOpen, initialTitle, initialDescription, initialTags, initialVisibility, initialCoverImage]);
+  }, [isOpen, initialTitle, initialDescription, initialTags, initialVisibility, initialCoverImage, initialAllowRemix]);
 
   // ESC to close
   useEffect(() => {
@@ -202,6 +208,7 @@ export default function ProjectSettingsModal({
     visibility,
     coverImage,
     password: visibility === 'private' ? password : undefined,
+    allowRemix,
   });
 
   if (!isOpen) return null;
@@ -509,6 +516,28 @@ export default function ProjectSettingsModal({
                 <p className="text-[11px] text-zinc-500">設定密碼後，知道連結的人輸入正確密碼才可查看。</p>
               </div>
             )}
+          </section>
+
+          {/* Allow Remix */}
+          <section>
+            <button
+              type="button"
+              onClick={() => setAllowRemix(v => !v)}
+              className="w-full flex items-center justify-between gap-4 px-4 py-3.5 rounded-xl border border-zinc-800 bg-zinc-900/30 hover:border-zinc-700 hover:bg-zinc-900/60 transition-all cursor-pointer text-left"
+              aria-pressed={allowRemix}
+            >
+              <div className="flex flex-col gap-0.5">
+                <span className="text-sm font-medium text-zinc-200">允許 Remix</span>
+                <span className="text-xs text-zinc-500">其他人可以 Fork 這個專案並加以改作</span>
+              </div>
+              <div
+                className={`relative flex-shrink-0 w-10 h-6 rounded-full transition-colors duration-200 ${allowRemix ? 'bg-indigo-600' : 'bg-zinc-700'}`}
+              >
+                <span
+                  className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${allowRemix ? 'translate-x-4' : 'translate-x-0'}`}
+                />
+              </div>
+            </button>
           </section>
         </div>
 

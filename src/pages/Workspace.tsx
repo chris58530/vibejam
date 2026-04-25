@@ -99,6 +99,7 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile' | 'round'>('desktop');
   const [isPublishing, setIsPublishing] = useState(false);
   const [visibility, setVisibility] = useState<'public' | 'private'>('public');
+  const [allowRemix, setAllowRemix] = useState(true);
 
   // Mobile tab
   const [mobileTab, setMobileTab] = useState<MobileTab>('code');
@@ -380,11 +381,12 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
   };
 
   // ── 發布 / 更新 ────────────────────────────────────────────────────
-  const handlePublish = async (modalData?: { title: string; description: string; tags: string; visibility: 'public' | 'private'; password?: string }) => {
+  const handlePublish = async (modalData?: { title: string; description: string; tags: string; visibility: 'public' | 'private'; password?: string; allowRemix?: boolean }) => {
     const pTitle = modalData?.title || title;
     const pDesc = modalData?.description || description;
     const pVis = modalData?.visibility || visibility;
     const pTags = modalData?.tags ?? tags;
+    const pAllowRemix = modalData?.allowRemix ?? allowRemix;
 
     if (!pTitle || !previewDoc) return;
     if (modalData) {
@@ -392,6 +394,7 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
       setDescription(pDesc);
       setVisibility(pVis);
       setTags(pTags);
+      setAllowRemix(pAllowRemix);
       setIsSettingsOpen(false);
     }
     setIsPublishing(true);
@@ -414,6 +417,7 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
           code: previewDoc,
           author_id: currentUser?.id,
           visibility: pVis,
+          allow_remix: pAllowRemix,
         });
         // 設定密碼（如有）
         if (modalData?.password && result.id && currentUser?.supabase_id) {
@@ -477,11 +481,12 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
   };
 
   // 從設定 Modal 儲存草稿（套用 modal 資料再存本機）
-  const handleSaveFromModal = (modalData: { title: string; description: string; tags: string; visibility: 'public' | 'private'; password?: string }) => {
+  const handleSaveFromModal = (modalData: { title: string; description: string; tags: string; visibility: 'public' | 'private'; password?: string; allowRemix: boolean }) => {
     setTitle(modalData.title);
     setDescription(modalData.description);
     setTags(modalData.tags);
     setVisibility(modalData.visibility);
+    setAllowRemix(modalData.allowRemix);
     setIsSettingsOpen(false);
     // 延一幀讓 state 更新後再存
     setTimeout(() => {
@@ -1478,6 +1483,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
         description={description}
         tags={tags}
         visibility={visibility}
+        allowRemix={allowRemix}
         onSave={handlePublish}
         onSaveLocal={handleSaveFromModal}
         isPublishing={isPublishing}

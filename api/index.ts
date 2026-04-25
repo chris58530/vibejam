@@ -524,7 +524,7 @@ app.get('/api/vibes/:id', async (req, res) => {
 
 // Create new vibe
 app.post('/api/vibes', async (req, res) => {
-  const { title, tags, code, author_id = 1, parent_vibe_id, parent_version_number, description = '' } = req.body;
+  const { title, tags, code, author_id = 1, parent_vibe_id, parent_version_number, description = '', allow_remix = true } = req.body;
   let { visibility = 'public' } = req.body;
   if (!['public', 'private'].includes(visibility)) visibility = 'public';
   try {
@@ -535,8 +535,8 @@ app.post('/api/vibes', async (req, res) => {
       if (parent?.visibility === 'private') visibility = 'private';
     }
     const vibe = await db.get(
-      'INSERT INTO vibes (title, author_id, tags, visibility, description) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-      [title, author_id, tags, visibility, description]
+      'INSERT INTO vibes (title, author_id, tags, visibility, description, allow_remix) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+      [title, author_id, tags, visibility, description, allow_remix !== false]
     );
     const vibeId = vibe.id;
     await db.run('INSERT INTO versions (vibe_id, version_number, author_id, code, update_log) VALUES ($1, $2, $3, $4, $5)', [vibeId, 1, author_id, code, 'Initial version']);
@@ -697,6 +697,22 @@ app.patch('/api/vibes/:id/cover-image', async (req, res) => {
     if (!vibe) return res.status(404).json({ error: 'Vibe not found' });
     if (vibe.author_id !== user.id) return res.status(403).json({ error: 'Forbidden' });
     await db.run('UPDATE vibes SET cover_image = $1 WHERE id = $2', [cover_image || null, req.params.id]);
+    res.json({ success: true });
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+// Update allow_remix flag (owner only)
+app.patch('/api/vibes/:id/allow-remix', async (req, res) => {
+  const { supabase_id, allow_remix } = req.body;
+  if (!supabase_id) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    await ensureDb();
+    const user = await db.get('SELECT id FROM users WHERE supabase_id = $1', [supabase_id]);
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+    const vibe = await db.get('SELECT author_id FROM vibes WHERE id = $1', [req.params.id]);
+    if (!vibe) return res.status(404).json({ error: 'Vibe not found' });
+    if (vibe.author_id !== user.id) return res.status(403).json({ error: 'Forbidden' });
+    await db.run('UPDATE vibes SET allow_remix = $1 WHERE id = $2', [allow_remix !== false, req.params.id]);
     res.json({ success: true });
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });

@@ -109,6 +109,7 @@ export interface Vibe {
   description?: string;
   cover_image?: string;
   has_password?: boolean;
+  allow_remix?: boolean;
   user_role?: 'owner' | 'collaborator' | 'viewer' | 'none';
   collaborators?: Collaborator[];
   latest_code?: string;
@@ -258,7 +259,7 @@ export const api = {
     }
     return res.json();
   },
-  async createVibe(data: { title: string; tags: string; code: string; description?: string; author_id?: number; parent_vibe_id?: number; parent_version_number?: number; visibility?: 'public' | 'private' }): Promise<{ id: number }> {
+  async createVibe(data: { title: string; tags: string; code: string; description?: string; author_id?: number; parent_vibe_id?: number; parent_version_number?: number; visibility?: 'public' | 'private'; allow_remix?: boolean }): Promise<{ id: number }> {
     return apiJson<{ id: number }>('/vibes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -306,6 +307,13 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ supabase_id: supabaseId, cover_image: coverImageUrl }),
     }, 'Failed to update cover image');
+  },
+  async updateAllowRemix(vibeId: number, supabaseId: string, allowRemix: boolean): Promise<{ success: boolean }> {
+    return apiJson<{ success: boolean }>(`/vibes/${vibeId}/allow-remix`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ supabase_id: supabaseId, allow_remix: allowRemix }),
+    }, 'Failed to update allow remix');
   },
   async addCollaborator(vibeId: number, supabaseId: string, username: string): Promise<Collaborator> {
     return apiJson<Collaborator>(`/vibes/${vibeId}/collaborators`, {

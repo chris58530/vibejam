@@ -123,6 +123,7 @@ export async function initializeDatabase() {
       ALTER TABLE vibes ADD COLUMN IF NOT EXISTS description TEXT DEFAULT '';
       ALTER TABLE vibes ADD COLUMN IF NOT EXISTS cover_image TEXT;
       ALTER TABLE vibes ADD COLUMN IF NOT EXISTS password_hash TEXT;
+      ALTER TABLE vibes ADD COLUMN IF NOT EXISTS allow_remix BOOLEAN DEFAULT TRUE;
 
       CREATE TABLE IF NOT EXISTS collaborators (
         id SERIAL PRIMARY KEY,
