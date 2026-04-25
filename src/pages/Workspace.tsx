@@ -69,12 +69,24 @@ function randomVibeName(): string {
 // ─────────────────────────────────────────────────────────────────────
 export default function Workspace({ currentUser }: WorkspaceProps) {
   const navigate = useNavigate();
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { setPublishFn, setIsPublishing: setStoreIsPublishing, setSaveStatus } = useWorkspaceStore();
   const modeOptions = useMemo(
     () => MODE_OPTIONS.map(opt => ({ ...opt, label: t(opt.labelKey), desc: t(opt.descKey) })),
     [t]
   );
+  const tr = useCallback(
+    (key: TranslationKey, vars?: Record<string, string | number>) => {
+      let result = t(key);
+      if (!vars) return result;
+      for (const [k, v] of Object.entries(vars)) {
+        result = result.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v));
+      }
+      return result;
+    },
+    [t]
+  );
+  const isZh = language === 'zh-TW';
 
   const [htmlCode, setHtmlCode] = useState('');
   const [cssCode, setCssCode] = useState('');
@@ -198,7 +210,7 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
     setTags(vibe.tags ?? '');
     setActiveTab('html');
     setConfirmLoad(null);
-    showToast(`已載入「${vibe.title}」`, 'download');
+    showToast(tr('workspace_toast_loaded', { title: vibe.title }), 'download');
   };
 
   // 從 Profile 頁的存檔「前往 Workspace 載入」傳遞進來
@@ -216,7 +228,12 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
       setActiveTab('html');
       if (slot.vibeId) setEditingVibeId(slot.vibeId);
       sessionStorage.removeItem('beaverkit_pending_load');
-      showToast(slot.vibeId ? `正在編輯「${slot.title}」` : `已載入「${slot.title}」`, slot.vibeId ? 'edit' : 'download');
+      showToast(
+        slot.vibeId
+          ? tr('workspace_toast_editing', { title: slot.title })
+          : tr('workspace_toast_loaded', { title: slot.title }),
+        slot.vibeId ? 'edit' : 'download'
+      );
     } catch { }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -356,7 +373,7 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
       setHtmlCode(pasted);
       setEditorMode(detected);
       const label = modeOptions.find(m => m.id === detected)?.label || detected;
-      showToast(`已自動切換為 ${label} 模式`, 'auto_awesome');
+      showToast(tr('workspace_toast_auto_mode', { mode: label }), 'auto_awesome');
     }
   };
 
@@ -404,7 +421,7 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
         // 編輯模式：新增版本到既有 Vibe
         await api.addVersion(editingVibeId, {
           code: previewDoc,
-          update_log: '使用者編輯更新',
+          update_log: isZh ? '使用者編輯更新' : 'User edited update',
           author_id: currentUser?.id,
         });
         navigate(`/p/${editingVibeId}`);
@@ -455,9 +472,9 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
           ? { ...s, tags, description, editorMode, code: { html: htmlCode, css: cssCode, js: jsCode }, savedAt: new Date().toISOString() }
           : s
       );
-      showToast(`已更新存檔「${title}」`, 'save');
+      showToast(tr('workspace_toast_save_updated', { title }), 'save');
     } else if (saves.length >= MAX_SAVES) {
-      showToast(`存檔已滿 (5/5)，請先刪除一個`, 'folder_off');
+      showToast(t('workspace_toast_save_full'), 'folder_off');
       return;
     } else {
       const slot: SaveSlot = {
@@ -470,7 +487,7 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
         savedAt: new Date().toISOString(),
       };
       newSaves = [slot, ...saves];
-      showToast(`專案「${title}」已存檔 (${newSaves.length}/5)`, 'save');
+      showToast(tr('workspace_toast_save_created', { title, count: newSaves.length }), 'save');
     }
 
     setSaves(newSaves);
@@ -500,7 +517,7 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
             : s
         );
       } else if (saves.length >= MAX_SAVES) {
-        showToast(`存檔已滿 (5/5)，請先刪除一個`, 'folder_off');
+        showToast(t('workspace_toast_save_full'), 'folder_off');
         return;
       } else {
         const slot: SaveSlot = {
@@ -519,7 +536,7 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
       lastSavedSnapshotRef.current = snap;
       setSaveStatusLocal('saved');
       setSaveStatus('saved');
-      showToast(`草稿「${modalData.title}」已儲存`, 'save');
+      showToast(tr('workspace_toast_draft_saved', { title: modalData.title }), 'save');
     }, 0);
   };
 
@@ -532,7 +549,7 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
     setCssCode(slot.code.css);
     setJsCode(slot.code.js);
     setActiveTab('html');
-    showToast(`已載入「${slot.title}」`, 'download');
+    showToast(tr('workspace_toast_loaded', { title: slot.title }), 'download');
   };
 
   const handleDeleteSave = (id: string) => {
@@ -587,30 +604,54 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages]);
 
-  const buildSystemPrompt = (): ChatMessage => ({
-    role: 'system',
-    content: `你是 BeaverBot，BeaverKit 的 AI 程式碼助理。使用者正在 Workspace 建立作品（目前模式：${editorMode}）。
+  const buildSystemPrompt = (): ChatMessage => {
+    const emptyCode = isZh ? '（尚無程式碼）' : '(No code yet)';
+    const content = isZh
+      ? `你是 BeaverBot，BeaverKit 的 AI 程式碼助理。使用者正在 Workspace 建立作品（目前模式：${editorMode}）。
 
 目前的程式碼：
 \`\`\`
-${currentCode || '（尚無程式碼）'}
+${currentCode || emptyCode}
 \`\`\`
 
 你的任務：
 1. 根據使用者的指令修改或生成程式碼
-2. 回覆時必須包含**完整的可執行程式碼**，用 \`\`\`html（或 \`\`\`tsx / \`\`\`vue 視框架而定）包裹
-3. 在程式碼區塊之前或之後，簡短說明你做了什麼
-4. 不要只給部分程式碼，必須給出完整程式碼
+2. 回覆時必須包含完整、可執行程式碼，並用 \`\`\`html（或 \`\`\`tsx / \`\`\`vue）包裹
+3. 在程式碼區塊前後簡短說明你做了什麼
+4. 不要只給部分程式碼
 
 【視窗尺寸規範 — 必須遵守】
 BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
-- 所有生成的程式碼，必須在 <head> 的 <style> 最開頭加入以下 CSS，確保在任何螢幕大小都能完美呈現：
+- 所有生成程式碼必須在 <head> 的 <style> 最開頭加入：
   html, body { width: 1280px; height: 720px; margin: 0; transform-origin: top left; transform: scale(calc(100vw / 1280)); }
-- 若專案使用 canvas，設定 width=1280 height=720
-- 不要使用固定的其他像素尺寸（如 800px、600px）作為根元素寬高
+- 若使用 canvas，設定 width=1280 height=720
+- 不要使用其他固定像素作為根元素寬高（如 800px、600px）
 
-使用繁體中文回答。`,
-  });
+使用繁體中文回答。`
+      : `You are BeaverBot, BeaverKit's AI coding assistant. The user is building in Workspace (current mode: ${editorMode}).
+
+Current code:
+\`\`\`
+${currentCode || emptyCode}
+\`\`\`
+
+Your tasks:
+1. Modify or generate code based on user intent.
+2. Always return complete, executable code wrapped in \`\`\`html (or \`\`\`tsx / \`\`\`vue as needed).
+3. Briefly explain what you changed.
+4. Never return partial snippets only.
+
+Viewport rules (must follow):
+BeaverKit preview baseline is 1280x720 (16:9).
+- Start <head><style> with:
+  html, body { width: 1280px; height: 720px; margin: 0; transform-origin: top left; transform: scale(calc(100vw / 1280)); }
+- If using canvas, set width=1280 and height=720.
+- Do not use other fixed root sizes like 800px or 600px.
+
+Answer in English.`;
+
+    return { role: 'system', content };
+  };
 
   const handleStopAI = () => {
     abortControllerRef.current?.abort();
@@ -677,7 +718,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
         if (err instanceof AIServiceError) {
           setAiError(err.message);
         } else {
-          setAiError('發生未知錯誤，請稍後再試。');
+          setAiError(t('workspace_ai_unknown_error'));
         }
       }
     } finally {
@@ -696,10 +737,10 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
   const hasActiveProvider = !!selectedProvider;
 
   const PRESET_PROMPTS = [
-    { icon: 'palette', text: '把顏色改成藍色' },
-    { icon: 'person', text: '加上我的名字' },
-    { icon: 'speed', text: '速度加快兩倍' },
-    { icon: 'dark_mode', text: '改成紫色主題' }
+    { icon: 'palette', text: t('workspace_preset_color_blue') },
+    { icon: 'person', text: t('workspace_preset_add_name') },
+    { icon: 'speed', text: t('workspace_preset_speed_twice') },
+    { icon: 'dark_mode', text: t('workspace_preset_purple_theme') }
   ];
   const todayUsage = selectedProvider ? getUsage(selectedProvider as ChatProvider) : 0;
   const limit = selectedProvider ? (dailyLimits[selectedProvider] || 0) : 0;
@@ -710,7 +751,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
     if (!hasContent) return;
     const emergencySlot: SaveSlot = {
       id: `emergency_${Date.now()}`,
-      title: title || '未命名備份',
+      title: title || t('workspace_emergency_backup_title'),
       tags,
       description: description || '',
       editorMode,
@@ -725,7 +766,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
       const filtered = existing.filter(s => !s.id.startsWith('emergency_')).slice(0, 4);
       localStorage.setItem(key, JSON.stringify([emergencySlot, ...filtered]));
     } catch { /* storage full */ }
-  }, [htmlCode, cssCode, jsCode, title, tags, description, editorMode, currentUser?.id]);
+  }, [htmlCode, cssCode, jsCode, title, tags, description, editorMode, currentUser?.id, t]);
 
   // 瀏覽器關閉 / 重新整理時：自動緊急備份 + 顯示原生警告
   useEffect(() => {
@@ -881,7 +922,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
         >
 
           {/* Close Sidebar Button */}
-          <button onClick={() => setIsAiSidebarOpen(false)} className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-12 bg-surface-container border border-white/10 rounded-r-lg hidden md:flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-variant z-20 transition-all shadow-md opacity-0 group-hover:opacity-100" title="收合側邊欄">
+          <button onClick={() => setIsAiSidebarOpen(false)} className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-12 bg-surface-container border border-white/10 rounded-r-lg hidden md:flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-variant z-20 transition-all shadow-md opacity-0 group-hover:opacity-100" title={t('workspace_close_sidebar')}>
             <span className="material-symbols-outlined text-[14px]">chevron_left</span>
           </button>
           {/* AI Assistant Header */}
@@ -926,7 +967,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
             <div className="px-4 py-2 border-b border-outline-variant/5 shrink-0 bg-surface-container-lowest/50">
               <p className="text-[10px] font-mono text-on-surface/30 uppercase tracking-widest">
                 <span className="material-symbols-outlined text-[11px] mr-1 align-middle">key</span>
-                請先設定 AI API Key
+                {t('workspace_ai_missing_key_header')}
               </p>
             </div>
           )}
@@ -944,12 +985,12 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
             {!hasActiveProvider && (
               <div className="flex flex-col items-center justify-center h-full text-center px-4">
                 <span className="material-symbols-outlined text-3xl text-on-surface/15 mb-2">key</span>
-                <p className="text-xs text-on-surface/30 mb-3">尚未設定 AI API Key</p>
+                <p className="text-xs text-on-surface/30 mb-3">{t('workspace_ai_missing_key_body')}</p>
                 <button
                   onClick={() => navigate('/settings')}
                   className="px-3 py-1.5 bg-primary text-on-primary text-xs font-bold rounded-lg hover:bg-primary-fixed transition-colors"
                 >
-                  前往設定
+                  {t('workspace_ai_go_settings')}
                 </button>
               </div>
             )}
@@ -957,8 +998,8 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
             {hasActiveProvider && messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full text-center px-4">
                 <span className="material-symbols-outlined text-4xl text-primary/20 mb-3">auto_awesome</span>
-                <p className="text-xs text-on-surface/50 font-medium mb-1">告訴 AI 你想要什麼</p>
-                <p className="text-[10px] text-on-surface/25">例如：「幫我做一個計時器」、「加入動畫效果」</p>
+                <p className="text-xs text-on-surface/50 font-medium mb-1">{t('workspace_ai_prompt_title')}</p>
+                <p className="text-[10px] text-on-surface/25">{t('workspace_ai_prompt_hint')}</p>
               </div>
             )}
 
@@ -971,7 +1012,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
                     }`}
                   style={{ fontSize: `${(chatFontScale / 100) * 24}px` }}
                 >
-                  {msg.role === 'assistant' ? formatAssistantMessage(msg.content, aiLoading && i === messages.length - 1) : msg.content}
+                  {msg.role === 'assistant' ? formatAssistantMessage(msg.content, aiLoading && i === messages.length - 1, t) : msg.content}
                 </div>
               </div>
             ))}
@@ -1027,7 +1068,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
                   onChange={e => setAiInput(e.target.value)}
                   onKeyDown={handleAiKeyDown}
                   rows={1}
-                  placeholder="輸入需求..."
+                  placeholder={t('workspace_ai_input_placeholder')}
                   className="flex-1 bg-transparent text-on-surface px-3 py-2.5 resize-none outline-none placeholder:text-on-surface/30"
                   style={{ fontSize: `${(chatFontScale / 100) * 24}px`, maxHeight: '80px', overflowY: 'auto' }}
                   onInput={(e) => {
@@ -1039,7 +1080,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
                 {aiLoading ? (
                   <button
                     onClick={handleStopAI}
-                    title="停止生成"
+                    title={t('workspace_ai_stop_generation')}
                     className="w-9 h-9 m-1 bg-error/80 text-white rounded-lg flex items-center justify-center hover:bg-error transition-colors shrink-0 shadow-md"
                   >
                     <span className="material-symbols-outlined text-[15px]">stop</span>
@@ -1069,8 +1110,8 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
                 <div className="w-full max-w-md">
                   <div className="text-center mb-8">
                     <span className="material-symbols-outlined text-[40px] text-primary/25 mb-3 block">code_blocks</span>
-                    <h2 className="text-xl font-bold text-on-surface mb-2">開始建立你的 Kit</h2>
-                    <p className="text-sm text-on-surface/40">選擇一個模式，或在左側 AI 對話框輸入需求</p>
+                    <h2 className="text-xl font-bold text-on-surface mb-2">{t('workspace_welcome_title')}</h2>
+                    <p className="text-sm text-on-surface/40">{t('workspace_welcome_subtitle')}</p>
                   </div>
                   <div className="grid grid-cols-2 gap-3 mb-5">
                     {modeOptions.map(opt => (
@@ -1091,7 +1132,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
                     onClick={() => setEditorReady(true)}
                     className="w-full py-2.5 text-sm text-on-surface/30 hover:text-on-surface/60 transition-colors cursor-pointer"
                   >
-                    直接開啟編輯器 →
+                    {t('workspace_open_editor_direct')}
                   </button>
                 </div>
               </div>
@@ -1109,7 +1150,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
                     ))}
                   </div>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => { setIsManualEditMode(!isManualEditMode); setHighlightEditBtn(false); }} className={`flex items-center gap-1 px-2.5 py-1 rounded transition-all duration-300 ${isManualEditMode ? 'bg-primary/20 text-primary font-bold shadow-sm' : 'text-on-surface-variant hover:text-on-surface hover:bg-white/5'} ${highlightEditBtn ? 'bg-yellow-500/20 text-yellow-300 ring-2 ring-yellow-500/50 scale-105' : ''}`} title={isManualEditMode ? '切換回保護模式' : '開啟手動編輯 (防呆)'}><span className="material-symbols-outlined text-[14px]">{isManualEditMode ? 'edit' : 'edit_off'}</span><span className="text-[11px]">{isManualEditMode ? '編輯中' : '唯讀保護'}</span></button>
+                    <button onClick={() => { setIsManualEditMode(!isManualEditMode); setHighlightEditBtn(false); }} className={`flex items-center gap-1 px-2.5 py-1 rounded transition-all duration-300 ${isManualEditMode ? 'bg-primary/20 text-primary font-bold shadow-sm' : 'text-on-surface-variant hover:text-on-surface hover:bg-white/5'} ${highlightEditBtn ? 'bg-yellow-500/20 text-yellow-300 ring-2 ring-yellow-500/50 scale-105' : ''}`} title={isManualEditMode ? t('workspace_manual_edit_switch_to_safe') : t('workspace_manual_edit_enable')}><span className="material-symbols-outlined text-[14px]">{isManualEditMode ? 'edit' : 'edit_off'}</span><span className="text-[11px]">{isManualEditMode ? t('workspace_manual_editing') : t('workspace_manual_readonly')}</span></button>
                   </div>
                 </div>
                 {/* Textarea */}
@@ -1127,11 +1168,11 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
                     placeholder={
                       isSplitMode
                         ? activeTab === 'html'
-                          ? '<div>Your HTML here</div>'
+                          ? t('workspace_split_html_placeholder')
                           : activeTab === 'css'
-                            ? 'body { font-family: sans-serif; }'
-                            : 'console.log("hello!");'
-                        : '把 AI 生成的程式碼貼在這裡 ✨\n\n💡 小提示：\n• 跟 AI 說「請輸出成一個完整的 HTML 檔案」效果最好\n• 也支援 React 和 Vue 元件，貼上後會自動偵測'
+                            ? t('workspace_split_css_placeholder')
+                            : t('workspace_split_js_placeholder')
+                        : t('workspace_single_editor_placeholder')
                     }
                     className="flex-1 w-full bg-transparent p-4 sm:pl-12 py-4 font-mono text-sm text-on-surface outline-none resize-none hide-scrollbar placeholder:text-on-surface/20 whitespace-pre"
                     spellCheck={false}
@@ -1206,7 +1247,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
                     </div>
                     <button
                       onClick={() => setShowConsole(s => !s)}
-                      title="Console"
+                      title={t('workspace_console_title')}
                       className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] transition-colors ${showConsole ? 'text-primary bg-primary/10' : consoleLogs.some(l => l.level === 'error') ? 'text-red-400 hover:text-red-300' : 'text-on-surface/30 hover:text-on-surface/60'}`}
                     >
                       <span className="material-symbols-outlined text-[13px]">terminal</span>
@@ -1220,7 +1261,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
                       <div className="w-full h-full bg-[#050505] flex items-center justify-center">
                         <div className="text-center">
                           <span className="material-symbols-outlined text-on-surface/10 text-5xl">preview</span>
-                          <p className="text-[11px] text-on-surface/20 mt-2">尚無預覽內容</p>
+                          <p className="text-[11px] text-on-surface/20 mt-2">{t('workspace_preview_empty')}</p>
                         </div>
                       </div>
                     )}
@@ -1228,15 +1269,15 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
                       <div className="absolute bottom-0 left-0 right-0 h-1/2 flex flex-col bg-[#0d0d0d]/95 backdrop-blur-sm border-t border-white/10 z-10 font-mono text-xs">
                         <div className="flex items-center gap-2 px-3 py-1.5 border-b border-white/[0.06] shrink-0">
                           <span className="material-symbols-outlined text-[12px] text-on-surface/40">terminal</span>
-                          <span className="text-[10px] uppercase tracking-widest text-on-surface/30 font-bold flex-1">Console</span>
-                          <button onClick={() => setConsoleLogs([])} className="text-[10px] text-on-surface/20 hover:text-on-surface/50 px-1.5 py-0.5 rounded transition-colors">清除</button>
+                          <span className="text-[10px] uppercase tracking-widest text-on-surface/30 font-bold flex-1">{t('workspace_console_title')}</span>
+                          <button onClick={() => setConsoleLogs([])} className="text-[10px] text-on-surface/20 hover:text-on-surface/50 px-1.5 py-0.5 rounded transition-colors">{t('workspace_console_clear')}</button>
                           <button onClick={() => setShowConsole(false)} className="text-on-surface/20 hover:text-on-surface/50 transition-colors ml-1">
                             <span className="material-symbols-outlined text-[14px]">close</span>
                           </button>
                         </div>
                         <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
                           {consoleLogs.length === 0 ? (
-                            <p className="text-on-surface/15 text-[10px] text-center mt-4">尚無訊息</p>
+                            <p className="text-on-surface/15 text-[10px] text-center mt-4">{t('workspace_console_empty')}</p>
                           ) : (
                             consoleLogs.map((log, i) => (
                               <div key={i} className={`flex items-start gap-2 px-1 py-0.5 rounded ${log.level === 'error' ? 'text-red-400 bg-red-500/5' : log.level === 'warn' ? 'text-yellow-400 bg-yellow-500/5' : log.level === 'info' ? 'text-blue-400' : 'text-on-surface/50'}`}>
@@ -1267,7 +1308,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
             <div className="flex items-center justify-between px-4 py-3 border-b border-outline-variant/10 shrink-0">
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary text-[16px]">api</span>
-                <span className="text-sm font-bold text-on-surface">BeaverKit API 說明</span>
+                <span className="text-sm font-bold text-on-surface">{t('workspace_api_guide_title')}</span>
               </div>
               <button onClick={() => setShowApiGuidePopup(false)} className="text-on-surface/40 hover:text-on-surface transition-colors">
                 <span className="material-symbols-outlined text-[18px]">close</span>
@@ -1280,162 +1321,16 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
         </div>
       )}
 
-
-      {/* ── (folder panel removed) ── */}
-      {false && (
-        <aside className="hidden">
-          {/* Header */}
-          <div className="px-4 py-3 border-b border-white/5 shrink-0">
-            <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-[#dae2fd]/40">我的專案</span>
-          </div>
-
-          <div className="flex-1 overflow-y-auto custom-scrollbar">
-
-            {/* ── 儲存區 ── */}
-            <div className="border-b border-white/5">
-              <button
-                onClick={() => setSavesOpen(o => !o)}
-                className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-white/[0.03] transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[#dae2fd]/30 text-[13px]">save</span>
-                  <span className="text-[10px] font-medium uppercase tracking-widest text-[#dae2fd]/40">儲存區</span>
-                  <span className={`text-[9px] font-mono tabular-nums ${saves.length >= MAX_SAVES ? 'text-red-400/70' : 'text-[#dae2fd]/20'}`}>{saves.length}/{MAX_SAVES}</span>
-                </div>
-                <span className="material-symbols-outlined text-[13px] text-[#dae2fd]/20 transition-transform duration-200" style={{ transform: savesOpen ? 'rotate(0deg)' : 'rotate(-90deg)' }}>expand_more</span>
-              </button>
-
-              {savesOpen && (
-                <div className="px-2.5 pb-2.5 space-y-1">
-                  <button
-                    onClick={handleSave}
-                    disabled={saves.length >= MAX_SAVES && !saves.find(s => s.title === title)}
-                    className="w-full flex items-center justify-center gap-1.5 bg-[#2665fd] hover:bg-[#2665fd]/90 disabled:opacity-30 disabled:cursor-not-allowed text-white text-[11px] font-semibold py-2 rounded-lg transition-colors active:scale-[0.98] mt-0.5"
-                  >
-                    <span className="material-symbols-outlined text-[13px]">save</span>
-                    儲存目前專案
-                  </button>
-                  {!currentUser && (
-                    <p className="text-[9px] text-[#dae2fd]/25 text-center pt-0.5">僅限本機儲存</p>
-                  )}
-                  {saves.length === 0 ? (
-                    <div className="text-center py-6">
-                      <p className="text-[9px] text-[#dae2fd]/20 leading-relaxed">尚無存檔</p>
-                    </div>
-                  ) : (
-                    saves.map(slot => (
-                      <div key={slot.id} className="group flex items-center gap-2 px-3 py-2 rounded-md hover:bg-white/[0.05] transition-colors">
-                        <div className="flex-1 min-w-0 cursor-pointer" onClick={() => handleLoadSave(slot)}>
-                          <p className="text-[13px] text-[#dae2fd]/80 truncate group-hover:text-[#dae2fd] transition-colors leading-tight">{slot.title}</p>
-                          <p className="text-[10px] text-[#dae2fd]/25 font-mono mt-0.5">
-                            {new Date(slot.savedAt).toLocaleString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                          </p>
-                        </div>
-                        <button onClick={() => handleDeleteSave(slot.id)} title="刪除" className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded text-[#dae2fd]/30 hover:text-red-400/70 transition-colors shrink-0">
-                          <span className="material-symbols-outlined text-[14px]">close</span>
-                        </button>
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* ── 已發布 ── */}
-            <div className="border-b border-white/5">
-              <button
-                onClick={() => setPublishedOpen(o => !o)}
-                className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-white/[0.03] transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[#dae2fd]/30 text-[13px]">public</span>
-                  <span className="text-[10px] font-medium uppercase tracking-widest text-[#dae2fd]/40">已發布</span>
-                  {currentUser && <span className="text-[9px] font-mono text-[#dae2fd]/20">{publishedVibes.length}</span>}
-                </div>
-                <span className="material-symbols-outlined text-[13px] text-[#dae2fd]/20 transition-transform duration-200" style={{ transform: publishedOpen ? 'rotate(0deg)' : 'rotate(-90deg)' }}>expand_more</span>
-              </button>
-
-              {publishedOpen && (
-                <div className="px-2.5 pb-2.5 space-y-1">
-                  {!currentUser ? (
-                    <div className="text-center py-6">
-                      <p className="text-[9px] text-[#dae2fd]/20 leading-relaxed">登入後查看</p>
-                    </div>
-                  ) : vibesLoading ? (
-                    <div className="text-center py-6">
-                      <p className="text-[9px] text-[#dae2fd]/20 animate-pulse">載入中…</p>
-                    </div>
-                  ) : publishedVibes.length === 0 ? (
-                    <div className="text-center py-6">
-                      <p className="text-[9px] text-[#dae2fd]/20">尚無已發布作品</p>
-                    </div>
-                  ) : (
-                    publishedVibes.map(vibe => (
-                      <div key={vibe.id} onClick={() => setConfirmLoad(vibe)} className="group px-3 py-2 rounded-md hover:bg-white/[0.05] cursor-pointer transition-colors">
-                        <p className="text-[13px] text-[#dae2fd]/80 truncate group-hover:text-[#dae2fd] transition-colors leading-tight">{vibe.title}</p>
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* ── Remix ── */}
-            <div>
-              <button
-                onClick={() => setRemixOpen(o => !o)}
-                className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-white/[0.03] transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[#dae2fd]/30 text-[13px]">fork_right</span>
-                  <span className="text-[10px] font-medium uppercase tracking-widest text-[#dae2fd]/40">Remix</span>
-                  {currentUser && <span className="text-[9px] font-mono text-[#dae2fd]/20">{remixVibes.length}</span>}
-                </div>
-                <span className="material-symbols-outlined text-[13px] text-[#dae2fd]/20 transition-transform duration-200" style={{ transform: remixOpen ? 'rotate(0deg)' : 'rotate(-90deg)' }}>expand_more</span>
-              </button>
-
-              {remixOpen && (
-                <div className="px-2.5 pb-2.5 space-y-1">
-                  {!currentUser ? (
-                    <div className="text-center py-6">
-                      <p className="text-[9px] text-[#dae2fd]/20 leading-relaxed">登入後查看</p>
-                    </div>
-                  ) : vibesLoading ? (
-                    <div className="text-center py-6">
-                      <p className="text-[9px] text-[#dae2fd]/20 animate-pulse">載入中…</p>
-                    </div>
-                  ) : remixVibes.length === 0 ? (
-                    <div className="text-center py-6">
-                      <p className="text-[9px] text-[#dae2fd]/20">尚無 Remix 作品</p>
-                    </div>
-                  ) : (
-                    remixVibes.map(vibe => (
-                      <div key={vibe.id} onClick={() => setConfirmLoad(vibe)} className="group px-3 py-2 rounded-md hover:bg-white/[0.05] cursor-pointer transition-colors">
-                        <p className="text-[13px] text-[#dae2fd]/80 truncate group-hover:text-[#dae2fd] transition-colors leading-tight">{vibe.title}</p>
-                        {vibe.parent_vibe_title && (
-                          <p className="text-[10px] text-[#dae2fd]/25 truncate mt-0.5">↳ {vibe.parent_vibe_title}</p>
-                        )}
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
-
-          </div>
-        </aside>
-      )}
-
       {/* ── 覆蓋確認 dialog ── */}
       {confirmLoad && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4" onClick={() => setConfirmLoad(null)}>
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
           <div className="relative bg-[#1a1a1c] border border-white/[0.08] rounded-xl shadow-2xl p-5 w-72" onClick={e => e.stopPropagation()}>
-            <p className="text-[13px] font-semibold text-[#dae2fd]/90 mb-1">載入此專案？</p>
-            <p className="text-[11px] text-[#dae2fd]/40 mb-5 leading-relaxed">「{confirmLoad.title}」將覆蓋目前編輯器的內容。</p>
+            <p className="text-[13px] font-semibold text-[#dae2fd]/90 mb-1">{t('workspace_confirm_load_title')}</p>
+            <p className="text-[11px] text-[#dae2fd]/40 mb-5 leading-relaxed">{tr('workspace_confirm_load_desc', { title: confirmLoad.title })}</p>
             <div className="flex gap-2">
-              <button onClick={() => setConfirmLoad(null)} className="flex-1 py-2 rounded-lg text-[11px] font-medium text-[#dae2fd]/40 border border-white/[0.06] hover:border-white/[0.12] hover:text-[#dae2fd]/70 transition-colors">取消</button>
-              <button onClick={() => handleLoadFromVibe(confirmLoad)} className="flex-1 py-2 rounded-lg text-[11px] font-semibold text-white bg-[#2665fd] hover:bg-[#2665fd]/90 transition-colors">確認載入</button>
+              <button onClick={() => setConfirmLoad(null)} className="flex-1 py-2 rounded-lg text-[11px] font-medium text-[#dae2fd]/40 border border-white/[0.06] hover:border-white/[0.12] hover:text-[#dae2fd]/70 transition-colors">{t('workspace_cancel')}</button>
+              <button onClick={() => handleLoadFromVibe(confirmLoad)} className="flex-1 py-2 rounded-lg text-[11px] font-semibold text-white bg-[#2665fd] hover:bg-[#2665fd]/90 transition-colors">{t('workspace_confirm_load_confirm')}</button>
             </div>
           </div>
         </div>
@@ -1493,7 +1388,7 @@ BeaverKit 預覽視窗基準解析度為 1280×720（16:9）。
 }
 
 // ── Helper: Format assistant messages ─────────────────────────────────
-function formatAssistantMessage(content: string, isStreaming = false): React.ReactNode {
+function formatAssistantMessage(content: string, isStreaming = false, t?: (key: TranslationKey) => string): React.ReactNode {
   // 解析 <think>...</think> 標籤
   let thinkContent: string | null = null;
   let responseContent = content;
@@ -1530,7 +1425,7 @@ function formatAssistantMessage(content: string, isStreaming = false): React.Rea
         <div key={i} className="my-1.5 bg-surface-container-lowest rounded px-2.5 py-1.5 border border-outline-variant/10 flex items-center justify-between">
           <div className="flex items-center gap-1.5 text-[9px] font-mono text-primary/80">
             <span className="material-symbols-outlined text-[11px] text-green-500">check_circle</span>
-            程式碼已自動套用至編輯器
+            {t ? t('workspace_code_applied') : 'Code applied to editor'}
           </div>
         </div>
       );
@@ -1547,7 +1442,7 @@ function formatAssistantMessage(content: string, isStreaming = false): React.Rea
           <div key={i + 'streaming'} className="my-1.5 bg-surface-container-lowest rounded px-2.5 py-1.5 border border-primary/30 shadow-sm flex items-center justify-between animate-pulse">
             <div className="flex items-center gap-1.5 text-[9px] font-mono text-primary animate-pulse">
               <span className="material-symbols-outlined text-[11px] animate-spin text-primary">data_object</span>
-              正在寫入右側編輯器...
+              {t ? t('workspace_writing_editor') : 'Writing to editor...'}
             </div>
             <span className="flex items-end gap-[2px]">
               <span className="thinking-dot w-1 h-1 rounded-full bg-primary border-primary" />
