@@ -236,6 +236,9 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
   const [showNewPasswordText, setShowNewPasswordText] = useState(false);
   const [passwordSaving, setPasswordSaving] = useState(false);
 
+  // Delete confirmation
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
   // Lineage state (lifted from RemixTree)
   const [ancestors, setAncestors] = useState<VibeAncestor[]>([]);
   const [vibeChildren, setVibeChildren] = useState<VibeChild[]>([]);
@@ -426,6 +429,18 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
     };
     sessionStorage.setItem('beaverkit_pending_load', JSON.stringify(slot));
     navigate('/workspace');
+  };
+
+  const handleDeleteVibe = async () => {
+    if (!vibe || !currentUser) return;
+    try {
+      await api.deleteVibe(vibe.id, currentUser.supabase_id ?? String(currentUser.id));
+      navigate('/');
+    } catch (err) {
+      console.error('Failed to delete vibe', err);
+    } finally {
+      setShowDeleteConfirm(false);
+    }
   };
 
   const timeAgo = (dateStr: string) => {
@@ -847,6 +862,16 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
                         </div>
                       </div>
                     )}
+                    {/* Danger zone */}
+                    <div className="mt-1 pt-3 border-t border-outline-variant/10">
+                      <button
+                        onClick={() => setShowDeleteConfirm(true)}
+                        className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-error/60 hover:text-error hover:bg-error/5 text-xs font-medium rounded-lg ring-1 ring-error/15 hover:ring-error/30 transition-all cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-[14px]">delete_forever</span>
+                        刪除 Vibe
+                      </button>
+                    </div>
                   </>
                 )}
               </div>
@@ -917,6 +942,41 @@ export default function VibeDetail({ currentUser }: VibeDetailProps) {
       </div>
 
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+
+      {/* ── Delete Confirm Dialog ── */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-surface border border-outline-variant/20 rounded-2xl shadow-2xl max-w-sm w-full mx-4 p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-error/10 flex items-center justify-center flex-shrink-0">
+                <span className="material-symbols-outlined text-error text-xl">delete_forever</span>
+              </div>
+              <div>
+                <h3 className="text-on-surface font-bold">確認刪除</h3>
+                <p className="text-on-surface-variant text-xs mt-0.5">此操作無法復原</p>
+              </div>
+            </div>
+            <p className="text-on-surface-variant text-sm leading-relaxed mb-6">
+              刪除這個 Vibe？所有版本與留言將永久移除。
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface transition-colors rounded-xl hover:bg-surface-container cursor-pointer"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleDeleteVibe}
+                className="px-5 py-2 bg-error text-white rounded-xl text-sm font-bold hover:opacity-90 transition-opacity flex items-center gap-2 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[16px]">delete_forever</span>
+                刪除
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
