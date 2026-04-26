@@ -126,6 +126,27 @@ export default function ProjectSettingsModal({
     return () => window.removeEventListener('keydown', handler);
   }, [isOpen, onClose]);
 
+  // Ctrl+V 貼上封面圖片
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (!file) continue;
+          const reader = new FileReader();
+          reader.onload = () => setCoverImage(reader.result as string);
+          reader.readAsDataURL(file);
+          break;
+        }
+      }
+    };
+    window.addEventListener('paste', handler);
+    return () => window.removeEventListener('paste', handler);
+  }, [isOpen]);
+
   const descOver = description.length > DESC_LIMIT;
   const canSubmit = title.trim().length > 0 && !descOver && !isPublishing;
 
@@ -283,7 +304,7 @@ export default function ProjectSettingsModal({
                   <ImageIcon className="w-5 h-5 text-zinc-500 group-hover:text-indigo-400 transition-colors" />
                 </div>
                 <div className="flex flex-col items-center gap-0.5">
-                  <span className="text-sm font-medium text-zinc-300">點擊上傳封面</span>
+                  <span className="text-sm font-medium text-zinc-300">點擊上傳 或 Ctrl+V 貼上</span>
                   <span className="text-xs text-zinc-500">建議 16:9 · 最大 5MB</span>
                 </div>
               </button>
