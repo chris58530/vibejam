@@ -94,6 +94,7 @@ export default function Studio({ currentUser }: StudioProps) {
   const [loading, setLoading] = useState(true);
   const [supabaseUserId, setSupabaseUserId] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<SaveSlot[]>([]);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 
   // Get supabase user id
   useEffect(() => {
@@ -238,6 +239,18 @@ export default function Studio({ currentUser }: StudioProps) {
   const handleView = (row: StudioRow) => {
     if (row.vibeId) {
       navigate(`/p/${row.vibeId}`);
+    }
+  };
+
+  const handleDeleteVibe = async (vibeId: number) => {
+    if (!supabaseUserId) return;
+    try {
+      await api.deleteVibe(vibeId, supabaseUserId);
+      setVibes(prev => prev.filter(v => v.id !== vibeId));
+    } catch (err) {
+      console.error('Failed to delete vibe', err);
+    } finally {
+      setDeleteConfirmId(null);
     }
   };
 
@@ -409,13 +422,22 @@ export default function Studio({ currentUser }: StudioProps) {
                         {isZh ? '編輯' : 'Edit'}
                       </button>
                       {row.kind === 'vibe' && (
-                        <button
-                          onClick={e => { e.stopPropagation(); handleView(row); }}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-lg text-white text-xs font-semibold hover:bg-white/30 transition-colors"
-                        >
-                          <span className="material-symbols-outlined text-[15px]">visibility</span>
-                          {isZh ? '查看' : 'View'}
-                        </button>
+                        <>
+                          <button
+                            onClick={e => { e.stopPropagation(); handleView(row); }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-lg text-white text-xs font-semibold hover:bg-white/30 transition-colors"
+                          >
+                            <span className="material-symbols-outlined text-[15px]">visibility</span>
+                            {isZh ? '查看' : 'View'}
+                          </button>
+                          <button
+                            onClick={e => { e.stopPropagation(); setDeleteConfirmId(row.vibeId!); }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/50 backdrop-blur-sm rounded-lg text-white text-xs font-semibold hover:bg-red-500/70 transition-colors"
+                          >
+                            <span className="material-symbols-outlined text-[15px]">delete</span>
+                            {isZh ? '刪除' : 'Delete'}
+                          </button>
+                        </>
                       )}
                       {row.kind === 'draft' && row.saveSlot && (
                         <button
@@ -484,6 +506,41 @@ export default function Studio({ currentUser }: StudioProps) {
             ? `共 ${filteredRows.length} 項`
             : `${filteredRows.length} item${filteredRows.length !== 1 ? 's' : ''}`
           }
+        </div>
+      )}
+
+      {/* ── Delete Confirm Dialog ── */}
+      {deleteConfirmId !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-surface border border-outline-variant/20 rounded-2xl shadow-2xl max-w-sm w-full mx-4 p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-error/10 flex items-center justify-center flex-shrink-0">
+                <span className="material-symbols-outlined text-error text-xl">delete_forever</span>
+              </div>
+              <div>
+                <h3 className="text-on-surface font-bold">{isZh ? '確認刪除' : 'Confirm Delete'}</h3>
+                <p className="text-on-surface-variant text-xs mt-0.5">{isZh ? '此操作無法復原' : 'This action cannot be undone'}</p>
+              </div>
+            </div>
+            <p className="text-on-surface-variant text-sm leading-relaxed mb-6">
+              {isZh ? '刪除這個 Vibe？所有版本與留言將永久移除。' : 'Delete this vibe? All versions and comments will be permanently removed.'}
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setDeleteConfirmId(null)}
+                className="px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface transition-colors rounded-xl hover:bg-surface-container cursor-pointer"
+              >
+                {isZh ? '取消' : 'Cancel'}
+              </button>
+              <button
+                onClick={() => handleDeleteVibe(deleteConfirmId)}
+                className="px-5 py-2 bg-error text-white rounded-xl text-sm font-bold hover:opacity-90 transition-opacity flex items-center gap-2 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[16px]">delete_forever</span>
+                {isZh ? '刪除' : 'Delete'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
