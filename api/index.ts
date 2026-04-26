@@ -64,8 +64,16 @@ async function checkVibeAccess(vibeId: number | string, supabaseId: string | nul
   if (!vibe) return { allowed: false, role: 'none', vibe: null };
   const visibility = vibe.visibility || 'public';
 
-  // Public and legacy unlisted vibes: anyone can access
+  // Public and legacy unlisted vibes: anyone can access, but still resolve role
   if (visibility !== 'private') {
+    if (supabaseId) {
+      if (vibe.owner_supabase_id === supabaseId) return { allowed: true, role: 'owner', vibe };
+      const user = await db.get('SELECT id FROM users WHERE supabase_id = $1', [supabaseId]);
+      if (user) {
+        const collab = await db.get('SELECT id FROM collaborators WHERE vibe_id = $1 AND user_id = $2', [vibeId, user.id]);
+        if (collab) return { allowed: true, role: 'collaborator', vibe };
+      }
+    }
     return { allowed: true, role: 'viewer', vibe };
   }
 
