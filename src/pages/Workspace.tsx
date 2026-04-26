@@ -368,12 +368,14 @@ export default function Workspace({ currentUser }: WorkspaceProps) {
     const pasted = e.clipboardData.getData('text');
     const detected = detectFramework(pasted);
 
-    if (detected !== 'single' && detected !== editorMode) {
+    if (detected !== editorMode && editorMode !== 'split') {
       e.preventDefault();
       setHtmlCode(pasted);
       setEditorMode(detected);
-      const label = modeOptions.find(m => m.id === detected)?.label || detected;
-      showToast(tr('workspace_toast_auto_mode', { mode: label }), 'auto_awesome');
+      if (detected !== 'single') {
+        const label = modeOptions.find(m => m.id === detected)?.label || detected;
+        showToast(tr('workspace_toast_auto_mode', { mode: label }), 'auto_awesome');
+      }
     }
   };
 
